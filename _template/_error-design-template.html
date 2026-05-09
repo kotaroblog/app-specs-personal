@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>[アプリ名] - エラー設計</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">[アプリ名]</a> / エラー設計</div>
+
+  <header class="site-header">
+    <h1>エラー設計・例外パターン一覧</h1>
+    <p>例外の分類とユーザーへの提示方針</p>
+  </header>
+
+  <h2>エラー分類の方針</h2>
+  <ul>
+    <li><strong>システムエラー</strong>: 想定外、開発者が修正すべき</li>
+    <li><strong>ビジネスエラー</strong>: 業務ルール違反、UIで分かりやすく案内</li>
+    <li><strong>ネットワークエラー</strong>: 一時的、リトライ可能</li>
+    <li><strong>権限エラー</strong>: 設定アプリへの誘導が必要</li>
+  </ul>
+
+  <h2>エラー一覧</h2>
+  <table>
+    <tr>
+      <th>エラーID</th>
+      <th>分類</th>
+      <th>発生条件</th>
+      <th>ユーザー表示</th>
+      <th>復旧方法</th>
+      <th>ロギング</th>
+    </tr>
+    <tr>
+      <td>ERR-001</td>
+      <td>ビジネス</td>
+      <td>必須項目未入力</td>
+      <td>「[項目名]を入力してください」</td>
+      <td>入力促進</td>
+      <td>不要</td>
+    </tr>
+    <tr>
+      <td>ERR-002</td>
+      <td>ネットワーク</td>
+      <td>API接続失敗</td>
+      <td>「通信エラーが発生しました。再試行しますか？」</td>
+      <td>リトライボタン</td>
+      <td>warning</td>
+    </tr>
+    <tr>
+      <td>ERR-003</td>
+      <td>システム</td>
+      <td>SwiftData書き込み失敗</td>
+      <td>「データ保存に失敗しました」</td>
+      <td>再起動を促す</td>
+      <td>error</td>
+    </tr>
+    <tr>
+      <td>ERR-004</td>
+      <td>権限</td>
+      <td>通知許可がない</td>
+      <td>「通知を有効にすると…」</td>
+      <td>設定アプリ起動</td>
+      <td>info</td>
+    </tr>
+  </table>
+
+  <h2>Swift エラー型の方針</h2>
+  <div class="callout">
+    <strong>Result型 または throws</strong> を統一して使用。コールバックでのエラー返却は禁止（CLAUDE.md準拠）。
+  </div>
+
+  <pre><code>enum [App]Error: LocalizedError {
+    case invalidInput(field: String)
+    case networkUnavailable
+    case persistenceFailed(underlying: Error)
+    case permissionDenied(type: PermissionType)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidInput(let field): return "\(field)を入力してください"
+        case .networkUnavailable: return "通信エラーが発生しました"
+        case .persistenceFailed: return "データ保存に失敗しました"
+        case .permissionDenied: return "権限が必要です"
+        }
+    }
+}</code></pre>
+
+  <h2>UI 表示パターン</h2>
+  <table>
+    <tr><th>重要度</th><th>表示形式</th><th>例</th></tr>
+    <tr><td>低</td><td>インラインメッセージ</td><td>入力フォームのヘルパー</td></tr>
+    <tr><td>中</td><td>Toast / バナー</td><td>「保存しました」「通信エラー」</td></tr>
+    <tr><td>高</td><td>アラートダイアログ</td><td>致命的なエラー、課金エラー</td></tr>
+    <tr><td>致命</td><td>フルスクリーンエラー画面</td><td>データ破損、起動不能</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>YYYY-MM-DD</td><td>初版作成</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: YYYY-MM-DD</footer>
+</div>
+</body>
+</html>

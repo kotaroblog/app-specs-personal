@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>[アプリ名] - 画面遷移図</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">[アプリ名]</a> / 画面遷移図</div>
+
+  <header class="site-header">
+    <h1>画面遷移図</h1>
+    <p>[アプリ名] 全画面の遷移マップ</p>
+  </header>
+
+  <div class="callout">スマホでは横スクロールで全体を確認できます。</div>
+
+  <h2>全体フロー</h2>
+  <div class="mermaid">
+flowchart TD
+  Launch([起動]) --> Home[ホーム画面]
+  Home --> ScreenA[画面A]
+  Home --> ScreenB[画面B]
+  </div>
+
+  <h2>主要な遷移パターン</h2>
+  <table>
+    <tr><th>起点</th><th>遷移先</th><th>トリガー</th></tr>
+    <tr><td>[画面]</td><td>[画面]</td><td>[操作]</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>YYYY-MM-DD</td><td>初版作成</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
+      flowchart: { curve: 'basis', useMaxWidth: true }
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: YYYY-MM-DD</footer>
+</div>
+</body>
+</html>

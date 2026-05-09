@@ -17,23 +17,40 @@
   </header>
 
   <h2>概要</h2>
-  <table>
-    <tr><th>項目</th><th>内容</th></tr>
-    <tr><td>カテゴリ</td><td>[App Storeカテゴリ]</td></tr>
-    <tr><td>対応OS</td><td>iOS 18.0+</td></tr>
-    <tr><td>言語</td><td>日本語</td></tr>
-    <tr><td>マネタイズ</td><td>[サブスク / 広告 / なし]</td></tr>
-  </table>
+  <ul class="kv-list">
+    <li><span class="k">カテゴリ</span><span class="v">[App Storeカテゴリ]</span></li>
+    <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
+    <li><span class="k">言語</span><span class="v">日本語</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">[サブスク / 広告 / なし]</span></li>
+    <li><span class="k">ステータス</span><span class="v">[企画中 / 開発中 / 申請中 / リリース済]</span></li>
+    <li><span class="k">リリース予定</span><span class="v">[YYYY-MM]</span></li>
+  </ul>
 
-  <h2>ドキュメント</h2>
+  <h2>全体仕様書</h2>
   <div class="card-grid">
     <a class="card" href="flow.html">
       <div class="title">画面遷移図</div>
-      <div class="desc">全画面の遷移をMermaidで可視化</div>
+      <div class="desc">全画面の遷移マップ</div>
     </a>
     <a class="card" href="data-model.html">
       <div class="title">データモデル</div>
-      <div class="desc">SwiftDataモデルの構造</div>
+      <div class="desc">SwiftDataモデルの構造とER図</div>
+    </a>
+    <a class="card" href="error-design.html">
+      <div class="title">エラー設計</div>
+      <div class="desc">例外パターン一覧と表示方針</div>
+    </a>
+    <a class="card" href="logging.html">
+      <div class="title">ロギング方針</div>
+      <div class="desc">os.log カテゴリとログレベル</div>
+    </a>
+    <a class="card" href="aso.html">
+      <div class="title">ASOキーワード戦略</div>
+      <div class="desc">App Store最適化の方針</div>
+    </a>
+    <a class="card" href="glossary.html">
+      <div class="title">用語集・ドメイン辞書</div>
+      <div class="desc">ドメイン用語の正典</div>
     </a>
   </div>
 
@@ -46,9 +63,16 @@
     </a>
   </div>
 
-  <footer class="site-footer">
-    最終更新: YYYY-MM-DD
-  </footer>
+  <h2>機能仕様書</h2>
+  <div class="card-grid">
+    <a class="card" href="features/_feature-template.html">
+      <div class="title">[機能名]</div>
+      <div class="desc">[一行説明]</div>
+      <div class="meta"><span class="tag todo">draft</span></div>
+    </a>
+  </div>
+
+  <footer class="site-footer">最終更新: YYYY-MM-DD</footer>
 </div>
 </body>
 </html>

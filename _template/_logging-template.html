@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>[アプリ名] - ロギング方針</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">[アプリ名]</a> / ロギング方針</div>
+
+  <header class="site-header">
+    <h1>ロギング方針</h1>
+    <p>os.log / Logger を用いたログ出力ルール</p>
+  </header>
+
+  <h2>基本方針</h2>
+  <div class="callout">
+    <strong><code>print()</code> は禁止</strong>。<code>Logger</code>（os.log）を使用する（CLAUDE.md準拠）。
+  </div>
+
+  <h2>Logger カテゴリの定義</h2>
+  <pre><code>import OSLog
+
+extension Logger {
+    private static let subsystem = Bundle.main.bundleIdentifier!
+
+    static let app = Logger(subsystem: subsystem, category: "app")
+    static let ui = Logger(subsystem: subsystem, category: "ui")
+    static let data = Logger(subsystem: subsystem, category: "data")
+    static let network = Logger(subsystem: subsystem, category: "network")
+    static let purchase = Logger(subsystem: subsystem, category: "purchase")
+    static let ad = Logger(subsystem: subsystem, category: "ad")
+}</code></pre>
+
+  <h2>ログレベルの使い分け</h2>
+  <table>
+    <tr><th>レベル</th><th>用途</th><th>例</th></tr>
+    <tr><td><code>.debug</code></td><td>開発時のみ確認したい情報</td><td>VM初期化、画面遷移</td></tr>
+    <tr><td><code>.info</code></td><td>通常のイベント</td><td>ログイン、購入完了</td></tr>
+    <tr><td><code>.notice</code></td><td>注目すべきイベント</td><td>初回起動、設定変更</td></tr>
+    <tr><td><code>.warning</code></td><td>異常だが継続可能</td><td>ネットワーク再試行、課金復元失敗</td></tr>
+    <tr><td><code>.error</code></td><td>エラー、機能継続不可</td><td>SwiftData保存失敗</td></tr>
+    <tr><td><code>.critical</code></td><td>アプリ継続不可</td><td>データベース破損</td></tr>
+  </table>
+
+  <h2>プライバシー対応</h2>
+  <div class="callout warn">
+    Logger 出力時、<strong>個人情報・APIキー・トークン</strong>を含めない。やむを得ず含む場合は <code>privacy: .private</code> を指定する。
+  </div>
+
+  <pre><code>// OK
+Logger.app.info("画面遷移: \(screenName, privacy: .public)")
+
+// NG（メールアドレスを公開ログに出している）
+Logger.app.info("ログイン: \(user.email)")
+
+// OK（私的データ扱い）
+Logger.app.info("ログイン: \(user.email, privacy: .private)")</code></pre>
+
+  <h2>禁止事項</h2>
+  <ul>
+    <li><code>print()</code> の使用（CI/lint で検知）</li>
+    <li>APIキー・パスワード・課金トランザクション詳細の出力</li>
+    <li>例外の詳細スタックトレースをユーザー向けログに含める</li>
+  </ul>
+
+  <h2>確認方法</h2>
+  <p>
+    macOS の Console.app でデバイスを選択し、subsystem でフィルタすると当該アプリのログのみ確認可能。
+  </p>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>YYYY-MM-DD</td><td>初版作成</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: YYYY-MM-DD</footer>
+</div>
+</body>
+</html>

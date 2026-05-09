@@ -178,6 +178,25 @@ img, svg { max-width: 100%; height: auto; }
 }
 
 .callout.warn { border-color: var(--color-warning); background: rgba(255,149,0,0.08); }
+.callout.danger { border-color: var(--color-danger); background: rgba(255,59,48,0.08); }
+
+.history-table { font-size: 0.85rem; }
+.history-table th { background: var(--color-bg-soft); }
+.history-table td:first-child { white-space: nowrap; font-weight: 600; }
+
+.section-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0 16px;
+  font-size: 0.8rem;
+  color: var(--color-text-soft);
+}
+
+.kv-list { list-style: none; padding-left: 0; }
+.kv-list li { display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px dashed var(--color-border); }
+.kv-list li .k { flex: 0 0 140px; color: var(--color-text-soft); font-size: 0.88rem; }
+.kv-list li .v { flex: 1; }
 
 .checklist { list-style: none; padding-left: 0; }
 .checklist li { position: relative; padding-left: 28px; margin: 6px 0; }

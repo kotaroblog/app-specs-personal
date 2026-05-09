@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>WorkoutDiary - データモデル</title>
+<title>[アプリ名] - データモデル</title>
 <link rel="stylesheet" href="../assets/css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">WorkoutDiary</a> / データモデル</div>
+  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">[アプリ名]</a> / データモデル</div>
 
   <header class="site-header">
     <h1>データモデル</h1>
@@ -20,68 +20,27 @@
   <h2>ER 図</h2>
   <div class="mermaid">
 erDiagram
-  Workout ||--o{ Exercise : has
-  Exercise ||--o{ ExerciseSet : has
-
-  Workout {
-    UUID id
-    Date date
-    String note
-    Date createdAt
-  }
-  Exercise {
+  EntityA ||--o{ EntityB : has
+  EntityA {
     UUID id
     String name
-    String category
-    Int order
+    Date createdAt
   }
-  ExerciseSet {
+  EntityB {
     UUID id
-    Double weight
-    Int reps
-    Int order
+    String value
   }
   </div>
 
-  <h2>Workout</h2>
+  <h2>EntityA</h2>
   <pre><code>@Model
-final class Workout {
+final class EntityA {
     var id: UUID = UUID()
-    var date: Date = Date()
-    var note: String?
+    var name: String = ""
     var createdAt: Date = Date()
 
     @Relationship(deleteRule: .cascade)
-    var exercises: [Exercise] = []
-
-    init(date: Date = .now) {
-        self.date = date
-    }
-}</code></pre>
-
-  <h2>Exercise</h2>
-  <pre><code>@Model
-final class Exercise {
-    var id: UUID = UUID()
-    var name: String = ""
-    var category: String = ""
-    var order: Int = 0
-
-    @Relationship(deleteRule: .cascade)
-    var sets: [ExerciseSet] = []
-
-    var workout: Workout?
-}</code></pre>
-
-  <h2>ExerciseSet</h2>
-  <pre><code>@Model
-final class ExerciseSet {
-    var id: UUID = UUID()
-    var weight: Double = 0
-    var reps: Int = 0
-    var order: Int = 0
-
-    var exercise: Exercise?
+    var children: [EntityB] = []
 }</code></pre>
 
   <h2>マイグレーション方針</h2>
@@ -92,7 +51,7 @@ final class ExerciseSet {
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
-    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.0</td><td>YYYY-MM-DD</td><td>初版作成</td></tr>
   </table>
 
   <script>
@@ -102,9 +61,7 @@ final class ExerciseSet {
     });
   </script>
 
-  <footer class="site-footer">
-    最終更新: 2026-05-09
-  </footer>
+  <footer class="site-footer">最終更新: YYYY-MM-DD</footer>
 </div>
 </body>
 </html>

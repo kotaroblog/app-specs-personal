@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>[アプリ名] - [機能名]</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">[アプリ名]</a> / [機能名]</div>
+
+  <header class="site-header">
+    <h1>[機能名]</h1>
+    <p>[1行説明：何を実現する機能か]</p>
+    <div class="section-meta">
+      <span class="tag todo">draft</span>
+      <span class="tag">機能ID: FEAT-01</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>[機能の目的・ユーザー価値・ビジネス価値]</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/[画面ID].html">[画面名]</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant V as View
+  participant VM as ViewModel
+  participant S as Service
+
+  U->>V: 操作
+  V->>VM: イベント通知
+  VM->>S: 処理依頼
+  S-->>VM: 結果
+  VM-->>V: 状態更新
+  V-->>U: 表示
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>[ルール1]</li>
+    <li>[ルール2]</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>[StoreKit 2 / AdMob / 等]</td><td>[用途]</td><td>[備考]</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>[条件]</td><td>[対応内容]</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>[実装ポイント]</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>YYYY-MM-DD</td><td>初版作成</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: YYYY-MM-DD</footer>
+</div>
+</body>
+</html>
