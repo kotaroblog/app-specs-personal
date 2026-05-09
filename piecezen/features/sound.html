@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - サウンド</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / サウンド</div>
+  <header class="site-header"><h1>サウンド機能（SoundManager）</h1><p>システムサウンド再生 + activePlayers 配列</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: PZ-FEAT-SOUND</span></div></header>
+
+  <h2>使用サウンド</h2>
+  <table>
+    <tr><th>イベント</th><th>サウンドファイル</th></tr>
+    <tr><td>blockPlaced</td><td>Tock.caf（システム音）</td></tr>
+    <tr><td>lineCleared</td><td>Tink.caf</td></tr>
+    <tr><td>combo</td><td>paymentSuccess.caf</td></tr>
+    <tr><td>gameOver</td><td>SIMToolkitGeneralBeep.caf</td></tr>
+    <tr><td>rotate</td><td>key_press_click.caf</td></tr>
+  </table>
+
+  <h2>SoundManager API</h2>
+  <pre><code>final class SoundManager {
+    static let shared: SoundManager
+    private var activePlayers: [AVAudioPlayer] = []  // ★強参照保持
+
+    func play(_ event: SoundEvent)
+    // - 音量0.8、UserDefaults で有効/無効
+    // - 再生終了時にactivePlayersから除去
+}</code></pre>
+
+  <h2>EXC_BAD_ACCESS 対策</h2>
+  <div class="callout warn">
+    連続再生時に AVAudioPlayer が解放されると EXC_BAD_ACCESS が発生する問題への対策として、
+    <strong>activePlayers 配列で再生中プレイヤーを強参照保持</strong>。再生終了時に配列から除去する設計。
+  </div>
+
+  <h2>プリロード</h2>
+  <p>init で全システムサウンドを <code>AVAudioPlayer(contentsOf:)</code> でプリロードし、再生時は <code>player.currentTime = 0</code> で即座に再生。遅延ペナルティ回避。</p>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

@@ -9,59 +9,67 @@
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../">← Felix App Specs</a></div>
+  <div class="breadcrumb"><a href="../">← Personal App Specs</a></div>
 
   <header class="site-header">
     <h1>StudyStopwatch</h1>
-    <p>学習タイマーアプリ · Bundle ID: <code>com.happyboy1002.StudyStopwatch</code></p>
+    <p>学習タイマー / Live Activity / Widget · Bundle ID: <code>com.happyboy1002.StudyStopwatch</code></p>
   </header>
 
   <h2>概要</h2>
   <ul class="kv-list">
     <li><span class="k">カテゴリ</span><span class="v">教育</span></li>
-    <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
-    <li><span class="k">言語</span><span class="v">日本語</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション + 広告</span></li>
+    <li><span class="k">対応OS</span><span class="v">iOS 18.0+ / Swift 6.0</span></li>
+    <li><span class="k">言語</span><span class="v">日本語のみ</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション + AdMob広告</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
-    <li><span class="k">リリース時期</span><span class="v">-</span></li>
+    <li><span class="k">バージョン</span><span class="v">v1.0.4 (build 5)</span></li>
+    <li><span class="k">表示名</span><span class="v">学習ストップウォッチ</span></li>
+    <li><span class="k">拡張ターゲット</span><span class="v">Live Activity / Widget</span></li>
+    <li><span class="k">App Group</span><span class="v"><code>group.com.happyboy1002.StudyStopwatch</code></span></li>
   </ul>
+
+  <h2>アプリの目的</h2>
+  <p>
+    教科ごとに学習時間を計測し、Live Activityでロック画面・Dynamic Islandに表示。
+    ヒートマップカレンダー・週間/月間レポート・Instagram Stories共有でモチベ維持を支援。
+    ポモドーロモード（集中25分/休憩5分）対応。
+  </p>
 
   <h2>全体仕様書</h2>
   <div class="card-grid">
-    <a class="card" href="flow.html">
-      <div class="title">画面遷移図</div>
-      <div class="desc">全画面の遷移マップ</div>
-    </a>
-    <a class="card" href="data-model.html">
-      <div class="title">データモデル</div>
-      <div class="desc">SwiftDataモデルの構造とER図</div>
-    </a>
-    <a class="card" href="error-design.html">
-      <div class="title">エラー設計</div>
-      <div class="desc">例外パターン一覧と表示方針</div>
-    </a>
-    <a class="card" href="logging.html">
-      <div class="title">ロギング方針</div>
-      <div class="desc">os.log カテゴリとログレベル</div>
-    </a>
-    <a class="card" href="aso.html">
-      <div class="title">ASOキーワード戦略</div>
-      <div class="desc">App Store最適化の方針</div>
-    </a>
-    <a class="card" href="glossary.html">
-      <div class="title">用語集・ドメイン辞書</div>
-      <div class="desc">ドメイン用語の正典</div>
-    </a>
+    <a class="card" href="flow.html"><div class="title">画面遷移図</div><div class="desc">全画面の遷移マップ</div></a>
+    <a class="card" href="data-model.html"><div class="title">データモデル</div><div class="desc">SwiftData @Model + AppGroup</div></a>
+    <a class="card" href="error-design.html"><div class="title">エラー設計</div><div class="desc">例外パターン一覧</div></a>
+    <a class="card" href="logging.html"><div class="title">ロギング方針</div><div class="desc">Logger カテゴリ</div></a>
+    <a class="card" href="aso.html"><div class="title">ASOキーワード戦略</div><div class="desc">App Store最適化</div></a>
+    <a class="card" href="glossary.html"><div class="title">用語集・ドメイン辞書</div><div class="desc">ドメイン用語の正典</div></a>
   </div>
 
   <h2>画面仕様書</h2>
   <div class="card-grid">
-    <p style="color: var(--color-text-soft); font-size: 0.9rem;">画面仕様書は順次追加予定。</p>
+    <a class="card" href="screens/home.html"><div class="title">ホーム（タイマー）</div><div class="desc">タイマー実行画面</div><div class="meta"><span class="tag">SS-HOME-01</span></div></a>
+    <a class="card" href="screens/today.html"><div class="title">今日</div><div class="desc">本日の学習ダッシュボード</div><div class="meta"><span class="tag">SS-TODAY-01</span></div></a>
+    <a class="card" href="screens/calendar-heatmap.html"><div class="title">カレンダーヒートマップ</div><div class="desc">月単位の学習日数可視化</div><div class="meta"><span class="tag">SS-CAL-01</span></div></a>
+    <a class="card" href="screens/report.html"><div class="title">レポート</div><div class="desc">週間/月間/通期統計</div><div class="meta"><span class="tag">SS-REPORT-01</span></div></a>
+    <a class="card" href="screens/share.html"><div class="title">シェア</div><div class="desc">SNS共有4種カード</div><div class="meta"><span class="tag">SS-SHARE-01</span></div></a>
+    <a class="card" href="screens/settings.html"><div class="title">設定</div><div class="desc">科目管理・通知・プレミアム</div><div class="meta"><span class="tag">SS-SET-01</span></div></a>
+    <a class="card" href="screens/premium.html"><div class="title">プレミアム</div><div class="desc">サブスク購入</div><div class="meta"><span class="tag">SS-PREMIUM-01</span></div></a>
+    <a class="card" href="screens/onboarding.html"><div class="title">オンボーディング</div><div class="desc">目標・科目セットアップ</div><div class="meta"><span class="tag">SS-ONB-01</span></div></a>
+    <a class="card" href="screens/subject-edit.html"><div class="title">科目編集</div><div class="desc">科目の追加・編集</div><div class="meta"><span class="tag">SS-SUBJ-01</span></div></a>
+    <a class="card" href="screens/live-activity.html"><div class="title">Live Activity</div><div class="desc">ロック画面・Dynamic Island</div><div class="meta"><span class="tag">SS-LA-01</span></div></a>
+    <a class="card" href="screens/widget.html"><div class="title">Widget</div><div class="desc">ホーム画面ウィジェット</div><div class="meta"><span class="tag">SS-WID-01</span></div></a>
   </div>
 
   <h2>機能仕様書</h2>
   <div class="card-grid">
-    <p style="color: var(--color-text-soft); font-size: 0.9rem;">機能仕様書は順次追加予定。</p>
+    <a class="card" href="features/timer.html"><div class="title">タイマー機能</div><div class="desc">永続化・バックグラウンド対応・ポモドーロ</div></a>
+    <a class="card" href="features/live-activity.html"><div class="title">Live Activity</div><div class="desc">ActivityKit 連携</div></a>
+    <a class="card" href="features/widget-sync.html"><div class="title">Widget同期</div><div class="desc">AppGroup 経由</div></a>
+    <a class="card" href="features/subscription.html"><div class="title">サブスク課金</div><div class="desc">StoreKit 2</div></a>
+    <a class="card" href="features/notification.html"><div class="title">通知</div><div class="desc">日次リマインダー</div></a>
+    <a class="card" href="features/share.html"><div class="title">シェア</div><div class="desc">4種カード + Instagram Stories</div></a>
+    <a class="card" href="features/app-update.html"><div class="title">アプリ更新チェック</div><div class="desc">App Store JSON API</div></a>
   </div>
 
   <footer class="site-footer">最終更新: 2026-05-09</footer>

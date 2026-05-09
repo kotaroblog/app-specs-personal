@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - エラー設計</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">CHROMATIC</a> / エラー設計</div>
+  <header class="site-header"><h1>エラー設計・例外パターン</h1></header>
+
+  <h2>エラー一覧</h2>
+  <table>
+    <tr><th>ID</th><th>分類</th><th>条件</th><th>表示</th><th>ログ</th></tr>
+    <tr><td>CR-AD-01</td><td>広告</td><td>Banner ロード失敗</td><td>サイレント（高さ0）</td><td>info</td></tr>
+    <tr><td>CR-AD-02</td><td>広告</td><td>Interstitial ロード失敗</td><td>サイレント（スキップ）</td><td>info</td></tr>
+    <tr><td>CR-SK-01</td><td>StoreKit</td><td>productNotFound</td><td>「商品が見つかりません」</td><td>error</td></tr>
+    <tr><td>CR-SK-02</td><td>StoreKit</td><td>verificationFailed</td><td>「決済の検証に失敗しました」</td><td>error</td></tr>
+    <tr><td>CR-AUDIO-01</td><td>オーディオ</td><td>AVAudioPlayer init失敗</td><td>サイレント</td><td>warning</td></tr>
+    <tr><td>CR-AUDIO-02</td><td>オーディオ</td><td>AudioSession 設定失敗</td><td>サイレント</td><td>error</td></tr>
+    <tr><td>CR-GC-01</td><td>Game Center</td><td>認証失敗</td><td>サイレント</td><td>warning</td></tr>
+    <tr><td>CR-GC-02</td><td>Game Center</td><td>スコア送信失敗</td><td>サイレント（後で再試行）</td><td>warning</td></tr>
+  </table>
+
+  <h2>SoundManager 安全実装</h2>
+  <div class="callout warn">
+    連続再生時の EXC_BAD_ACCESS 対策として <strong>activePlayers 配列で AVAudioPlayer を強参照保持</strong>。
+    再生終了時に配列から除去。
+  </div>
+
+  <h2>購入状態の改ざん対策</h2>
+  <div class="callout warn">
+    UserDefaults はオフラインキャッシュのみ。<strong>起動時に <code>verifyEntitlements()</code> で StoreKit から最新エンタイトルメントを取得して上書き</strong>。
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

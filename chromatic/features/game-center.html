@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - Game Center</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / Game Center</div>
+  <header class="site-header"><h1>Game Center機能</h1><p>難易度別リーダーボード3本</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: CR-FEAT-GC</span></div></header>
+
+  <h2>リーダーボードID</h2>
+  <table>
+    <tr><th>難易度</th><th>Leaderboard ID</th></tr>
+    <tr><td>NORMAL</td><td><code>chromatic.leaderboard.normal</code></td></tr>
+    <tr><td>FAST</td><td><code>chromatic.leaderboard.fast</code></td></tr>
+    <tr><td>INSANE</td><td><code>chromatic.leaderboard.insane</code></td></tr>
+  </table>
+
+  <h2>GameCenterManager API</h2>
+  <pre><code>final class GameCenterManager {
+    static let shared: GameCenterManager
+
+    func authenticate()
+    func submitScore(score: Int, difficulty: Difficulty) async
+    func showLeaderboard(difficulty: Difficulty)
+}</code></pre>
+
+  <h2>処理フロー</h2>
+  <ol>
+    <li>App起動時に <code>authenticate()</code> で GKLocalPlayer 認証（メインスレッド保証）</li>
+    <li>triggerGameOver() で <code>submitScore()</code> 呼出</li>
+    <li>トロフィーアイコンタップで <code>showLeaderboard()</code> → GKGameCenterViewController</li>
+  </ol>
+
+  <h2>必須設定</h2>
+  <ul>
+    <li>CODE_SIGN_ENTITLEMENTS: <code>CHROMATIC.entitlements</code> で Game Center を有効化</li>
+    <li>App Store Connect でリーダーボード3本を作成済み</li>
+    <li>リーダーボードアイコン: <code>leaderboard_icon_1024.png</code></li>
+  </ul>
+
+  <h2>エラー処理</h2>
+  <p>認証失敗・スコア送信失敗ともに<strong>サイレント</strong>で扱う。ユーザー体験を阻害しない。</p>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

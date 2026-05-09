@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - Widgets</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / Widgets</div>
+  <header class="site-header">
+    <h1>ホーム画面ウィジェット（3種）</h1>
+    <p>Summary / Weekly / CategoryTracker</p>
+    <div class="section-meta"><span class="tag done">v1.0.5</span><span class="tag">画面ID: WD-WIDGET-01〜03</span></div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>ホーム画面に配置できるウィジェット3種。週間進捗・継続日数・カテゴリ別トラッキングを表示。</p>
+
+  <h2>3種類のウィジェット</h2>
+  <table>
+    <tr><th>ウィジェット</th><th>サイズ</th><th>表示内容</th></tr>
+    <tr><td>Summary</td><td>Small</td><td>今週のセッション数・最終トレーニング日・ストリーク</td></tr>
+    <tr><td>Weekly</td><td>Medium</td><td>週間サマリ + トップ種目</td></tr>
+    <tr><td>CategoryTracker</td><td>Medium</td><td>カテゴリ別の今週セッション数</td></tr>
+  </table>
+
+  <h2>データソース</h2>
+  <pre><code>// AppGroup UserDefaults
+WidgetSharedData {
+    let weeklyCount: Int
+    let lastWorkoutDate: Date?
+    let currentStreak: Int
+}
+
+WeeklySummaryData {
+    let weekStart: Date
+    let weekEnd: Date
+    let totalSessionCount: Int
+    let topExercises: [TopExercise]
+    let currentStreak: Int
+    let streakUnit: StreakUnit  // .days / .weeks
+}</code></pre>
+
+  <h2>更新タイミング</h2>
+  <ul>
+    <li>本体起動時に <code>WidgetSharedData</code> を AppGroup に書き込み</li>
+    <li>セッション保存後に <code>WidgetCenter.shared.reloadAllTimelines()</code></li>
+    <li>翌日0時に自動再取得</li>
+  </ul>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">Bundle Identifier: <code>com.happyboy1002.WorkoutDiary.widget</code></li>
+    <li class="done">AppGroup: 共通の suiteName で本体・Widget が共有</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - PR検出</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / PR検出</div>
+  <header class="site-header">
+    <h1>PR（自己ベスト）検出機能</h1>
+    <p>セット保存時の過去最大値比較とPaywall導線</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: WD-FEAT-PR</span></div>
+  </header>
+
+  <h2>概要</h2>
+  <p>新しいセット追加時に同種目の過去最大値と比較し、PR（Personal Record）かどうか判定。
+  PR達成時は祝賀演出 + POST-PR Paywall（v1.0.5）で課金転換を狙う。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/workout-session.html">トレーニング記録画面</a></li>
+    <li><a href="../screens/add-workout.html">セット追加</a></li>
+    <li><a href="../screens/paywall.html">Paywall (POST-PR)</a></li>
+  </ul>
+
+  <h2>PRDetector API</h2>
+  <pre><code>struct PRDetector {
+    func detectPR(newSet: WorkoutSet, history: [WorkoutSet]) -> PRType?
+    func detectPRs(sessions: [WorkoutSession]) -> [PR]
+}
+
+enum PRType {
+    case maxWeight       // 重量更新
+    case maxVolume       // ボリューム更新
+    case maxReps(Double) // 同重量でレップ更新
+}</code></pre>
+
+  <h2>1RM 推定（Epley公式）</h2>
+  <pre><code>struct OneRepMaxCalculator {
+    static func calculate(weight: Double, reps: Int) -> Double {
+        return weight * (1 + Double(reps) / 30)
+    }
+}</code></pre>
+
+  <h2>処理フロー</h2>
+  <ol>
+    <li>WorkoutSet 保存後</li>
+    <li>同種目の過去 WorkoutSet を取得</li>
+    <li><code>PRDetector.detectPR()</code> で比較</li>
+    <li>PR なら祝賀演出（アニメーション + ハプティクス）</li>
+    <li>条件下で Paywall 表示（無料 + 初回PR 等）</li>
+  </ol>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>PR種類: maxWeight / maxVolume / maxReps</li>
+    <li>有酸素種目は別ロジック（時間・距離の最高値）</li>
+    <li>Paywall表示は1日1回まで</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

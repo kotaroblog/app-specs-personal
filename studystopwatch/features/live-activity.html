@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - Live Activity機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / Live Activity機能</div>
+  <header class="site-header"><h1>Live Activity機能</h1><p>ActivityKit連携・ロック画面とDynamic Island</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: SS-FEAT-LA</span></div></header>
+
+  <h2>概要</h2>
+  <p>ActivityKitを使用してロック画面・Dynamic Islandにタイマー経過時間を表示する機能。
+  本体タイマーと1秒同期、終了時のクリーンアップ含む安全な実装。</p>
+
+  <h2>LiveActivityService API</h2>
+  <pre><code>final class LiveActivityService {
+    static let shared: LiveActivityService
+
+    func startActivity(subject: Subject) async
+    func updateActivity(elapsedSeconds: Int) async
+    func endActivity() async
+    func cleanupOrphanedActivities() async  // 起動時に呼出
+}</code></pre>
+
+  <h2>処理フロー</h2>
+  <ol>
+    <li>タイマー開始 → <code>Activity.request(attributes:contentState:)</code></li>
+    <li>1秒ごと → <code>activity.update(.init(state:))</code></li>
+    <li>タイマー停止 → <code>activity.end(.init(state:))</code></li>
+    <li>アプリ起動時 → <code>cleanupOrphanedActivities()</code> で残骸検出・削除</li>
+  </ol>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>NSSupportsLiveActivities = true（Info.plist）</li>
+    <li>同時に1つのActivityのみ（既存があれば終了してから新規作成）</li>
+    <li>失敗時はサイレント（タイマー本体は正常動作）</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th></tr>
+    <tr><td>ActivityKit</td><td>Live Activity起動・更新・終了</td></tr>
+    <tr><td>WidgetKit</td><td>Activity拡張のUI実装</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

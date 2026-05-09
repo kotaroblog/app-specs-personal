@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - データモデル</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">CHROMATIC</a> / データモデル</div>
+  <header class="site-header"><h1>データモデル</h1><p>UserDefaults中心の軽量データ構造（SwiftData未使用）</p></header>
+
+  <div class="callout">
+    本アプリは <strong>SwiftData/Realm を使わず、UserDefaults のみ</strong>でローカルデータを管理。スコア・設定・ストリーク・課金状態を全て UserDefaults に保存。
+  </div>
+
+  <h2>UserDefaults キー（StorageKey）</h2>
+  <table>
+    <tr><th>キー</th><th>型</th><th>用途</th></tr>
+    <tr><td><code>chromatic_best_score_normal</code></td><td>Int</td><td>NORMAL ベストスコア</td></tr>
+    <tr><td><code>chromatic_best_score_fast</code></td><td>Int</td><td>FAST ベストスコア</td></tr>
+    <tr><td><code>chromatic_best_score_insane</code></td><td>Int</td><td>INSANE ベストスコア</td></tr>
+    <tr><td><code>chromatic_sound_enabled</code></td><td>Bool</td><td>効果音有効（デフォルト true）</td></tr>
+    <tr><td><code>chromatic_color_blind_mode</code></td><td>Bool</td><td>色覚サポートモード</td></tr>
+    <tr><td><code>chromatic_has_seen_onboarding</code></td><td>Bool</td><td>オンボーディング済</td></tr>
+    <tr><td><code>chromatic_ads_removed</code></td><td>Bool</td><td>広告削除済（オフラインキャッシュ）</td></tr>
+    <tr><td><code>chromatic_streak_count</code></td><td>Int</td><td>連続プレイ日数</td></tr>
+    <tr><td><code>chromatic_last_played_date</code></td><td>String</td><td>最終プレイ日（YYYY-MM-DD）</td></tr>
+  </table>
+
+  <h2>状態管理（@Observable @MainActor）</h2>
+  <table>
+    <tr><th>クラス</th><th>責務</th></tr>
+    <tr><td><code>GameViewModel</code></td><td>ラウンド進行・入力判定・速度計算・マイルストーン</td></tr>
+    <tr><td><code>PurchaseManager</code></td><td>StoreKit 課金（広告除去 IAP）</td></tr>
+    <tr><td><code>SoundManager</code></td><td>WAVサウンド再生</td></tr>
+    <tr><td><code>StreakManager</code></td><td>連続プレイ日数</td></tr>
+    <tr><td><code>GameCenterManager</code></td><td>Game Center 認証・スコア送信・LB表示</td></tr>
+    <tr><td><code>InterstitialAdManager</code></td><td>全画面広告（2ゲームに1回）</td></tr>
+  </table>
+
+  <h2>主要 Enum</h2>
+
+  <h3>Difficulty</h3>
+  <pre><code>enum Difficulty: String {
+    case normal  = "NORMAL"   // roundOffset: 0
+    case fast    = "FAST"     // roundOffset: 9
+    case insane  = "INSANE"   // roundOffset: 19
+}</code></pre>
+
+  <h3>GameState</h3>
+  <pre><code>enum GameState {
+    case idle          // START画面
+    case showing       // CPUがシーケンス表示中
+    case playerTurn    // プレイヤー入力待ち
+    case gameOver      // ゲーム終了
+}</code></pre>
+
+  <h3>色インデックス</h3>
+  <table>
+    <tr><th>Index</th><th>色</th><th>周波数（音）</th></tr>
+    <tr><td>0</td><td>赤</td><td>329.63 Hz (E4)</td></tr>
+    <tr><td>1</td><td>緑</td><td>415.30 Hz (G#4)</td></tr>
+    <tr><td>2</td><td>青</td><td>523.25 Hz (C5)</td></tr>
+    <tr><td>3</td><td>黄</td><td>659.25 Hz (E5)</td></tr>
+  </table>
+
+  <h2>速度テーブル</h2>
+  <table>
+    <tr><th>実効ラウンド</th><th>litMs（点灯時間）</th><th>gapMs（間隔）</th><th>ラベル</th></tr>
+    <tr><td>1-4</td><td>650</td><td>195</td><td>NORMAL</td></tr>
+    <tr><td>5-9</td><td>500</td><td>150</td><td>NORMAL+</td></tr>
+    <tr><td>10-14</td><td>400</td><td>120</td><td>FAST</td></tr>
+    <tr><td>15-19</td><td>320</td><td>96</td><td>FAST+</td></tr>
+    <tr><td>20+</td><td>250</td><td>75</td><td>INSANE</td></tr>
+  </table>
+
+  <h2>マイルストーン演出</h2>
+  <table>
+    <tr><th>ラウンド</th><th>メッセージ</th><th>背景色</th></tr>
+    <tr><td>5</td><td>GREAT!</td><td>green</td></tr>
+    <tr><td>10</td><td>AMAZING!</td><td>blue</td></tr>
+    <tr><td>15</td><td>INCREDIBLE!</td><td>purple</td></tr>
+    <tr><td>20</td><td>LEGENDARY!</td><td>gold</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

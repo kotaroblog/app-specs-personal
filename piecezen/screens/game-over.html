@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - ゲーム終了</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / ゲーム終了</div>
+  <header class="site-header"><h1>ゲーム終了（GameOverView）</h1><p>GameView上のオーバーレイ画面</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: PZ-OVER-01</span></div></header>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>「GAME OVER」ラベル</td><td>大きく中央表示</td></tr>
+    <tr><td>スコア表示</td><td>現在スコア + ベストスコア</td></tr>
+    <tr><td>NEW BEST バッジ</td><td>更新時のみ表示</td></tr>
+    <tr><td>Watch Adボタン</td><td>1回限り、リワード広告で救済</td></tr>
+    <tr><td>Restartボタン</td><td>新ゲーム開始</td></tr>
+    <tr><td>Mode Selectボタン</td><td>HomeView へ戻る</td></tr>
+    <tr><td>Shareボタン</td><td>標準シェアシート</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>Watch Ad</td><td>Rewarded広告 → GameEngine.rescueWithReward() → GameView</td></tr>
+    <tr><td>Restart</td><td>GameView（リセット）</td></tr>
+    <tr><td>Mode Select</td><td>HomeView</td></tr>
+    <tr><td>Share</td><td>UIActivityViewController</td></tr>
+  </table>
+
+  <h2>救済機能</h2>
+  <p>「Watch Ad」を1回だけ選択可（hasUsedReward=true で再利用不可）。視聴後にランダムで1セルを消去してゲーム継続。</p>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

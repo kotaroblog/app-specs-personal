@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - エラー設計</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">PieceZen</a> / エラー設計</div>
+  <header class="site-header"><h1>エラー設計・例外パターン</h1><p>広告 / StoreKit / SwiftData / オーディオ</p></header>
+
+  <h2>エラー一覧</h2>
+  <table>
+    <tr><th>ID</th><th>分類</th><th>発生条件</th><th>表示</th><th>復旧</th><th>ログ</th></tr>
+    <tr><td>PZ-AD-01</td><td>広告</td><td>Banner ロード失敗</td><td>サイレント（高さ0）</td><td>—</td><td>info</td></tr>
+    <tr><td>PZ-AD-02</td><td>広告</td><td>Interstitial ロード失敗</td><td>サイレント（スキップ）</td><td>—</td><td>info</td></tr>
+    <tr><td>PZ-AD-03</td><td>広告</td><td>Rewarded 未ロード</td><td>「広告を読み込めませんでした」</td><td>再試行</td><td>warning</td></tr>
+    <tr><td>PZ-SK-01</td><td>StoreKit</td><td>verification失敗</td><td>「決済の検証に失敗しました」</td><td>サポート問合せ</td><td>error</td></tr>
+    <tr><td>PZ-SK-02</td><td>StoreKit</td><td>商品取得失敗</td><td>「商品を読込中」</td><td>再試行</td><td>error</td></tr>
+    <tr><td>PZ-DB-01</td><td>SwiftData</td><td>fetch失敗</td><td>サイレント（空配列）</td><td>—</td><td>error</td></tr>
+    <tr><td>PZ-DB-02</td><td>SwiftData</td><td>save失敗</td><td>「ハイスコア保存失敗」</td><td>—</td><td>error</td></tr>
+    <tr><td>PZ-AUDIO-01</td><td>オーディオ</td><td>AVAudioPlayer init失敗</td><td>サイレント</td><td>—</td><td>warning</td></tr>
+  </table>
+
+  <h2>SoundManager の安全な実装</h2>
+  <div class="callout warn">
+    連続再生時に AVAudioPlayer が解放されて EXC_BAD_ACCESS が発生する問題への対策として、
+    再生中プレイヤーを <code>activePlayers</code> 配列で<strong>強参照保持</strong>。再生終了時に除去。
+  </div>
+
+  <h2>UI 表示パターン</h2>
+  <table>
+    <tr><th>重要度</th><th>表示</th></tr>
+    <tr><td>低</td><td>サイレント / Logger のみ</td></tr>
+    <tr><td>中</td><td>Alert ダイアログ</td></tr>
+    <tr><td>高</td><td>該当なし</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

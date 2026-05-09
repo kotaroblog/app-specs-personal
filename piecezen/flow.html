@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - 画面遷移図</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">PieceZen</a> / 画面遷移図</div>
+  <header class="site-header"><h1>画面遷移図</h1><p>PieceZen 全画面の遷移マップ</p></header>
+
+  <h2>全体フロー</h2>
+  <div class="mermaid">
+flowchart TD
+  Launch([起動]) --> App[BlockPuzzleApp]
+  App --> Home[HomeView<br/>NavigationStack]
+  Home --> Game[GameView]
+  Home --> Settings[SettingsView]
+  Home --> Stats[StatisticsView]
+
+  Game --> GameOver[GameOverView<br/>オーバーレイ]
+  GameOver -- Retry --> Game
+  GameOver -- Watch Ad --> Reward[Rewarded広告]
+  Reward --> Game
+  GameOver -- Mode Select --> Home
+  GameOver -- Share --> ShareSheet[ShareSheet]
+
+  Settings --> Paywall[PaywallView]
+  Paywall -- 購入 --> Settings
+  </div>
+
+  <h2>ゲーム画面の状態遷移</h2>
+  <div class="mermaid">
+flowchart LR
+  Init[GameState .playing] --> Place[ブロック配置]
+  Place --> Check{ライン揃い?}
+  Check -- yes --> Clear[ライン消去演出]
+  Clear --> Combo{連続消去?}
+  Combo -- yes --> ComboPlus[combo+1]
+  ComboPlus --> Init
+  Combo -- no --> ResetCombo[combo=0]
+  ResetCombo --> Init
+  Check -- no --> Refill{トレイ全消費?}
+  Refill -- yes --> NewBlocks[新トレイ生成]
+  NewBlocks --> Check2{配置可能?}
+  Check2 -- no --> Over[GameState .gameOver]
+  Refill -- no --> Init
+  </div>
+
+  <h2>主要な遷移トリガー</h2>
+  <table>
+    <tr><th>起点</th><th>操作</th><th>遷移先</th></tr>
+    <tr><td>HomeView</td><td>Playボタン</td><td>GameView</td></tr>
+    <tr><td>GameView</td><td>ゲームオーバー判定</td><td>GameOverView（オーバーレイ）</td></tr>
+    <tr><td>GameOverView</td><td>Watch Ad</td><td>Rewarded広告 → ゲーム継続</td></tr>
+    <tr><td>GameOverView</td><td>Restart</td><td>GameView（リセット）</td></tr>
+    <tr><td>HomeView</td><td>Settings</td><td>SettingsView</td></tr>
+  </table>
+
+  <h2>画面ID対応表</h2>
+  <table>
+    <tr><th>画面ID</th><th>画面</th><th>ファイル</th></tr>
+    <tr><td>PZ-HOME-01</td><td>ホーム</td><td><code>Views/Home/HomeView.swift</code></td></tr>
+    <tr><td>PZ-GAME-01</td><td>ゲーム</td><td><code>Views/Game/GameView.swift</code></td></tr>
+    <tr><td>PZ-OVER-01</td><td>ゲーム終了</td><td><code>Views/GameOver/GameOverView.swift</code></td></tr>
+    <tr><td>PZ-SET-01</td><td>設定</td><td><code>Views/Settings/SettingsView.swift</code></td></tr>
+    <tr><td>PZ-STATS-01</td><td>統計</td><td><code>Views/Statistics/StatisticsView.swift</code></td></tr>
+    <tr><td>PZ-PAY-01</td><td>Paywall</td><td><code>Views/Paywall/PaywallView.swift</code></td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <script>mermaid.initialize({startOnLoad: true, theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default', flowchart: { curve: 'basis', useMaxWidth: true }});</script>
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

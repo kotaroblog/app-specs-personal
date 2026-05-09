@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - ゲーム</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / ゲーム</div>
+  <header class="site-header"><h1>ゲーム画面（GameView）</h1><p>メイン画面（タイトル+ゲーム+結果が統合）</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: CR-GAME-01</span></div></header>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>タイトルバー</td><td>「CHROMATIC」中央 + リーダーボード/設定ボタン両脇</td></tr>
+    <tr><td>ScoreHeaderView</td><td>現スコア + 全難易度ベストスコア</td></tr>
+    <tr><td>StreakBadgeView</td><td>連続プレイ日数（炎アイコン）</td></tr>
+    <tr><td>StatusTextView</td><td>状態表示（「WATCH」「YOUR TURN」「GAME OVER」）</td></tr>
+    <tr><td>PanelGridView</td><td>2×2パネル（赤/緑/青/黄）</td></tr>
+    <tr><td>SequenceDotsView</td><td>シーケンスドットインジケーター</td></tr>
+    <tr><td>ProgressBarView</td><td>入力進捗</td></tr>
+    <tr><td>難易度Picker</td><td>idle時のみ表示（NORMAL/FAST/INSANE）</td></tr>
+    <tr><td>STARTボタン</td><td>ラベル動的（START / RETRY等）</td></tr>
+    <tr><td>BannerAdView</td><td>下部（広告削除なし時）</td></tr>
+    <tr><td>MilestoneFlashView</td><td>ラウンド5/10/15/20到達時の演出</td></tr>
+    <tr><td>GameOverOverlayView</td><td>ゲームオーバー時のオーバーレイ</td></tr>
+  </table>
+
+  <h2>状態（GameState）</h2>
+  <table>
+    <tr><th>状態</th><th>表示</th></tr>
+    <tr><td>idle</td><td>難易度選択 + STARTボタン</td></tr>
+    <tr><td>showing</td><td>シーケンス表示（点灯）</td></tr>
+    <tr><td>playerTurn</td><td>パネルタップ受付</td></tr>
+    <tr><td>gameOver</td><td>GameOverOverlayView 表示</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>STARTタップ</td><td>showing 状態へ</td></tr>
+    <tr><td>正解</td><td>シーケンス満了で次ラウンド</td></tr>
+    <tr><td>不正解</td><td>gameOver</td></tr>
+    <tr><td>RETRY</td><td>Interstitial表示 → 新ゲーム</td></tr>
+    <tr><td>MODE SELECT</td><td>Interstitial表示 → idle</td></tr>
+    <tr><td>SHARE</td><td>ShareCardView → ShareSheet</td></tr>
+    <tr><td>トロフィーアイコン</td><td>Game Center Leaderboard</td></tr>
+    <tr><td>設定アイコン</td><td>SettingsView (sheet)</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">scenePhase 監視 → refreshStreakOnLaunch()</li>
+    <li class="done">ATT 要求は初回ゲームオーバー時</li>
+    <li class="done">Interstitial は2ゲームに1回（gameCount % 2 == 0）</li>
+    <li class="done">hasSeenOnboarding=false でOnboardingView (sheet, interactiveDismissDisabled)</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/game-logic.html">ゲームロジック仕様書</a></li>
+    <li><a href="../features/game-center.html">Game Center機能</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

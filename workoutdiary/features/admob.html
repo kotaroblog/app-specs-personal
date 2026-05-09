@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - AdMob機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / AdMob機能</div>
+  <header class="site-header">
+    <h1>AdMob 広告機能</h1>
+    <p>Banner + Rewarded 広告</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: WD-FEAT-AD</span></div>
+  </header>
+
+  <h2>概要</h2>
+  <p>本アプリは Banner と Rewarded の2種類の広告を活用。プレミアムユーザーは非表示。
+  Rewarded 視聴で1回限りプレミアム機能を一時解放できる導線あり。</p>
+
+  <h2>広告の種類と配置</h2>
+  <table>
+    <tr><th>種類</th><th>配置</th><th>無料/プレミアム</th></tr>
+    <tr><td>Banner</td><td>ContentView 下部</td><td>無料のみ</td></tr>
+    <tr><td>Rewarded</td><td>能動視聴（プレミアム機能一時解放）</td><td>常時利用可</td></tr>
+  </table>
+
+  <h2>AdMob ID 構成</h2>
+  <pre><code>// App ID
+"ca-app-pub-4104853755894501~7490751129"
+
+// Rewarded Ad Unit
+#if DEBUG
+"ca-app-pub-3940256099942544/1712485313"  // Google公式テストID
+#else
+"ca-app-pub-4104853755894501/1172971356"  // 本番ID
+#endif</code></pre>
+
+  <h2>RewardedAdManager API</h2>
+  <pre><code>@Observable @MainActor
+final class RewardedAdManager {
+    var isAdReady: Bool
+    private var adContinuation: CheckedContinuation&lt;Bool, Never&gt;?
+
+    func loadAd()
+    func showAd() async -> Bool  // true=報酬獲得
+}</code></pre>
+
+  <h2>continuation leak 対策</h2>
+  <div class="callout warn">
+    Google AdMob の callback ベースAPI を <code>CheckedContinuation</code> でブリッジ。
+    重複表示・メモリリーク防止のため、callback 実行後に必ず <code>resume</code> + <code>nil</code> 化。
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>Banner はプレミアムユーザーには表示しない</li>
+    <li>Rewarded はプレミアム判定不要（常時表示可）</li>
+    <li>Rewarded 視聴で <code>tempPremiumExpiresAt</code> を保存し時限解放</li>
+    <li>本番リリース時は本番 Ad Unit ID へ切替必須</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th></tr>
+    <tr><td>Google AdMob SDK v12.0+</td><td>Banner / Rewarded 広告</td></tr>
+    <tr><td>App Tracking Transparency</td><td>IDFA許可</td></tr>
+    <tr><td>Info.plist (NSUserTrackingUsageDescription)</td><td>ATT説明文</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>Banner ロード失敗</td><td>サイレント（高さ0）</td></tr>
+    <tr><td>Rewarded ロード失敗</td><td>「広告を読み込めませんでした」</td></tr>
+    <tr><td>視聴中断</td><td>報酬なし</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

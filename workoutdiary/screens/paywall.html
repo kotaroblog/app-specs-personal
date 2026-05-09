@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - Paywall</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / Paywall</div>
+  <header class="site-header">
+    <h1>Paywall画面（POST-PR）</h1>
+    <p>PR達成タイミングで表示する特別な課金訴求画面</p>
+    <div class="section-meta"><span class="tag done">v1.0.5+</span><span class="tag">画面ID: WD-PAYWALL-01</span></div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>PR（自己ベスト）達成時の興奮を活かして課金転換率を上げるための特別Paywall。v1.0.5で追加。</p>
+
+  <h2>表示タイミング</h2>
+  <ul>
+    <li>WorkoutSessionView でセット保存</li>
+    <li>PRDetector で PR 検出</li>
+    <li>PR祝賀演出表示</li>
+    <li>祝賀後にPaywall表示（無料ユーザーかつ初回PR時等の条件下）</li>
+  </ul>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>祝賀ヘッダー</td><td>VStack</td><td>「PR達成おめでとう！」演出継続</td></tr>
+    <tr><td>特典リスト</td><td>List</td><td>広告なし・シェア・統計等</td></tr>
+    <tr><td>プラン選択</td><td>HStack</td><td>月額・年額</td></tr>
+    <tr><td>「あとで」ボタン</td><td>Button</td><td>サイレント閉じ</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>購入</td><td>StoreKit → 完了 → WorkoutSessionView</td></tr>
+    <tr><td>あとで</td><td>WorkoutSessionView</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">PR祝賀 → Paywall の遷移は alert で誘導</li>
+    <li class="done">表示頻度を制御（2回目以降は表示しない等のロジック）</li>
+    <li>A/B テストで効果測定（v1.x）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="premium.html">プレミアム画面</a></li>
+    <li><a href="../features/pr-detection.html">PR検出機能</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成（v1.0.5機能の仕様化）</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

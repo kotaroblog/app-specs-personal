@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - 統計</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / 統計</div>
+  <header class="site-header">
+    <h1>統計画面（StatsView）</h1>
+    <p>カテゴリ・種目別のグラフと進捗表示</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-STATS-01</span></div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>選択した種目の Max Weight / Total Volume / 1RM の推移をグラフで表示する画面。期間切替（1ヶ月/3ヶ月/全期間）対応。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>カテゴリ選択</td><td>Picker</td><td>胸/背中/肩/腕/脚/腹筋/有酸素/その他</td></tr>
+    <tr><td>種目選択</td><td>Picker</td><td>カテゴリで絞った種目</td></tr>
+    <tr><td>期間選択</td><td>Picker</td><td>1M / 3M / All</td></tr>
+    <tr><td>Max Weight グラフ</td><td>Charts</td><td>X軸=日付, Y軸=Max重量（or 有酸素時間）</td></tr>
+    <tr><td>Total Volume グラフ</td><td>Charts</td><td>X軸=日付, Y軸=Volume（or 有酸素距離）</td></tr>
+    <tr><td>シェアボタン</td><td>Toolbar</td><td>ShareCardPreviewView 起動</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>データなし</td><td>「データがありません」</td></tr>
+    <tr><td>データあり（重量系）</td><td>Max重量・Volumeグラフ</td></tr>
+    <tr><td>データあり（有酸素系）</td><td>時間・距離グラフ</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>StatsViewModel {
+    var selectedPeriod: StatsPeriod  // .oneMonth / .threeMonths / .all
+    func maxWeightData() -> [DataPoint]
+    func totalVolumeData() -> [DataPoint]
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">SwiftUI Charts 使用</li>
+    <li class="done"><code>exercise.isCardio</code> で有酸素判定 → 時間・距離切り替え</li>
+    <li class="done">OneRepMaxCalculator (Epley公式) で 1RM 推定</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="workout-share.html">シェア画面</a></li>
+    <li><a href="../features/share-card.html">シェアカード機能</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 用語集</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">StudyStopwatch</a> / 用語集</div>
+
+  <header class="site-header">
+    <h1>用語集・ドメイン辞書</h1>
+    <p>StudyStopwatch 独自の用語と、コード上の命名対応</p>
+  </header>
+
+  <h2>主要ドメイン用語</h2>
+  <table>
+    <tr><th>日本語</th><th>英語識別子</th><th>定義</th></tr>
+    <tr><td>科目 / 教科</td><td><code>Subject</code></td><td>勉強対象（数学、英語等）</td></tr>
+    <tr><td>学習セッション</td><td><code>StudySession</code></td><td>1回の勉強行動の記録</td></tr>
+    <tr><td>経過時間</td><td><code>elapsedSeconds</code></td><td>タイマーの実時間</td></tr>
+    <tr><td>日次目標</td><td><code>dailyGoalMinutes</code></td><td>1日の勉強目標時間</td></tr>
+    <tr><td>連続学習日数</td><td><code>streak</code></td><td>連続して学習した日数</td></tr>
+    <tr><td>集中タイム</td><td><code>focusMinutes</code> (25)</td><td>ポモドーロ集中フェーズ</td></tr>
+    <tr><td>休憩タイム</td><td><code>breakMinutes</code> (5)</td><td>ポモドーロ休憩フェーズ</td></tr>
+    <tr><td>目標種別</td><td><code>goalType</code></td><td>定期テスト / 高校受験 / 大学受験</td></tr>
+    <tr><td>志望校</td><td><code>schoolName</code></td><td>受験対象校名</td></tr>
+    <tr><td>試験日</td><td><code>examDate</code></td><td>試験日</td></tr>
+    <tr><td>ヒートマップ</td><td><code>CalendarHeatmapView</code></td><td>月間学習日数を色濃淡で可視化</td></tr>
+    <tr><td>シェアカード</td><td><code>StudyShareSheet</code></td><td>SNS共有用画像</td></tr>
+    <tr><td>プレミアム</td><td><code>isPremium</code></td><td>サブスク購読状態</td></tr>
+  </table>
+
+  <h2>ポモドーロ用語</h2>
+  <table>
+    <tr><th>UI 表記</th><th>コード</th></tr>
+    <tr><td>集中タイム</td><td><code>PomodoroPhase.focus</code></td></tr>
+    <tr><td>休憩タイム</td><td><code>PomodoroPhase.shortBreak</code></td></tr>
+  </table>
+
+  <h2>シェアカード種別</h2>
+  <table>
+    <tr><th>UI 表記</th><th>コード</th></tr>
+    <tr><td>Daily（日次）</td><td><code>ShareCardType.daily</code></td></tr>
+    <tr><td>Summary（サマリ）</td><td><code>ShareCardType.summary</code></td></tr>
+    <tr><td>Heatmap（ヒートマップ）</td><td><code>ShareCardType.heatmap</code></td></tr>
+    <tr><td>Graph（グラフ）</td><td><code>ShareCardType.graph</code></td></tr>
+  </table>
+
+  <h2>使い分けの注意</h2>
+  <ul>
+    <li>「科目」と「教科」 — UIでは「教科」、コードは <code>Subject</code></li>
+    <li>「セッション」と「記録」 — UIで「記録」、コードで <code>StudySession</code></li>
+    <li>ポモドーロは集中フェーズのみ duration に計上（休憩は記録されない）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

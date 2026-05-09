@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - インターバルタイマー</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / インターバルタイマー</div>
+  <header class="site-header">
+    <h1>インターバルタイマー（IntervalTimerView）</h1>
+    <p>セット間休憩のカウントダウンタイマー</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-TIMER-01</span></div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>セット間の休憩時間を計測するタイマー画面。バックグラウンド継続対応。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>残り時間表示</td><td>大きなText</td><td>MM:SS 形式</td></tr>
+    <tr><td>時間プリセット</td><td>HStack</td><td>30s / 60s / 90s / 120s / 180s</td></tr>
+    <tr><td>カスタム入力</td><td>Stepper</td><td>任意秒指定</td></tr>
+    <tr><td>開始/一時停止/リセット</td><td>Button</td><td>タイマー制御</td></tr>
+    <tr><td>サウンド設定</td><td>Toggle</td><td>終了音の有無</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>停止中</td><td>「開始」ボタン</td></tr>
+    <tr><td>カウント中</td><td>「一時停止」ボタン + 残り秒数</td></tr>
+    <tr><td>終了</td><td>サウンド再生 + リセットボタン</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">IntervalTimerManager で Timer 制御</li>
+    <li class="done">scenePhase 監視でバックグラウンド時も継続</li>
+    <li class="done">終了時にハプティクス + サウンド</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

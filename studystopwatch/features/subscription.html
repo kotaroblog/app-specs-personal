@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - サブスク機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / サブスク機能</div>
+  <header class="site-header"><h1>サブスクリプション課金</h1><p>StoreKit 2 月額/年額プラン</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: SS-FEAT-SUB</span></div></header>
+
+  <h2>提供商品</h2>
+  <table>
+    <tr><th>プラン</th><th>Product ID</th></tr>
+    <tr><td>月額</td><td><code>com.happyboy1002.StudyStopwatch.premium.monthly</code></td></tr>
+    <tr><td>年額</td><td><code>com.happyboy1002.StudyStopwatch.premium.yearly</code></td></tr>
+  </table>
+
+  <h2>SubscriptionManager API</h2>
+  <pre><code>final class SubscriptionManager: ObservableObject {
+    @Published var products: [Product]
+    @Published var isPremium: Bool
+
+    func loadProducts() async
+    func purchase(_ product: Product) async throws
+    func restorePurchases() async throws
+    func startTransactionListener()
+}</code></pre>
+
+  <h2>プレミアム特典</h2>
+  <ul>
+    <li>広告非表示（Banner / Interstitial）</li>
+    <li>シェアカードの限定テーマ3種解放</li>
+    <li>レポート画面の詳細統計（前週比 / 1日平均 / ベスト曜日）</li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <ol>
+    <li><code>Product.products(for:)</code> で商品取得</li>
+    <li>購入時 <code>product.purchase()</code></li>
+    <li>結果を <code>checkVerified()</code> で検証</li>
+    <li>成功 → <code>transaction.finish()</code></li>
+    <li>Transaction.updates 監視で自動更新も処理</li>
+  </ol>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th></tr>
+    <tr><td>StoreKit 2</td><td>商品取得・購入・トランザクション監視</td></tr>
+    <tr><td>App Store Connect</td><td>商品設定・価格</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

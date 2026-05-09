@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - セット追加</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / セット追加</div>
+  <header class="site-header">
+    <h1>セット追加画面（AddWorkoutView）</h1>
+    <p>新しいセットの種目・重量・レップを入力</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-ADD-01</span></div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>WorkoutSessionView から sheet で起動。種目を選択し、重量・レップ（または時間・距離）を入力する画面。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>種目セレクタ</td><td>Picker</td><td>カテゴリ → 種目の2段階</td></tr>
+    <tr><td>重量入力</td><td>NumberField</td><td>有酸素以外で表示</td></tr>
+    <tr><td>レップ入力</td><td>NumberField</td><td>有酸素以外で表示</td></tr>
+    <tr><td>時間入力</td><td>NumberField</td><td>有酸素時に表示（分）</td></tr>
+    <tr><td>距離入力</td><td>NumberField</td><td>有酸素時に表示（km）</td></tr>
+    <tr><td>前回値表示</td><td>Text</td><td>同種目の前回 weight × reps を参考表示</td></tr>
+    <tr><td>「追加」ボタン</td><td>Button</td><td>WorkoutSet INSERT</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>未入力</td><td>追加ボタン無効</td></tr>
+    <tr><td>入力済</td><td>追加ボタン有効</td></tr>
+    <tr><td>追加成功 + PR</td><td>祝賀演出</td></tr>
+    <tr><td>追加成功（PRなし）</td><td>sheet を閉じる</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">exercise.useCardioInput で入力フィールド切替</li>
+    <li class="done">前回値は @Query で同種目の最新 WorkoutSet を取得して表示</li>
+    <li class="done">追加後 PRDetector でPR検出</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - 広告制御</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / 広告制御</div>
+  <header class="site-header"><h1>広告制御機能</h1><p>Banner / Interstitial / Rewarded 3種広告</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: PZ-FEAT-AD</span></div></header>
+
+  <h2>広告構成</h2>
+  <table>
+    <tr><th>種類</th><th>表示タイミング</th><th>無料/購入</th></tr>
+    <tr><td>Banner</td><td>GameView 下部に常時</td><td>無料のみ</td></tr>
+    <tr><td>Interstitial</td><td>3ゲームに1回、最低90秒間隔</td><td>無料のみ</td></tr>
+    <tr><td>Rewarded</td><td>GameOver時の救済（1回限り）</td><td>常時利用可</td></tr>
+  </table>
+
+  <h2>AdMob ID</h2>
+  <pre><code>App ID: ca-app-pub-4104853755894501~1889600698
+Interstitial: 2184902139
+Rewarded: 3655551463</code></pre>
+
+  <h2>AdManager API</h2>
+  <pre><code>@Observable @MainActor
+final class AdManager {
+    func loadInterstitial()
+    func loadRewarded()
+    func showInterstitialIfReady()  // 3ゲーム/90秒制御
+    func showRewarded(completion: (Bool) -> Void)
+}</code></pre>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>Banner はプレミアム時に非表示（高さ0）</li>
+    <li>Interstitial は表示頻度を抑制（プレミアム時は完全非表示）</li>
+    <li>Rewarded は救済機能として全ユーザー利用可</li>
+    <li>本番リリースは本番AdMob IDに切替必須</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

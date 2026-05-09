@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - ロギング方針</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">CHROMATIC</a> / ロギング方針</div>
+  <header class="site-header"><h1>ロギング方針</h1></header>
+
+  <div class="callout"><strong><code>print()</code> は禁止</strong>。Logger（os.log）を使用。</div>
+
+  <h2>共通設定</h2>
+  <pre><code>Logger(subsystem: "com.happyboy1002.CHROMATIC", category: "[クラス名]")</code></pre>
+
+  <h2>カテゴリ一覧</h2>
+  <table>
+    <tr><th>カテゴリ</th><th>用途</th></tr>
+    <tr><td><code>GameViewModel</code></td><td>ゲームロジック</td></tr>
+    <tr><td><code>PurchaseManager</code></td><td>課金・エンタイトルメント</td></tr>
+    <tr><td><code>SoundManager</code></td><td>音声再生</td></tr>
+    <tr><td><code>GameCenterManager</code></td><td>Game Center 連携</td></tr>
+    <tr><td><code>InterstitialAdManager</code></td><td>全画面広告</td></tr>
+    <tr><td><code>StreakManager</code></td><td>ストリーク管理</td></tr>
+  </table>
+
+  <h2>ログレベル</h2>
+  <table>
+    <tr><th>レベル</th><th>用途</th></tr>
+    <tr><td><code>.info</code></td><td>標準操作（ゲーム開始・スコア送信）</td></tr>
+    <tr><td><code>.warning</code></td><td>非致命的エラー</td></tr>
+    <tr><td><code>.error</code></td><td>StoreKit verify失敗等</td></tr>
+    <tr><td><code>.debug</code></td><td>開発用（速度計算詳細等）</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

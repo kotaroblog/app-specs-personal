@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - ロギング方針</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">WorkoutDiary</a> / ロギング方針</div>
+
+  <header class="site-header">
+    <h1>ロギング方針</h1>
+    <p>Logger（os.log）を用いたログ出力ルール</p>
+  </header>
+
+  <h2>基本方針</h2>
+  <div class="callout">
+    <strong><code>print()</code> は禁止</strong>。<code>Logger</code>（os.log）を使用する（CLAUDE.md準拠）。
+  </div>
+
+  <h2>共通設定</h2>
+  <pre><code>import OSLog
+
+private static let subsystem = "com.happyboy1002.WorkoutDiary"</code></pre>
+
+  <h2>カテゴリ一覧</h2>
+  <table>
+    <tr><th>カテゴリ</th><th>用途</th><th>使用箇所</th></tr>
+    <tr><td><code>App</code></td><td>アプリ起動・初期化</td><td>WorkoutDiaryApp</td></tr>
+    <tr><td><code>Migration</code></td><td>SwiftDataマイグレーション</td><td>AppDelegate</td></tr>
+    <tr><td><code>StoreManager</code></td><td>サブスク課金</td><td>StoreManager</td></tr>
+    <tr><td><code>RewardedAd</code></td><td>リワード広告</td><td>RewardedAdManager</td></tr>
+    <tr><td><code>BannerAd</code></td><td>バナー広告</td><td>BannerAdView</td></tr>
+    <tr><td><code>UpdateChecker</code></td><td>App Storeバージョン確認</td><td>AppUpdateChecker</td></tr>
+    <tr><td><code>Notification</code></td><td>通知スケジューリング</td><td>NotificationService</td></tr>
+    <tr><td><code>Achievement</code></td><td>実績・バッジ</td><td>AchievementService</td></tr>
+    <tr><td><code>PR</code></td><td>自己ベスト検出</td><td>PRDetector</td></tr>
+    <tr><td><code>Share</code></td><td>シェアカード生成</td><td>ShareViewModel</td></tr>
+    <tr><td><code>Onboarding</code></td><td>オンボーディング</td><td>OnboardingViewModel</td></tr>
+    <tr><td><code>Widget</code></td><td>Widget拡張</td><td>WidgetSharedData</td></tr>
+  </table>
+
+  <h2>使用例</h2>
+  <pre><code>private static let logger = Logger(
+    subsystem: "com.happyboy1002.WorkoutDiary",
+    category: "StoreManager"
+)
+
+logger.info("商品取得完了: \(products.count, privacy: .public)件")
+logger.warning("購入処理キャンセル")
+logger.error("検証失敗: \(error.localizedDescription)")</code></pre>
+
+  <h2>ログレベルの使い分け</h2>
+  <table>
+    <tr><th>レベル</th><th>用途</th><th>例</th></tr>
+    <tr><td><code>.debug</code></td><td>開発時のみ</td><td>VM初期化、画面遷移</td></tr>
+    <tr><td><code>.info</code></td><td>通常イベント</td><td>セット追加、PR検出</td></tr>
+    <tr><td><code>.notice</code></td><td>注目すべきイベント</td><td>初回起動、サブスク購入</td></tr>
+    <tr><td><code>.warning</code></td><td>異常だが継続可</td><td>広告ロード失敗、Continuationリセット</td></tr>
+    <tr><td><code>.error</code></td><td>機能継続不可</td><td>SwiftData保存失敗、StoreKit検証失敗</td></tr>
+  </table>
+
+  <h2>プライバシー対応</h2>
+  <div class="callout warn">
+    StoreKit のトランザクションID、Apple ID、デバイス識別子は <strong>ログ出力しない</strong>。
+    識別子（種目ID、セットID）は <code>privacy: .public</code> を明示。
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

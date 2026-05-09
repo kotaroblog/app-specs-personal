@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - レポート</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / レポート</div>
+  <header class="site-header"><h1>レポート画面（ReportView）</h1><p>週間・月間・通期の統計レポート</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-REPORT-01</span></div></header>
+
+  <h2>目的・役割</h2>
+  <p>期間別の学習統計を表示。期間切替・科目別集計・前週比トレンドを可視化。プレミアムは詳細統計に拡張。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>期間Picker</td><td>週 / 月 / 通期</td></tr>
+    <tr><td>合計学習時間</td><td>選択期間のトータル</td></tr>
+    <tr><td>科目別バー</td><td>科目ごとの時間内訳</td></tr>
+    <tr><td>折れ線グラフ</td><td>日別の推移（SwiftUI Charts）</td></tr>
+    <tr><td>前週比</td><td>「前週より N% UP」（プレミアム）</td></tr>
+    <tr><td>1日平均</td><td>プレミアム限定</td></tr>
+    <tr><td>ベスト曜日</td><td>プレミアム限定</td></tr>
+    <tr><td>シェアボタン</td><td>StudyShareSheet</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>条件</th><th>表示</th></tr>
+    <tr><td>無料</td><td>基本統計のみ</td></tr>
+    <tr><td>プレミアム</td><td>詳細統計含む</td></tr>
+  </table>
+
+  <h2>関連</h2>
+  <ul><li><a href="../features/share.html">シェア機能</a></li><li><a href="premium.html">プレミアム画面</a></li></ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

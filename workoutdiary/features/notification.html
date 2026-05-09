@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - 通知機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / 通知機能</div>
+  <header class="site-header">
+    <h1>通知機能（3種類）</h1>
+    <p>Daily Reminder / Streak Risk / Weekly Summary</p>
+    <div class="section-meta"><span class="tag done">v1.0.5</span><span class="tag">機能ID: WD-FEAT-NOTIF</span></div>
+  </header>
+
+  <h2>概要</h2>
+  <p>UserNotifications フレームワーク（ローカル通知）で3種類の通知を配信。
+  日次リマインダー・ストリーク危機通知・週間サマリ通知（v1.0.5 追加）の3層構成。</p>
+
+  <h2>3種類の通知</h2>
+  <table>
+    <tr><th>通知</th><th>Identifier</th><th>タイミング</th><th>用途</th></tr>
+    <tr><td>Daily Reminder</td><td>workoutReminder</td><td>毎日定時（19時など）</td><td>記録忘れ防止</td></tr>
+    <tr><td>Streak Risk</td><td>streakRiskReminder</td><td>当日未訓練の翌朝</td><td>ストリーク途切れ警告（v1.0.5）</td></tr>
+    <tr><td>Weekly Summary</td><td>weeklySummaryNotification</td><td>週末（日曜夜など）</td><td>週間サマリ通知（v1.0.5）</td></tr>
+  </table>
+
+  <h2>NotificationService API</h2>
+  <pre><code>@MainActor
+final class NotificationService {
+    static let shared: NotificationService
+
+    func requestAuthorization() async throws
+    func scheduleReminder(at time: Date)
+    func scheduleStreakRiskReminderIfNeeded()
+    func scheduleWeeklySummaryNotification()
+    func cancelAll()
+}</code></pre>
+
+  <h2>処理フロー（Daily Reminder）</h2>
+  <ol>
+    <li>SettingsView で時刻設定</li>
+    <li><code>scheduleReminder(at: time)</code> → UNCalendarNotificationTrigger 作成</li>
+    <li>毎日その時刻に通知配信</li>
+  </ol>
+
+  <h2>処理フロー（Streak Risk）</h2>
+  <ol>
+    <li>毎日アプリ起動時または日付変更時に判定</li>
+    <li>当日未訓練 + ストリーク継続中なら通知スケジュール</li>
+    <li>翌朝に「今日トレーニングしないとストリークが途切れます」通知</li>
+  </ol>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>通知許可は初回ONで明示的にリクエスト</li>
+    <li>各通知は個別に有効/無効切替可（UserDefaults）</li>
+    <li>時刻変更時は再スケジュール</li>
+    <li>当日訓練済みなら streak risk 通知をキャンセル</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th></tr>
+    <tr><td>UserNotifications</td><td>ローカル通知</td></tr>
+    <tr><td>Info.plist</td><td>通知許可ダイアログ文言</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成（v1.0.5 の Streak Risk / Weekly Summary 含む）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

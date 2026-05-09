@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - Live Activity</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / Live Activity</div>
+  <header class="site-header"><h1>Live Activity（StudyStopwatchLiveActivity）</h1><p>ロック画面・Dynamic Islandタイマー表示</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-LA-01</span></div></header>
+
+  <h2>表示モード</h2>
+  <table>
+    <tr><th>モード</th><th>表示内容</th></tr>
+    <tr><td>Lock Screen</td><td>科目アイコン + 科目名 + 経過時間（大）</td></tr>
+    <tr><td>Dynamic Island Compact (Leading)</td><td>科目アイコン</td></tr>
+    <tr><td>Dynamic Island Compact (Trailing)</td><td>経過時間</td></tr>
+    <tr><td>Dynamic Island Expanded</td><td>科目名 + 経過時間 + ストリーク</td></tr>
+    <tr><td>Dynamic Island Minimal</td><td>科目アイコン</td></tr>
+  </table>
+
+  <h2>データソース</h2>
+  <pre><code>struct StudyActivityAttributes: ActivityAttributes {
+    var subjectName: String
+    var subjectColorHex: String
+    var subjectIconName: String
+    var startTime: Date
+
+    struct ContentState: Codable {
+        var elapsedSeconds: Int
+        var subjectName: String
+    }
+}</code></pre>
+
+  <h2>更新タイミング</h2>
+  <ul>
+    <li>タイマー開始時 → <code>Activity.request()</code></li>
+    <li>タイマー1秒ごと → <code>Activity.update(state)</code></li>
+    <li>タイマー停止時 → <code>Activity.end()</code></li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul><li><a href="../features/live-activity.html">Live Activity機能仕様書</a></li></ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

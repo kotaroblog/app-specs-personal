@@ -9,59 +9,57 @@
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../">← Felix App Specs</a></div>
+  <div class="breadcrumb"><a href="../">← Personal App Specs</a></div>
 
   <header class="site-header">
     <h1>CHROMATIC</h1>
-    <p>色記憶パズルアプリ · Bundle ID: <code>com.happyboy1002.Chromatic</code></p>
+    <p>4色2×2グリッドの色記憶パズル · Bundle ID: <code>com.happyboy1002.CHROMATIC</code></p>
   </header>
 
   <h2>概要</h2>
   <ul class="kv-list">
     <li><span class="k">カテゴリ</span><span class="v">ゲーム / パズル</span></li>
-    <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
-    <li><span class="k">言語</span><span class="v">日本語</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション + 広告</span></li>
+    <li><span class="k">対応OS</span><span class="v">iOS 18.0+ / Swift 6.0</span></li>
+    <li><span class="k">言語</span><span class="v">日本語のみ</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">広告（Banner/Interstitial）+ IAP（広告除去 ¥240）</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
-    <li><span class="k">リリース時期</span><span class="v">-</span></li>
+    <li><span class="k">配信地域</span><span class="v">日本のみ</span></li>
+    <li><span class="k">対応デバイス</span><span class="v">iPhone（縦向き専用）</span></li>
+    <li><span class="k">難易度</span><span class="v">NORMAL / FAST / INSANE</span></li>
+    <li><span class="k">Game Center</span><span class="v">対応（難易度別リーダーボード3本）</span></li>
   </ul>
+
+  <h2>アプリの目的</h2>
+  <p>
+    赤・緑・青・黄の4色パネルが順に光るシーケンスを記憶して同じ順にタップする色記憶パズル。
+    NORMAL/FAST/INSANEの3難易度、5/10/15/20ラウンドのマイルストーン演出、色覚サポート、Game Centerリーダーボード対応。
+  </p>
 
   <h2>全体仕様書</h2>
   <div class="card-grid">
-    <a class="card" href="flow.html">
-      <div class="title">画面遷移図</div>
-      <div class="desc">全画面の遷移マップ</div>
-    </a>
-    <a class="card" href="data-model.html">
-      <div class="title">データモデル</div>
-      <div class="desc">SwiftDataモデルの構造とER図</div>
-    </a>
-    <a class="card" href="error-design.html">
-      <div class="title">エラー設計</div>
-      <div class="desc">例外パターン一覧と表示方針</div>
-    </a>
-    <a class="card" href="logging.html">
-      <div class="title">ロギング方針</div>
-      <div class="desc">os.log カテゴリとログレベル</div>
-    </a>
-    <a class="card" href="aso.html">
-      <div class="title">ASOキーワード戦略</div>
-      <div class="desc">App Store最適化の方針</div>
-    </a>
-    <a class="card" href="glossary.html">
-      <div class="title">用語集・ドメイン辞書</div>
-      <div class="desc">ドメイン用語の正典</div>
-    </a>
+    <a class="card" href="flow.html"><div class="title">画面遷移図</div><div class="desc">全画面の遷移マップ</div></a>
+    <a class="card" href="data-model.html"><div class="title">データモデル</div><div class="desc">UserDefaults + 状態管理</div></a>
+    <a class="card" href="error-design.html"><div class="title">エラー設計</div><div class="desc">例外パターン一覧</div></a>
+    <a class="card" href="logging.html"><div class="title">ロギング方針</div><div class="desc">Logger カテゴリ</div></a>
+    <a class="card" href="aso.html"><div class="title">ASOキーワード戦略</div><div class="desc">App Store最適化</div></a>
+    <a class="card" href="glossary.html"><div class="title">用語集・ドメイン辞書</div><div class="desc">ドメイン用語の正典</div></a>
   </div>
 
   <h2>画面仕様書</h2>
   <div class="card-grid">
-    <p style="color: var(--color-text-soft); font-size: 0.9rem;">画面仕様書は順次追加予定。</p>
+    <a class="card" href="screens/game.html"><div class="title">ゲーム</div><div class="desc">メイン画面（タイトル+ゲーム）</div><div class="meta"><span class="tag">CR-GAME-01</span></div></a>
+    <a class="card" href="screens/settings.html"><div class="title">設定</div><div class="desc">サウンド・色覚・課金</div><div class="meta"><span class="tag">CR-SET-01</span></div></a>
+    <a class="card" href="screens/onboarding.html"><div class="title">オンボーディング</div><div class="desc">3ステップ初回チュートリアル</div><div class="meta"><span class="tag">CR-ONB-01</span></div></a>
   </div>
 
   <h2>機能仕様書</h2>
   <div class="card-grid">
-    <p style="color: var(--color-text-soft); font-size: 0.9rem;">機能仕様書は順次追加予定。</p>
+    <a class="card" href="features/game-logic.html"><div class="title">ゲームロジック</div><div class="desc">速度加速・マイルストーン</div></a>
+    <a class="card" href="features/storekit.html"><div class="title">StoreKit課金</div><div class="desc">広告除去IAP</div></a>
+    <a class="card" href="features/sound.html"><div class="title">サウンド</div><div class="desc">WAVデータ事前生成</div></a>
+    <a class="card" href="features/streak.html"><div class="title">ストリーク</div><div class="desc">連続プレイ日数</div></a>
+    <a class="card" href="features/game-center.html"><div class="title">Game Center</div><div class="desc">リーダーボード3本</div></a>
+    <a class="card" href="features/ad-control.html"><div class="title">広告制御</div><div class="desc">Banner + Interstitial</div></a>
   </div>
 
   <footer class="site-footer">最終更新: 2026-05-09</footer>

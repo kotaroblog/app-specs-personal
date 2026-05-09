@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - 用語集</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">WorkoutDiary</a> / 用語集</div>
+
+  <header class="site-header">
+    <h1>用語集・ドメイン辞書</h1>
+    <p>WorkoutDiary 独自の用語と、コード上の命名対応</p>
+  </header>
+
+  <h2>主要ドメイン用語</h2>
+  <table>
+    <tr><th>日本語</th><th>英語識別子</th><th>定義</th></tr>
+    <tr><td>ワークアウト / トレーニング</td><td><code>WorkoutSession</code></td><td>1回のトレーニング全体（複数種目・セットを含む）</td></tr>
+    <tr><td>セット</td><td><code>WorkoutSet</code></td><td>1セット分の記録（重量・レップ or 時間・距離）</td></tr>
+    <tr><td>種目</td><td><code>Exercise</code></td><td>「ベンチプレス」「スクワット」等の運動種目</td></tr>
+    <tr><td>カテゴリ</td><td><code>ExerciseCategory</code></td><td>胸/背中/肩/腕/脚/腹筋/有酸素/その他</td></tr>
+    <tr><td>テンプレート</td><td><code>WorkoutTemplate</code></td><td>頻繁に行うメニューの保存・再利用</td></tr>
+    <tr><td>テンプレートエントリ</td><td><code>TemplateEntry</code></td><td>テンプレート内の1種目</td></tr>
+    <tr><td>重量</td><td><code>weight</code></td><td>キログラム単位</td></tr>
+    <tr><td>レップ</td><td><code>reps</code></td><td>1セットの回数</td></tr>
+    <tr><td>時間</td><td><code>duration</code></td><td>有酸素種目の分単位</td></tr>
+    <tr><td>距離</td><td><code>distance</code></td><td>有酸素種目のkm単位</td></tr>
+    <tr><td>自己ベスト / PR</td><td><code>PR</code> / <code>PersonalRecord</code></td><td>過去最大値の更新</td></tr>
+    <tr><td>1RM</td><td><code>OneRepMaxCalculator</code></td><td>1回最大挙上重量（Epley公式で推定）</td></tr>
+    <tr><td>ストリーク</td><td><code>streak</code></td><td>連続トレーニング日数</td></tr>
+    <tr><td>実績 / バッジ</td><td><code>Achievement</code></td><td>条件達成で獲得</td></tr>
+    <tr><td>プレミアム</td><td><code>isPremium</code></td><td>サブスク購読中フラグ</td></tr>
+    <tr><td>トライアル</td><td><code>trial</code></td><td>サブスクの無料試用期間</td></tr>
+    <tr><td>シェアカード</td><td><code>ShareCardView</code></td><td>SNS用の画像生成カード</td></tr>
+  </table>
+
+  <h2>カテゴリ（ExerciseCategory）</h2>
+  <table>
+    <tr><th>UI 表記</th><th>rawValue</th></tr>
+    <tr><td>胸</td><td><code>chest</code></td></tr>
+    <tr><td>背中</td><td><code>back</code></td></tr>
+    <tr><td>肩</td><td><code>shoulders</code></td></tr>
+    <tr><td>腕</td><td><code>arms</code></td></tr>
+    <tr><td>脚</td><td><code>legs</code></td></tr>
+    <tr><td>腹筋</td><td><code>abs</code></td></tr>
+    <tr><td>有酸素</td><td><code>cardio</code></td></tr>
+    <tr><td>その他</td><td><code>other</code></td></tr>
+  </table>
+
+  <h2>実績バッジ一覧</h2>
+  <table>
+    <tr><th>バッジ名</th><th>条件</th></tr>
+    <tr><td>First Step</td><td>初回セッション完了</td></tr>
+    <tr><td>Consistency</td><td>10セッション完了</td></tr>
+    <tr><td>Half Century</td><td>50セッション完了</td></tr>
+    <tr><td>Centurion</td><td>100セッション完了</td></tr>
+    <tr><td>Streak 3 / 7 / 14 / 30</td><td>連続日数達成</td></tr>
+    <tr><td>First PR</td><td>初回 PR 達成</td></tr>
+    <tr><td>PR Machine</td><td>10 PR 達成</td></tr>
+    <tr><td>Goal Achieved</td><td>目標達成</td></tr>
+    <tr><td>Monthly Perfect</td><td>月間目標 4週連続達成</td></tr>
+  </table>
+
+  <h2>シェアカードテーマ</h2>
+  <ul>
+    <li><strong>Default</strong>: 標準（無料）</li>
+    <li><strong>Dark</strong>: ダーク（無料）</li>
+    <li><strong>Minimal</strong>: ミニマル（無料）</li>
+    <li><strong>Ocean</strong>: 海テーマ（プレミアム）</li>
+    <li><strong>Sunset</strong>: 夕焼けテーマ（プレミアム）</li>
+  </ul>
+
+  <h2>使い分けの注意</h2>
+  <ul>
+    <li>「セット」と「セッション」の混同注意 — セット = 1組、セッション = 1回のトレーニング全体</li>
+    <li>「重量」と「ウェイト」 — UIは「重量」で統一</li>
+    <li>「PR」と「自己ベスト」 — UIでは併記可、コードは <code>PR</code></li>
+    <li>有酸素種目は <code>useCardioInput: Bool</code> で判定し、weight/reps の代わりに duration/distance を入力</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

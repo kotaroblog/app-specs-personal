@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - 種目一覧</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / 種目一覧</div>
+  <header class="site-header">
+    <h1>種目一覧画面（ExerciseListView）</h1>
+    <p>種目マスタの一覧・追加・編集</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-EXERCISE-01</span></div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>登録済みの種目（Exercise）を一覧表示し、追加・編集・削除を行う画面。カテゴリ別フィルタ対応。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>カテゴリフィルタ</td><td>Picker</td><td>胸/背中/肩/腕/脚/腹筋/有酸素/その他</td></tr>
+    <tr><td>種目リスト</td><td>List</td><td>名前・カテゴリ・有酸素フラグ表示</td></tr>
+    <tr><td>追加ボタン</td><td>NavigationLink</td><td>ExerciseFormView へ</td></tr>
+    <tr><td>削除アクション</td><td>Swipe</td><td>確認ダイアログ後削除</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>セルタップ</td><td>ExerciseFormView（編集mode）</td></tr>
+    <tr><td>追加ボタン</td><td>ExerciseFormView（新規）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Model final class Exercise {
+    var id: UUID
+    var name: String
+    var category: String  // ExerciseCategory.rawValue
+    var memo: String
+    var createdAt: Date
+    var useCardioInput: Bool
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">初回起動時に <code>insertDefaultExercises()</code> でデフォルト種目を挿入</li>
+    <li class="done">削除時は @Relationship(deleteRule: .cascade) で関連 WorkoutSet も削除</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="workout-session.html">トレーニング記録画面</a></li>
+    <li><a href="../features/migration.html">マイグレーション機能</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

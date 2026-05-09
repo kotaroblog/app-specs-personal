@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - 画面遷移図</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">CHROMATIC</a> / 画面遷移図</div>
+  <header class="site-header"><h1>画面遷移図</h1><p>CHROMATIC 全画面の遷移マップ</p></header>
+
+  <h2>全体フロー</h2>
+  <div class="mermaid">
+flowchart TD
+  Launch([起動]) --> App[CHROMATICApp]
+  App --> Game[GameView]
+  Game -. hasSeenOnboarding=false .-> Onb[OnboardingView<br/>sheet]
+  Onb -- 完了 --> Game
+  Game --> Settings[SettingsView<br/>sheet]
+  Game --> GC[Game Center<br/>Leaderboard]
+  </div>
+
+  <h2>ゲーム状態遷移</h2>
+  <div class="mermaid">
+flowchart LR
+  Idle[GameState .idle] -- START --> Showing[GameState .showing]
+  Showing -- シーケンス表示完了 --> Player[GameState .playerTurn]
+  Player -- 正解 --> Correct{シーケンス満了?}
+  Correct -- yes --> NextRound[次ラウンド]
+  Correct -- no --> Player
+  Player -- 不正解 --> GameOver[GameState .gameOver]
+  NextRound --> Showing
+  NextRound -- マイルストーン達成 --> Milestone[MilestoneFlash 演出]
+  Milestone --> Showing
+  GameOver -- RETRY --> Showing
+  GameOver -- MODE SELECT --> Idle
+  </div>
+
+  <h2>主要な遷移トリガー</h2>
+  <table>
+    <tr><th>起点</th><th>操作</th><th>遷移先</th></tr>
+    <tr><td>GameView</td><td>STARTタップ</td><td>シーケンス表示開始</td></tr>
+    <tr><td>GameView</td><td>難易度選択</td><td>同画面（次回ゲームに反映）</td></tr>
+    <tr><td>GameView</td><td>パネルタップ（playerTurn中）</td><td>正解/不正解判定</td></tr>
+    <tr><td>GameView</td><td>トロフィー</td><td>Game Center Leaderboard</td></tr>
+    <tr><td>GameView</td><td>設定アイコン</td><td>SettingsView (sheet)</td></tr>
+    <tr><td>GameView</td><td>初回起動</td><td>OnboardingView (sheet)</td></tr>
+    <tr><td>GameOver</td><td>SHARE</td><td>ShareCardView 経由 ShareSheet</td></tr>
+  </table>
+
+  <h2>画面ID対応表</h2>
+  <table>
+    <tr><th>画面ID</th><th>画面</th><th>ファイル</th></tr>
+    <tr><td>CR-GAME-01</td><td>ゲーム（メイン）</td><td><code>Game/GameView.swift</code></td></tr>
+    <tr><td>CR-SET-01</td><td>設定</td><td><code>Settings/SettingsView.swift</code></td></tr>
+    <tr><td>CR-ONB-01</td><td>オンボーディング</td><td><code>Onboarding/OnboardingView.swift</code></td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <script>mermaid.initialize({startOnLoad: true, theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default', flowchart: { curve: 'basis', useMaxWidth: true }});</script>
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

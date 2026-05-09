@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - シェア</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / シェア</div>
+  <header class="site-header">
+    <h1>シェア画面（WorkoutShareSheet）</h1>
+    <p>ワークアウト結果のSNS共有用カード生成</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-SHARE-01</span></div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>WorkoutSession や StatsView の結果を画像化してSNSにシェアする画面。5テーマ + Instagram Stories 対応。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>テーマ選択</td><td>Picker</td><td>Default / Dark / Minimal / Ocean / Sunset</td></tr>
+    <tr><td>プレビュー</td><td>ShareCardView</td><td>生成された画像のプレビュー</td></tr>
+    <tr><td>「シェア」ボタン</td><td>Button</td><td>UIActivityViewController 起動</td></tr>
+    <tr><td>「Instagram Stories」</td><td>Button</td><td>専用フォーマットで Instagram に直接</td></tr>
+  </table>
+
+  <h2>テーマ仕様</h2>
+  <table>
+    <tr><th>テーマ</th><th>無料/プレミアム</th></tr>
+    <tr><td>Default</td><td>無料</td></tr>
+    <tr><td>Dark</td><td>無料</td></tr>
+    <tr><td>Minimal</td><td>無料</td></tr>
+    <tr><td>Ocean</td><td>プレミアム</td></tr>
+    <tr><td>Sunset</td><td>プレミアム</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">ShareViewModel が画像生成を統括</li>
+    <li class="done">ImageRenderer で UIImage 生成</li>
+    <li class="done">Instagram Stories 用は別フォーマット（縦長）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/share-card.html">シェアカード機能</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

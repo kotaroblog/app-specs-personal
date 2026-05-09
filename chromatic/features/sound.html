@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - サウンド</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / サウンド</div>
+  <header class="site-header"><h1>サウンド機能（SoundManager）</h1><p>WAVデータを動的生成して再生</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: CR-FEAT-SOUND</span></div></header>
+
+  <h2>音色仕様</h2>
+  <table>
+    <tr><th>イベント</th><th>波形</th><th>周波数</th></tr>
+    <tr><td>赤パネル</td><td>sin</td><td>329.63 Hz (E4)</td></tr>
+    <tr><td>緑パネル</td><td>sin</td><td>415.30 Hz (G#4)</td></tr>
+    <tr><td>青パネル</td><td>sin</td><td>523.25 Hz (C5)</td></tr>
+    <tr><td>黄パネル</td><td>sin</td><td>659.25 Hz (E5)</td></tr>
+    <tr><td>ゲームオーバー</td><td>sawtooth</td><td>120.0 Hz</td></tr>
+  </table>
+
+  <h2>SoundManager API</h2>
+  <pre><code>final class SoundManager {
+    static let shared: SoundManager
+    private var activePlayers: [AVAudioPlayer] = []  // ★強参照保持
+
+    func playPanelSound(colorIndex: Int)
+    func playGameOverSound()
+}</code></pre>
+
+  <h2>初期化（事前生成）</h2>
+  <ol>
+    <li>init で全サウンドデータを WAV データとして動的生成</li>
+    <li>sin / sawtooth 波形を 25ms / 50cs 長で生成</li>
+    <li>AVAudioPlayer をプリロードして再生時の遅延を排除</li>
+  </ol>
+
+  <h2>EXC_BAD_ACCESS 対策</h2>
+  <div class="callout warn">
+    activePlayers 配列で再生中プレイヤーを<strong>強参照保持</strong>。再生終了で配列から除去。
+  </div>
+
+  <h2>AudioSession</h2>
+  <p>lazy 初期化（ensureSessionReady）で接続状態を確認してから再生。</p>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

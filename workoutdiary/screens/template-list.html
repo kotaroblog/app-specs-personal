@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - テンプレート選択</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / テンプレート選択</div>
+  <header class="site-header">
+    <h1>テンプレート選択（TemplateListView）</h1>
+    <p>保存済みのワークアウトテンプレートを選択して適用</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-TEMPLATE-01</span></div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>頻繁に行うメニュー（例: 胸の日 / 脚の日 / プッシュデー）をテンプレートとして保存・適用する画面。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>テンプレートリスト</td><td>List</td><td>名前 + エントリ数表示</td></tr>
+    <tr><td>「適用」ボタン</td><td>Button</td><td>WorkoutSession にエントリを一括追加</td></tr>
+    <tr><td>「保存」ボタン</td><td>NavigationLink</td><td>SaveTemplateView 起動</td></tr>
+    <tr><td>削除アクション</td><td>Swipe</td><td>確認後削除</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Model final class WorkoutTemplate {
+    var id: UUID
+    var name: String
+    var createdAt: Date
+    @Relationship(deleteRule: .cascade) var entries: [TemplateEntry] = []
+}
+
+@Model final class TemplateEntry {
+    var exerciseName: String
+    var exerciseCategory: String
+    var weight: Double
+    var reps: Int
+    var sets: Int
+    var order: Int
+    var duration: Double
+    var distance: Double
+    var isCardio: Bool
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">適用時に WorkoutSet を sets 数だけ INSERT</li>
+    <li class="done">経験・目標で重量・レップを自動補正</li>
+    <li class="done">初回起動時に <code>insertDefaultTemplates()</code> でデフォルト挿入</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

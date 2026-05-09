@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - Widget</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / Widget</div>
+  <header class="site-header"><h1>Widget（StudyStopwatchWidget）</h1><p>ホーム画面ウィジェット</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-WID-01</span></div></header>
+
+  <h2>サイズ別構成</h2>
+  <table>
+    <tr><th>サイズ</th><th>表示内容</th></tr>
+    <tr><td>Small</td><td>達成率リング + 時間 + ストリーク日数</td></tr>
+    <tr><td>Medium</td><td>日次目標 + 簡易グラフ</td></tr>
+  </table>
+
+  <h2>データソース</h2>
+  <p>AppGroup UserDefaults <code>group.com.happyboy1002.StudyStopwatch</code></p>
+
+  <table>
+    <tr><th>キー</th><th>用途</th></tr>
+    <tr><td><code>todayStudySeconds</code></td><td>本日の学習時間</td></tr>
+    <tr><td><code>dailyGoalMinutes</code></td><td>達成率計算用</td></tr>
+    <tr><td><code>streakDays</code></td><td>ストリーク表示</td></tr>
+    <tr><td><code>themeAccentHex</code></td><td>テーマカラー</td></tr>
+  </table>
+
+  <h2>更新頻度</h2>
+  <ul>
+    <li>30分ごと（Timeline policy）</li>
+    <li>本体起動時に <code>WidgetCenter.shared.reloadAllTimelines()</code></li>
+    <li>セッション保存後に同様</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul><li><a href="../features/widget-sync.html">Widget同期機能</a></li></ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

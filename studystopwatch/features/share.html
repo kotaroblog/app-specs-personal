@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - シェア機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / シェア機能</div>
+  <header class="site-header"><h1>シェア機能（4種カード）</h1><p>SNS共有 + Instagram Stories対応</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: SS-FEAT-SHARE</span></div></header>
+
+  <h2>概要</h2>
+  <p>学習結果を4種類のカード（Daily/Summary/Heatmap/Graph）として画像化し、SNSに共有する機能。
+  Instagram Stories へは専用URLスキーム（pasteboard経由）で直接シェア可能。</p>
+
+  <h2>4種カードと用途</h2>
+  <table>
+    <tr><th>カード</th><th>用途</th></tr>
+    <tr><td>Daily</td><td>本日の学習時間まとめ</td></tr>
+    <tr><td>Summary</td><td>週間/月間サマリ</td></tr>
+    <tr><td>Heatmap</td><td>カレンダーヒートマップ</td></tr>
+    <tr><td>Graph</td><td>学習推移グラフ（line/bar）</td></tr>
+  </table>
+
+  <h2>テーマ</h2>
+  <table>
+    <tr><th>テーマ</th><th>無料/プレミアム</th></tr>
+    <tr><td>Duotone / Flat</td><td>無料</td></tr>
+    <tr><td>プレミアムテーマ3種</td><td>プレミアム</td></tr>
+  </table>
+
+  <h2>InstagramShareService API</h2>
+  <pre><code>final class InstagramShareService {
+    func shareToStories(image: UIImage)
+    // → pasteboard 経由で instagram-stories://share URLスキーム起動
+}</code></pre>
+
+  <h2>処理フロー</h2>
+  <ol>
+    <li>ShareViewModel が選択カード+テーマで View を構築</li>
+    <li>ImageRenderer で UIImage 生成</li>
+    <li>UIActivityViewController（標準シェア）or Instagram Stories（専用）</li>
+  </ol>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th></tr>
+    <tr><td>UIActivityViewController</td><td>標準シェアシート</td></tr>
+    <tr><td>UIPasteboard</td><td>Instagram Stories 経由</td></tr>
+    <tr><td>LSApplicationQueriesSchemes</td><td>instagram-stories 許可</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

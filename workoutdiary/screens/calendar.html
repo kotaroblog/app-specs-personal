@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - カレンダー</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / カレンダー</div>
+  <header class="site-header">
+    <h1>カレンダー画面（CalendarView）</h1>
+    <p>月単位のトレーニング履歴を可視化</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-CALENDAR-01</span></div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>月単位のカレンダーでトレーニング日をハイライト表示し、過去のセッションへ素早くアクセスする画面。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>月ナビゲーション</td><td>HStack</td><td>前月・次月・年月表示</td></tr>
+    <tr><td>カレンダーグリッド</td><td>LazyVGrid</td><td>日付グリッド、セッション日を強調表示</td></tr>
+    <tr><td>ストリーク表示</td><td>Text</td><td>「連続Nログイン」</td></tr>
+    <tr><td>選択日サマリ</td><td>VStack</td><td>セット数・トータルボリューム</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>セッションあり</td><td>日付セルに塗りつぶし・カウント表示</td></tr>
+    <tr><td>セッションなし</td><td>日付セルのみ</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>日付タップ</td><td>WorkoutSessionView（その日へ）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">SwiftData @Query で月単位のセッション取得</li>
+    <li class="done">AchievementService.calculateStreak() でストリーク計算</li>
+    <li>ヒートマップ風の濃淡表現（v1.x）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="workout-session.html">トレーニング記録画面</a></li>
+    <li><a href="../features/achievement.html">実績・ストリーク機能</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

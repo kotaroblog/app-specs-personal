@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - ホーム</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / ホーム</div>
+  <header class="site-header"><h1>ホーム画面（HomeView）</h1><p>タイトル画面・ナビゲーション起点</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: PZ-HOME-01</span></div></header>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>アプリ名「PieceZen」</td><td>グラデーション表示</td></tr>
+    <tr><td>ベストスコア</td><td>HighScoreRecord から取得</td></tr>
+    <tr><td>ストリーク</td><td>連続プレイ日数</td></tr>
+    <tr><td>Playボタン</td><td>GameView へ遷移</td></tr>
+    <tr><td>Settings</td><td>SettingsView へ</td></tr>
+    <tr><td>Statistics</td><td>StatisticsView へ</td></tr>
+    <tr><td>背景</td><td>ZenParticleBackground（パーティクルアニメ）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>Play</td><td>GameView</td></tr>
+    <tr><td>Settings</td><td>SettingsView</td></tr>
+    <tr><td>Statistics</td><td>StatisticsView</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">@Query でハイスコア取得</li>
+    <li class="done">Canvas + TimelineView でパーティクル描画（60fps）</li>
+    <li class="done">scenePhase 監視で StreakManager.refreshStreakOnLaunch()</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

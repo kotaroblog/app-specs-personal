@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 画面遷移図</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">StudyStopwatch</a> / 画面遷移図</div>
+
+  <header class="site-header">
+    <h1>画面遷移図</h1>
+    <p>StudyStopwatch 全画面の遷移マップ</p>
+  </header>
+
+  <h2>起動〜タブ構成</h2>
+  <div class="mermaid">
+flowchart TD
+  Launch([起動]) --> Root[RootView]
+  Root -- onboardingCompleted=false --> Onb[OnboardingView]
+  Root -- onboardingCompleted=true --> Tabs[ContentView TabView]
+  Onb -- 完了 --> Tabs
+  Tabs --> THome[Tab: ホーム]
+  Tabs --> TToday[Tab: 今日]
+  Tabs --> TCal[Tab: カレンダー]
+  Tabs --> TReport[Tab: レポート]
+  Tabs --> TSet[Tab: 設定]
+  </div>
+
+  <h2>ホーム経路（タイマー）</h2>
+  <div class="mermaid">
+flowchart LR
+  Home[HomeView] -- 開始 --> Running[タイマー実行中]
+  Running -- 一時停止 --> Paused[一時停止中]
+  Paused -- 再開 --> Running
+  Running -- 停止 --> Save[StudySession保存]
+  Save --> Home
+  Running -. 連動 .-> LA[Live Activity]
+  Save -. 同期 .-> Widget[ホーム画面Widget]
+  </div>
+
+  <h2>レポート・シェア経路</h2>
+  <div class="mermaid">
+flowchart LR
+  Report[ReportView] -- 期間選択 --> Filter{週/月/通期}
+  Filter --> Chart[グラフ表示]
+  Chart -- シェア --> ShareSheet[StudyShareSheet]
+  ShareSheet --> Daily[Daily Card]
+  ShareSheet --> Summary[Summary Card]
+  ShareSheet --> Heatmap[Heatmap Card]
+  ShareSheet --> Graph[Graph Card]
+  </div>
+
+  <h2>設定経路</h2>
+  <div class="mermaid">
+flowchart TD
+  Set[SettingsView] --> Subj[SubjectEditView (sheet)]
+  Set --> Premium[PremiumView]
+  Set --> Privacy[PrivacyPolicyView]
+  Set --> Notif[通知時刻設定]
+  </div>
+
+  <h2>主要な遷移トリガー</h2>
+  <table>
+    <tr><th>起点</th><th>操作</th><th>遷移先</th></tr>
+    <tr><td>RootView</td><td>onboarding完了済</td><td>ContentView</td></tr>
+    <tr><td>HomeView</td><td>STARTタップ</td><td>タイマー実行中UI</td></tr>
+    <tr><td>HomeView</td><td>STOPタップ</td><td>StudySession保存</td></tr>
+    <tr><td>TodayView</td><td>シェアアイコン</td><td>StudyShareSheet</td></tr>
+    <tr><td>ReportView</td><td>期間Picker</td><td>同画面（再集計）</td></tr>
+    <tr><td>SettingsView</td><td>科目追加</td><td>SubjectEditView (sheet)</td></tr>
+    <tr><td>SettingsView</td><td>プレミアム</td><td>PremiumView</td></tr>
+  </table>
+
+  <h2>画面ID対応表</h2>
+  <table>
+    <tr><th>画面ID</th><th>画面</th><th>ファイル</th></tr>
+    <tr><td>SS-HOME-01</td><td>ホーム（タイマー）</td><td><code>Views/Timer/HomeView.swift</code></td></tr>
+    <tr><td>SS-TODAY-01</td><td>今日</td><td><code>Views/Today/TodayView.swift</code></td></tr>
+    <tr><td>SS-CAL-01</td><td>カレンダーヒートマップ</td><td><code>Views/Calendar/CalendarHeatmapView.swift</code></td></tr>
+    <tr><td>SS-REPORT-01</td><td>レポート</td><td><code>Views/Report/ReportView.swift</code></td></tr>
+    <tr><td>SS-SHARE-01</td><td>シェア</td><td><code>Views/Share/StudyShareSheet.swift</code></td></tr>
+    <tr><td>SS-SET-01</td><td>設定</td><td><code>Views/Settings/SettingsView.swift</code></td></tr>
+    <tr><td>SS-PREMIUM-01</td><td>プレミアム</td><td><code>Views/Settings/PremiumView.swift</code></td></tr>
+    <tr><td>SS-ONB-01</td><td>オンボーディング</td><td><code>Views/Onboarding/OnboardingView.swift</code></td></tr>
+    <tr><td>SS-SUBJ-01</td><td>科目編集</td><td><code>Views/Settings/SubjectEditView.swift</code></td></tr>
+    <tr><td>SS-LA-01</td><td>Live Activity</td><td><code>StudyStopwatchLiveActivity/</code></td></tr>
+    <tr><td>SS-WID-01</td><td>Widget</td><td><code>StudyStopwatchWidget/</code></td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成（ソースコードからリバース）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
+      flowchart: { curve: 'basis', useMaxWidth: true }
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

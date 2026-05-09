@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - Widget機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / Widget機能</div>
+  <header class="site-header">
+    <h1>Widget機能</h1>
+    <p>3種ウィジェット（Summary/Weekly/CategoryTracker）と本体同期</p>
+    <div class="section-meta"><span class="tag done">v1.0.5</span><span class="tag">機能ID: WD-FEAT-WIDGET</span></div>
+  </header>
+
+  <h2>概要</h2>
+  <p>iOS ホーム画面に3種類のウィジェットを提供。AppGroup UserDefaults 経由で本体・Widget間でデータ同期。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/widgets.html">Widgets画面仕様</a></li>
+  </ul>
+
+  <h2>3種類のウィジェット</h2>
+  <table>
+    <tr><th>ウィジェット</th><th>サイズ</th><th>表示</th></tr>
+    <tr><td>Summary</td><td>Small</td><td>今週セッション数 / 最終日 / ストリーク</td></tr>
+    <tr><td>Weekly</td><td>Medium</td><td>週間サマリ + トップ種目</td></tr>
+    <tr><td>CategoryTracker</td><td>Medium</td><td>カテゴリ別の今週セッション数</td></tr>
+  </table>
+
+  <h2>共有データ</h2>
+  <pre><code>// AppGroup UserDefaults
+struct WidgetSharedData {
+    let weeklyCount: Int
+    let lastWorkoutDate: Date?
+    let currentStreak: Int
+}
+
+struct WeeklySummaryData {
+    let weekStart: Date
+    let weekEnd: Date
+    let totalSessionCount: Int
+    let topExercises: [TopExercise]
+    let currentStreak: Int
+    let streakUnit: StreakUnit  // .days / .weeks
+}</code></pre>
+
+  <h2>同期タイミング</h2>
+  <ul>
+    <li>本体起動時 → AppGroup 書き込み + WidgetCenter.reloadAllTimelines()</li>
+    <li>セッション保存後 → AppGroup 書き込み + WidgetCenter.reloadAllTimelines()</li>
+    <li>翌日0時 → Timeline policy で自動再取得</li>
+  </ul>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>Single Source of Truth は AppGroup UserDefaults</li>
+    <li>Widget は本体に依存しない（AppGroup nil でも空表示で動作）</li>
+    <li>Widget Bundle Identifier: <code>com.happyboy1002.WorkoutDiary.widget</code></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

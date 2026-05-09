@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - ゲームロジック</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / ゲームロジック</div>
+  <header class="site-header"><h1>ゲームロジック</h1><p>シーケンス記憶・速度加速・マイルストーン</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: CR-FEAT-LOGIC</span></div></header>
+
+  <h2>ゲームフロー</h2>
+  <ol>
+    <li><code>startGame()</code>: ストリーク記録 → sequence/playerIndex/score リセット → nextRound()</li>
+    <li><code>nextRound()</code>: ランダム色（0-3）追加 → 速度計算 → showSequence()</li>
+    <li><code>showSequence()</code>: 各色を順に点灯（litMs+音） → 消灯（gapMs） → playerTurn</li>
+    <li><code>handlePanelTap()</code>: 正解判定 → playerIndex+1</li>
+    <li>シーケンス満了 → score+1 → checkMilestone() → nextRound()</li>
+    <li>不正解 → triggerGameOver()</li>
+  </ol>
+
+  <h2>速度計算（computeSpeed）</h2>
+  <p>実効ラウンド = sequence.count + difficulty.roundOffset</p>
+  <table>
+    <tr><th>実効ラウンド</th><th>litMs</th><th>gapMs</th><th>ラベル</th></tr>
+    <tr><td>1-4</td><td>650</td><td>195</td><td>NORMAL</td></tr>
+    <tr><td>5-9</td><td>500</td><td>150</td><td>NORMAL+</td></tr>
+    <tr><td>10-14</td><td>400</td><td>120</td><td>FAST</td></tr>
+    <tr><td>15-19</td><td>320</td><td>96</td><td>FAST+</td></tr>
+    <tr><td>20+</td><td>250</td><td>75</td><td>INSANE</td></tr>
+  </table>
+
+  <p>gapMs = litMs × 0.3（切り捨て）</p>
+
+  <h2>難易度オフセット</h2>
+  <table>
+    <tr><th>難易度</th><th>roundOffset</th><th>開始時の体感</th></tr>
+    <tr><td>NORMAL</td><td>0</td><td>NORMAL速度から</td></tr>
+    <tr><td>FAST</td><td>9</td><td>NORMAL+から開始</td></tr>
+    <tr><td>INSANE</td><td>19</td><td>FAST+ / INSANE速度から開始</td></tr>
+  </table>
+
+  <h2>マイルストーン演出</h2>
+  <table>
+    <tr><th>ラウンド</th><th>メッセージ</th><th>色</th></tr>
+    <tr><td>5</td><td>GREAT!</td><td>green</td></tr>
+    <tr><td>10</td><td>AMAZING!</td><td>blue</td></tr>
+    <tr><td>15</td><td>INCREDIBLE!</td><td>purple</td></tr>
+    <tr><td>20</td><td>LEGENDARY!</td><td>gold</td></tr>
+  </table>
+
+  <p>MilestoneFlashView で2秒間表示。</p>
+
+  <h2>Task キャンセル管理</h2>
+  <p>showingTask / milestoneTask を <code>Task&lt;Void, Never&gt;</code> で保持。新ゲーム開始時に cancel()。deinit では MainActor.assumeIsolated で安全アクセス。</p>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

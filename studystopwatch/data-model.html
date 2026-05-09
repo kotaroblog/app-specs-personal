@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - データモデル</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">StudyStopwatch</a> / データモデル</div>
+
+  <header class="site-header">
+    <h1>データモデル</h1>
+    <p>SwiftData @Model + AppGroup UserDefaults（Widget/LiveActivity共有）</p>
+  </header>
+
+  <h2>ER 図</h2>
+  <div class="mermaid">
+erDiagram
+  Subject ||--o{ StudySession : has
+  UserSettings {
+    Int dailyGoalMinutes
+    Bool reminderEnabled
+    Int reminderHour
+    String goalType
+    String schoolName
+    Date examDate
+  }
+  Subject {
+    UUID id
+    String name
+    String colorHex
+    String iconName
+    Int sortOrder
+    Int currentScore
+    Int targetScore
+  }
+  StudySession {
+    UUID id
+    Date startTime
+    Date endTime
+    TimeInterval duration
+  }
+  </div>
+
+  <h2>StudySession</h2>
+  <pre><code>@Model final class StudySession {
+    var id: UUID = UUID()
+    var startTime: Date = Date()
+    var endTime: Date?
+    var duration: TimeInterval = 0
+    var subject: Subject?
+
+    var date: Date { Calendar.current.startOfDay(for: startTime) }
+}</code></pre>
+
+  <h2>Subject</h2>
+  <pre><code>@Model final class Subject {
+    var id: UUID = UUID()
+    var name: String = ""
+    var colorHex: String = "#007AFF"
+    var iconName: String = "book"
+    var sortOrder: Int = 0
+    var createdAt: Date = Date()
+    var currentScore: Int?
+    var targetScore: Int?
+
+    @Relationship(deleteRule: .cascade, inverse: \StudySession.subject)
+    var sessions: [StudySession] = []
+}</code></pre>
+
+  <h2>UserSettings</h2>
+  <pre><code>@Model final class UserSettings {
+    var dailyGoalMinutes: Int? = nil
+    var reminderEnabled: Bool = false
+    var reminderHour: Int = 19
+    var reminderMinute: Int = 0
+    var goalType: String?  // "定期テスト" / "高校受験" / "大学受験"
+    var schoolName: String?
+    var motivation: String?
+    var examDate: Date?
+}</code></pre>
+
+  <h2>StudyActivityAttributes（Live Activity）</h2>
+  <pre><code>struct StudyActivityAttributes: ActivityAttributes {
+    var subjectName: String
+    var subjectColorHex: String
+    var subjectIconName: String
+    var startTime: Date
+
+    struct ContentState: Codable {
+        var elapsedSeconds: Int
+        var subjectName: String
+    }
+}</code></pre>
+
+  <h2>UserDefaults キー（AppGroup）</h2>
+  <p>AppGroup: <code>group.com.happyboy1002.StudyStopwatch</code></p>
+
+  <table>
+    <tr><th>キー</th><th>型</th><th>用途</th></tr>
+    <tr><td><code>activeTimer_startTime</code></td><td>Date</td><td>タイマー開始日時（永続化）</td></tr>
+    <tr><td><code>activeTimer_subjectID</code></td><td>String (UUID)</td><td>タイマー科目ID</td></tr>
+    <tr><td><code>todayStudySeconds</code></td><td>Int</td><td>本日の学習時間（Widget用）</td></tr>
+    <tr><td><code>dailyGoalMinutes</code></td><td>Int</td><td>日次目標（Widget用）</td></tr>
+    <tr><td><code>schoolName</code></td><td>String</td><td>志望校名</td></tr>
+    <tr><td><code>examDate</code></td><td>Date</td><td>試験日</td></tr>
+    <tr><td><code>streakDays</code></td><td>Int</td><td>連続学習日数</td></tr>
+    <tr><td><code>themeAccentHex</code></td><td>String</td><td>テーマカラー</td></tr>
+    <tr><td><code>onboardingCompleted</code></td><td>Bool</td><td>オンボーディング完了</td></tr>
+    <tr><td><code>appearanceMode</code></td><td>String</td><td>外観モード（system/light/dark）</td></tr>
+  </table>
+
+  <h2>Enum 一覧</h2>
+  <ul>
+    <li><code>GoalType</code>: regularExam / highSchoolEntrance / universityEntrance</li>
+    <li><code>ShareCardType</code>: daily / summary / heatmap / graph</li>
+    <li><code>ShareCardTheme</code>: 複数テーマ（無料/プレミアム）</li>
+    <li><code>ShareSummaryPeriod</code>: week / month</li>
+    <li><code>ShareGraphType</code>: line / bar</li>
+    <li><code>OnboardingPage</code>: welcome / goalType / subject / score / motivation / exam / target / commit / paywall</li>
+    <li><code>PomodoroPhase</code>: focus（25分） / shortBreak（5分）</li>
+  </ul>
+
+  <h2>マイグレーション方針</h2>
+  <div class="callout warn">
+    SwiftDataの@Modelは全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する。
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

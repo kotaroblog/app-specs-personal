@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - データモデル</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">PieceZen</a> / データモデル</div>
+  <header class="site-header"><h1>データモデル</h1><p>SwiftData @Model + 状態管理 (@Observable)</p></header>
+
+  <h2>永続化（SwiftData）</h2>
+
+  <h3>HighScoreRecord</h3>
+  <pre><code>@Model final class HighScoreRecord {
+    var score: Int = 0
+    var achievedAt: Date = Date()
+}</code></pre>
+
+  <h3>StatRecord（プレイ履歴）</h3>
+  <pre><code>@Model final class StatRecord {
+    var score: Int = 0
+    var playedAt: Date = Date()
+}</code></pre>
+
+  <h2>状態管理（@Observable @MainActor）</h2>
+  <table>
+    <tr><th>クラス</th><th>責務</th></tr>
+    <tr><td><code>GameEngine</code></td><td>グリッド・配置・ライン消去・スコア・アンドゥ・演出</td></tr>
+    <tr><td><code>AdManager</code></td><td>広告表示制御</td></tr>
+    <tr><td><code>StoreManager</code></td><td>課金（広告除去）</td></tr>
+    <tr><td><code>SoundManager</code></td><td>サウンド再生</td></tr>
+    <tr><td><code>HapticManager</code></td><td>ハプティクス</td></tr>
+    <tr><td><code>StreakManager</code></td><td>連続プレイ日数</td></tr>
+  </table>
+
+  <h2>Value Types</h2>
+  <pre><code>struct Block: Identifiable, Sendable {
+    let id: UUID
+    let shape: BlockShape  // 19種類
+    let color: BlockColor  // 12色
+}
+
+struct BlockShape: Sendable {
+    let offsets: [(row: Int, col: Int)]
+    func rotated() -> BlockShape  // 4回転対応
+    func cells(at anchor: GridPosition) -> [GridPosition]
+}
+
+struct GridPosition: Hashable, Sendable {
+    let row: Int   // 0-7
+    let col: Int   // 0-7
+}
+
+enum CellState {
+    case empty
+    case filled(BlockColor)
+}
+
+enum GameState {
+    case playing
+    case gameOver
+    case rescued  // リワード広告で救済中
+}</code></pre>
+
+  <h2>BlockShape 19種類</h2>
+  <p>dot / domino2H/V / line3H/V / lShape3A〜3D / line4H/V / square2x2 / tShapeDown/Up / sShape / zShape / bigLShapeA/B / plusShape</p>
+
+  <h2>BlockColor 12種類</h2>
+  <p>red, blue, green, yellow, orange, purple, cyan, pink, mint, indigo, teal, brown</p>
+
+  <h2>ColorTheme 5種類</h2>
+  <p>classic / ocean / sakura / neon / monochrome</p>
+
+  <h2>UndoSnapshot</h2>
+  <pre><code>struct UndoSnapshot {
+    let grid: [[CellState]]
+    let blocks: [Block?]
+    let score: Int
+    let comboCount: Int
+}</code></pre>
+
+  <h2>UserDefaults キー</h2>
+  <table>
+    <tr><th>キー</th><th>用途</th></tr>
+    <tr><td><code>currentTheme</code></td><td>選択中ColorTheme</td></tr>
+    <tr><td><code>soundEnabled</code></td><td>効果音有効</td></tr>
+    <tr><td><code>hapticEnabled</code></td><td>ハプティクス有効</td></tr>
+    <tr><td><code>lastPlayedDate</code></td><td>ストリーク管理</td></tr>
+    <tr><td><code>streakCount</code></td><td>連続プレイ日数</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

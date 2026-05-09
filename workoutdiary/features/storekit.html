@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - StoreKit機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / StoreKit機能</div>
+  <header class="site-header">
+    <h1>StoreKit 課金機能</h1>
+    <p>サブスクリプション購入・トライアル・復元</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: WD-FEAT-SK</span></div>
+  </header>
+
+  <h2>概要</h2>
+  <p>StoreKit 2 を使用したサブスクリプション課金。月額・年額の2プラン。Trial（無料試用）対応、Transaction.updates でリアルタイム反映。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/premium.html">プレミアム画面</a></li>
+    <li><a href="../screens/paywall.html">Paywall（POST-PR）</a></li>
+    <li><a href="../screens/settings.html">設定画面</a></li>
+  </ul>
+
+  <h2>提供商品</h2>
+  <table>
+    <tr><th>プラン</th><th>Product ID</th></tr>
+    <tr><td>月額</td><td><code>com.happyboy1002.WorkoutDiary.premium.monthly.v2</code></td></tr>
+    <tr><td>年額</td><td><code>com.happyboy1002.WorkoutDiary.premium.yearly</code></td></tr>
+  </table>
+
+  <h2>StoreManager API</h2>
+  <pre><code>@Observable @MainActor
+final class StoreManager {
+    var products: [Product]
+    var purchasedProductIDs: Set&lt;String&gt;
+    var isPremium: Bool
+    var trialRemainingDays: Int?
+
+    func loadProducts() async
+    func purchase(_ product: Product) async throws
+    func restorePurchases() async throws
+    func startTransactionListener()
+    func checkVerified&lt;T&gt;(_ result: VerificationResult&lt;T&gt;) throws -> T
+}</code></pre>
+
+  <h2>Trial（無料試用）</h2>
+  <ul>
+    <li>App Store Connect でプロモーションオファーとして設定</li>
+    <li>Transaction listener で expirationDate を監視</li>
+    <li><code>trialRemainingDays</code> 計算 → ContentView バナーで残日数表示</li>
+    <li>v1.0.5 で Trial 終了通知追加検討</li>
+  </ul>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>購入は Apple ID（Family Sharing 対応）</li>
+    <li>復元は <code>AppStore.sync()</code> でいつでも可</li>
+    <li>未認証Transactionは finish() しない（再検証可能）</li>
+    <li>Family Sharing 購入の判定は <code>transaction.ownershipType</code></li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th></tr>
+    <tr><td>StoreKit 2</td><td>Product 取得・purchase / Transaction.updates</td></tr>
+    <tr><td>App Store Connect</td><td>商品設定・価格</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>verification失敗</td><td>「決済の検証に失敗しました」</td></tr>
+    <tr><td>userCancelled</td><td>サイレント</td></tr>
+    <tr><td>pending</td><td>「処理中です」+ Transaction.updates 待機</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

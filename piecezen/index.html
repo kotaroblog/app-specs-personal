@@ -9,59 +9,64 @@
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../">← Felix App Specs</a></div>
+  <div class="breadcrumb"><a href="../">← Personal App Specs</a></div>
 
   <header class="site-header">
     <h1>PieceZen</h1>
-    <p>ジグソーパズルアプリ · Bundle ID: <code>com.happyboy1002.PieceZen</code></p>
+    <p>8×8グリッドのブロック配置パズル · Bundle ID: <code>com.happyboy1002.BlockPuzzle</code></p>
   </header>
+
+  <div class="callout">
+    プロジェクト名は <code>BlockPuzzle</code>（ローカルパス・Bundle ID）、ストア表示名は <strong>PieceZen</strong>。仕様書ではストア名で統一。
+  </div>
 
   <h2>概要</h2>
   <ul class="kv-list">
     <li><span class="k">カテゴリ</span><span class="v">ゲーム / パズル</span></li>
-    <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
-    <li><span class="k">言語</span><span class="v">日本語</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション + 広告</span></li>
+    <li><span class="k">対応OS</span><span class="v">iOS 18.0+ / Swift 6.0</span></li>
+    <li><span class="k">言語</span><span class="v">日本語のみ</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">広告（Banner/Interstitial/Rewarded） + IAP（広告除去）</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
-    <li><span class="k">リリース時期</span><span class="v">-</span></li>
+    <li><span class="k">リリース時期</span><span class="v">2026年4月</span></li>
+    <li><span class="k">バージョン</span><span class="v">v1.2 (build 15)</span></li>
+    <li><span class="k">配信地域</span><span class="v">日本のみ</span></li>
+    <li><span class="k">対応デバイス</span><span class="v">iPhone（縦向き専用）</span></li>
   </ul>
+
+  <h2>アプリの目的</h2>
+  <p>
+    8×8グリッドにブロックピース（19種類・回転対応）を配置してラインを揃えて消すブロックパズル。
+    コンボ・パーフェクトクリア・アンドゥ・リワード広告での救済機能で再プレイ性を高めた設計。
+  </p>
 
   <h2>全体仕様書</h2>
   <div class="card-grid">
-    <a class="card" href="flow.html">
-      <div class="title">画面遷移図</div>
-      <div class="desc">全画面の遷移マップ</div>
-    </a>
-    <a class="card" href="data-model.html">
-      <div class="title">データモデル</div>
-      <div class="desc">SwiftDataモデルの構造とER図</div>
-    </a>
-    <a class="card" href="error-design.html">
-      <div class="title">エラー設計</div>
-      <div class="desc">例外パターン一覧と表示方針</div>
-    </a>
-    <a class="card" href="logging.html">
-      <div class="title">ロギング方針</div>
-      <div class="desc">os.log カテゴリとログレベル</div>
-    </a>
-    <a class="card" href="aso.html">
-      <div class="title">ASOキーワード戦略</div>
-      <div class="desc">App Store最適化の方針</div>
-    </a>
-    <a class="card" href="glossary.html">
-      <div class="title">用語集・ドメイン辞書</div>
-      <div class="desc">ドメイン用語の正典</div>
-    </a>
+    <a class="card" href="flow.html"><div class="title">画面遷移図</div><div class="desc">全画面の遷移マップ</div></a>
+    <a class="card" href="data-model.html"><div class="title">データモデル</div><div class="desc">SwiftData @Model + 状態管理</div></a>
+    <a class="card" href="error-design.html"><div class="title">エラー設計</div><div class="desc">例外パターン一覧</div></a>
+    <a class="card" href="logging.html"><div class="title">ロギング方針</div><div class="desc">Logger カテゴリ</div></a>
+    <a class="card" href="aso.html"><div class="title">ASOキーワード戦略</div><div class="desc">App Store最適化</div></a>
+    <a class="card" href="glossary.html"><div class="title">用語集・ドメイン辞書</div><div class="desc">ドメイン用語の正典</div></a>
   </div>
 
   <h2>画面仕様書</h2>
   <div class="card-grid">
-    <p style="color: var(--color-text-soft); font-size: 0.9rem;">画面仕様書は順次追加予定。</p>
+    <a class="card" href="screens/home.html"><div class="title">ホーム</div><div class="desc">タイトル画面</div><div class="meta"><span class="tag">PZ-HOME-01</span></div></a>
+    <a class="card" href="screens/game.html"><div class="title">ゲーム</div><div class="desc">メインゲーム画面</div><div class="meta"><span class="tag">PZ-GAME-01</span></div></a>
+    <a class="card" href="screens/game-over.html"><div class="title">ゲーム終了</div><div class="desc">救済リワード広告含む</div><div class="meta"><span class="tag">PZ-OVER-01</span></div></a>
+    <a class="card" href="screens/settings.html"><div class="title">設定</div><div class="desc">サウンド・テーマ・課金</div><div class="meta"><span class="tag">PZ-SET-01</span></div></a>
+    <a class="card" href="screens/statistics.html"><div class="title">統計</div><div class="desc">スコア推移グラフ</div><div class="meta"><span class="tag">PZ-STATS-01</span></div></a>
+    <a class="card" href="screens/paywall.html"><div class="title">Paywall</div><div class="desc">広告除去IAP</div><div class="meta"><span class="tag">PZ-PAY-01</span></div></a>
   </div>
 
   <h2>機能仕様書</h2>
   <div class="card-grid">
-    <p style="color: var(--color-text-soft); font-size: 0.9rem;">機能仕様書は順次追加予定。</p>
+    <a class="card" href="features/game-logic.html"><div class="title">ゲームロジック</div><div class="desc">配置・消去・スコア・コンボ</div></a>
+    <a class="card" href="features/ad-control.html"><div class="title">広告制御</div><div class="desc">Banner / Interstitial / Rewarded</div></a>
+    <a class="card" href="features/storekit.html"><div class="title">StoreKit課金</div><div class="desc">広告除去IAP</div></a>
+    <a class="card" href="features/sound.html"><div class="title">サウンド</div><div class="desc">activePlayers配列で安全再生</div></a>
+    <a class="card" href="features/haptic.html"><div class="title">ハプティクス</div><div class="desc">UIFeedbackGenerator</div></a>
+    <a class="card" href="features/streak.html"><div class="title">ストリーク</div><div class="desc">連続プレイ日数</div></a>
   </div>
 
   <footer class="site-footer">最終更新: 2026-05-09</footer>

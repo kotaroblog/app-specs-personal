@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - カレンダーヒートマップ</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / カレンダーヒートマップ</div>
+  <header class="site-header"><h1>カレンダーヒートマップ（CalendarHeatmapView）</h1><p>GitHubコミットカレンダー風の可視化</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-CAL-01</span></div></header>
+
+  <h2>目的・役割</h2>
+  <p>月間の学習日数を色濃淡で表示。継続を視覚化してモチベ維持。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>月ナビゲーション</td><td>前月・次月</td></tr>
+    <tr><td>日付グリッド</td><td>学習時間に応じた色濃淡（無/薄/中/濃）</td></tr>
+    <tr><td>ストリークバッジ</td><td>連続学習日数</td></tr>
+    <tr><td>選択日詳細</td><td>その日の科目別内訳</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table><tr><th>操作</th><th>先</th></tr>
+  <tr><td>日付タップ</td><td>同画面で詳細表示</td></tr></table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">SwiftData @Query で月単位のセッション集計</li>
+    <li class="done">学習時間（分）を 4段階に分類して色濃淡</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

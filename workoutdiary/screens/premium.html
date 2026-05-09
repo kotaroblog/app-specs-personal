@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - プレミアム</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / プレミアム</div>
+  <header class="site-header">
+    <h1>プレミアム画面（PremiumPlanView）</h1>
+    <p>サブスク購入・トライアル・特典説明</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-PREMIUM-01</span></div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>月額/年額のサブスク購入と、トライアル状態の表示。広告非表示・限定テーマ・詳細統計の特典訴求。</p>
+
+  <h2>提供商品</h2>
+  <table>
+    <tr><th>プラン</th><th>Product ID</th></tr>
+    <tr><td>月額</td><td><code>com.happyboy1002.WorkoutDiary.premium.monthly.v2</code></td></tr>
+    <tr><td>年額</td><td><code>com.happyboy1002.WorkoutDiary.premium.yearly</code></td></tr>
+  </table>
+
+  <h2>プレミアム特典</h2>
+  <ul>
+    <li>広告非表示</li>
+    <li>シェアカード限定テーマ（Ocean / Sunset 等）</li>
+    <li>詳細統計（前週比・1日平均・ベスト曜日）</li>
+    <li>RewardedAd で1回限りの一時解放（v1.0.5）</li>
+  </ul>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>商品取得中</td><td>ProgressView</td></tr>
+    <tr><td>未契約</td><td>プラン選択 + 購入ボタン</td></tr>
+    <tr><td>トライアル中</td><td>残日数表示</td></tr>
+    <tr><td>契約中</td><td>「ご利用ありがとうございます」</td></tr>
+    <tr><td>失敗</td><td>エラーアラート</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">StoreManager で Transaction.updates 監視</li>
+    <li class="done">trialRemainingDays 計算 → ContentView バナー表示</li>
+    <li class="done">復元ボタンで AppStore.sync()</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="paywall.html">Paywall（POST-PR）</a></li>
+    <li><a href="../features/storekit.html">StoreKit機能</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

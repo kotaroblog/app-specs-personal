@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - 設定</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / 設定</div>
+  <header class="site-header">
+    <h1>設定画面（SettingsView）</h1>
+    <p>プロフィール・課金・通知・データ出力</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-SETTINGS-01</span></div>
+  </header>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>セクション</th><th>項目</th><th>動作</th></tr>
+    <tr><td>プロフィール</td><td>目標 / 経験 / 週間目標</td><td>Picker（目標: 筋肥大/減量/健康/筋力）</td></tr>
+    <tr><td>プレミアム</td><td>「Pro版にアップグレード」</td><td>PremiumPlanView 起動</td></tr>
+    <tr><td>プレミアム</td><td>購入を復元</td><td>StoreManager.restorePurchases()</td></tr>
+    <tr><td>通知</td><td>Daily reminder ON/OFF + 時刻</td><td>NotificationService</td></tr>
+    <tr><td>通知</td><td>Streak Risk 通知</td><td>v1.0.5 追加</td></tr>
+    <tr><td>通知</td><td>Weekly Summary 通知</td><td>v1.0.5 追加</td></tr>
+    <tr><td>バッジ</td><td>実績一覧</td><td>AchievementService 表示</td></tr>
+    <tr><td>データ</td><td>CSVエクスポート</td><td>データ出力機能</td></tr>
+    <tr><td>サポート</td><td>プライバシーポリシー</td><td>app-policies/workoutdiary/</td></tr>
+    <tr><td>サポート</td><td>利用規約</td><td>app-policies/workoutdiary/</td></tr>
+    <tr><td>その他</td><td>バージョン情報</td><td>1.0.5 (build 1)</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「Pro版にアップグレード」</td><td>PremiumPlanView</td></tr>
+    <tr><td>プライバシー / 規約</td><td>SafariSheet</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">UserProfile（@AppStorage）に goal / experience / frequency を保存</li>
+    <li class="done">通知時刻は UserDefaults に保存、変更時に再スケジュール</li>
+    <li>App Store Connect 要件: アカウント削除導線（v1.x）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="premium.html">プレミアム画面</a></li>
+    <li><a href="../features/notification.html">通知機能</a></li>
+    <li><a href="../features/achievement.html">実績機能</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

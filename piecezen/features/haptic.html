@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - ハプティクス</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / ハプティクス</div>
+  <header class="site-header"><h1>ハプティクス機能（HapticManager）</h1><p>UIFeedbackGenerator</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: PZ-FEAT-HAPTIC</span></div></header>
+
+  <h2>API</h2>
+  <pre><code>final class HapticManager {
+    static let shared: HapticManager
+
+    func blockPlaced()
+    func linesCleared(count: Int, isCross: Bool)
+    func comboCleared(level: Int)
+    func gameOver()
+    func highScoreUpdated()
+}</code></pre>
+
+  <h2>振動パターン</h2>
+  <table>
+    <tr><th>イベント</th><th>振動</th></tr>
+    <tr><td>blockPlaced</td><td>軽い impact (light)</td></tr>
+    <tr><td>linesCleared (1)</td><td>medium</td></tr>
+    <tr><td>linesCleared (2+)</td><td>heavy</td></tr>
+    <tr><td>linesCleared (cross)</td><td>notification.success</td></tr>
+    <tr><td>comboCleared (level)</td><td>段階的に強く</td></tr>
+    <tr><td>gameOver</td><td>notification.error</td></tr>
+    <tr><td>highScoreUpdated</td><td>notification.success</td></tr>
+  </table>
+
+  <h2>制御</h2>
+  <p>@AppStorage("hapticEnabled") で有効/無効を切替。無効時は何もしない。</p>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

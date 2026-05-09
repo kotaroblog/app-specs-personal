@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - ゲームロジック</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / ゲームロジック</div>
+  <header class="site-header"><h1>ゲームロジック</h1><p>配置・消去・スコア・コンボ・ゲームオーバー判定</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: PZ-FEAT-LOGIC</span></div></header>
+
+  <h2>グリッドサイズ</h2>
+  <p>8×8（64マス、GridPosition で管理）</p>
+
+  <h2>配置ルール</h2>
+  <ul>
+    <li>BlockShape.cells(at: anchor) で配置先セル群取得</li>
+    <li>すべてのセルが <code>.empty</code> かつグリッド範囲内なら有効</li>
+    <li>配置時に grid[row][col] = .filled(blockColor)</li>
+    <li>1マス = 1点（配置スコア）</li>
+  </ul>
+
+  <h2>ライン消去</h2>
+  <table>
+    <tr><th>条件</th><th>判定</th></tr>
+    <tr><td>横ライン</td><td>行の8マス全部 filled</td></tr>
+    <tr><td>縦ライン</td><td>列の8マス全部 filled</td></tr>
+    <tr><td>クロス</td><td>行+列同時 → 交差点を crossPositions Setに記録</td></tr>
+  </table>
+
+  <h2>スコア計算</h2>
+  <table>
+    <tr><th>項目</th><th>得点</th></tr>
+    <tr><td>配置（1マス）</td><td>+1</td></tr>
+    <tr><td>ライン消去（基本）</td><td>20 × ライン数 × max(1, comboCount)</td></tr>
+    <tr><td>Double（2ライン）</td><td>+30</td></tr>
+    <tr><td>Triple（3ライン）</td><td>+80</td></tr>
+    <tr><td>Quad（4+ライン）</td><td>+200</td></tr>
+    <tr><td>Cross（行+列同時）</td><td>+150</td></tr>
+    <tr><td>Perfect Clear（全消し）</td><td>+500</td></tr>
+  </table>
+
+  <h2>コンボシステム</h2>
+  <ul>
+    <li>消去直後に新ブロック配置で再消去 → comboCount++</li>
+    <li>コンボ2以上で「Nice!」「Great!」「Amazing!」演出</li>
+    <li>各コンボでハプティクス＋サウンド段階化</li>
+  </ul>
+
+  <h2>ゲームオーバー判定</h2>
+  <div class="callout">
+    トレイ内の全ブロックが「<strong>どの回転状態でも</strong>」配置不可なら gameOver。
+    <code>GameEngine.canPlace(block:)</code> が4回転すべてを試す（フェアネス設計）。
+  </div>
+
+  <h2>トレイ補充</h2>
+  <ul>
+    <li>3ブロック全消費で <code>refillTray()</code> → <code>BlockShape.generateTray()</code></li>
+    <li>フェアネス: 1トレイに5マス以上ブロックは最大1個</li>
+  </ul>
+
+  <h2>アンドゥ</h2>
+  <ul>
+    <li>UndoSnapshot で grid/blocks/score/comboCount をキャプチャ</li>
+    <li>最大3回（2回目以降はリワード広告必須）</li>
+    <li>新手を配置すると snapshot が上書き → 1手のみ復元可</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

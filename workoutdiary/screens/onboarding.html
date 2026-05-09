@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - オンボーディング</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / オンボーディング</div>
+  <header class="site-header">
+    <h1>オンボーディング（11ステップ）</h1>
+    <p>初回起動時のウィザード形式セットアップ</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-ONBOARDING-01</span></div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>初回起動時に目標・経験・頻度を入力して、テンプレートやリマインダーを最適化するためのウィザード。
+  最後に Paywall でサブスク提示。</p>
+
+  <h2>11ステップの構成</h2>
+  <ol>
+    <li>Welcome — アプリの紹介</li>
+    <li>Goal — 目標選択（筋肥大 / 減量 / 健康 / 筋力）</li>
+    <li>Experience — 経験レベル（初級 / 中級 / 上級）</li>
+    <li>Frequency — 週間頻度（2 / 3 / 4 / 5+ days）</li>
+    <li>Loading — 解析中演出</li>
+    <li>Result — 解析結果表示</li>
+    <li>Prediction — 達成予測</li>
+    <li>Features — アプリの主要機能紹介</li>
+    <li>Commit — 「始める」コミット</li>
+    <li>Notification — 通知許可リクエスト</li>
+    <li>Paywall — サブスク提示</li>
+  </ol>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>TabView (Page Style)</td><td>SwiftUI</td><td>11ページの順次遷移</td></tr>
+    <tr><td>プログレスバー</td><td>ProgressView</td><td>ステップ進行表示</td></tr>
+    <tr><td>「次へ」ボタン</td><td>Button</td><td>各ステップで前進</td></tr>
+    <tr><td>「スキップ」</td><td>Button</td><td>Paywall までスキップ可</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>11ステップ完了</td><td>ContentView (MainTabView)</td></tr>
+    <tr><td>各ステップ → 次へ</td><td>次のステップ</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// UserDefaults @AppStorage で永続化
+@AppStorage("userGoal") var goal: String
+@AppStorage("userExperience") var experience: String
+@AppStorage("userFrequency") var frequency: String
+@AppStorage("onboardingCompleted") var completed: Bool</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">完了時に <code>insertDefaultTemplates()</code> で目標・経験別の初期テンプレ挿入</li>
+    <li class="done">通知ステップで UNUserNotificationCenter 許可リクエスト</li>
+    <li class="done">Paywall ステップでスキップ可（強制購入なし）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

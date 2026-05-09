@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - エラー設計</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">WorkoutDiary</a> / エラー設計</div>
+
+  <header class="site-header">
+    <h1>エラー設計・例外パターン一覧</h1>
+    <p>SwiftData / StoreKit / AdMob / 通知 のエラーハンドリング方針</p>
+  </header>
+
+  <h2>エラー分類</h2>
+  <ul>
+    <li><strong>StoreKitエラー</strong>: 購入・復元・検証失敗</li>
+    <li><strong>AdMobエラー</strong>: 広告ロード失敗（サイレント処理）</li>
+    <li><strong>SwiftDataエラー</strong>: 保存失敗・マイグレーション失敗</li>
+    <li><strong>権限エラー</strong>: 通知許可・ATT拒否</li>
+    <li><strong>ビジネスエラー</strong>: 入力値不正など</li>
+  </ul>
+
+  <h2>定義済み Error 型</h2>
+
+  <h3>StoreError（StoreManager）</h3>
+  <pre><code>enum StoreError: Error {
+    case productNotFound
+    case verificationFailed
+    case userCancelled
+    case pending
+    case unknown(String)
+}</code></pre>
+
+  <h2>エラー一覧</h2>
+  <table>
+    <tr><th>エラーID</th><th>分類</th><th>発生条件</th><th>ユーザー表示</th><th>復旧</th><th>ロギング</th></tr>
+    <tr><td>WD-SK-01</td><td>StoreKit</td><td>productNotFound</td><td>「商品が見つかりません」</td><td>復元ボタン誘導</td><td>error</td></tr>
+    <tr><td>WD-SK-02</td><td>StoreKit</td><td>verificationFailed</td><td>「決済の検証に失敗しました」</td><td>サポート問合せ</td><td>error</td></tr>
+    <tr><td>WD-SK-03</td><td>StoreKit</td><td>pending</td><td>「処理中です」</td><td>承認後に自動更新</td><td>info</td></tr>
+    <tr><td>WD-AD-01</td><td>広告</td><td>Banner ロード失敗</td><td>サイレント（高さ0）</td><td>—</td><td>info</td></tr>
+    <tr><td>WD-AD-02</td><td>広告</td><td>Rewarded ロード失敗</td><td>「広告を読み込めませんでした」</td><td>再試行</td><td>warning</td></tr>
+    <tr><td>WD-DB-01</td><td>SwiftData</td><td>context.save() 失敗</td><td>「データ保存に失敗しました」</td><td>再試行 / 再起動</td><td>error</td></tr>
+    <tr><td>WD-DB-02</td><td>SwiftData</td><td>マイグレーション失敗</td><td>サイレント（旧データ保持）</td><td>—</td><td>error</td></tr>
+    <tr><td>WD-NOTIF-01</td><td>権限</td><td>通知許可拒否</td><td>「設定アプリで通知を有効に」</td><td>設定アプリ起動</td><td>info</td></tr>
+    <tr><td>WD-ATT-01</td><td>権限</td><td>ATT拒否</td><td>サイレント</td><td>—</td><td>info</td></tr>
+    <tr><td>WD-INPUT-01</td><td>ビジネス</td><td>重量・レップ未入力</td><td>「入力してください」</td><td>入力促進</td><td>—</td></tr>
+    <tr><td>WD-INPUT-02</td><td>ビジネス</td><td>負の値入力</td><td>赤枠 + 警告</td><td>正の値に修正</td><td>—</td></tr>
+  </table>
+
+  <h2>UI 表示パターン</h2>
+  <table>
+    <tr><th>重要度</th><th>表示形式</th><th>例</th></tr>
+    <tr><td>低</td><td>インラインメッセージ</td><td>入力検証</td></tr>
+    <tr><td>中</td><td>Alertダイアログ</td><td>StoreKit / SwiftData失敗</td></tr>
+    <tr><td>高</td><td>フルスクリーン誘導</td><td>該当なし（ローカル完結）</td></tr>
+  </table>
+
+  <h2>RewardedAdManager の continuation leak 対策</h2>
+  <div class="callout warn">
+    <code>adContinuation</code> プロパティで <code>CheckedContinuation</code> を手動管理。重複表示やメモリリークを防止。
+  </div>
+
+  <pre><code>// 簡略例
+private var adContinuation: CheckedContinuation&lt;Bool, Never&gt;?
+
+func showAd() async -> Bool {
+    await withCheckedContinuation { continuation in
+        self.adContinuation = continuation
+        // 広告表示後、コールバックで resume
+    }
+}</code></pre>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成（ソースコードからリバース）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

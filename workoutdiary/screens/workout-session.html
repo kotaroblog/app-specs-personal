@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - トレーニング記録</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / トレーニング記録</div>
+
+  <header class="site-header">
+    <h1>トレーニング記録画面（WorkoutSessionView）</h1>
+    <p>1日分のトレーニングセッションを入力・編集する中心画面</p>
+    <div class="section-meta">
+      <span class="tag done">v1.0</span>
+      <span class="tag">画面ID: WD-TRAINING-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>選択した日付のトレーニングセッションを表示・編集する画面。種目ごとにセットを追加し、PR検出・テンプレート適用・インターバルタイマー・シェアを操作できる。アプリの主機能画面。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>日付セレクタ</td><td>DatePicker</td><td>編集対象の日付選択</td></tr>
+    <tr><td>セッションリスト</td><td>List</td><td>その日の WorkoutSet（種目ごとグループ）</td></tr>
+    <tr><td>セット追加ボタン</td><td>Button</td><td>AddWorkoutView を sheet 表示</td></tr>
+    <tr><td>テンプレート適用ボタン</td><td>Button</td><td>TemplateListView を sheet 表示</td></tr>
+    <tr><td>インターバルタイマー</td><td>Button</td><td>IntervalTimerView を sheet 表示</td></tr>
+    <tr><td>PR祝賀</td><td>Overlay</td><td>PR検出時に演出</td></tr>
+    <tr><td>シェアボタン</td><td>Toolbar</td><td>WorkoutShareSheet 起動</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>記録なし</td><td>「セットを追加して記録を始めましょう」</td></tr>
+    <tr><td>記録あり</td><td>種目別グループのリスト</td></tr>
+    <tr><td>PR検出</td><td>PR祝賀演出 + Paywall（POST-PR、v1.0.5）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>セット追加</td><td>AddWorkoutView (sheet)</td></tr>
+    <tr><td>セルタップ</td><td>EditWorkoutSetView (sheet)</td></tr>
+    <tr><td>テンプレート適用</td><td>TemplateListView (sheet)</td></tr>
+    <tr><td>テンプレ保存</td><td>SaveTemplateView (sheet)</td></tr>
+    <tr><td>インターバルタイマー</td><td>IntervalTimerView (sheet)</td></tr>
+    <tr><td>シェア</td><td>WorkoutShareSheet (sheet)</td></tr>
+    <tr><td>PR検出 → Paywall</td><td>PaywallView</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Model final class WorkoutSession {
+    var id: UUID
+    var date: Date
+    var note: String?
+    @Relationship(deleteRule: .cascade, inverse: \WorkoutSet.session)
+    var sets: [WorkoutSet] = []
+}
+
+@Model final class WorkoutSet {
+    var id: UUID
+    var exercise: Exercise?
+    var weight: Double
+    var reps: Int
+    var order: Int
+    var session: WorkoutSession?
+    var duration: Double  // 有酸素分
+    var distance: Double  // 有酸素km
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">SwiftData @Query で対象日の WorkoutSession を取得</li>
+    <li class="done">PRDetector でセット保存時に過去最大値比較</li>
+    <li class="done">テンプレート適用時は経験・目標で重量・レップを自動補正</li>
+    <li class="done">scenePhase 監視でインターバルタイマー中断時処理</li>
+    <li>非同期保存中の入力ロック（v1.x）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="add-workout.html">セット追加画面</a></li>
+    <li><a href="template-list.html">テンプレート選択</a></li>
+    <li><a href="interval-timer.html">インターバルタイマー</a></li>
+    <li><a href="../features/pr-detection.html">PR検出機能</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

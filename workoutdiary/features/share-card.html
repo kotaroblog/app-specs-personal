@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - シェアカード</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / シェアカード</div>
+  <header class="site-header">
+    <h1>シェアカード機能</h1>
+    <p>5テーマ + Instagram Stories 対応のSNS共有</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: WD-FEAT-SHARE</span></div>
+  </header>
+
+  <h2>概要</h2>
+  <p>WorkoutSession や StatsView の結果を画像化してSNSに共有する機能。5テーマから選択可能、Instagram Storiesへの直接シェア対応。</p>
+
+  <h2>テーマ仕様</h2>
+  <table>
+    <tr><th>テーマ</th><th>無料/プレミアム</th><th>特徴</th></tr>
+    <tr><td>Default</td><td>無料</td><td>標準カラー</td></tr>
+    <tr><td>Dark</td><td>無料</td><td>ダークモード</td></tr>
+    <tr><td>Minimal</td><td>無料</td><td>シンプル白背景</td></tr>
+    <tr><td>Ocean</td><td>プレミアム</td><td>青グラデーション</td></tr>
+    <tr><td>Sunset</td><td>プレミアム</td><td>夕焼けグラデーション</td></tr>
+  </table>
+
+  <h2>処理フロー</h2>
+  <ol>
+    <li>ShareViewModel が選択テーマでViewを構築</li>
+    <li><code>ImageRenderer</code> で UIImage 生成</li>
+    <li><code>UIActivityViewController</code> で標準シェア or <code>instagram-stories://share</code> で直接Instagram</li>
+  </ol>
+
+  <h2>Instagram Stories 対応</h2>
+  <pre><code>// pasteboard 経由でストーリーズ起動
+UIPasteboard.general.setItems([
+    ["com.instagram.sharedSticker.backgroundImage": imageData]
+], options: [...])
+UIApplication.shared.open(URL(string: "instagram-stories://share")!)</code></pre>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>プレミアムテーマは isPremium=true ユーザーのみ選択可</li>
+    <li>Instagram 未インストール時は通常 ShareSheet にフォールバック</li>
+    <li>画像内にApp Storeリンク（QRコード or テキスト）含む</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

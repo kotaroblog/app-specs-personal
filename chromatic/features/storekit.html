@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - StoreKit機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / StoreKit機能</div>
+  <header class="site-header"><h1>StoreKit 課金機能</h1><p>広告除去 IAP（¥240、買い切り）</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: CR-FEAT-SK</span></div></header>
+
+  <h2>提供商品</h2>
+  <table>
+    <tr><th>商品</th><th>Product ID</th><th>形式</th></tr>
+    <tr><td>広告削除</td><td><code>com.happyboy1002.CHROMATIC.removeads</code></td><td>非消耗型・買い切り（¥240）</td></tr>
+  </table>
+
+  <h2>PurchaseManager API</h2>
+  <pre><code>@Observable @MainActor
+final class PurchaseManager {
+    var isAdsRemoved: Bool
+
+    func loadProducts() async
+    func purchase() async throws
+    func restore() async throws
+    func verifyEntitlements() async  // 起動時に呼出（改ざん対策）
+}</code></pre>
+
+  <h2>処理フロー</h2>
+  <ol>
+    <li>App起動時に <code>verifyEntitlements()</code> でStoreKitから最新を取得</li>
+    <li>UserDefaults <code>chromatic_ads_removed</code> を上書き（オフラインキャッシュとして保持）</li>
+    <li>購入時 <code>product.purchase()</code></li>
+    <li>VerificationResult で検証 → transaction.finish()</li>
+  </ol>
+
+  <h2>改ざん対策</h2>
+  <div class="callout warn">
+    UserDefaults はオフラインキャッシュのみ。起動時に必ず StoreKit で上書きするため、
+    UserDefaults を直接書き換えても次回起動でリセットされる。
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

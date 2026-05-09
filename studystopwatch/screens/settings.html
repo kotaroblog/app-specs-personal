@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 設定</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 設定</div>
+  <header class="site-header"><h1>設定画面（SettingsView）</h1><p>科目管理・通知・プレミアム・法務</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-SET-01</span></div></header>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>セクション</th><th>項目</th></tr>
+    <tr><td>科目管理</td><td>追加/編集/削除/並べ替え（SubjectEditView 起動）</td></tr>
+    <tr><td>外観</td><td>system / light / dark</td></tr>
+    <tr><td>目標</td><td>dailyGoalMinutes 設定</td></tr>
+    <tr><td>通知</td><td>有効/無効 + 時刻設定</td></tr>
+    <tr><td>プレミアム</td><td>「Pro版にアップグレード」 / 「購入を復元」</td></tr>
+    <tr><td>法務</td><td>プライバシーポリシー / 利用規約</td></tr>
+    <tr><td>アプリ情報</td><td>バージョン / 開発者</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>先</th></tr>
+    <tr><td>科目追加</td><td>SubjectEditView (sheet)</td></tr>
+    <tr><td>「Pro版にアップグレード」</td><td>PremiumView</td></tr>
+    <tr><td>プライバシー / 規約</td><td>WebView (SafariSheet)</td></tr>
+  </table>
+
+  <h2>関連</h2>
+  <ul><li><a href="subject-edit.html">科目編集画面</a></li><li><a href="premium.html">プレミアム画面</a></li></ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

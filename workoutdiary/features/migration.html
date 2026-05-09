@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - マイグレーション</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / マイグレーション</div>
+  <header class="site-header">
+    <h1>SwiftDataマイグレーション戦略</h1>
+    <p>初期データ挿入と既存データ変換</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: WD-FEAT-MIG</span></div>
+  </header>
+
+  <h2>概要</h2>
+  <p>SwiftDataの@Modelに新規プロパティを追加した際の互換性維持と、初期データの自動挿入を行う仕組み。
+  UserDefaults フラグで「一度だけ実行」を保証。</p>
+
+  <h2>マイグレーション処理</h2>
+  <table>
+    <tr><th>処理</th><th>UserDefaultsフラグ</th><th>実行内容</th></tr>
+    <tr><td><code>migrateCategoryToRawValue()</code></td><td>migratedCategory</td><td>ローカライズ名 → rawValue 変換</td></tr>
+    <tr><td><code>insertDefaultExercises()</code></td><td>hasInsertedDefaults</td><td>初期種目を挿入</td></tr>
+    <tr><td><code>insertCardioDefaults()</code></td><td>hasInsertedCardioDefaults</td><td>有酸素デフォルト種目挿入</td></tr>
+    <tr><td><code>insertExpandedDefaults()</code></td><td>hasInsertedExpandedDefaults</td><td>拡張デフォルト種目挿入</td></tr>
+    <tr><td><code>insertDefaultTemplates()</code></td><td>hasInsertedDefaultTemplates</td><td>初期テンプレート挿入（目標・経験別）</td></tr>
+  </table>
+
+  <h2>処理フロー</h2>
+  <ol>
+    <li>AppDelegate で SwiftData ModelContainer 初期化</li>
+    <li>各マイグレーションをチェック → 未実行なら実行</li>
+    <li>実行成功で UserDefaults フラグ true</li>
+    <li>失敗時は次回起動でリトライ</li>
+  </ol>
+
+  <h2>SwiftData @Model のデフォルト値</h2>
+  <div class="callout warn">
+    すべての @Model クラスのプロパティに<strong>デフォルト値必須</strong>。新規追加時は必ずデフォルト値を設定する。CLAUDE.md準拠。
+  </div>
+
+  <pre><code>@Model final class Exercise {
+    var memo: String = ""             // ★デフォルト値
+    var useCardioInput: Bool = false  // ★デフォルト値
+}</code></pre>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>マイグレーションは順次実行（依存順序を保つ）</li>
+    <li>テンプレ挿入は経験・目標で重量・レップを補正</li>
+    <li>既存ユーザーのカスタマイズは保護（上書きしない）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - ロギング方針</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">PieceZen</a> / ロギング方針</div>
+  <header class="site-header"><h1>ロギング方針</h1><p>Logger（os.log）統一</p></header>
+
+  <div class="callout"><strong><code>print()</code>は禁止</strong>。Logger（os.log）を使用。</div>
+
+  <h2>共通設定</h2>
+  <pre><code>Logger(subsystem: "com.happyboy1002.BlockPuzzle", category: "[クラス名]")</code></pre>
+
+  <h2>カテゴリ一覧</h2>
+  <table>
+    <tr><th>カテゴリ</th><th>用途</th></tr>
+    <tr><td><code>GameEngine</code></td><td>ゲームロジック・配置・消去・スコア</td></tr>
+    <tr><td><code>AdManager</code></td><td>広告ロード・表示</td></tr>
+    <tr><td><code>StoreManager</code></td><td>課金・トランザクション</td></tr>
+    <tr><td><code>SoundManager</code></td><td>サウンド再生</td></tr>
+    <tr><td><code>StreakManager</code></td><td>ストリーク管理</td></tr>
+    <tr><td><code>SettingsView</code></td><td>設定変更</td></tr>
+  </table>
+
+  <h2>ログレベル</h2>
+  <table>
+    <tr><th>レベル</th><th>用途</th></tr>
+    <tr><td><code>.info</code></td><td>ゲーム開始・配置・消去・ハイスコア更新</td></tr>
+    <tr><td><code>.warning</code></td><td>広告ロード失敗、AVAudioPlayer初期化失敗</td></tr>
+    <tr><td><code>.error</code></td><td>StoreKit verify失敗、SwiftData fetch/save失敗</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

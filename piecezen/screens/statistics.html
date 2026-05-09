@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - 統計</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / 統計</div>
+  <header class="site-header"><h1>統計画面（StatisticsView）</h1><p>過去のスコア・プレイ履歴</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: PZ-STATS-01</span></div></header>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>ベストスコア</td><td>HighScoreRecord 表示</td></tr>
+    <tr><td>今日のベスト</td><td>本日プレイ分の最高</td></tr>
+    <tr><td>総プレイ回数</td><td>StatRecord の総数</td></tr>
+    <tr><td>平均スコア</td><td>StatRecord の平均</td></tr>
+    <tr><td>スコア推移グラフ</td><td>直近20ゲーム（SwiftUI Charts）</td></tr>
+    <tr><td>直近10ゲームリスト</td><td>各回のスコア + プレイ日時</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>HighScoreRecord（@Query）
+StatRecord（@Query, sort: .reverse）</code></pre>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

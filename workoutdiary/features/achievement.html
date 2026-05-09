@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - 実績・ストリーク</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / 実績・ストリーク</div>
+  <header class="site-header">
+    <h1>実績・ストリーク機能</h1>
+    <p>継続トレーニング日数とバッジシステム</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: WD-FEAT-ACH</span></div>
+  </header>
+
+  <h2>概要</h2>
+  <p>連続トレーニング日数（ストリーク）の計算と、各種実績バッジの判定機能。
+  継続のモチベーション維持を狙う。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/calendar.html">カレンダー</a></li>
+    <li><a href="../screens/settings.html">設定（バッジ表示）</a></li>
+    <li><a href="../screens/widgets.html">Widgets</a></li>
+  </ul>
+
+  <h2>AchievementService API</h2>
+  <pre><code>@MainActor
+final class AchievementService {
+    func calculateStreak(sessions: [WorkoutSession]) -> Int
+    func checkAchievements(sessions: [WorkoutSession]) -> [Achievement]
+}</code></pre>
+
+  <h2>バッジ一覧</h2>
+  <table>
+    <tr><th>バッジ名</th><th>条件</th></tr>
+    <tr><td>First Step</td><td>初回セッション完了</td></tr>
+    <tr><td>Consistency</td><td>10セッション完了</td></tr>
+    <tr><td>Half Century</td><td>50セッション完了</td></tr>
+    <tr><td>Centurion</td><td>100セッション完了</td></tr>
+    <tr><td>Streak 3</td><td>3日連続</td></tr>
+    <tr><td>Streak 7</td><td>7日連続</td></tr>
+    <tr><td>Streak 14</td><td>14日連続</td></tr>
+    <tr><td>Streak 30</td><td>30日連続</td></tr>
+    <tr><td>First PR</td><td>初回PR達成</td></tr>
+    <tr><td>PR Machine</td><td>10PR達成</td></tr>
+    <tr><td>Goal Achieved</td><td>目標達成</td></tr>
+    <tr><td>Monthly Perfect</td><td>月間目標 4週連続達成</td></tr>
+  </table>
+
+  <h2>ストリーク計算ロジック</h2>
+  <pre><code>// 昨日トレーニングしていれば streak +1
+// 当日のみなら 1 開始
+// 2日以上空いていれば 0 リセット
+func calculateStreak(sessions: [WorkoutSession]) -> Int {
+    let sortedDates = sessions.map { $0.date }.sorted()
+    var streak = 0
+    var prev = Date.distantPast
+    for date in sortedDates {
+        if Calendar.current.isDate(date, inSameDayAs: prev) { continue }
+        if Calendar.current.isDate(date, inSameDayAs: prev.advanced(by: 86400)) {
+            streak += 1
+        } else {
+            streak = 1
+        }
+        prev = date
+    }
+    return streak
+}</code></pre>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>同日の複数セッションは1日としてカウント</li>
+    <li>ストリーク途切れは2日連続未訓練で発生</li>
+    <li>達成後のバッジは取り消されない</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

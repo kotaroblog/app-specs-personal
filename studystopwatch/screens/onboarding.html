@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - オンボーディング</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / オンボーディング</div>
+  <header class="site-header"><h1>オンボーディング（OnboardingView）</h1><p>初回起動時のセットアップウィザード</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-ONB-01</span></div></header>
+
+  <h2>ステップ構成</h2>
+  <ol>
+    <li>Welcome — アプリ紹介</li>
+    <li>GoalType — 定期テスト / 高校受験 / 大学受験</li>
+    <li>Subject — 科目選択</li>
+    <li>Score — 現在/目標点数（定期テストのみ）</li>
+    <li>Motivation — 動機入力</li>
+    <li>Exam — 試験日設定（受験のみ）</li>
+    <li>Target — 学習目標時間設定</li>
+    <li>Commit — 「始める」</li>
+    <li>Notification — 通知許可</li>
+    <li>Paywall — サブスク提示</li>
+  </ol>
+
+  <h2>フロー分岐</h2>
+  <ul>
+    <li><strong>定期テスト</strong>: Score ステップで現状/目標点数入力</li>
+    <li><strong>受験</strong>: Exam ステップで試験日入力、志望校入力</li>
+  </ul>
+
+  <h2>遷移</h2>
+  <p>完了時に <code>onboardingCompleted = true</code> → ContentView</p>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - ゲーム</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / ゲーム</div>
+  <header class="site-header"><h1>ゲーム画面（GameView）</h1><p>メインのゲームプレイ画面</p>
+  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: PZ-GAME-01</span></div></header>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>ScoreHeaderView</td><td>現在スコア / ハイスコア / コンボ</td></tr>
+    <tr><td>GridView</td><td>8×8グリッド描画（消去アニメ含む）</td></tr>
+    <tr><td>BlockTrayView</td><td>3スロットのドラッグ可能ピース</td></tr>
+    <tr><td>プレビュー表示</td><td>ドラッグ中の配置先ハイライト</td></tr>
+    <tr><td>回転ボタン</td><td>ピースを4回転</td></tr>
+    <tr><td>アンドゥボタン</td><td>1手戻す（最大3回、2回目以降は広告）</td></tr>
+    <tr><td>PlayFeedbackOverlay</td><td>スコアポップアップ・賞賛テキスト・クロス爆発</td></tr>
+    <tr><td>BannerAdView</td><td>下部固定（広告除去未済時）</td></tr>
+  </table>
+
+  <h2>状態遷移（GameState）</h2>
+  <table>
+    <tr><th>状態</th><th>説明</th></tr>
+    <tr><td><code>.playing</code></td><td>通常プレイ中</td></tr>
+    <tr><td><code>.gameOver</code></td><td>配置不可・GameOverView オーバーレイ</td></tr>
+    <tr><td><code>.rescued</code></td><td>リワード広告で救済中</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>ゲームオーバー判定</td><td>GameOverView（オーバーレイ）</td></tr>
+    <tr><td>戻る</td><td>HomeView</td></tr>
+  </table>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/game-logic.html">ゲームロジック仕様書</a></li>
+    <li><a href="../features/ad-control.html">広告制御機能</a></li>
+    <li><a href="game-over.html">GameOverView</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - ロギング方針</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">StudyStopwatch</a> / ロギング方針</div>
+
+  <header class="site-header">
+    <h1>ロギング方針</h1>
+    <p>Logger（os.log）を用いたログ出力ルール</p>
+  </header>
+
+  <div class="callout">
+    <strong><code>print()</code> は禁止</strong>。<code>Logger</code>（os.log）を使用する。
+  </div>
+
+  <h2>共通設定</h2>
+  <pre><code>private let logger = Logger(
+    subsystem: Bundle.main.bundleIdentifier ?? "StudyStopwatch",
+    category: "[クラス名]"
+)</code></pre>
+
+  <h2>カテゴリ一覧</h2>
+  <table>
+    <tr><th>カテゴリ</th><th>使用箇所</th></tr>
+    <tr><td><code>TimerViewModel</code></td><td>タイマー永続化・復元</td></tr>
+    <tr><td><code>LiveActivityService</code></td><td>Activity start/update/end</td></tr>
+    <tr><td><code>WidgetSyncService</code></td><td>Widget データ同期</td></tr>
+    <tr><td><code>SubscriptionManager</code></td><td>StoreKit 課金</td></tr>
+    <tr><td><code>NotificationService</code></td><td>ローカル通知</td></tr>
+    <tr><td><code>InstagramShareService</code></td><td>シェア機能</td></tr>
+    <tr><td><code>AppUpdateService</code></td><td>App Store API</td></tr>
+    <tr><td><code>InterstitialAdManager</code></td><td>全画面広告</td></tr>
+  </table>
+
+  <h2>ログレベル</h2>
+  <table>
+    <tr><th>レベル</th><th>用途</th></tr>
+    <tr><td><code>.info</code></td><td>通常イベント（タイマー開始・停止、セッション保存）</td></tr>
+    <tr><td><code>.warning</code></td><td>異常だが継続可（Live Activity orphaned、AppGroup nil）</td></tr>
+    <tr><td><code>.error</code></td><td>機能継続不可（StoreKit verify失敗、SwiftData save失敗）</td></tr>
+  </table>
+
+  <h2>プライバシー対応</h2>
+  <div class="callout warn">
+    StoreKitトランザクションID、志望校名、メールアドレス等は<strong>ログに出さない</strong>。
+    識別子（科目ID、セッションID）は <code>privacy: .public</code>。
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

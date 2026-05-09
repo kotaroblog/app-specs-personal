@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - エラー設計</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">StudyStopwatch</a> / エラー設計</div>
+
+  <header class="site-header">
+    <h1>エラー設計・例外パターン一覧</h1>
+    <p>StoreKit / Live Activity / Widget / 通知 のエラー</p>
+  </header>
+
+  <h2>定義済み Error型</h2>
+  <pre><code>enum StoreError: Error {
+    case productNotFound
+    case verificationFailed
+    case userCancelled
+}
+
+enum AppUpdateError: Error {
+    case fetchFailed
+    case parseFailed
+}</code></pre>
+
+  <h2>エラー一覧</h2>
+  <table>
+    <tr><th>ID</th><th>分類</th><th>発生条件</th><th>表示</th><th>復旧</th><th>ログ</th></tr>
+    <tr><td>SS-SK-01</td><td>StoreKit</td><td>商品未取得</td><td>「商品を読込中」</td><td>再試行</td><td>error</td></tr>
+    <tr><td>SS-SK-02</td><td>StoreKit</td><td>verification失敗</td><td>「決済の検証に失敗しました」</td><td>サポート問合せ</td><td>error</td></tr>
+    <tr><td>SS-LA-01</td><td>Live Activity</td><td>Activity.request失敗</td><td>サイレント</td><td>—</td><td>error</td></tr>
+    <tr><td>SS-LA-02</td><td>Live Activity</td><td>orphaned activity 検出</td><td>サイレント（クリーンアップ）</td><td>—</td><td>warning</td></tr>
+    <tr><td>SS-WID-01</td><td>Widget</td><td>AppGroup nil</td><td>Widget空表示</td><td>本体起動で同期</td><td>warning</td></tr>
+    <tr><td>SS-NOTIF-01</td><td>権限</td><td>通知許可拒否</td><td>「設定で通知を有効に」</td><td>設定アプリ</td><td>info</td></tr>
+    <tr><td>SS-AD-01</td><td>広告</td><td>Banner ロード失敗</td><td>サイレント（高さ0）</td><td>—</td><td>info</td></tr>
+    <tr><td>SS-AD-02</td><td>広告</td><td>Interstitial 未ロード</td><td>サイレント</td><td>—</td><td>info</td></tr>
+    <tr><td>SS-DB-01</td><td>SwiftData</td><td>save失敗</td><td>「データ保存に失敗」</td><td>再試行</td><td>error</td></tr>
+    <tr><td>SS-TIMER-01</td><td>タイマー</td><td>24時間境界超え</td><td>サイレントリセット</td><td>—</td><td>info</td></tr>
+    <tr><td>SS-UPDATE-01</td><td>更新</td><td>App Store API失敗</td><td>サイレント</td><td>—</td><td>warning</td></tr>
+  </table>
+
+  <h2>UI 表示パターン</h2>
+  <table>
+    <tr><th>重要度</th><th>表示</th></tr>
+    <tr><td>低</td><td>サイレント / Logger のみ</td></tr>
+    <tr><td>中</td><td>Alert ダイアログ</td></tr>
+    <tr><td>高</td><td>該当なし</td></tr>
+  </table>
+
+  <h2>タイマー24時間境界の扱い</h2>
+  <div class="callout">
+    アプリ再起動時、保存済み startTime と現在時刻の差が <strong>24時間以内のみ復元</strong>。
+    朝をまたいだ場合は自動的にリセットして、誤った長時間記録を防ぐ。
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div>
+</body>
+</html>

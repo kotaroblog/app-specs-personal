@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<title>PieceZen - 用語集</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">PieceZen</a> / 用語集</div>
+  <header class="site-header"><h1>用語集・ドメイン辞書</h1></header>
+
+  <h2>主要ドメイン用語</h2>
+  <table>
+    <tr><th>日本語</th><th>英語</th><th>定義</th></tr>
+    <tr><td>ピース / ブロック</td><td><code>Block</code> / <code>BlockShape</code></td><td>配置するピース1個</td></tr>
+    <tr><td>グリッド</td><td><code>Grid</code></td><td>8×8の配置盤面</td></tr>
+    <tr><td>セル / マス</td><td><code>Cell</code> / <code>GridPosition</code></td><td>グリッドの1マス</td></tr>
+    <tr><td>形状</td><td><code>BlockShape</code></td><td>ブロックの形（19種）</td></tr>
+    <tr><td>ライン消去</td><td>Line Clear</td><td>横/縦の8マスが揃って消える</td></tr>
+    <tr><td>クロス消去</td><td>Cross</td><td>横+縦同時消去（特別演出 +150点）</td></tr>
+    <tr><td>コンボ</td><td><code>comboCount</code></td><td>連続消去の回数</td></tr>
+    <tr><td>パーフェクトクリア</td><td>Perfect Clear</td><td>グリッド全消し（+500点）</td></tr>
+    <tr><td>アンドゥ</td><td><code>UndoSnapshot</code></td><td>1手戻す（最大3回、2回目以降は広告）</td></tr>
+    <tr><td>救済 / リワード広告</td><td>Reward Ad</td><td>GameOver時に広告視聴で復活</td></tr>
+    <tr><td>トレイ</td><td><code>BlockTray</code></td><td>3スロットのピース配置エリア</td></tr>
+    <tr><td>テーマ</td><td><code>ColorTheme</code></td><td>カラーパレット（5種）</td></tr>
+    <tr><td>ハイスコア</td><td><code>HighScoreRecord</code></td><td>過去最高スコア</td></tr>
+    <tr><td>ストリーク</td><td><code>streakCount</code></td><td>連続プレイ日数</td></tr>
+  </table>
+
+  <h2>ColorTheme 5種類</h2>
+  <table>
+    <tr><th>UI 表記</th><th>コード</th></tr>
+    <tr><td>クラシック</td><td><code>.classic</code></td></tr>
+    <tr><td>オーシャン</td><td><code>.ocean</code></td></tr>
+    <tr><td>サクラ</td><td><code>.sakura</code></td></tr>
+    <tr><td>ネオン</td><td><code>.neon</code></td></tr>
+    <tr><td>モノクロ</td><td><code>.monochrome</code></td></tr>
+  </table>
+
+  <h2>スコア用語</h2>
+  <table>
+    <tr><th>UI 表記</th><th>コード</th></tr>
+    <tr><td>Single</td><td>1ライン消去</td></tr>
+    <tr><td>Double</td><td>2ライン消去 +30</td></tr>
+    <tr><td>Triple</td><td>3ライン消去 +80</td></tr>
+    <tr><td>Quad</td><td>4+ライン消去 +200</td></tr>
+    <tr><td>Cross</td><td>行+列同時 +150</td></tr>
+    <tr><td>Perfect Clear</td><td>全消し +500</td></tr>
+  </table>
+
+  <h2>注意</h2>
+  <ul>
+    <li>ストア表示名は <strong>PieceZen</strong>、Bundle ID は <code>com.happyboy1002.BlockPuzzle</code> で異なる</li>
+    <li>仕様書では <strong>PieceZen</strong> で統一</li>
+    <li>ローカルディレクトリ名は <code>BlockPuzzle</code></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
+</div></body></html>
