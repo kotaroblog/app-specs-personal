@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - データモデル</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">WorkoutDiary</a> / データモデル</div>
+
+  <header class="site-header">
+    <h1>データモデル</h1>
+    <p>SwiftData @Model の構造とリレーション</p>
+  </header>
+
+  <h2>ER 図</h2>
+  <div class="mermaid">
+erDiagram
+  Workout ||--o{ Exercise : has
+  Exercise ||--o{ ExerciseSet : has
+
+  Workout {
+    UUID id
+    Date date
+    String note
+    Date createdAt
+  }
+  Exercise {
+    UUID id
+    String name
+    String category
+    Int order
+  }
+  ExerciseSet {
+    UUID id
+    Double weight
+    Int reps
+    Int order
+  }
+  </div>
+
+  <h2>Workout</h2>
+  <pre><code>@Model
+final class Workout {
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var note: String?
+    var createdAt: Date = Date()
+
+    @Relationship(deleteRule: .cascade)
+    var exercises: [Exercise] = []
+
+    init(date: Date = .now) {
+        self.date = date
+    }
+}</code></pre>
+
+  <h2>Exercise</h2>
+  <pre><code>@Model
+final class Exercise {
+    var id: UUID = UUID()
+    var name: String = ""
+    var category: String = ""
+    var order: Int = 0
+
+    @Relationship(deleteRule: .cascade)
+    var sets: [ExerciseSet] = []
+
+    var workout: Workout?
+}</code></pre>
+
+  <h2>ExerciseSet</h2>
+  <pre><code>@Model
+final class ExerciseSet {
+    var id: UUID = UUID()
+    var weight: Double = 0
+    var reps: Int = 0
+    var order: Int = 0
+
+    var exercise: Exercise?
+}</code></pre>
+
+  <h2>マイグレーション方針</h2>
+  <div class="callout warn">
+    SwiftDataの<code>@Model</code>は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する。
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">
+    最終更新: 2026-05-09
+  </footer>
+</div>
+</body>
+</html>

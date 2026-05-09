@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - 画面遷移図</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">WorkoutDiary</a> / 画面遷移図</div>
+
+  <header class="site-header">
+    <h1>画面遷移図</h1>
+    <p>WorkoutDiary 全画面の遷移マップ</p>
+  </header>
+
+  <div class="callout">
+    スマホでは横スクロールで全体を確認できます。ピンチ操作で拡大可能。
+  </div>
+
+  <h2>全体フロー</h2>
+  <div class="mermaid">
+flowchart TD
+  Launch([起動]) --> Onboarding{初回起動?}
+  Onboarding -- Yes --> OnbScreen[オンボーディング]
+  Onboarding -- No --> Home[ホーム画面]
+  OnbScreen --> Home
+
+  Home --> WorkoutDetail[ワークアウト詳細]
+  Home --> Calendar[カレンダー画面]
+  Home --> Settings[設定画面]
+  Home --> AddWorkout[新規記録]
+
+  AddWorkout --> ExercisePicker[種目選択]
+  ExercisePicker --> SetEntry[セット入力]
+  SetEntry --> Home
+
+  WorkoutDetail --> Edit[編集画面]
+  Edit --> WorkoutDetail
+
+  Settings --> Paywall[Paywall]
+  Settings --> About[アプリについて]
+  Paywall --> Home
+  </div>
+
+  <h2>主要な遷移パターン</h2>
+  <table>
+    <tr><th>起点</th><th>遷移先</th><th>トリガー</th></tr>
+    <tr><td>ホーム</td><td>新規記録</td><td>＋ボタン</td></tr>
+    <tr><td>ホーム</td><td>カレンダー</td><td>カレンダーアイコン</td></tr>
+    <tr><td>設定</td><td>Paywall</td><td>「Pro版にアップグレード」セル</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
+      flowchart: { curve: 'basis', useMaxWidth: true }
+    });
+  </script>
+
+  <footer class="site-footer">
+    最終更新: 2026-05-09
+  </footer>
+</div>
+</body>
+</html>
