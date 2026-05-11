@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>PieceZen - v2.0 大型アップデート企画書「静謐ドーパミン」</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / v2.0 大型アップデート企画書</div>
+
+  <header class="site-header">
+    <h1>PieceZen v2.0 大型アップデート企画書</h1>
+    <p>「静謐ドーパミン」設計 ― 習慣形成ループと静かで確実なフィードバックで継続率を引き上げる</p>
+    <div class="section-meta">
+      <span class="tag todo">draft</span>
+      <span class="tag">FEAT-V2-ROADMAP</span>
+      <span class="tag">2026年6月〜10月</span>
+    </div>
+  </header>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-12</td><td>初版作成</td></tr>
+  </table>
+
+  <h2>1. アップデート目的とコンセプト</h2>
+
+  <h3>現状</h3>
+  <ul class="kv-list">
+    <li><span class="k">現バージョン</span><span class="v">v1.2.1 リリース済み</span></li>
+    <li><span class="k">配信地域</span><span class="v">日本のみ</span></li>
+    <li><span class="k">課題</span><span class="v">継続率（D1 / D7）の引き上げが急務。習慣形成ループが不足している</span></li>
+  </ul>
+
+  <h3>コンセプト：「静謐ドーパミン」</h3>
+  <p>
+    Block Blast! が蛍光色・大音量で実装するコンボ演出を、PieceZen の世界観（木・石・自然素材）に合わせ
+    <strong>「静かだが確実に気持ちいい」</strong>版に置き換える。
+  </p>
+  <table>
+    <tr><th>競合のアプローチ</th><th>PieceZen のアプローチ</th></tr>
+    <tr><td>うるさく・派手にフィードバックする</td><td>静かに・確実にフィードバックする</td></tr>
+    <tr><td>蛍光色・大音量コンボ演出</td><td>木目テクスチャ・自然素材系の光と音</td></tr>
+    <tr><td>刺激で引き止める</td><td>マインドフルネス・集中層を離脱させない習慣形成ループ</td></tr>
+  </table>
+
+  <h2>2. KPI 目標（仮置き）</h2>
+  <table>
+    <tr><th>指標</th><th>目標</th></tr>
+    <tr><td>D1 継続率</td><td>+10pt 改善</td></tr>
+    <tr><td>D7 継続率</td><td>+5pt 改善</td></tr>
+    <tr><td>平均セッション数/日</td><td>1.3倍</td></tr>
+    <tr><td>広告表示回数（Interstitial + Rewarded）</td><td>1.5倍</td></tr>
+  </table>
+
+  <h2>3. 段階リリース計画</h2>
+  <table>
+    <tr><th>バージョン</th><th>スコープ</th><th>想定リリース時期</th></tr>
+    <tr>
+      <td><strong>v2.0「静謐ドーパミン」</strong></td>
+      <td>コンボ強化 / パーフェクト演出 / ハプティクス / ストリークカレンダー + 7日報酬</td>
+      <td>2026年6月</td>
+    </tr>
+    <tr>
+      <td><strong>v2.1「習慣化」</strong></td>
+      <td>デイリーチャレンジ / レベル・XP / スキン解放</td>
+      <td>2026年8月</td>
+    </tr>
+    <tr>
+      <td><strong>v2.2「コンテンツ拡充」</strong></td>
+      <td>デイリーミッション / 実績 / 世界ランキング（Game Center）</td>
+      <td>2026年10月</td>
+    </tr>
+  </table>
+
+  <h2>4. v2.0 機能詳細</h2>
+
+  <h3>4.1 コンボ/連鎖システム強化</h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>連続ライン消しに倍率を設け、プレイヤーに「次も消したい」という動機を与える</td></tr>
+    <tr><td>仕様</td><td>連続ライン消しで倍率アップ（2x → 4x → 8x）。倍率テキストのアニメーション表示</td></tr>
+    <tr><td>UI仕様</td><td>スコア付近に倍率テキストをフェードイン・スケールアップで表示。木目テクスチャの世界観に合ったカラー（ゴールド系）</td></tr>
+    <tr><td>既存コード活用</td><td>既実装の <code>comboCount</code> / <code>comboText</code> / <code>comboCleared()</code> を活用。スコア式の調整のみで対応可能</td></tr>
+    <tr><td>改修ファイル</td><td><code>GameEngine.swift</code>, <code>ScoreEvent.swift</code>, <code>PlayFeedbackOverlay.swift</code></td></tr>
+    <tr><td>実装難易度</td><td>S（Small）</td></tr>
+    <tr><td>工数</td><td>4〜6h</td></tr>
+  </table>
+
+  <h3>4.2 パーフェクトクリア演出強化</h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>盤面全消しを「特別感のある体験」にして達成感を最大化する</td></tr>
+    <tr><td>仕様</td><td>盤面全消し検知時、ボーナスを +500pt から +1000pt に調整。スローモーション演出追加</td></tr>
+    <tr><td>UI仕様</td><td>専用エフェクト：木目テクスチャに合わせた光の粒のパーティクルをグリッド全体に広げる。0.5秒のスローモーション後に通常速度に戻る</td></tr>
+    <tr><td>既存コード活用</td><td>既実装の <code>isPerfectClearTriggered</code> / <code>PerfectClearOverlay</code> を活用</td></tr>
+    <tr><td>改修ファイル</td><td><code>GameEngine.swift</code>, <code>PlayFeedbackOverlay.swift</code></td></tr>
+    <tr><td>実装難易度</td><td>S（Small）</td></tr>
+    <tr><td>工数</td><td>2〜4h</td></tr>
+  </table>
+
+  <h3>4.3 強化ハプティクス</h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>触覚フィードバックを「静謐ドーパミン」世界観に統一し、プレイの没入感を高める</td></tr>
+    <tr><td>仕様（振動パターン）</td><td>
+      通常ライン消し: 短い1回振動<br>
+      コンボ時: 段階的に強くなる連続パターン（2x=弱2回 / 4x=中3回 / 8x=強4回）<br>
+      パーフェクトクリア: 長めの重厚パターン
+    </td></tr>
+    <tr><td>UI仕様（効果音）</td><td>コンボ・パーフェクト専用 SE を「ガラス共鳴音・木琴音」など自然素材系に統一</td></tr>
+    <tr><td>改修ファイル</td><td><code>HapticManager.swift</code></td></tr>
+    <tr><td>実装難易度</td><td>S（Small）</td></tr>
+    <tr><td>工数</td><td>3〜5h</td></tr>
+    <tr><td>注意点</td><td>SE 音源を別途調達する必要あり。無料の自然音素材（freesound.org 等）を検討。ライセンス確認必須</td></tr>
+  </table>
+
+  <h3>4.4 ストリークカレンダー + 7日報酬テーブル</h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>連続起動を視覚化・報酬化して習慣形成ループを作る（1010! 参考）</td></tr>
+    <tr><td>仕様</td><td>連続起動日数を「7日カレンダー」で可視化。7日連続ログインで段階報酬を付与</td></tr>
+    <tr><td>報酬テーブル</td><td>
+      Day1: 軽い演出（スコア +500）<br>
+      Day3: スキン「ocean」一時試用（24h）<br>
+      Day7: スキン「sakura」永久解放（または広告除去 24h）
+    </td></tr>
+    <tr><td>UI仕様</td><td>ホーム画面またはゲーム起動時のモーダルに7マスのカレンダーを表示。達成済みマスは木目アイコンで強調</td></tr>
+    <tr><td>既存コード活用</td><td>既実装の <code>StreakManager</code> を流用。報酬テーブルとモーダル表示を追加</td></tr>
+    <tr><td>改修ファイル</td><td><code>StreakManager.swift</code>, <code>ContentView.swift</code>, 新規 <code>StreakRewardView.swift</code></td></tr>
+    <tr><td>実装難易度</td><td>M（Medium）</td></tr>
+    <tr><td>工数</td><td>8〜12h</td></tr>
+    <tr><td>重要制約</td><td><strong>ストリーク消滅ペナルティは設けない</strong>（Blockudoku の失敗事例より。カジュアル層離脱を防ぐ）</td></tr>
+  </table>
+
+  <h2>5. v2.1 機能サマリ（簡易）</h2>
+
+  <h3>5.1 デイリーチャレンジ</h3>
+  <ul>
+    <li>日付シードベースで固定パズルを生成し、世界中のプレイヤーが同じお題に挑戦できる</li>
+    <li>クリアでトロフィーバッジを付与（SwiftData に保存）</li>
+    <li>新規モデル追加のため <strong>SwiftData マイグレーション必須</strong></li>
+    <li>参考: Blockudoku のデイリーチャレンジ機能</li>
+  </ul>
+
+  <h3>5.2 レベル/XP システム</h3>
+  <ul>
+    <li>プレイごとにスコアに応じて XP を加算</li>
+    <li>レベルアップ時に専用演出（パーティクル + ハプティクス）</li>
+    <li>新規モデル <code>PlayerProfile</code> を追加（レベル・累計XP・解放スキン一覧）</li>
+  </ul>
+
+  <h3>5.3 スキン解放</h3>
+  <ul>
+    <li>既定義5テーマ（classic / ocean / sakura / neon / monochrome）に解放条件を追加</li>
+    <li>解放トリガー: レベル達成 / 実績達成 / リワード広告視聴のいずれか</li>
+    <li>解放済みスキンは <code>PlayerProfile.unlockedSkins</code> で管理</li>
+  </ul>
+
+  <h2>6. v2.2 機能サマリ（簡易）</h2>
+  <ul>
+    <li><strong>デイリーミッション3種</strong>: コンボ5回達成 / 100行消す / パーフェクトクリア1回 等。日替わりで入れ替わる</li>
+    <li><strong>実績・トロフィー</strong>: Game Center 連携。累計スコア・プレイ日数・コンボ回数等で解放</li>
+    <li><strong>世界ランキング</strong>: Game Center リーダーボード。週次ハイスコア + 累計スコアの2種</li>
+  </ul>
+
+  <h2>7. やらないこと（スコープ外）</h2>
+  <table>
+    <tr><th>避けるべき要素</th><th>理由</th></tr>
+    <tr><td>ゲーム中のインタースティシャル広告</td><td>プレイ強制中断によるユーザー体験の著しい悪化</td></tr>
+    <tr><td>ストリーク消滅ペナルティ（ライフ制）</td><td>カジュアル層の離脱を招く（Blockudoku の失敗事例）</td></tr>
+    <tr><td>数日間続くトーナメント（72時間超）</td><td>プレイ義務感が強くなり長期離脱につながる</td></tr>
+    <tr><td>ブッシュ・ジェム等のゲームプレイ変質オブジェクト</td><td>長期ユーザーの離脱・既存ゲームバランスの崩壊</td></tr>
+    <tr><td>バトルパス形式のメタ進行</td><td>認知コストが高くカジュアル層に不適合</td></tr>
+  </table>
+
+  <h2>8. 技術リスク・確認事項</h2>
+  <table>
+    <tr><th>リスク・確認事項</th><th>詳細</th><th>対応方針</th></tr>
+    <tr>
+      <td><strong>グリッドサイズの確認</strong></td>
+      <td>実装上は 8×8 グリッドだが、ストア表記では「10×10」と記載されている</td>
+      <td>実装コードと仕様書・ストア表記を一致させるよう確認・修正</td>
+    </tr>
+    <tr>
+      <td><strong>SE 音源調達</strong></td>
+      <td>コンボ・パーフェクトクリア専用の自然素材系 SE（ガラス共鳴音・木琴音等）が未調達</td>
+      <td>freesound.org 等の CC0 ライセンス素材を検討。ライセンス表記を <code>Credits.html</code> 等に記載</td>
+    </tr>
+    <tr>
+      <td><strong>SwiftData マイグレーション</strong></td>
+      <td>v2.1 以降でモデル追加（PlayerProfile 等）が発生する</td>
+      <td><code>VersionedSchema</code> + <code>SchemaMigrationPlan</code> の実装を v2.1 開発前に必ず設計</td>
+    </tr>
+    <tr>
+      <td><strong>Game Center Capability</strong></td>
+      <td>v2.2 で実績・リーダーボードを追加する際に必要</td>
+      <td>v2.2 開発前に <code>project.yml</code> に Game Center capability を追加 + Entitlement 設定</td>
+    </tr>
+    <tr>
+      <td><strong>AdMob リワード広告の流用</strong></td>
+      <td>既存のリワード広告実装を v2.0 ストリーク報酬（Day7: 広告除去 24h）・v2.1 スキン解放で流用</td>
+      <td>既存 <code>AdManager.swift</code> の流用可否を確認。コールバック設計の整合性を保つ</td>
+    </tr>
+  </table>
+
+  <h2>9. 競合分析サマリ</h2>
+  <table>
+    <tr><th>アプリ</th><th>効いている仕掛け</th><th>PieceZen への示唆</th></tr>
+    <tr>
+      <td><a href="https://balancy.co/blog/2025/03/26/how-could-block-blast-by-hungry-studio-earn-more-monetization-and-gameplay-deconstruction/" target="_blank" rel="noopener">Block Blast!</a></td>
+      <td>ゼロストレス + 即時報酬 + 動的難易度</td>
+      <td>コンボ演出を「静謐版」に置き換えて世界観を維持しつつ即時報酬を提供</td>
+    </tr>
+    <tr>
+      <td><a href="https://apps.apple.com/us/app/1010-block-puzzle-game/id911793120" target="_blank" rel="noopener">1010!</a></td>
+      <td>週次アートアンロック・ストリークカレンダー</td>
+      <td>カレンダー型ストリーク（7日可視化）を v2.0 で採用</td>
+    </tr>
+    <tr>
+      <td><a href="https://easybrain.com/blockudoku" target="_blank" rel="noopener">Blockudoku</a></td>
+      <td>デイリーチャレンジ + トロフィー</td>
+      <td>v2.1 デイリーチャレンジで採用。ペナルティ設計の失敗は反面教師として活用</td>
+    </tr>
+    <tr>
+      <td>Wood Block Puzzle</td>
+      <td>木目テクスチャ・ゼンモード</td>
+      <td>世界観・トーン&マナーの方向性として参考（すでに PieceZen が実装済み）</td>
+    </tr>
+  </table>
+
+  <h2>関連仕様書</h2>
+  <ul>
+    <li><a href="game-logic.html">ゲームロジック</a>（コンボ・スコア計算）</li>
+    <li><a href="haptic.html">ハプティクス</a>（HapticManager）</li>
+    <li><a href="sound.html">サウンド</a>（activePlayers 配列で安全再生）</li>
+    <li><a href="streak.html">ストリーク</a>（StreakManager）</li>
+    <li><a href="ad-control.html">広告制御</a>（リワード広告流用）</li>
+  </ul>
+
+  <footer class="site-footer">最終更新: 2026-05-12</footer>
+</div>
+</body>
+</html>
