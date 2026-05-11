@@ -25,6 +25,7 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-12</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-05-12</td><td>グリッドサイズを 8×8 に確定（ストアメタデータ側を後日修正）、SE 音源は別途調達方針を明記</td></tr>
   </table>
 
   <h2>1. アップデート目的とコンセプト</h2>
@@ -182,14 +183,14 @@
   <table>
     <tr><th>リスク・確認事項</th><th>詳細</th><th>対応方針</th></tr>
     <tr>
-      <td><strong>グリッドサイズの確認</strong></td>
-      <td>実装上は 8×8 グリッドだが、ストア表記では「10×10」と記載されている</td>
-      <td>実装コードと仕様書・ストア表記を一致させるよう確認・修正</td>
+      <td><strong>グリッドサイズの確定</strong></td>
+      <td>実装上は 8×8 グリッドで運用中。ストア表記「10×10」とは不一致</td>
+      <td><strong>8×8 を正とする（確定）</strong>。次回ストア提出時にメタデータ（サブタイトル・スクリーンショット文言・説明文）を 8×8 表記に修正する</td>
     </tr>
     <tr>
       <td><strong>SE 音源調達</strong></td>
       <td>コンボ・パーフェクトクリア専用の自然素材系 SE（ガラス共鳴音・木琴音等）が未調達</td>
-      <td>freesound.org 等の CC0 ライセンス素材を検討。ライセンス表記を <code>Credits.html</code> 等に記載</td>
+      <td>ユーザー側で別途調達予定。実装着手前までに用意する</td>
     </tr>
     <tr>
       <td><strong>SwiftData マイグレーション</strong></td>
@@ -242,7 +243,7 @@
     <li><a href="ad-control.html">広告制御</a>（リワード広告流用）</li>
   </ul>
 
-  <footer class="site-footer">最終更新: 2026-05-12</footer>
+  <footer class="site-footer">最終更新: 2026-05-12（v1.1）</footer>
 </div>
 </body>
 </html>
