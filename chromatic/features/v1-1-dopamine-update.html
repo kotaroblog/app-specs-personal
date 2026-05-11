@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - v1.1 ドーパミン強化アップデート仕様書</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / v1.1 ドーパミン強化アップデート</div>
+
+  <header class="site-header">
+    <h1>v1.1 ドーパミン強化アップデート 仕様書</h1>
+    <p>毎日続けたくなる「ドーパミン分泌型」体験への進化 — Daily Challenge・ストリーク強化・Juice演出</p>
+    <div class="section-meta">
+      <span class="tag todo">実装中</span>
+      <span class="tag">機能ID: CR-FEAT-V1-1</span>
+      <span class="tag">バージョン: 1.1.0 (Build 3)</span>
+    </div>
+  </header>
+
+  <!-- ===================== リリース概要 ===================== -->
+  <h2>リリース概要</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>バージョン</td><td>1.1.0 (Build 3)</td></tr>
+    <tr><td>リリース予定日</td><td>2026年6月初頭</td></tr>
+    <tr><td>目的</td><td>毎日続けたくなる「ドーパミン分泌型」体験への進化</td></tr>
+    <tr><td>D1リテンション目標</td><td>35% → 50%（+30% 以上）</td></tr>
+    <tr><td>D7リテンション目標</td><td>12% → 25%（+50% 以上）</td></tr>
+    <tr><td>DAU目標</td><td>50 → 150</td></tr>
+    <tr><td>必要OS</td><td>iOS 18.0+（既存と同じ）</td></tr>
+  </table>
+
+  <!-- ===================== KPI設計 ===================== -->
+  <h2>KPI 設計</h2>
+  <table>
+    <tr><th>指標</th><th>v1.0 基準値</th><th>v1.1 目標値</th></tr>
+    <tr><td>D1リテンション</td><td>35%</td><td>50%</td></tr>
+    <tr><td>D7リテンション</td><td>12%</td><td>25%</td></tr>
+    <tr><td>平均セッション数/日</td><td>1.2</td><td>2.5</td></tr>
+    <tr><td>DAU</td><td>50</td><td>150</td></tr>
+    <tr><td>Daily Challenge参加率</td><td>—</td><td>新規DAUの 70% 以上</td></tr>
+  </table>
+
+  <!-- ===================== 機能A: Daily Challenge ===================== -->
+  <h2>A. Daily Challenge（日替わりチャレンジ）</h2>
+  <div class="section-meta" style="margin-bottom:1rem;">
+    <span class="tag">Wordleスタイル</span>
+    <span class="tag">決定論的シーケンス</span>
+  </div>
+
+  <h3>概要</h3>
+  <p>
+    全プレイヤーが同じ日に同じ色順をプレイするモード。
+    日付（<code>yyyyMMdd</code>）をシードとする SplitMix64 ベースの決定論的 RNG でシーケンスを生成することで、
+    サーバーレスで全員が同一体験を共有できる。
+    公開起算日: <strong>2026-05-12 = Day 1</strong>。
+  </p>
+
+  <h3>シーケンス生成ルール</h3>
+  <ul>
+    <li>最大 50 ラウンドを事前生成（起動時の遅延なし）</li>
+    <li>同色 3 連続を回避する制約を持つ再シャッフルロジック</li>
+    <li>24:00（端末ローカル時間）で自動リセット</li>
+    <li>タイムゾーン跨ぎでも同一日扱い（ローカル日付基準）</li>
+  </ul>
+
+  <h3>処理フロー（Daily Challenge プレイ）</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant EntryBtn as DailyChallengeEntryButton
+  participant DCM as DailyChallengeManager
+  participant RNG as SeededRandomNumberGenerator
+  participant GV as GameView
+
+  U->>EntryBtn: TODAY'S CHALLENGE タップ
+  EntryBtn->>DCM: startDailyChallenge()
+  DCM->>RNG: init(seed: yyyyMMdd)
+  RNG-->>DCM: 決定論的シーケンス（50ラウンド）
+  DCM-->>GV: sequence, mode=.daily
+  GV-->>U: ゲーム開始（speedLabel="DAILY"）
+  U->>GV: ゲームプレイ
+  GV->>DCM: saveResult(score)
+  DCM->>DCM: chromatic_daily_best_yyyyMMdd 更新
+  GV-->>U: DailyChallengeResultView 表示
+  </div>
+
+  <h3>結果シェア</h3>
+  <p>ゲームオーバー時に <code>DailyChallengeResultView</code> を表示し、絵文字グリッド（🟥🟩🟦🟨）形式でシェア可能。</p>
+
+  <h3>UserDefaults キー（Daily Challenge）</h3>
+  <table>
+    <tr><th>キー</th><th>型</th><th>用途</th></tr>
+    <tr><td><code>chromatic_daily_best_yyyyMMdd</code></td><td>String → Int</td><td>Daily Challenge 日別ベストスコア（日付ごとに1エントリ）</td></tr>
+    <tr><td><code>chromatic_daily_completed_count</code></td><td>Int</td><td>Daily Challenge 累計プレイ数</td></tr>
+    <tr><td><code>chromatic_daily_last_played_date</code></td><td>String (yyyyMMdd)</td><td>Daily Challenge 最終プレイ日</td></tr>
+    <tr><td><code>chromatic_daily_last_played_score</code></td><td>Int</td><td>Daily Challenge 最終プレイスコア</td></tr>
+  </table>
+
+  <h3>関連ファイル</h3>
+  <table>
+    <tr><th>ファイル</th><th>役割</th></tr>
+    <tr><td><code>Daily/SeededRandomNumberGenerator.swift</code></td><td>SplitMix64 決定論的 RNG</td></tr>
+    <tr><td><code>Daily/DailyChallengeManager.swift</code></td><td>日付シード・本日ベスト管理</td></tr>
+    <tr><td><code>Daily/DailyChallengeEntryButton.swift</code></td><td>ホームのエントリボタン</td></tr>
+    <tr><td><code>Daily/DailyChallengeResultView.swift</code></td><td>絵文字グリッド結果オーバーレイ</td></tr>
+  </table>
+
+  <!-- ===================== 機能B: ストリーク強化 ===================== -->
+  <h2>B. ストリーク強化（毎日続けたくなる装置）</h2>
+
+  <h3>大型ストリーク表示（LargeStreakDisplayView）</h3>
+  <p>
+    idle 画面に大型炎アイコン + 日数を常時表示。
+    既存の <a href="streak.html">StreakBadgeView</a> より視覚的インパクトを大幅に強化。
+  </p>
+
+  <h3>ストリークシールド</h3>
+  <ul>
+    <li>週 1 回まで自動消費</li>
+    <li>1 日休んでもストリークを継続維持</li>
+    <li>次回利用可能日を <code>chromatic_streak_shield_available_date</code> で管理</li>
+  </ul>
+
+  <h3>マイルストーン演出</h3>
+  <table>
+    <tr><th>マイルストーン（日数）</th><th>演出内容</th></tr>
+    <tr><td>3 日</td><td>ミニお祝いオーバーレイ</td></tr>
+    <tr><td>7 日</td><td>フルスクリーンお祝いオーバーレイ（パーティクル + ハプティクス + カラーグラデーション）</td></tr>
+    <tr><td>14 日</td><td>同上</td></tr>
+    <tr><td>30 日</td><td>同上（heavy 演出）</td></tr>
+    <tr><td>60 日</td><td>同上</td></tr>
+    <tr><td>100 日</td><td>同上（最大演出）</td></tr>
+    <tr><td>365 日</td><td>同上（最大演出）</td></tr>
+  </table>
+  <p>演出トリガー: idle 画面への復帰時にチェック。<code>chromatic_last_streak_milestone</code> で重複防止。</p>
+
+  <h3>プッシュ通知リマインダー</h3>
+  <ul>
+    <li>毎日 21:00 に「今日の CHROMATIC はまだ？」を配信</li>
+    <li>当日プレイ済みの場合は翌日への自動リスケジュール（二重発火防止）</li>
+    <li><code>chromatic_notifications_enabled</code> で ON/OFF 管理</li>
+  </ul>
+
+  <h3>処理フロー（ストリークシールド判定）</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant App as App起動
+  participant SM as StreakManager
+  participant UDF as UserDefaults
+
+  App->>SM: refreshStreakOnLaunch()
+  SM->>UDF: chromatic_last_played_date 取得
+  alt 前日プレイ
+    SM->>SM: streak +1
+  else 2日前プレイ（シールド未使用）
+    SM->>UDF: shield_available_date チェック
+    SM->>SM: シールド消費 → streak 維持
+  else 2日以上経過（シールドなし）
+    SM->>SM: streak = 0 リセット
+  end
+  SM->>UDF: 状態保存
+  </div>
+
+  <h3>UserDefaults キー（ストリーク強化）</h3>
+  <table>
+    <tr><th>キー</th><th>型</th><th>用途</th></tr>
+    <tr><td><code>chromatic_streak_shield_available_date</code></td><td>String (yyyy-MM-dd)</td><td>シールド次回利用可能日</td></tr>
+    <tr><td><code>chromatic_last_streak_milestone</code></td><td>Int</td><td>最後に演出済みのマイルストーン日数</td></tr>
+    <tr><td><code>chromatic_notifications_enabled</code></td><td>Bool</td><td>通知 ON/OFF 設定</td></tr>
+  </table>
+
+  <h3>関連ファイル</h3>
+  <table>
+    <tr><th>ファイル</th><th>役割</th></tr>
+    <tr><td><code>Streak/StreakManager.swift</code></td><td>ストリーク判定・シールド消費ロジック（既存拡張）</td></tr>
+    <tr><td><code>Streak/LargeStreakDisplayView.swift</code></td><td>idle 画面の大型炎 + 日数表示</td></tr>
+    <tr><td><code>Streak/StreakMilestoneOverlay.swift</code></td><td>7/30/100 日のお祝い演出</td></tr>
+    <tr><td><code>Notifications/NotificationManager.swift</code></td><td>毎日 21 時リマインダー</td></tr>
+  </table>
+
+  <!-- ===================== 機能C: Juice演出強化 ===================== -->
+  <h2>C. Juice 演出強化（ドーパミン分泌の瞬間最大化）</h2>
+
+  <h3>HapticsManager（ハプティクス一元管理）</h3>
+  <table>
+    <tr><th>発火タイミング</th><th>パターン</th></tr>
+    <tr><td>パネルタップ</td><td>light × 1</td></tr>
+    <tr><td>ラウンドクリア</td><td>medium × 1</td></tr>
+    <tr><td>マイルストーン到達</td><td>heavy × 2 連打</td></tr>
+    <tr><td>ベスト更新</td><td>success + heavy</td></tr>
+    <tr><td>ストリーク達成</td><td>heavy × 2 + success</td></tr>
+    <tr><td>ゲームオーバー</td><td>error × 1</td></tr>
+  </table>
+
+  <h3>ParticleBurstView（Canvas パーティクル爆発）</h3>
+  <p>
+    SwiftUI <code>Canvas</code> + <code>TimelineView</code> による軽量パーティクル実装。
+    重力・回転・透明度フェードを対応。
+  </p>
+  <table>
+    <tr><th>サイズ種別</th><th>パーティクル数</th></tr>
+    <tr><td>small（マイルストーン 3/14 日等）</td><td>14 個</td></tr>
+    <tr><td>medium（ラウンドクリア等）</td><td>36 個</td></tr>
+    <tr><td>large（ベスト更新・100 日等）</td><td>72 個</td></tr>
+  </table>
+
+  <h3>NewBestFlashView（全画面ゴールドフラッシュ）</h3>
+  <p>プレイ中ベスト更新の瞬間に全画面ゴールドフラッシュを発火。0.3s でフェードアウト。</p>
+
+  <h3>ScreenShakeModifier（画面シェイク）</h3>
+  <p><code>GeometryEffect</code> ベースの減衰 sin 波シェイク。マイルストーン到達時・ベスト更新時に発火。</p>
+
+  <h3>MilestoneFlashView 強化</h3>
+  <ul>
+    <li>スケールスプリングアニメーション</li>
+    <li>外側へのリップルエフェクト</li>
+    <li>カラーグラデーション（マイルストーン日数に応じた色変化）</li>
+    <li>文字のトラッキング展開アニメーション</li>
+  </ul>
+
+  <h3>関連ファイル</h3>
+  <table>
+    <tr><th>ファイル</th><th>役割</th></tr>
+    <tr><td><code>Effects/HapticsManager.swift</code></td><td>ハプティクス一元管理</td></tr>
+    <tr><td><code>Effects/ParticleBurstView.swift</code></td><td>SwiftUI Canvas パーティクル爆発</td></tr>
+    <tr><td><code>Effects/ScreenShakeModifier.swift</code></td><td>GeometryEffect ベース画面シェイク</td></tr>
+    <tr><td><code>Game/NewBestFlashView.swift</code></td><td>全画面ゴールドフラッシュ</td></tr>
+    <tr><td><code>Game/MilestoneFlashView.swift</code></td><td>マイルストーン到達演出（既存強化）</td></tr>
+  </table>
+
+  <!-- ===================== アーキテクチャ ===================== -->
+  <h2>アーキテクチャ・追加ファイル一覧</h2>
+  <pre><code>Effects/
+├── HapticsManager.swift          # ハプティクス一元管理
+├── ParticleBurstView.swift       # SwiftUI Canvas パーティクル
+└── ScreenShakeModifier.swift     # GeometryEffect ベース画面シェイク
+
+Daily/
+├── SeededRandomNumberGenerator.swift  # SplitMix64 決定論的RNG
+├── DailyChallengeManager.swift        # 日付シード・本日ベスト管理
+├── DailyChallengeEntryButton.swift    # ホームのエントリボタン
+└── DailyChallengeResultView.swift     # 絵文字グリッド結果オーバーレイ
+
+Streak/
+├── LargeStreakDisplayView.swift     # idle画面の大型炎+日数表示
+└── StreakMilestoneOverlay.swift     # 7/30/100日のお祝い演出
+
+Notifications/
+└── NotificationManager.swift        # 毎日21時リマインダー
+
+Game/
+└── NewBestFlashView.swift           # 全画面ゴールドフラッシュ</code></pre>
+
+  <!-- ===================== 全UserDefaults一覧 ===================== -->
+  <h2>UserDefaults 新規キー一覧（v1.1 追加分）</h2>
+  <table>
+    <tr><th>キー</th><th>型</th><th>用途</th></tr>
+    <tr><td><code>chromatic_streak_shield_available_date</code></td><td>String</td><td>シールド次回利用可能日</td></tr>
+    <tr><td><code>chromatic_last_streak_milestone</code></td><td>Int</td><td>最後に演出済みのマイルストーン日数</td></tr>
+    <tr><td><code>chromatic_notifications_enabled</code></td><td>Bool</td><td>通知 ON/OFF 設定</td></tr>
+    <tr><td><code>chromatic_daily_best_yyyyMMdd</code></td><td>String → Int</td><td>Daily Challenge 日別ベストスコア</td></tr>
+    <tr><td><code>chromatic_daily_completed_count</code></td><td>Int</td><td>Daily Challenge 累計プレイ数</td></tr>
+    <tr><td><code>chromatic_daily_last_played_date</code></td><td>String</td><td>Daily Challenge 最終プレイ日</td></tr>
+    <tr><td><code>chromatic_daily_last_played_score</code></td><td>Int</td><td>Daily Challenge 最終プレイスコア</td></tr>
+  </table>
+
+  <!-- ===================== UI画面遷移 ===================== -->
+  <h2>UI 画面遷移（v1.1 変更点）</h2>
+  <table>
+    <tr><th>画面・状態</th><th>変更内容</th></tr>
+    <tr><td>idle 画面</td><td>大型ストリーク表示（LargeStreakDisplayView）追加、TODAY'S CHALLENGE ボタン追加、難易度 Picker + START ボタンは既存のまま</td></tr>
+    <tr><td>Daily Challenge プレイ中</td><td>通常難易度と同じ UI。speedLabel が "DAILY" に変化</td></tr>
+    <tr><td>Daily Challenge ゲームオーバー</td><td>DailyChallengeResultView（絵文字グリッド + シェアボタン）を表示</td></tr>
+    <tr><td>ストリーク 7/30/100 日到達時</td><td>任意の idle 復帰タイミングで StreakMilestoneOverlay 全画面表示</td></tr>
+  </table>
+
+  <!-- ===================== 通知許諾フロー ===================== -->
+  <h2>通知許諾フロー</h2>
+  <ol>
+    <li>初回起動時: ATT 許諾後、二回目の idle 復帰タイミングで <code>UNUserNotificationCenter</code> 許諾リクエスト</li>
+    <li>許可後: 毎日 21:00 の <code>UNCalendarNotificationTrigger(repeats: true)</code> を 1 本登録</li>
+    <li>プレイ済み日: <code>refreshAfterPlay()</code> で同名 ID を削除 → 翌日シングルトリガー + 明後日以降リピートに切り替え</li>
+    <li>既に拒否済み: SettingsView で「設定アプリから許可してください」へ誘導</li>
+  </ol>
+
+  <!-- ===================== ビジネスルール ===================== -->
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>Daily Challenge は 1 日 1 回のみ（当日プレイ済み = ボタンを「結果を見る」に変更）</li>
+    <li>ストリークシールドは <strong>週 1 回のみ</strong>使用可能（連続使用不可）</li>
+    <li>マイルストーン演出は各日数につき <strong>1 回のみ</strong>（<code>chromatic_last_streak_milestone</code> で管理）</li>
+    <li>Daily Challenge のシーケンスはサーバー不要・クライアント完結（オフライン対応）</li>
+    <li>Public起算日 2026-05-12 = Day 1 は <code>DailyChallengeManager</code> にハードコード</li>
+  </ul>
+
+  <!-- ===================== エラー処理 ===================== -->
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>通知許諾拒否後のリマインダー登録要求</td><td>SettingsView に誘導バナー表示。通知なしで通常動作は継続</td></tr>
+    <tr><td>通知二重発火（プレイ済み日の再起動等）</td><td><code>refreshAfterPlay()</code> で同名 ID 削除 + 再登録で解決</td></tr>
+    <tr><td>低スペック端末でのパーティクル FPS 低下</td><td>Canvas レンダリングのため軽量だが、将来的に粒子数を端末性能で動的調整する</td></tr>
+    <tr><td>タイムゾーン跨ぎでのリセット誤作動</td><td>ローカル日付基準で統一。UTC 変換は行わない</td></tr>
+  </table>
+
+  <!-- ===================== 既知リスク・制約 ===================== -->
+  <h2>既知のリスク・制約</h2>
+  <ul>
+    <li>Daily Challenge はローカル時刻基準のためタイムゾーン跨ぎで同一日扱いとなり得る（許容）</li>
+    <li>通知二重発火防止のため <code>refreshAfterPlay()</code> で同名 ID 削除 + 再登録パターンを採用</li>
+    <li>パーティクルは Canvas レンダリングのため低スペック端末で FPS 低下の可能性</li>
+    <li>iOS 18.0+ 必須（既存と同じ）</li>
+  </ul>
+
+  <!-- ===================== 関連仕様書 ===================== -->
+  <h2>関連仕様書</h2>
+  <ul>
+    <li><a href="streak.html">ストリーク機能（StreakManager）</a> — v1.0 ベース仕様</li>
+    <li><a href="game-logic.html">ゲームロジック</a> — 速度加速・マイルストーン</li>
+    <li><a href="../screens/game.html">ゲーム画面（CR-GAME-01）</a> — idle / プレイ中 UI</li>
+    <li><a href="../screens/settings.html">設定画面（CR-SET-01）</a> — 通知 ON/OFF 設定</li>
+  </ul>
+
+  <!-- ===================== 変更履歴 ===================== -->
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-04-30</td><td>v1.0 初回審査提出</td></tr>
+    <tr><td>1.0.1</td><td>2026-05-11</td><td>特商法対応</td></tr>
+    <tr><td>1.1.0</td><td>2026-06予定</td><td>ドーパミン強化アップデート（Daily Challenge・ストリーク強化・Juice演出）</td></tr>
+    <tr><td>doc 1.0</td><td>2026-05-11</td><td>本仕様書 初版作成</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-11</footer>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+  });
+</script>
+</body>
+</html>
