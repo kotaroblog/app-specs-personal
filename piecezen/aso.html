@@ -8,54 +8,130 @@
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">PieceZen</a> / ASO戦略</div>
-  <header class="site-header"><h1>ASOキーワード戦略</h1><p>初版・要マーケレビュー</p></header>
+  <header class="site-header"><h1>ASOキーワード戦略</h1><p>v2.0 GPT-5レビュー反映版 ―「思想説明」から「快感訴求」へ</p></header>
 
   <h2>ターゲットユーザー</h2>
   <ul class="kv-list">
     <li><span class="k">ペルソナ</span><span class="v">スキマ時間に脳トレパズルを楽しむ20〜50代</span></li>
-    <li><span class="k">課題</span><span class="v">無料で長く遊べるパズル、広告少なめ希望</span></li>
+    <li><span class="k">課題</span><span class="v">無料で長く遊べるパズル、広告少なめ希望、派手すぎないゲーム性</span></li>
     <li><span class="k">利用シーン</span><span class="v">通勤・休憩・寝る前の数分</span></li>
   </ul>
 
+  <h2>ASO設計の指針（v2.0 改訂で大幅修正）</h2>
+  <div class="callout">
+    <p style="margin-top:0"><strong>GPT-5レビュー指摘の核心</strong>：</p>
+    <ul style="margin-bottom:0">
+      <li>App Store スクショは"広告"ではなく<strong>「インストール誘導UI」</strong>。「今すぐ遊びたい」「無料なら触るか」への圧が必要</li>
+      <li>これまでは"思想説明"に寄りすぎていた。<strong>「快感訴求コピー」</strong>への切り替えが必要</li>
+      <li><strong>"広告少"は入口には効くが継続理由ではない。</strong>継続理由訴求は「気持ちいいから続く」に置き換える</li>
+    </ul>
+  </div>
+
   <h2>主要キーワード候補</h2>
   <table>
-    <tr><th>優先度</th><th>キーワード</th><th>採用</th></tr>
-    <tr><td>1</td><td>パズル</td><td>○</td></tr>
-    <tr><td>1</td><td>ブロック</td><td>○</td></tr>
-    <tr><td>1</td><td>暇つぶし</td><td>○</td></tr>
-    <tr><td>2</td><td>脳トレ</td><td>○</td></tr>
-    <tr><td>2</td><td>テトリス風</td><td>△</td></tr>
-    <tr><td>3</td><td>禅 / Zen</td><td>○</td></tr>
-    <tr><td>3</td><td>無料 / 広告少なめ</td><td>○</td></tr>
+    <tr><th>優先度</th><th>キーワード</th><th>採用</th><th>備考</th></tr>
+    <tr><td>1</td><td>パズル</td><td>○</td><td>主要検索語</td></tr>
+    <tr><td>1</td><td>ブロック</td><td>○</td><td>ジャンル特定</td></tr>
+    <tr><td>1</td><td>暇つぶし</td><td>○</td><td>利用シーン訴求</td></tr>
+    <tr><td>2</td><td>脳トレ</td><td>○</td><td>ベネフィット訴求</td></tr>
+    <tr><td>2</td><td>テトリス風</td><td>△</td><td>ジャンル類推</td></tr>
+    <tr><td>2</td><td>1分パズル / 5分パズル</td><td>○ NEW</td><td>「1プレイ◯分」フック追加</td></tr>
+    <tr><td>3</td><td>禅 / Zen</td><td>○</td><td>世界観訴求</td></tr>
+    <tr><td>3</td><td>広告少なめ</td><td>○</td><td>入口フック（継続理由としては使わない）</td></tr>
+    <tr><td>3</td><td>片手 / オフライン</td><td>○ NEW</td><td>即理解フック追加（GPT-5指摘）</td></tr>
   </table>
 
-  <h2>App Store Connect 設定</h2>
+  <h2>App Store Connect 設定（v2.0 改訂案）</h2>
   <ul class="kv-list">
     <li><span class="k">表示名</span><span class="v">PieceZen</span></li>
-    <li><span class="k">サブタイトル</span><span class="v">広告少なめ8x8の暇つぶしパズル（暫定）</span></li>
-    <li><span class="k">キーワード</span><span class="v">パズル,ブロック,暇つぶし,脳トレ,テトリス,Zen,禅,無料,8x8,コンボ</span></li>
+    <li><span class="k">サブタイトル（旧）</span><span class="v">広告少なめ8x8の暇つぶしパズル</span></li>
+    <li><span class="k">サブタイトル（v2.0案A）</span><span class="v"><strong>静かなのに、やめられない8x8パズル</strong></span></li>
+    <li><span class="k">サブタイトル（v2.0案B）</span><span class="v"><strong>置くたび気持ちいい、片手の脳トレパズル</strong></span></li>
+    <li><span class="k">サブタイトル（v2.0案C）</span><span class="v"><strong>1分で脳が整う、静謐ブロックパズル</strong></span></li>
+    <li><span class="k">キーワード</span><span class="v">パズル,ブロック,暇つぶし,脳トレ,テトリス,Zen,禅,片手,オフライン,8x8,コンボ</span></li>
   </ul>
+  <p style="font-size:0.95em; color:var(--muted, #666)">※ A/Bテスト対象。リリース時は1案を選択し、ストア成績を見て差し替え検討。</p>
 
-  <h2>説明文の構造</h2>
-  <ol>
-    <li>「シンプルに、淡々と、ブロックを置いて消す」</li>
-    <li>8×8 / 19種ピース / 回転対応 / 救済アンドゥ</li>
-    <li>機能リスト: コンボ / パーフェクトクリア / アンドゥ / 統計 / 5テーマ</li>
-    <li>差別化: 救済リワード広告、5テーマカラー</li>
-  </ol>
-
-  <h2>スクリーンショット戦略</h2>
+  <h2>スクリーンショット戦略（v2.0 改訂版）</h2>
+  <div class="callout">
+    <strong>GPT-5指摘の改善方針</strong>：「思想説明型」キャプションから「感覚コピー型」へ全面差し替え。
+    各スクショに<strong>1秒で伝わる即理解フック</strong>を載せる。
+  </div>
   <table>
-    <tr><th>順序</th><th>テーマ</th></tr>
-    <tr><td>1</td><td>第一印象（ゲーム画面）</td></tr>
-    <tr><td>2</td><td>コンボ・パーフェクトクリア演出</td></tr>
-    <tr><td>3</td><td>5テーマの紹介</td></tr>
-    <tr><td>4</td><td>統計画面（ハイスコア）</td></tr>
-    <tr><td>5</td><td>アンドゥ・救済機能</td></tr>
+    <tr><th>順序</th><th>テーマ</th><th>キャプション案（感覚訴求）</th><th>狙い</th></tr>
+    <tr>
+      <td>1</td>
+      <td>第一印象（ゲーム画面）</td>
+      <td><strong>「置くたび、気持ちいい。」</strong></td>
+      <td>触覚快感の即時訴求。CTR最大化</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>コンボ・パーフェクトクリア演出</td>
+      <td><strong>「静かなのに、脳がほしがる。」</strong></td>
+      <td>コンセプト「低周波ドーパミン」を1文で表現</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Near Miss / 期待生成（v2.0新機能）</td>
+      <td><strong>「あと1手で、決まる。」</strong></td>
+      <td>"次の一手期待"を訴求。中毒性を匂わせる</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>5テーマ（拡張版v2.1）</td>
+      <td><strong>「気分で変える、5つの世界。」</strong></td>
+      <td>収集要素・カスタマイズ性</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>ストリーク・終了画面（v2.0新機能）</td>
+      <td><strong>「1分の脳トレが、習慣になる。」</strong></td>
+      <td>継続性・ベネフィット訴求</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>救済アンドゥ・広告少なめ訴求</td>
+      <td><strong>「広告は控えめ。集中、切らさない。」</strong></td>
+      <td>入口フック（継続理由としては使わないことに注意）</td>
+    </tr>
   </table>
 
-  <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <h2>説明文の構造（v2.0 改訂版）</h2>
+  <p>従来の「機能列挙型」から、<strong>「感覚→ベネフィット→機能」の3段構え</strong>に変更。</p>
+  <ol>
+    <li><strong>感覚コピー（冒頭3行）</strong>：「置くたび、気持ちいい。／静かなのに、やめられない。／PieceZen は、低く深い快感のブロックパズル。」</li>
+    <li><strong>利用シーン</strong>：通勤・休憩・寝る前の1〜5分。片手で完結。オフライン対応</li>
+    <li><strong>世界観の説明</strong>：木目・自然素材の落ち着いたUI。派手すぎないコンボ演出</li>
+    <li><strong>機能リスト</strong>：コンボ / パーフェクトクリア / Near Miss演出 / アンドゥ / ストリーク / 5テーマ / 統計</li>
+    <li><strong>収益訴求（最後）</strong>：広告は控えめ。広告除去IAP（買い切り¥480）あり</li>
+  </ol>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <h2>ブロック素材感の改善（ストア提出前必須）</h2>
+  <div class="callout">
+    <strong>GPT-5最優先指摘</strong>：現状のブロックは「フラット矩形」で快感画像になっていない。<strong>ストア提出スクリーンショットでは必ず以下を反映</strong>すること。
+  </div>
+  <ul>
+    <li>微弱ハイライト（上端 5〜10% の明度UP）</li>
+    <li>内側グラデーション（中心がわずかに明るい）</li>
+    <li>エッジ反射（縁にハイライト 1〜2px）</li>
+    <li>接地シャドウ（下端に淡い影）</li>
+    <li>木目 or 石目テクスチャ（テーマ別）</li>
+  </ul>
+  <p>※ 実装側（v2.0）で対応するため、リリース後にストア素材を更新する。</p>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>2.0</td><td>2026-05-12</td><td>GPT-5レビュー反映：「思想説明」から「快感訴求」へ全面切替。サブタイトル3案・スクショキャプション6案・説明文構造を再設計。ブロック素材感の改善要件を追加。グリッドサイズ表記を8×8に統一</td></tr>
+  </table>
+
+  <h2>関連仕様書</h2>
+  <ul>
+    <li><a href="features/v2.0-roadmap.html">v2.0 大型アップデート企画書「静謐ドーパミン」</a></li>
+    <li><a href="features/v2.0-review-2026-05.html">v2.0 外部レビューレポート（GPT-5 / 2026-05-12）</a></li>
+  </ul>
+
+  <footer class="site-footer">最終更新: 2026-05-12（v2.0）</footer>
 </div></body></html>

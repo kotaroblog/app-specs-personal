@@ -13,7 +13,7 @@
 
   <header class="site-header">
     <h1>PieceZen v2.0 大型アップデート企画書</h1>
-    <p>「静謐ドーパミン」設計 ― 習慣形成ループと静かで確実なフィードバックで継続率を引き上げる</p>
+    <p>「静謐ドーパミン」設計 ― 刺激を弱めるのではなく、刺激の質を"低周波化"する</p>
     <div class="section-meta">
       <span class="tag todo">draft</span>
       <span class="tag">FEAT-V2-ROADMAP</span>
@@ -25,7 +25,8 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-12</td><td>初版作成</td></tr>
-    <tr><td>1.1</td><td>2026-05-12</td><td>グリッドサイズを 8×8 に確定（ストアメタデータ側を後日修正）、SE 音源は別途調達方針を明記</td></tr>
+    <tr><td>1.1</td><td>2026-05-12</td><td>グリッドサイズを 8×8 に確定、SE 音源は別途調達方針を明記</td></tr>
+    <tr><td>2.0</td><td>2026-05-12</td><td>GPT-5 レビューを反映：コンセプトに"低周波化"を明記。v2.0 スコープに Near Miss / 配置吸着感 / 終了画面再設計 を追加。v2.1 スキン解放を SE・ハプティクス・背景粒子含む拡張版に格上げ。スコープ外項目に"刺激を弱くする方向"を追加</td></tr>
   </table>
 
   <h2>1. アップデート目的とコンセプト</h2>
@@ -34,27 +35,40 @@
   <ul class="kv-list">
     <li><span class="k">現バージョン</span><span class="v">v1.2.1 リリース済み</span></li>
     <li><span class="k">配信地域</span><span class="v">日本のみ</span></li>
-    <li><span class="k">課題</span><span class="v">継続率（D1 / D7）の引き上げが急務。習慣形成ループが不足している</span></li>
+    <li><span class="k">課題</span><span class="v">継続率（D1 / D7）の引き上げが急務。習慣形成ループ・期待形成・終了体験が不足している</span></li>
   </ul>
 
   <h3>コンセプト：「静謐ドーパミン」</h3>
+  <div class="callout">
+    <p style="margin-top:0; font-size:1.05em">
+      <strong>本コンセプトの核心は「刺激を弱める」ことではない。</strong><br>
+      <strong>"刺激の質を低周波化する"こと</strong>である。
+    </p>
+    <p style="margin-bottom:0">
+      ❌ ドーパミンを<strong>弱くする</strong>（＝無刺激化 = 継続理由消失）<br>
+      ⭕ ドーパミンを<strong>低周波化する</strong>（＝刺激の周波数を下げ、なおかつ脳が欲しがる状態を作る）
+    </p>
+  </div>
   <p>
     Block Blast! が蛍光色・大音量で実装するコンボ演出を、PieceZen の世界観（木・石・自然素材）に合わせ
-    <strong>「静かだが確実に気持ちいい」</strong>版に置き換える。
+    <strong>「静かだが確実に脳が欲しがる」</strong>版に置き換える。"静かなのに、やめられない"を成立させるため、
+    触覚・予兆・期待形成の3要素を中核に据える。
   </p>
   <table>
     <tr><th>競合のアプローチ</th><th>PieceZen のアプローチ</th></tr>
-    <tr><td>うるさく・派手にフィードバックする</td><td>静かに・確実にフィードバックする</td></tr>
-    <tr><td>蛍光色・大音量コンボ演出</td><td>木目テクスチャ・自然素材系の光と音</td></tr>
-    <tr><td>刺激で引き止める</td><td>マインドフルネス・集中層を離脱させない習慣形成ループ</td></tr>
+    <tr><td>うるさく・派手にフィードバックする（高周波）</td><td>低く・深く・確実にフィードバックする（低周波）</td></tr>
+    <tr><td>蛍光色・大音量コンボ演出</td><td>木目テクスチャ・低音SE・呼吸グロー</td></tr>
+    <tr><td>視覚刺激で引き止める</td><td>触覚・予兆・期待形成で脳を引き止める</td></tr>
+    <tr><td>"今の快感"だけで成立</td><td>"次で決まるかも"の期待形成までセット</td></tr>
   </table>
 
   <h2>2. KPI 目標（仮置き）</h2>
   <table>
     <tr><th>指標</th><th>目標</th></tr>
     <tr><td>D1 継続率</td><td>+10pt 改善</td></tr>
-    <tr><td>D7 継続率</td><td>+5pt 改善</td></tr>
+    <tr><td>D7 継続率</td><td>+8pt 改善（期待形成・Near Miss導入により上方修正）</td></tr>
     <tr><td>平均セッション数/日</td><td>1.3倍</td></tr>
+    <tr><td>1セッションあたり再プレイ回数（"あと1回"導線効果）</td><td>1.5倍</td></tr>
     <tr><td>広告表示回数（Interstitial + Rewarded）</td><td>1.5倍</td></tr>
   </table>
 
@@ -63,20 +77,24 @@
     <tr><th>バージョン</th><th>スコープ</th><th>想定リリース時期</th></tr>
     <tr>
       <td><strong>v2.0「静謐ドーパミン」</strong></td>
-      <td>コンボ強化 / パーフェクト演出 / ハプティクス / ストリークカレンダー + 7日報酬</td>
-      <td>2026年6月</td>
+      <td>コンボ強化 / パーフェクト演出 / ハプティクス / ストリーク + 7日報酬 / <strong>Near Miss演出</strong> / <strong>配置時の吸着感</strong> / <strong>終了画面の再設計</strong></td>
+      <td>2026年6月〜7月</td>
     </tr>
     <tr>
       <td><strong>v2.1「習慣化」</strong></td>
-      <td>デイリーチャレンジ / レベル・XP / スキン解放</td>
-      <td>2026年8月</td>
+      <td>デイリーチャレンジ / レベル・XP / スキン拡張（色 + SE + ハプティクス + 背景粒子）</td>
+      <td>2026年8月〜9月</td>
     </tr>
     <tr>
       <td><strong>v2.2「コンテンツ拡充」</strong></td>
       <td>デイリーミッション / 実績 / 世界ランキング（Game Center）</td>
-      <td>2026年10月</td>
+      <td>2026年10月〜11月</td>
     </tr>
   </table>
+  <div class="callout">
+    <strong>v2.0 工数増の影響</strong>：既存スコープ 17〜27h に対し、新規追加 17〜27h（Near Miss / 配置吸着感 / 終了画面再設計）で合計 34〜54h。
+    リリース時期を1ヶ月後ろ倒し（6月→6月〜7月）。
+  </div>
 
   <h2>4. v2.0 機能詳細</h2>
 
@@ -85,8 +103,8 @@
     <tr><th>項目</th><th>内容</th></tr>
     <tr><td>目的</td><td>連続ライン消しに倍率を設け、プレイヤーに「次も消したい」という動機を与える</td></tr>
     <tr><td>仕様</td><td>連続ライン消しで倍率アップ（2x → 4x → 8x）。倍率テキストのアニメーション表示</td></tr>
-    <tr><td>UI仕様</td><td>スコア付近に倍率テキストをフェードイン・スケールアップで表示。木目テクスチャの世界観に合ったカラー（ゴールド系）</td></tr>
-    <tr><td>既存コード活用</td><td>既実装の <code>comboCount</code> / <code>comboText</code> / <code>comboCleared()</code> を活用。スコア式の調整のみで対応可能</td></tr>
+    <tr><td>UI仕様</td><td>"墨が滲む"ような拡散表現でテキスト出現。木目テクスチャ世界観に合うゴールド系。文字だけが派手にならないよう、消去列から光粒子が盤面に吸われる演出を同時発火</td></tr>
+    <tr><td>既存コード活用</td><td>既実装の <code>comboCount</code> / <code>comboText</code> / <code>comboCleared()</code> を活用。スコア式調整＋エフェクト層追加</td></tr>
     <tr><td>改修ファイル</td><td><code>GameEngine.swift</code>, <code>ScoreEvent.swift</code>, <code>PlayFeedbackOverlay.swift</code></td></tr>
     <tr><td>実装難易度</td><td>S（Small）</td></tr>
     <tr><td>工数</td><td>4〜6h</td></tr>
@@ -96,8 +114,8 @@
   <table>
     <tr><th>項目</th><th>内容</th></tr>
     <tr><td>目的</td><td>盤面全消しを「特別感のある体験」にして達成感を最大化する</td></tr>
-    <tr><td>仕様</td><td>盤面全消し検知時、ボーナスを +500pt から +1000pt に調整。スローモーション演出追加</td></tr>
-    <tr><td>UI仕様</td><td>専用エフェクト：木目テクスチャに合わせた光の粒のパーティクルをグリッド全体に広げる。0.5秒のスローモーション後に通常速度に戻る</td></tr>
+    <tr><td>仕様</td><td>盤面全消し検知時、ボーナスを +500pt から +1000pt に調整。0.5秒のスローモーション後に通常速度へ復帰</td></tr>
+    <tr><td>UI仕様</td><td>木目テクスチャに合わせた光の粒のパーティクル（20〜30粒）をグリッド全体に広げる。背景に薄い"呼吸グロー"を1サイクル</td></tr>
     <tr><td>既存コード活用</td><td>既実装の <code>isPerfectClearTriggered</code> / <code>PerfectClearOverlay</code> を活用</td></tr>
     <tr><td>改修ファイル</td><td><code>GameEngine.swift</code>, <code>PlayFeedbackOverlay.swift</code></td></tr>
     <tr><td>実装難易度</td><td>S（Small）</td></tr>
@@ -107,17 +125,17 @@
   <h3>4.3 強化ハプティクス</h3>
   <table>
     <tr><th>項目</th><th>内容</th></tr>
-    <tr><td>目的</td><td>触覚フィードバックを「静謐ドーパミン」世界観に統一し、プレイの没入感を高める</td></tr>
+    <tr><td>目的</td><td>触覚フィードバックを「低周波ドーパミン」世界観に統一し、プレイの没入感を高める</td></tr>
     <tr><td>仕様（振動パターン）</td><td>
       通常ライン消し: 短い1回振動<br>
       コンボ時: 段階的に強くなる連続パターン（2x=弱2回 / 4x=中3回 / 8x=強4回）<br>
-      パーフェクトクリア: 長めの重厚パターン
+      パーフェクトクリア: 長めの重厚パターン（残響感を意識）
     </td></tr>
-    <tr><td>UI仕様（効果音）</td><td>コンボ・パーフェクト専用 SE を「ガラス共鳴音・木琴音」など自然素材系に統一</td></tr>
+    <tr><td>UI仕様（効果音）</td><td>コンボ・パーフェクト専用 SE を「ガラス共鳴音・木琴音」など自然素材系に統一。残響を長めに取る</td></tr>
     <tr><td>改修ファイル</td><td><code>HapticManager.swift</code></td></tr>
     <tr><td>実装難易度</td><td>S（Small）</td></tr>
     <tr><td>工数</td><td>3〜5h</td></tr>
-    <tr><td>注意点</td><td>SE 音源を別途調達する必要あり。無料の自然音素材（freesound.org 等）を検討。ライセンス確認必須</td></tr>
+    <tr><td>注意点</td><td>SE 音源はユーザー側で別途調達予定。実装着手前までに用意する</td></tr>
   </table>
 
   <h3>4.4 ストリークカレンダー + 7日報酬テーブル</h3>
@@ -130,12 +148,78 @@
       Day3: スキン「ocean」一時試用（24h）<br>
       Day7: スキン「sakura」永久解放（または広告除去 24h）
     </td></tr>
-    <tr><td>UI仕様</td><td>ホーム画面またはゲーム起動時のモーダルに7マスのカレンダーを表示。達成済みマスは木目アイコンで強調</td></tr>
+    <tr><td>UI仕様</td><td>ホーム画面起動時のモーダルに7マスのカレンダーを表示。達成済みマスは木目アイコンで強調</td></tr>
     <tr><td>既存コード活用</td><td>既実装の <code>StreakManager</code> を流用。報酬テーブルとモーダル表示を追加</td></tr>
     <tr><td>改修ファイル</td><td><code>StreakManager.swift</code>, <code>ContentView.swift</code>, 新規 <code>StreakRewardView.swift</code></td></tr>
     <tr><td>実装難易度</td><td>M（Medium）</td></tr>
     <tr><td>工数</td><td>8〜12h</td></tr>
     <tr><td>重要制約</td><td><strong>ストリーク消滅ペナルティは設けない</strong>（Blockudoku の失敗事例より。カジュアル層離脱を防ぐ）</td></tr>
+  </table>
+
+  <h3>4.5 Near Miss 演出 <span class="tag">NEW v2.0</span></h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>「あと1マスで全消し」「あと1列」の状態で<strong>"惜しい"感を能動的に演出</strong>し、次の一手への期待を生む。人間は「惜しい」で中毒化する</td></tr>
+    <tr><td>仕様</td><td>
+      盤面状態をプレイヤーの操作ごとに評価し、以下のいずれかを検出した時に Near Miss 演出を発火：<br>
+      ① あと1ピース配置でライン消しできるセル列・行が存在<br>
+      ② あと1ライン消去でパーフェクトクリアが成立<br>
+      ③ コンボ継続まであと1手
+    </td></tr>
+    <tr><td>UI仕様</td><td>
+      対象セルに<strong>微発光</strong>（透明度 0.3 で 1.5秒周期の呼吸アニメ）<br>
+      対象列・行の外周に<strong>淡い磁力線</strong>のような細いライン演出<br>
+      静かなSE（風鈴の余韻のような単発音）を1回再生<br>
+      ハプティクスは出さない（過剰刺激回避）
+    </td></tr>
+    <tr><td>新規実装</td><td>新規 <code>NearMissDetector.swift</code>（盤面評価ロジック）, <code>NearMissOverlay.swift</code>（演出層）。<code>GameEngine.swift</code> に評価フック追加</td></tr>
+    <tr><td>実装難易度</td><td>M（Medium）</td></tr>
+    <tr><td>工数</td><td>6〜10h</td></tr>
+    <tr><td>注意点</td><td>毎ターン評価が走るためパフォーマンス影響を測定。8×8 グリッドなので O(64) 程度に収まる想定</td></tr>
+  </table>
+
+  <h3>4.6 配置時の「吸着感」 <span class="tag">NEW v2.0</span></h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>「置けた」感の触覚的快感を作る。配置という最頻アクションに低周波ドーパミンを宿す</td></tr>
+    <tr><td>仕様</td><td>
+      配置確定時のアニメーションを以下のシーケンスで実装：<br>
+      ① ドロップ着地に 0.06秒の遅延（"吸い込まれる"感）<br>
+      ② 配置直後に scale 1.04 → 1.0 のスプリングアニメ（0.15秒）<br>
+      ③ 微振動（UIImpactFeedbackGenerator .light）<br>
+      ④ 低音SE 1発（ウッドノックのような短音）<br>
+      ⑤ 周囲4セルに 0.1秒だけ光拡散
+    </td></tr>
+    <tr><td>UI仕様</td><td>シーケンス全体で 0.25秒以内に収め、操作のテンポを損なわない</td></tr>
+    <tr><td>改修ファイル</td><td><code>GameEngine.swift</code>（finalizePlacement のシーケンス変更）, <code>BoardView.swift</code>, <code>HapticManager.swift</code></td></tr>
+    <tr><td>実装難易度</td><td>S（Small）</td></tr>
+    <tr><td>工数</td><td>3〜5h</td></tr>
+    <tr><td>注意点</td><td>低音SE 1種類が追加で必要（自然素材系）。SE調達リストに追記</td></tr>
+  </table>
+
+  <h3>4.7 終了画面の再設計 <span class="tag">NEW v2.0</span></h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>ゲームオーバーを<strong>離脱地点</strong>ではなく<strong>再プレイ起動点</strong>に変える。"あと1回"導線を埋め込みD1継続率を直接押し上げる</td></tr>
+    <tr><td>仕様（表示要素）</td><td>
+      ① <strong>成長表示</strong>: 今回スコア＋過去ベスト超え or 過去N回平均超えを明示<br>
+      ② <strong>"あと1回"フック</strong>: 「最高スコアまであと◯◯」「あと1コンボで新記録」など、状況に応じた動的コピー<br>
+      ③ <strong>streak 維持表示</strong>: 「今日プレイ済み（streak ◯日継続中）」または「あと◯時間でstreak途切れます」<br>
+      ④ <strong>1タップ再開ボタン</strong>: 大きく中央配置、迷わせない<br>
+      ⑤ リワード広告救済は既存通り維持<br>
+      ⑥ 静かな終了SE（息を吐くような余韻音）
+    </td></tr>
+    <tr><td>"あと1回"コピー生成ロジック</td><td>
+      <code>EndOfGameMessageBuilder</code> で以下の優先順位で1メッセージ選択：<br>
+      a. ベスト記録まで残り 100pt 以内 → 「あと◯◯で新記録」<br>
+      b. コンボ最大値まであと1〜2 → 「あと◯コンボで自己ベスト」<br>
+      c. streak 7日達成まで残り3日以内 → 「あと◯日でstreak報酬」<br>
+      d. 該当なし → 「ナイスプレイ。次の一手を待っている」など中性メッセージ
+    </td></tr>
+    <tr><td>新規実装</td><td>新規 <code>EndOfGameMessageBuilder.swift</code>, <code>GameOverView.swift</code> 大幅改修（既存ファイル）</td></tr>
+    <tr><td>実装難易度</td><td>M（Medium）</td></tr>
+    <tr><td>工数</td><td>8〜12h</td></tr>
+    <tr><td>注意点</td><td>"あと1回"コピーの誤発火（誇大表現）を避けるため、しきい値は実データで調整。最初は a/b/c の優先順位を保守的に設定</td></tr>
   </table>
 
   <h2>5. v2.1 機能サマリ（簡易）</h2>
@@ -155,11 +239,21 @@
     <li>新規モデル <code>PlayerProfile</code> を追加（レベル・累計XP・解放スキン一覧）</li>
   </ul>
 
-  <h3>5.3 スキン解放</h3>
+  <h3>5.3 スキン拡張（v2.0 改訂で大幅強化）</h3>
+  <p><strong>「色変更だけ」では収集物として弱い</strong>という指摘を踏まえ、スキンを"テーマパッケージ"に格上げする。</p>
   <ul>
-    <li>既定義5テーマ（classic / ocean / sakura / neon / monochrome）に解放条件を追加</li>
+    <li>既定義5テーマ（classic / ocean / sakura / neon / monochrome）それぞれに以下を紐付け：
+      <ul>
+        <li><strong>配色</strong>（既存）</li>
+        <li><strong>専用SE</strong>（配置音・ライン消去音・コンボ音）</li>
+        <li><strong>専用ハプティクス</strong>（パターン微調整）</li>
+        <li><strong>背景粒子エフェクト</strong>（sakura=花びら / ocean=泡 / neon=光線 等）</li>
+        <li><strong>UI音</strong>（メニュー操作音）</li>
+      </ul>
+    </li>
     <li>解放トリガー: レベル達成 / 実績達成 / リワード広告視聴のいずれか</li>
     <li>解放済みスキンは <code>PlayerProfile.unlockedSkins</code> で管理</li>
+    <li>v2.1 想定工数: 大幅増（各テーマで SE 3〜4種 / 粒子エフェクト1種が必要）。アセット制作がボトルネック</li>
   </ul>
 
   <h2>6. v2.2 機能サマリ（簡易）</h2>
@@ -177,6 +271,8 @@
     <tr><td>数日間続くトーナメント（72時間超）</td><td>プレイ義務感が強くなり長期離脱につながる</td></tr>
     <tr><td>ブッシュ・ジェム等のゲームプレイ変質オブジェクト</td><td>長期ユーザーの離脱・既存ゲームバランスの崩壊</td></tr>
     <tr><td>バトルパス形式のメタ進行</td><td>認知コストが高くカジュアル層に不適合</td></tr>
+    <tr><td><strong>"刺激を弱くする"方向の演出変更</strong></td><td><strong>「静謐」と「無刺激」を混同しない。</strong>静かであっても脳が欲しがる状態（低周波ドーパミン）を成立させる。単純なボリュームダウン・エフェクト削減は禁じ手</td></tr>
+    <tr><td>"広告少"を継続理由として打ち出すコピー</td><td>入口には効くが継続理由にはならない。継続理由は「気持ちいいから続ける」に集約する</td></tr>
   </table>
 
   <h2>8. 技術リスク・確認事項</h2>
@@ -189,8 +285,13 @@
     </tr>
     <tr>
       <td><strong>SE 音源調達</strong></td>
-      <td>コンボ・パーフェクトクリア専用の自然素材系 SE（ガラス共鳴音・木琴音等）が未調達</td>
-      <td>ユーザー側で別途調達予定。実装着手前までに用意する</td>
+      <td>コンボ・パーフェクトクリア・配置吸着・Near Miss・終了画面の自然素材系 SE が未調達</td>
+      <td>ユーザー側で別途調達予定。実装着手前までに用意する。最低必要数: ①コンボ系3種 ②パーフェクト1種 ③配置吸着（低音ウッドノック）1種 ④Near Miss（風鈴余韻）1種 ⑤終了余韻音1種 = 計7種</td>
+    </tr>
+    <tr>
+      <td><strong>Near Miss 検出のパフォーマンス</strong></td>
+      <td>毎ターン盤面評価が走るため、操作レスポンスへの影響を計測する必要あり</td>
+      <td>8×8 グリッドで O(64) 程度に収まる想定。配置確定後の非同期評価で対応。Instruments でプロファイリング実施</td>
     </tr>
     <tr>
       <td><strong>SwiftData マイグレーション</strong></td>
@@ -214,8 +315,8 @@
     <tr><th>アプリ</th><th>効いている仕掛け</th><th>PieceZen への示唆</th></tr>
     <tr>
       <td><a href="https://balancy.co/blog/2025/03/26/how-could-block-blast-by-hungry-studio-earn-more-monetization-and-gameplay-deconstruction/" target="_blank" rel="noopener">Block Blast!</a></td>
-      <td>ゼロストレス + 即時報酬 + 動的難易度</td>
-      <td>コンボ演出を「静謐版」に置き換えて世界観を維持しつつ即時報酬を提供</td>
+      <td>ゼロストレス + 即時報酬 + 動的難易度 + "次で気持ちよくなる盤面"の意図的生成</td>
+      <td>コンボ演出を低周波版に置き換え、"次の一手期待"を Near Miss + 終了画面コピーで実現</td>
     </tr>
     <tr>
       <td><a href="https://apps.apple.com/us/app/1010-block-puzzle-game/id911793120" target="_blank" rel="noopener">1010!</a></td>
@@ -225,14 +326,24 @@
     <tr>
       <td><a href="https://easybrain.com/blockudoku" target="_blank" rel="noopener">Blockudoku</a></td>
       <td>デイリーチャレンジ + トロフィー</td>
-      <td>v2.1 デイリーチャレンジで採用。ペナルティ設計の失敗は反面教師として活用</td>
+      <td>v2.1 デイリーチャレンジで採用。ペナルティ設計の失敗は反面教師</td>
     </tr>
     <tr>
       <td>Wood Block Puzzle</td>
       <td>木目テクスチャ・ゼンモード</td>
-      <td>世界観・トーン&マナーの方向性として参考（すでに PieceZen が実装済み）</td>
+      <td>世界観・トーン&マナーの方向性として参考</td>
+    </tr>
+    <tr>
+      <td>Duolingo（カジュアルジャンル外参考）</td>
+      <td>感情フィードバック・成長実感・再開理由</td>
+      <td>終了画面の"あと1回"コピーで成長実感を表現（キャラクターは持たない設計）</td>
     </tr>
   </table>
+
+  <h2>10. 関連レビュー</h2>
+  <ul>
+    <li><a href="v2.0-review-2026-05.html">v2.0 外部レビューレポート（GPT-5 / 2026-05-12）</a> — 本企画書 v2.0 改訂の根拠</li>
+  </ul>
 
   <h2>関連仕様書</h2>
   <ul>
@@ -241,9 +352,10 @@
     <li><a href="sound.html">サウンド</a>（activePlayers 配列で安全再生）</li>
     <li><a href="streak.html">ストリーク</a>（StreakManager）</li>
     <li><a href="ad-control.html">広告制御</a>（リワード広告流用）</li>
+    <li><a href="../aso.html">ASOキーワード戦略</a>（GPT-5レビューを踏まえ別途改訂）</li>
   </ul>
 
-  <footer class="site-footer">最終更新: 2026-05-12（v1.1）</footer>
+  <footer class="site-footer">最終更新: 2026-05-12（v2.0）</footer>
 </div>
 </body>
 </html>
