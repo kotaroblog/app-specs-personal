@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>PieceZen - v2.0 外部レビューレポート（GPT-5 / 2026-05-12）</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / v2.0 外部レビューレポート</div>
+
+  <header class="site-header">
+    <h1>v2.0 外部レビューレポート</h1>
+    <p>GPT-5 によるUX/UI・ドーパミン設計レビュー（現状版 v1.2.1 + v2.0企画書 を対象）</p>
+    <div class="section-meta">
+      <span class="tag">REVIEW</span>
+      <span class="tag">GPT-5</span>
+      <span class="tag">2026-05-12</span>
+    </div>
+  </header>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-12</td><td>GPT-5 レビューレポート初版保存</td></tr>
+  </table>
+
+  <h2>レビュー実施概要</h2>
+  <ul class="kv-list">
+    <li><span class="k">レビュア</span><span class="v">ChatGPT (GPT-5) — モバイルゲーム UX/リテンション設計の専門家ペルソナ</span></li>
+    <li><span class="k">実施日</span><span class="v">2026-05-12</span></li>
+    <li><span class="k">評価対象</span><span class="v">現状版 v1.2.1（スクリーンショット）＋ v2.0 大型アップデート企画書</span></li>
+    <li><span class="k">評価軸</span><span class="v">A. UX/UIデザイン　B. ドーパミン設計・リテンション仕掛けの有効性</span></li>
+    <li><span class="k">関連仕様</span><span class="v"><a href="v2.0-roadmap.html">v2.0 大型アップデート企画書「静謐ドーパミン」</a></span></li>
+  </ul>
+
+  <div class="callout">
+    本レポートはレビュー原文の保存版。v2.0 企画書の改訂は別途 <a href="v2.0-roadmap.html">v2.0-roadmap.html</a> で反映する。
+  </div>
+
+  <h2>1. 総評</h2>
+  <p>方向性は正しい。ただし現状は「落ち着いている」ではなく、<strong>「刺激不足で記憶に残らない」</strong>に寄っている。</p>
+  <p>
+    v2.0 の「静謐ドーパミン」は差別化として成立可能。ただし今の企画書は<strong>"静かな演出追加"に寄りすぎており</strong>、
+    継続率を本当に押し上げる<strong>メタ進行・可変報酬・期待形成</strong>がまだ弱い。
+    Block Blast! 系競合に対して、<strong>「脳汁の代替」</strong>がまだ不足している。
+  </p>
+
+  <h2>2. UX/UI 評価</h2>
+
+  <h3>良い点</h3>
+  <table>
+    <tr><th>#</th><th>項目</th><th>評価</th></tr>
+    <tr>
+      <td>1</td>
+      <td>トーン統一</td>
+      <td>濃紺背景＋彩度高めブロック＋白タイポの統一感がある。「広告少なめ・集中できる」というコンセプトとUIトーンが一致。個人開発パズルとしては上位</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>余白設計</td>
+      <td>無駄な情報詰め込みなし。Block Blast! クローン系にありがちな「安い中華感」がない。外周余白・カード間隔・上部コピーとの距離が安定</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>広告除去買い切りの訴求</td>
+      <td>サブスク疲れ市場に刺さる。UIも押し売り感が少なく戦略的に良い</td>
+    </tr>
+  </table>
+
+  <h3>課題点（優先度付き）</h3>
+
+  <h4>P0: "ゲームが気持ちよさそう"に見えない</h4>
+  <p>
+    スクショ全体から受ける印象が「静か・丁寧・ミニマル」で止まっている。
+    パズルゲームで必要なのは「置きたい」「消したい」「連鎖したい」という<strong>運動欲求</strong>。
+    今のスクショは<strong>「情報画像」</strong>に見えて<strong>「快感画像」</strong>になっていない。
+  </p>
+  <ul>
+    <li>ブロックに立体感がない</li>
+    <li>発光が弱い</li>
+    <li>消去エフェクトが弱い</li>
+    <li>"次の一手" を想像させない</li>
+  </ul>
+  <p>Block Blast! はUIが下品でも「置いた瞬間が気持ちよさそう」に見える。PieceZen は逆。</p>
+
+  <h4>P0: CTA導線が弱すぎる</h4>
+  <p>App Store スクショは広告ではなく<strong>「インストール誘導UI」</strong>。「今すぐ遊びたい」「無料なら触るか」への圧が弱い。</p>
+  <p>例えば「無料」「オフライン」「1プレイ5分」「脳が整う」「広告少」「片手」のような即理解フックが弱い。今は"思想説明"が多い。</p>
+
+  <h4>P1: 世界観がまだ"デモUI"っぽい</h4>
+  <p>全画面グラデ背景・半透明カード・汎用SFフォント感・無機質パネルが強い。「Apple風ミニマルUI」で止まっている。</p>
+  <p>目指すべきは「木・石・和紙・柔らかい反射・空気感・深い影」の方向。</p>
+
+  <h4>P1: コンボ演出が弱い</h4>
+  <p>「×3 COMBO!」は世界観的にも中途半端。文字だけが急に派手で、Glow が安っぽい・レイヤーが浅い・物理感がない。</p>
+  <p><strong>改善方向</strong>：墨が滲むような拡散 / 光粒子が盤面に吸われる / 低速カメラ / ハプティクス遅延 / 残響SE。</p>
+
+  <h4>P1: KPI可視化が"義務感"に寄っている</h4>
+  <p>「毎日5分のパズル習慣」は危険。習慣系コピーはユーザーに"やらされ感"を与える。Duolingo はキャラと感情で誤魔化しているが、PieceZen は感情キャラクターが無いので義務性が前面に出る。</p>
+
+  <h4>P2: 色覚対応が弱い</h4>
+  <p>赤・緑依存がある。コンボ高速化すると識別ミスが増える。最低限「ブロック輪郭差・内部模様・明度差」を追加すべき。</p>
+
+  <h4>P2: iOSらしい触覚導線が薄い</h4>
+  <p>iOSカジュアルゲームは<strong>「視覚より触覚」</strong>で中毒化している。今のUIは"見るUI"。必要なのは"指で気持ちいいUI"。</p>
+
+  <h3>具体的改善提案</h3>
+  <table>
+    <tr><th>#</th><th>改善提案</th><th>具体内容</th><th>効果</th></tr>
+    <tr>
+      <td>1</td>
+      <td>ブロックに素材感追加</td>
+      <td>微弱ハイライト / 内側グラデ / エッジ反射 / 木目 or 石目 / 接地シャドウ</td>
+      <td>工数対効果が非常に高い（最優先）</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>配置時の「吸着感」</td>
+      <td>着地0.06秒遅延 / scale 1.04→1.0 / 微振動 / 低音1発 / 周囲セルへ光拡散</td>
+      <td>「置けた」感の獲得</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>コンボ時に盤面全体へ波紋</td>
+      <td>消去列から波紋 / 周囲ブロック微発光 / 背景に薄い呼吸グロー</td>
+      <td>「盤面全体が反応する」感覚</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>スクショを「快感訴求」に変える</td>
+      <td>「脳が整う。」「置くたび、気持ちいい。」「静かなのに、やめられない。」など感覚コピーへ</td>
+      <td>CTR・CVR改善</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>UIノイズを減らし"禅"へ振り切る</td>
+      <td>ミニマル × ネオンの組合せをやめ、ネオン感を捨てる</td>
+      <td>「静謐ドーパミン」コンセプトとの整合</td>
+    </tr>
+  </table>
+
+  <h2>3. ドーパミン/リテンション設計評価</h2>
+
+  <h3>「静謐ドーパミン」コンセプトの妥当性</h3>
+  <p>かなり良い。市場的にも「派手疲れ・TikTok疲れ・脳疲労・ASMR需要・mindful app需要」は確実に存在する。特に30代以上には刺さる。</p>
+  <div class="callout">
+    <strong>ただし問題</strong>：「静か」は差別化になるが、<strong>「弱い刺激」は継続理由にならない</strong>。
+    必要なのは「静かなのに、脳が欲しがる」状態。今のv2.0はまだ"静かな演出強化"。本当に必要なのは<strong>"期待形成"</strong>。
+  </div>
+
+  <h3>v2.0 スコープの過不足</h3>
+
+  <h4>採用が正しいもの</h4>
+  <table>
+    <tr><th>要素</th><th>評価</th></tr>
+    <tr><td>コンボ強化</td><td>正しい。Block Blast! 系で最重要</td></tr>
+    <tr><td>ハプティクス強化</td><td>超重要。むしろ最優先でもいい</td></tr>
+    <tr><td>ストリーク（ペナルティなし）</td><td>正しい。Blockudoku のライフ制は確かに疲弊を生む</td></tr>
+  </table>
+
+  <h4>足りない要素（新規追加すべき）</h4>
+  <table>
+    <tr><th>要素</th><th>理由</th></tr>
+    <tr>
+      <td><strong>Near Miss 演出</strong></td>
+      <td>最重要レベルで不足。「あと1マスで全消し」「あと1列」時に微発光・呼吸アニメ・静かなSEが必要。人間は「惜しい」で中毒化する</td>
+    </tr>
+    <tr>
+      <td><strong>"次の一手期待"生成</strong></td>
+      <td>Block Blast! が強い理由。PieceZen は現在の快感しかない。「次で決まるかも」を盤面生成アルゴリズムで作る</td>
+    </tr>
+    <tr>
+      <td><strong>終了時演出</strong></td>
+      <td>ゲームオーバーが弱い。「今日のベスト・前回超え・成長・streak維持」を必ず出す。終了体験が弱いとD1が伸びない</td>
+    </tr>
+    <tr>
+      <td><strong>"あと1回"導線</strong></td>
+      <td>「今日は最高スコア更新まであと120」「あと1コンボで新記録」「7日達成まであと1日」等の期待形成</td>
+    </tr>
+  </table>
+
+  <h3>v2.1 / v2.2 送り判断の評価</h3>
+  <table>
+    <tr><th>判断</th><th>評価</th><th>理由</th></tr>
+    <tr><td>Game Center 後回し</td><td>○ 正しい</td><td>初期のランキングは空洞感が強い</td></tr>
+    <tr><td>バトルパス不採用</td><td>○ 完全に正しい</td><td>世界観を壊す</td></tr>
+    <tr><td>XP を v2.1 送り</td><td>△ 遅い</td><td>レベル/XPは D1〜D7 改善にかなり効く。ストリークより先でもいい</td></tr>
+    <tr><td>スキン解放（既定5テーマのみ）</td><td>△ 弱い</td><td>色変更だけでは「欲しい」が生まれにくい</td></tr>
+  </table>
+
+  <h3>競合比較で足りない仕掛け</h3>
+  <table>
+    <tr><th>競合</th><th>PieceZen に不足している要素</th></tr>
+    <tr>
+      <td>Block Blast!</td>
+      <td>Near Miss / Next期待 / 盤面呼吸 / 難易度揺らぎ / "救済配置" / 無意識誘導 ＋ "次で気持ちよくなる盤面"の意図的生成</td>
+    </tr>
+    <tr>
+      <td>Duolingo</td>
+      <td>感情フィードバック / 成長実感 / 再開理由</td>
+    </tr>
+    <tr>
+      <td>Candy Crush</td>
+      <td>予兆演出 / 連鎖期待 / 音階快感</td>
+    </tr>
+  </table>
+
+  <h2>4. 致命的な見落とし／盲点</h2>
+
+  <div class="callout">
+    <h3 style="margin-top:0">最大の盲点：「静謐」と「無刺激」を混同している</h3>
+    <p>Zen系ゲームで失敗する典型。必要なのは<strong>「刺激を減らす」</strong>ではなく<strong>「刺激の質を変える」</strong>こと。</p>
+    <p style="font-size:1.05em">
+      ❌ ドーパミンを<strong>弱くする</strong><br>
+      ⭕ ドーパミンを<strong>低周波化する</strong>
+    </p>
+  </div>
+
+  <h3>もう1つの盲点："広告少"は継続理由にならない</h3>
+  <p>これは入口には効くが継続理由にはならない。ユーザーは「広告少ないから続ける」ではなく、「気持ちいいから続ける」。</p>
+
+  <h2>5. 次に着手すべき優先タスク TOP5</h2>
+  <table>
+    <tr><th>順位</th><th>タスク</th><th>具体内容</th></tr>
+    <tr>
+      <td>1位</td>
+      <td><strong>配置・消去・コンボの触覚快感</strong></td>
+      <td>着地吸着 / 低遅延ハプティクス / 低音SE / 微スロー / 波紋。UIより重要</td>
+    </tr>
+    <tr>
+      <td>2位</td>
+      <td><strong>Near Miss システム実装</strong></td>
+      <td>あと1列で消える時：盤面呼吸 / 微粒子 / 軽い磁力演出</td>
+    </tr>
+    <tr>
+      <td>3位</td>
+      <td><strong>"次で決まる"期待生成</strong></td>
+      <td>盤面生成アルゴリズム改善。D7に直結</td>
+    </tr>
+    <tr>
+      <td>4位</td>
+      <td><strong>スキンを「収集物」に昇格</strong></td>
+      <td>色変更だけでは弱い。テーマごとに SE / ハプティクス / 背景粒子 / UI音 まで変える</td>
+    </tr>
+    <tr>
+      <td>5位</td>
+      <td><strong>終了画面の再設計</strong></td>
+      <td>成長 / 今日の成果 / streak / 次回期待 / 1タップ再開</td>
+    </tr>
+  </table>
+
+  <h2>6. 結論</h2>
+  <div class="callout">
+    <p>企画全体としては、「個人開発カジュアルパズル」としてはかなり戦略的。ただし現段階では：</p>
+    <p style="font-size:1.1em; text-align:center; margin:1em 0">
+      <strong>"思想は強いが、依存設計がまだ弱い"</strong>
+    </p>
+    <p>
+      「静謐ドーパミン」を本当に成立させるなら、<strong>"低刺激なのに脳が欲しがる"設計</strong>を、
+      <strong>触覚・予兆・期待形成</strong>で作る必要がある。
+    </p>
+  </div>
+
+  <h2>関連仕様書</h2>
+  <ul>
+    <li><a href="v2.0-roadmap.html">v2.0 大型アップデート企画書「静謐ドーパミン」</a>（このレビューを踏まえ改訂予定）</li>
+    <li><a href="game-logic.html">ゲームロジック</a></li>
+    <li><a href="haptic.html">ハプティクス</a></li>
+    <li><a href="../aso.html">ASOキーワード戦略</a></li>
+  </ul>
+
+  <footer class="site-footer">最終更新: 2026-05-12（v1.0）</footer>
+</div>
+</body>
+</html>
