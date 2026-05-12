@@ -38,12 +38,14 @@
   <!-- ===================== KPI設計 ===================== -->
   <h2>KPI 設計</h2>
   <table>
-    <tr><th>指標</th><th>v1.0 基準値</th><th>v1.1 目標値</th></tr>
-    <tr><td>D1リテンション</td><td>35%</td><td>50%</td></tr>
-    <tr><td>D7リテンション</td><td>12%</td><td>25%</td></tr>
-    <tr><td>平均セッション数/日</td><td>1.2</td><td>2.5</td></tr>
-    <tr><td>DAU</td><td>50</td><td>150</td></tr>
-    <tr><td>Daily Challenge参加率</td><td>—</td><td>新規DAUの 70% 以上</td></tr>
+    <tr><th>指標</th><th>v1.0 基準値</th><th>v1.1 当初目標</th><th>v1.1.0 修正版（評価反映後）</th></tr>
+    <tr><td>D1リテンション</td><td>35%</td><td>50%</td><td><strong>55%</strong>（Near Miss効果で再挑戦率向上見込み）</td></tr>
+    <tr><td>D7リテンション</td><td>12%</td><td>25%</td><td><strong>30%</strong>（Variable Surprise で慣れ防止）</td></tr>
+    <tr><td>平均セッション数/日</td><td>1.2</td><td>2.5</td><td><strong>3.0</strong></td></tr>
+    <tr><td>DAU</td><td>50</td><td>150</td><td>150（変更なし）</td></tr>
+    <tr><td>Daily Challenge参加率</td><td>—</td><td>新規DAUの 70% 以上</td><td>新規DAUの 70%（変更なし）</td></tr>
+    <tr><td>「あと1ラウンドだった」モーメント比率</td><td>—</td><td>—</td><td>全プレイの <strong>25% 以上</strong>を目標</td></tr>
+    <tr><td>Surprise遭遇率</td><td>—</td><td>—</td><td>約10ゲームに1回（5.5%）</td></tr>
   </table>
 
   <!-- ===================== 機能A: Daily Challenge ===================== -->
@@ -234,12 +236,117 @@ sequenceDiagram
     <tr><td><code>Game/MilestoneFlashView.swift</code></td><td>マイルストーン到達演出（既存強化）</td></tr>
   </table>
 
+  <!-- ===================== v1.1 追加実装（評価フィードバック反映） ===================== -->
+  <h2>v1.1 追加実装（評価フィードバック反映）</h2>
+  <div class="section-meta" style="margin-bottom:1rem;">
+    <span class="tag">モバイルゲームPM視点</span>
+    <span class="tag">Near Miss / Variable Reward / 速度カーブ</span>
+  </div>
+
+  <blockquote style="border-left:4px solid #FF9500; margin:1rem 0; padding:0.75rem 1rem; background:rgba(255,149,0,0.08); border-radius:0 8px 8px 0;">
+    <p style="margin:0; font-style:italic; color:#ccc;">
+      「短時間で脳を高負荷運転させる」設計としてはかなり強い。<br>
+      ただし現状は <strong>競技性は強いが、依存性はまだ弱い</strong>。<br>
+      必要なのは Near Miss / Flow演出 / Variable Reward / リズム没入 / Surprise。
+    </p>
+  </blockquote>
+
+  <!-- D. Near Miss -->
+  <h3>D. Near Miss演出（「あと一歩」訴求）</h3>
+  <p><strong>目的:</strong> 「ベストまであと1」「Round 5まであと2」など、惜しい時のフレーズで再挑戦動機を最大化。</p>
+
+  <h4>仕様（通常モード）— <code>GameOverOverlayView</code></h4>
+  <p>表示優先4段階で出し分け（<code>nearMissText: String?</code> computed property で返す）:</p>
+  <table>
+    <tr><th>優先度</th><th>条件</th><th>表示フレーズ</th></tr>
+    <tr><td>1（最高）</td><td>isNewBest = true</td><td>スキップ（NEW BEST ! と排他）</td></tr>
+    <tr><td>2</td><td>ベスト直前（差が 1〜3）</td><td>「ベストまであと N」</td></tr>
+    <tr><td>3</td><td>マイルストーン直前（5/10/15/20/25/30/40/50）（差が 1〜4）</td><td>「Round X まであと N」</td></tr>
+    <tr><td>4（初プレイ時）</td><td>best = 0</td><td>「最初の壁 Round 5 まで あと N」</td></tr>
+  </table>
+
+  <h4>仕様（Daily Challenge）— <code>DailyChallengeResultView</code></h4>
+  <p>2系統のフレーズを独立して表示可能:</p>
+  <table>
+    <tr><th>系統</th><th>条件</th><th>表示フレーズ</th></tr>
+    <tr><td>メイン Near Miss</td><td>本日ベスト直前（差が 1〜3）</td><td>「本日ベストまであと N」</td></tr>
+    <tr><td>メイン Near Miss</td><td>Roundマイルストーン直前</td><td>「Round X まであと N」</td></tr>
+    <tr><td>「明日来てね」誘導</td><td>累計プレイ数の次マイルストーン（3/7/14/30/50/100/365）直前</td><td>「明日プレイで Daily 累計 N 回達成！」</td></tr>
+  </table>
+  <p>「明日来てね」誘導は Near Miss と独立して表示可（idle帰着動機）。</p>
+
+  <h4>UI仕様</h4>
+  <ul>
+    <li>カラー: オレンジ系 <code>#FF9500</code></li>
+    <li>背景: Capsule + 0.4 opacity 影</li>
+    <li>アニメーション: バウンスインアニメ</li>
+  </ul>
+  <p><strong>変更ファイル:</strong> <code>GameOverOverlayView.swift</code>（<code>nearMissText</code> computed property 追加、NEW BEST ! と排他で表示）、<code>DailyChallengeResultView.swift</code>（<code>nearMissText</code> + <code>comebackText</code> 追加）</p>
+
+  <!-- E. 速度カーブ6段階化 -->
+  <h3>E. 速度カーブ 6段階化</h3>
+  <p><strong>目的:</strong> 評価AIから「320→250msの急変で記憶ゲー→反射ゲーに変質する」指摘を受け、滑らかなランプに修正。</p>
+
+  <table>
+    <tr><th>実効ラウンド</th><th>旧速度（5段階）</th><th>新速度（6段階）</th><th>ラベル</th></tr>
+    <tr><td>1〜4</td><td>650ms</td><td>650ms</td><td>NORMAL</td></tr>
+    <tr><td>5〜9</td><td>500ms</td><td>500ms</td><td>NORMAL+</td></tr>
+    <tr><td>10〜14</td><td>400ms</td><td>400ms</td><td>FAST</td></tr>
+    <tr><td>15〜19</td><td>320ms</td><td><strong>340ms</strong></td><td>FAST+</td></tr>
+    <tr><td>20〜24</td><td>250ms</td><td><strong>300ms</strong></td><td><strong>RAPID（新規）</strong></td></tr>
+    <tr><td>25+</td><td>—</td><td><strong>280ms</strong></td><td>INSANE</td></tr>
+  </table>
+
+  <p><code>Difficulty.insane</code> の <code>roundOffset</code> を <strong>19 → 24</strong> に変更。INSANE難易度モードは Round 25+ の INSANE 280ms 速度から開始。</p>
+  <p style="color:#FF9500;">注意: 既存ベストスコアは継続有効。新スコアは旧より上振れ可能性あり（互換性のある変更）。</p>
+  <p><strong>変更ファイル:</strong> <code>GameViewModel.swift</code>（<code>computeSpeed()</code> 6段階化、<code>Difficulty.insane.roundOffset</code> 19→24）</p>
+
+  <!-- F. Variable Surprise -->
+  <h3>F. Variable Surprise 4種（合計 5.5% 発火）</h3>
+  <p><strong>目的:</strong> 評価AIから「報酬密度が単調、予測可能、Variable Reward不足」を指摘され、希少サプライズを追加。</p>
+
+  <h4>実装クラス</h4>
+  <ul>
+    <li><code>SurpriseEffectManager</code>（@Observable @MainActor singleton）— 4種発火・確率判定・1プレイ1回制約</li>
+    <li><code>SurpriseBannerView</code>（共用バナーView）— 4種共有のCapsuleバナー</li>
+  </ul>
+
+  <h4>発火条件</h4>
+  <ul>
+    <li>ラウンドクリア時に確率判定（<code>handlePanelTap</code> 内ラウンドクリア時に <code>maybeTrigger(round:)</code> 呼び出し）</li>
+    <li><strong>Round 5 未満では発火しない</strong>（達成感確立後に効くため）</li>
+    <li><strong>同一プレイで2回発火しない</strong>（希少性維持）</li>
+    <li><code>startGame()</code> 時に <code>resetForNewGame()</code> でフラグリセット</li>
+  </ul>
+
+  <h4>4種の演出</h4>
+  <table>
+    <tr><th>演出</th><th>確率</th><th>バナー文言</th><th>カラー</th><th>アイコン</th><th>追加効果</th></tr>
+    <tr><td>RAINBOW BURST</td><td>2.0%</td><td>"RAINBOW BURST!"</td><td>#FF3B30 → #AF52DE</td><td>sparkles</td><td>7色虹パーティクル発火</td></tr>
+    <tr><td>GOLDEN ROUND</td><td>1.5%</td><td>"GOLDEN ROUND"</td><td>#FFD60A → #FF9500</td><td>star.fill</td><td>バナーのみ（v1.1）</td></tr>
+    <tr><td>ECHO</td><td>1.0%</td><td>"ECHO!"</td><td>#007AFF → #A0A0FF</td><td>waveform</td><td>バナーのみ（v1.1）</td></tr>
+    <tr><td>FLOW MOMENT</td><td>1.5%</td><td>"FLOW"</td><td>#34C759 → #007AFF</td><td>infinity</td><td>バナーのみ（v1.1）</td></tr>
+  </table>
+  <p style="color:#888; font-size:0.9em;">注: v1.1 では GOLDEN / ECHO / FLOW は「バナー表示のみ」。各演出の追加ロジック（金パネル化・シーケンスリプレイ・心拍パルス）は v1.2 で本格実装予定。</p>
+
+  <h4>バナー仕様（SurpriseBannerView）</h4>
+  <ul>
+    <li>Capsule背景に LinearGradient（左→右）</li>
+    <li>shadow × 2層</li>
+    <li>scale spring bounce-in（0.5 → 1.0）</li>
+    <li>1.4秒後にfade out</li>
+    <li><code>.allowsHitTesting(false)</code></li>
+  </ul>
+  <p><strong>変更ファイル:</strong> <code>GameViewModel.swift</code>（<code>startGame()</code> で <code>resetForNewGame()</code> 呼び出し）、<code>GameView.swift</code>（<code>SurpriseEffectManager.shared</code> 監視、<code>RainbowParticleBurstView</code> 追加、<code>SurpriseBannerView × 4</code> 配置）</p>
+
   <!-- ===================== アーキテクチャ ===================== -->
   <h2>アーキテクチャ・追加ファイル一覧</h2>
   <pre><code>Effects/
 ├── HapticsManager.swift          # ハプティクス一元管理
 ├── ParticleBurstView.swift       # SwiftUI Canvas パーティクル
-└── ScreenShakeModifier.swift     # GeometryEffect ベース画面シェイク
+├── ScreenShakeModifier.swift     # GeometryEffect ベース画面シェイク
+├── SurpriseEffectManager.swift   # 4種サプライズ発火・確率・1回制約（新規）
+└── SurpriseBannerView.swift      # 共用サプライズバナーView（新規）
 
 Daily/
 ├── SeededRandomNumberGenerator.swift  # SplitMix64 決定論的RNG
@@ -255,7 +362,13 @@ Notifications/
 └── NotificationManager.swift        # 毎日21時リマインダー
 
 Game/
-└── NewBestFlashView.swift           # 全画面ゴールドフラッシュ</code></pre>
+└── NewBestFlashView.swift           # 全画面ゴールドフラッシュ
+
+修正ファイル（評価フィードバック反映）:
+├── GameViewModel.swift              # startGame()→resetForNewGame(), maybeTrigger(), computeSpeed()6段階化, roundOffset 19→24
+├── GameView.swift                   # SurpriseEffectManager.shared監視, RainbowParticleBurstView, SurpriseBannerView×4
+├── GameOverOverlayView.swift        # nearMissText computed property 追加（NEW BEST ! 排他）
+└── DailyChallengeResultView.swift   # nearMissText + comebackText 追加</code></pre>
 
   <!-- ===================== 全UserDefaults一覧 ===================== -->
   <h2>UserDefaults 新規キー一覧（v1.1 追加分）</h2>
@@ -327,6 +440,58 @@ Game/
     <li><a href="../screens/settings.html">設定画面（CR-SET-01）</a> — 通知 ON/OFF 設定</li>
   </ul>
 
+  <!-- ===================== v1.2 持ち越し課題 ===================== -->
+  <h2>v1.2 で取り組む課題</h2>
+  <p>評価AIの提案のうち、規模が大きいか v1.1 で実装しきれなかった項目。次期スプリントの計画時に参照すること。</p>
+  <table>
+    <tr><th>機能</th><th>理由・概要</th><th>工数感</th></tr>
+    <tr>
+      <td><strong>PERFECT CHAIN / リズム評価システム</strong></td>
+      <td>「記憶ゲー → 音ゲー脳混合」で寿命延長。入力テンポ安定度を内部評価し、SMOOTH/PERFECT FLOW判定で BGM・Glow に反映</td>
+      <td>大（2週）</td>
+    </tr>
+    <tr>
+      <td><strong>BGM 動的レイヤリング</strong></td>
+      <td>フロー状態の演出。連続クリアでBGMが強化される</td>
+      <td>大（2週）</td>
+    </tr>
+    <tr>
+      <td><strong>背景心拍同期パルス</strong></td>
+      <td>Round 15+ で背景がBPMに同期して微脈動。Geometry Dash的ゾーン感</td>
+      <td>中（1週）</td>
+    </tr>
+    <tr>
+      <td><strong>Daily「美しい並び」生成</strong></td>
+      <td>単なるランダムでなく、ABAB / 対称 / リズム感のあるシーケンスを優先生成。"意味ありげ"が中毒化する</td>
+      <td>中（1週）</td>
+    </tr>
+    <tr>
+      <td><strong>「読み」演出</strong></td>
+      <td>次ラウンドの色を一瞬予告。期待形成 → 当てた時の達成感</td>
+      <td>小〜中</td>
+    </tr>
+    <tr>
+      <td><strong>GOLDEN ROUND の本格演出</strong></td>
+      <td>パネルが金色光沢に変化（v1.1 はバナーのみ）</td>
+      <td>小</td>
+    </tr>
+    <tr>
+      <td><strong>ECHO の本格演出</strong></td>
+      <td>クリアしたシーケンスを高速リプレイ表示（v1.1 はバナーのみ）</td>
+      <td>中</td>
+    </tr>
+    <tr>
+      <td><strong>FLOW MOMENT の本格演出</strong></td>
+      <td>全画面の薄い脈動演出（v1.1 はバナーのみ）</td>
+      <td>小</td>
+    </tr>
+    <tr>
+      <td><strong>カラークリスタル経済 + パレット解禁 + 宝箱開封 + パレット課金</strong></td>
+      <td>v1.2 既定スコープ。ゲーム内経済圏の確立</td>
+      <td>大</td>
+    </tr>
+  </table>
+
   <!-- ===================== 変更履歴 ===================== -->
   <h2>変更履歴</h2>
   <table class="history-table">
@@ -335,9 +500,10 @@ Game/
     <tr><td>1.0.1</td><td>2026-05-11</td><td>特商法対応</td></tr>
     <tr><td>1.1.0</td><td>2026-06予定</td><td>ドーパミン強化アップデート（Daily Challenge・ストリーク強化・Juice演出）</td></tr>
     <tr><td>doc 1.0</td><td>2026-05-11</td><td>本仕様書 初版作成</td></tr>
+    <tr><td>doc 1.1</td><td>2026-05-12</td><td>Near Miss演出 / 速度カーブ6段階化 / Variable Surprise 4種を追加実装（評価フィードバック反映）。実装規模: 30〜40行のViewModel変更 + 2新規ファイル。v1.2持ち越し項目を明示</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-11</footer>
+  <footer class="site-footer">最終更新: 2026-05-12</footer>
 </div>
 
 <script>
