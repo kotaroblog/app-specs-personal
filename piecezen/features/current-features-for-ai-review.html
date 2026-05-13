@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>PieceZen - 現状機能一覧（AI評価依頼用）</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<style>
+  .prompt-box {
+    background: var(--color-bg-soft);
+    border: 2px solid var(--color-accent);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin: 16px 0;
+    white-space: pre-wrap;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--color-text);
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", sans-serif;
+  }
+  .prompt-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .feature-matrix td:first-child { font-weight: 600; white-space: nowrap; }
+  .badge-yes { color: var(--color-success); font-weight: 700; }
+  .badge-no  { color: var(--color-text-soft); }
+  .score-formula {
+    background: var(--color-bg-soft);
+    border-left: 3px solid var(--color-accent);
+    padding: 12px 16px;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 0.9rem;
+    line-height: 1.9;
+    margin: 12px 0;
+  }
+  .screenshot-item {
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin: 6px 0;
+    font-size: 0.9rem;
+  }
+  .section-meta { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    letter-spacing: 0.03em;
+  }
+  .tag.done { background: #e8f8ee; color: var(--color-success); }
+  .tag.warn { background: #fff4e6; color: var(--color-warning); }
+  .callout {
+    background: var(--color-bg-soft);
+    border-left: 3px solid var(--color-warning);
+    padding: 12px 16px;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    margin: 12px 0;
+    font-size: 0.9rem;
+  }
+  .callout-info {
+    border-left-color: var(--color-accent);
+  }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9rem; }
+  th { background: var(--color-bg-soft); text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--color-border); font-weight: 600; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+  code { background: var(--color-bg-soft); padding: 1px 5px; border-radius: 4px; font-size: 0.85em; }
+  ul, ol { padding-left: 1.4em; margin: 8px 0; }
+  li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / 現状機能一覧（AI評価依頼用）</div>
+
+  <header class="site-header">
+    <h1>PieceZen — 現状機能一覧（AI評価依頼用）</h1>
+    <p>v1.2.1 リリース済み · コードを正本として網羅的に整理したゲーム性評価依頼資料</p>
+    <div class="section-meta">
+      <span class="tag done">v1.2.1</span>
+      <span class="tag">FEAT-AI-REVIEW</span>
+      <span class="tag">2026-05-13 作成</span>
+    </div>
+  </header>
+
+  <h2>変更履歴</h2>
+  <table>
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-13</td><td>初版作成（v1.2.1 コードから機能網羅）</td></tr>
+  </table>
+
+  <!-- ====================================================
+       Section 1: アプリ概要
+  ==================================================== -->
+  <h2>Section 1: アプリ概要</h2>
+  <p>GPT-5 などの外部 AI がゼロ知識状態で評価できるよう、ジャンル・世界観・収益構造・配信状況を整理する。</p>
+
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>アプリ名</td><td>PieceZen（ストア表示名）/ プロジェクト名: BlockPuzzle</td></tr>
+    <tr><td>ジャンル</td><td>カジュアルゲーム / パズル（ブロック配置系）</td></tr>
+    <tr><td>プラットフォーム</td><td>iOS 18.0+（iPhone 縦向き専用）</td></tr>
+    <tr><td>配信状況</td><td>リリース済み（2026年4月）· v1.2.1 · 日本のみ配信</td></tr>
+    <tr><td>年齢レーティング</td><td>4+（暴力・購買要素なし、広告は AdMob 標準）</td></tr>
+    <tr><td>言語</td><td>日本語のみ</td></tr>
+    <tr><td>収益構造</td><td>AdMob（Banner + Interstitial + Rewarded） + IAP 広告除去 ¥480 買い切り</td></tr>
+    <tr><td>開発体制</td><td>個人開発 1 名 · 週 20h（Claude Code 活用で実質 3〜5 倍速）</td></tr>
+    <tr><td>技術スタック</td><td>Swift 6 / SwiftUI / SwiftData / StoreKit 2 / Google AdMob</td></tr>
+  </table>
+
+  <h3>世界観・コンセプト</h3>
+  <p>
+    「静かに集中できるパズル体験」をコンセプトとする。競合（Block Blast! 等）が蛍光色・大音量のエフェクトを採用する中、
+    PieceZen は落ち着いた配色テーマ・システムサウンド活用・白いフラッシュ演出など、
+    カジュアル層が日常のスキマ時間に使いやすい雰囲気を重視している。
+    ホーム画面にはゆっくり動くパーティクル背景（<code>ZenParticleBackground</code>）を配置し、
+    「始める前からリラックスできる」導入体験を意図している。
+  </p>
+
+  <h3>ゲームの基本構造（ひと言まとめ）</h3>
+  <div class="callout callout-info">
+    8×8 グリッドに 19 種類のブロックピース（回転対応）をドラッグ＆ドロップで配置し、
+    横列・縦列が揃うと消えてスコアが入る。トレイの 3 ピースをすべて使い切ると次の 3 ピースが補充される。
+    どのピースもグリッドに置けなくなった時点でゲームオーバー。回転を使って詰まりを回避するのが差別化要素。
+  </div>
+
+  <!-- ====================================================
+       Section 2: 現状ゲーム機能一覧
+  ==================================================== -->
+  <h2>Section 2: 現状ゲーム機能一覧（コード実装ベース）</h2>
+
+  <h3>2-1. コアゲームプレイ</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th><th>根拠ファイル</th></tr>
+    <tr>
+      <td>グリッドサイズ</td>
+      <td>8×8（64マス固定）。<code>GridPosition.gridSize = 8</code></td>
+      <td><code>GridPosition.swift</code>, <code>GameEngine.swift</code></td>
+    </tr>
+    <tr>
+      <td>ピース種類数</td>
+      <td>19 種類（<code>BlockShape.allShapes</code> に列挙）。1〜5マス、直線・L字・T字・S/Z字・+字・2×2 正方形を網羅</td>
+      <td><code>BlockShape.swift</code></td>
+    </tr>
+    <tr>
+      <td>ピースのマス数内訳</td>
+      <td>1マス×1、2マス×2、3マス×6、4マス×7、5マス×3（bigLShapeA/B, plusShape）</td>
+      <td><code>BlockShape.swift</code></td>
+    </tr>
+    <tr>
+      <td>ピース色数</td>
+      <td>12 色の論理キー（red/blue/green/yellow/orange/purple/cyan/pink/mint/indigo/teal/brown）をテーマにマッピング</td>
+      <td><code>CellState.swift</code>, <code>ColorTheme.swift</code></td>
+    </tr>
+    <tr>
+      <td>トレイ仕様</td>
+      <td>常時 3 枠。3 枠すべて使用済みになったタイミングで次の 3 ピースが一括補充。個別補充はない</td>
+      <td><code>GameEngine.refillTray()</code></td>
+    </tr>
+    <tr>
+      <td>トレイフェアネス</td>
+      <td>1 セット（3枚）あたり 5 マス以上のピース（bigL/plus）は最大 1 枚。残り 2 枠は小さいピースから選ばれる</td>
+      <td><code>BlockShape.generateTray()</code></td>
+    </tr>
+    <tr>
+      <td>配置操作</td>
+      <td>ドラッグ＆ドロップ。ドラッグ中にプレビュー表示（置ける場合は色付き、置けない場合はグレー）</td>
+      <td><code>GameEngine.updatePreview()</code>, <code>GridView.swift</code></td>
+    </tr>
+    <tr>
+      <td>配置スコア</td>
+      <td>1 マス配置 = 1 点（マス数分が即時加算）</td>
+      <td><code>GameEngine.place()</code></td>
+    </tr>
+    <tr>
+      <td>ライン消去ルール</td>
+      <td>横列（行）または縦列（列）がすべて埋まると消去。同一アクションで複数ライン同時消去あり</td>
+      <td><code>GameEngine.detectLinesToClear()</code></td>
+    </tr>
+    <tr>
+      <td>回転機能</td>
+      <td>あり。トレイ上のピースをタップで 90 度時計回り回転。回転状態はトレイ内で保持</td>
+      <td><code>GameEngine.rotateBlock(at:)</code></td>
+    </tr>
+    <tr>
+      <td>ゲームオーバー判定</td>
+      <td>トレイに残るすべてのピースについて「4 回転すべてを試して」グリッドのどこにも置けない場合にゲームオーバー。回転で打開できる場合は継続</td>
+      <td><code>GameEngine.canPlace(block:)</code></td>
+    </tr>
+  </table>
+
+  <h3>2-2. スコアリングシステム</h3>
+  <div class="score-formula">
+<strong>配置スコア</strong>: 配置マス数 × 1点（毎配置即時加算）
+
+<strong>ライン消去スコア</strong>:
+  基本スコア = 20 × ライン数 × max(1, comboCount)
+  同時消去ボーナス（加算）:
+    DOUBLE（2ライン同時）: +30点
+    TRIPLE（3ライン同時）: +80点
+    QUAD（4ライン以上同時）: +200点
+    CROSS（行+列の同時消去）: +150点
+    コンボ時（連続消去2回目〜）: ボーナス加算なし（倍率で稼ぐ設計）
+
+<strong>パーフェクトクリアボーナス</strong>: +500点（グリッド全マス消去時）
+  </div>
+
+  <h3>2-3. コンボシステム</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr>
+      <td>カウント条件</td>
+      <td>ピース配置 1 回ごとにライン消去が発生したターンを連続で数える。消去ゼロのターンで <code>comboCount</code> リセット</td>
+    </tr>
+    <tr>
+      <td>スコア倍率</td>
+      <td>基本スコアに <code>max(1, comboCount)</code> を乗算。2 コンボなら基本スコア 2 倍、3 コンボなら 3 倍（上限なし）</td>
+    </tr>
+    <tr>
+      <td>コンボ数表示</td>
+      <td>2 コンボ以上でスコアヘッダーに <code>x2, x3...</code> のコンボテキストが 300ms 表示された後フェードアウト</td>
+    </tr>
+    <tr>
+      <td>賞賛テキスト</td>
+      <td>2コンボ→「Nice!」、3コンボ→「Great!」、4コンボ以上→「Amazing!」が 900ms ポップアップ</td>
+    </tr>
+    <tr>
+      <td>演出</td>
+      <td>コンボ段階に応じたハプティクス強度変化 + サウンド（4コンボ以上でより派手な音）。フローティングスコアテキストのフォントサイズ・色も段階で変化</td>
+    </tr>
+  </table>
+
+  <h3>2-4. 同時消去ボーナス演出</h3>
+  <table>
+    <tr><th>ボーナス種別</th><th>条件</th><th>賞賛テキスト</th><th>全画面フラッシュ色</th><th>フローティングテキスト色</th></tr>
+    <tr><td>DOUBLE!</td><td>2ライン同時消去</td><td>DOUBLE!</td><td>黄色（opacity 0.18）</td><td>黄色</td></tr>
+    <tr><td>TRIPLE!</td><td>3ライン同時消去</td><td>TRIPLE!</td><td>青（opacity 0.22）</td><td>青</td></tr>
+    <tr><td>QUAD!</td><td>4ライン以上同時消去</td><td>QUAD!</td><td>紫（opacity 0.28）</td><td>紫</td></tr>
+    <tr><td>CROSS!</td><td>行+列の同時消去（交差）</td><td>CROSS!</td><td>ピンク（opacity 0.28）</td><td>ピンク。交差点に波紋リング+放射パーティクル×16</td></tr>
+    <tr><td>PERFECT!</td><td>グリッド全消去</td><td>PERFECT!</td><td>虹グラデーション（opacity 0.4）</td><td>虹グラデーション文字</td></tr>
+  </table>
+  <div class="callout callout-info">
+    消去アニメーションは「100ms 白フラッシュ → 300ms フェードアウトでグリッドをクリア」の 2 段階。
+    消去位置ごとにパーティクル（5〜12 粒）が飛散する。CROSS 演出のみ交差点に <code>CrossExplosion</code>（16粒放射 + リング波紋）が加わる。
+  </div>
+
+  <h3>2-5. パーフェクトクリア</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>検知条件</td><td>ライン消去後にグリッドの全 64 マスが <code>empty</code> になった瞬間（<code>finalizePlacement</code> 内で判定）</td></tr>
+    <tr><td>ボーナス</td><td>+500点を即時加算</td></tr>
+    <tr><td>演出時間</td><td>1.5 秒間の専用オーバーレイ（虹グラデーション背景 + "✨ PERFECT! ✨" テキスト + "+500 BONUS"）</td></tr>
+    <tr><td>ハプティクス</td><td><code>gameOver()</code>（UINotificationFeedbackGenerator .error）を流用した強い衝撃</td></tr>
+    <tr><td>サウンド</td><td>combo音 + 200ms 後に gameOver音の重ね掛け</td></tr>
+    <tr><td>シェイク</td><td><code>shakeTrigger += 3</code>（画面シェイクアニメーションを 3 回分発火）</td></tr>
+  </table>
+
+  <h3>2-6. アンドゥ機能</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>最大使用回数</td><td>1 ゲームにつき 3 回（<code>GameEngine.undoMaxCount = 3</code>）</td></tr>
+    <tr><td>無料回数</td><td>1 回目はリワード広告不要。2〜3 回目以降はリワード広告視聴が必要（<code>undoFreeRemaining</code> で管理）</td></tr>
+    <tr><td>スナップショット保存タイミング</td><td>ピース配置直前に毎回上書き（1手前のみ保存）</td></tr>
+    <tr><td>復元内容</td><td>グリッド状態・トレイの 3 ピース・スコア・comboCount を完全復元</td></tr>
+    <tr><td>動作条件</td><td>gameState == .playing かつ undoSnapshot が存在する場合のみ有効</td></tr>
+    <tr><td>アニメーション</td><td>進行中のアニメーション Task（消去・配置）をキャンセルしてから <code>easeOut(0.25s)</code> で復元</td></tr>
+  </table>
+
+  <h3>2-7. 救済機能（リワード広告）</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>発動タイミング</td><td>ゲームオーバー直後の画面で「広告を見てもう1手」ボタンが表示</td></tr>
+    <tr><td>表示条件</td><td><code>!hasUsedReward &amp;&amp; AdManager.shared.isRewardedAdReady</code>（1ゲーム 1 回制限）</td></tr>
+    <tr><td>救済内容</td><td>埋まっているセルをランダムに 1 マス消去してゲームを再開</td></tr>
+    <tr><td>ゲームオーバー再判定</td><td>救済後に <code>checkGameOver()</code> を再実行。1マス消えただけでは打開できない場合は即座に再ゲームオーバー</td></tr>
+    <tr><td>使用フラグ</td><td><code>hasUsedReward = true</code> にして以後の同ゲームでは非表示</td></tr>
+  </table>
+
+  <h3>2-8. ストリーク（連続プレイ日数）</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>カウント方法</td><td>ゲーム開始時に <code>StreakManager.shared.recordPlay()</code> を呼び出し。同日複数回は 1 回とカウント</td></tr>
+    <tr><td>継続条件</td><td>前日プレイ済み → +1。2 日以上空いた → 1 にリセット</td></tr>
+    <tr><td>途切れ検知</td><td>アプリ起動時（<code>StreakManager.init()</code>）に lastPlayDate が昨日でも今日でもなければ currentStreak を 0 にリセット</td></tr>
+    <tr><td>永続化</td><td>UserDefaults（currentStreakDays / lastPlayDate / longestStreakDays）</td></tr>
+    <tr><td>表示場所</td><td>ホーム画面の statsRow にストリーク日数を表示</td></tr>
+    <tr><td>最長記録</td><td><code>longestStreak</code> を別途保持</td></tr>
+    <tr><td>通知連携</td><td>毎日 21:00 に UNCalendarNotificationTrigger でリマインダー通知（ストリーク維持促進）</td></tr>
+  </table>
+
+  <h3>2-9. スコア統計</h3>
+  <table>
+    <tr><th>記録項目</th><th>永続化方法</th><th>表示場所</th></tr>
+    <tr>
+      <td>ハイスコア（全期間）</td>
+      <td>SwiftData <code>HighScoreRecord</code>（score, achievedAt）</td>
+      <td>ホーム画面・ゲーム画面ヘッダー・ゲームオーバー画面</td>
+    </tr>
+    <tr>
+      <td>今日のベストスコア</td>
+      <td><code>StatRecord</code> から当日分をフィルタして計算</td>
+      <td>統計画面</td>
+    </tr>
+    <tr>
+      <td>総プレイ回数</td>
+      <td>SwiftData <code>StatRecord</code> のレコード数</td>
+      <td>統計画面</td>
+    </tr>
+    <tr>
+      <td>平均スコア</td>
+      <td>StatRecord 全件の平均計算（リアルタイム）</td>
+      <td>統計画面</td>
+    </tr>
+    <tr>
+      <td>直近 10 ゲームのスコアリスト</td>
+      <td>StatRecord（playedAt 降順）</td>
+      <td>統計画面</td>
+    </tr>
+    <tr>
+      <td>スコア推移グラフ</td>
+      <td>StatRecord 直近 20 件を Swift Charts で折れ線グラフ（catmullRom 補間）</td>
+      <td>統計画面（2ゲーム以上の時のみ表示）</td>
+    </tr>
+    <tr>
+      <td>ハイスコア更新フラグ</td>
+      <td>メモリ内 <code>isHighScoreBeaten</code>（ゲーム中のみ）</td>
+      <td>スコアヘッダーのゴールドカラー表示に使用</td></tr>
+  </table>
+
+  <h3>2-10. カラーテーマ</h3>
+  <table class="feature-matrix">
+    <tr><th>テーマ名</th><th>表示名</th><th>配色コンセプト</th><th>ブロック色の特徴</th></tr>
+    <tr>
+      <td>classic</td>
+      <td>クラシック</td>
+      <td>デフォルト。虹色系の鮮やかな配色</td>
+      <td>SwiftUI 標準色（red/blue/green/yellow 等）+ グラデーション</td>
+    </tr>
+    <tr>
+      <td>ocean</td>
+      <td>オーシャン</td>
+      <td>青〜緑〜水色の落ち着いた海系</td>
+      <td>全色を HSL で青系統に統一（深いブルー / シアン / ターコイズ 等）</td>
+    </tr>
+    <tr>
+      <td>sakura</td>
+      <td>サクラ</td>
+      <td>ピンク〜パープル〜暖色の柔らかい春系</td>
+      <td>桜ピンク / ラベンダー / コーラル / ピーチ 等</td>
+    </tr>
+    <tr>
+      <td>neon</td>
+      <td>ネオン</td>
+      <td>saturation 100% の蛍光サイバー系</td>
+      <td>全色が彩度最大の蛍光色（ゲームライクな派手さ）</td>
+    </tr>
+    <tr>
+      <td>monochrome</td>
+      <td>モノクローム</td>
+      <td>グレースケールのみ</td>
+      <td>12色すべてをグレー階調（0.25〜0.85）に対応。色覚多様性・ミニマリスト向け</td>
+    </tr>
+  </table>
+  <div class="callout callout-info">
+    テーマは設定画面から即時切り替え可能（<code>@AppStorage</code> 経由）。
+    各テーマはメインカラー / lighter / darker の 3 段階グラデーションで立体感を表現。
+    ブロックの表示色はテーマに依存し、ゲームロジックは <code>BlockColor</code> という論理キーで管理されるため、テーマ変更がゲーム結果に影響しない。
+  </div>
+
+  <h3>2-11. ハプティクス</h3>
+  <table>
+    <tr><th>パターン名</th><th>発火タイミング</th><th>フィードバック種類</th></tr>
+    <tr><td>blockPlaced</td><td>ピース配置時・アンドゥ実行時</td><td>UIImpactFeedbackGenerator(.light)</td></tr>
+    <tr><td>linesCleared（1ライン）</td><td>1ライン消去時</td><td>UIImpactFeedbackGenerator(.medium)</td></tr>
+    <tr><td>linesCleared（2ライン）</td><td>2ライン同時消去</td><td>UIImpactFeedbackGenerator(.medium)</td></tr>
+    <tr><td>linesCleared（3ライン）</td><td>3ライン同時消去</td><td>UINotificationFeedbackGenerator(.success)</td></tr>
+    <tr><td>linesCleared（4ライン+）</td><td>4ライン以上同時消去</td><td>heavy × 2発（80ms 間隔）</td></tr>
+    <tr><td>linesCleared（cross）</td><td>行+列クロス消去</td><td>heavy + 60ms 後に rigid</td></tr>
+    <tr><td>comboCleared（lv2）</td><td>2コンボ</td><td>UIImpactFeedbackGenerator(.medium)</td></tr>
+    <tr><td>comboCleared（lv3）</td><td>3コンボ</td><td>UINotificationFeedbackGenerator(.success)</td></tr>
+    <tr><td>comboCleared（lv4+）</td><td>4コンボ以上</td><td>heavy + 80ms 後に rigid（2段階）</td></tr>
+    <tr><td>gameOver</td><td>ゲームオーバー時・パーフェクトクリア時</td><td>UINotificationFeedbackGenerator(.error)</td></tr>
+    <tr><td>highScoreUpdated</td><td>ハイスコア更新時</td><td>.success + 200ms 後に .heavy</td></tr>
+    <tr><td>rotateBlock</td><td>ピース回転タップ時</td><td>UIImpactFeedbackGenerator(.light)（blockPlaced 流用）</td></tr>
+  </table>
+  <p>ハプティクスは設定画面でオン/オフ切り替え可能（<code>UserDefaults["isHapticEnabled"]</code>）。</p>
+
+  <h3>2-12. サウンド</h3>
+  <p>AVAudioPlayer を使用。iOS システムサウンドファイル（<code>.caf</code>）を流用しており、独自録音音源はなし。
+  サウンドカテゴリは <code>.ambient</code> で設定（ミュージックアプリ等の再生を邪魔しない）。</p>
+  <table>
+    <tr><th>キー名</th><th>使用システムサウンド</th><th>発火タイミング</th></tr>
+    <tr><td>blockPlaced</td><td>Tock.caf</td><td>ピース配置時</td></tr>
+    <tr><td>lineCleared</td><td>Tink.caf</td><td>1ライン消去 / 複数ライン時の後半音</td></tr>
+    <tr><td>combo</td><td>paymentSuccess.caf</td><td>2〜3コンボ / 2ライン以上同時消去 / クロス消去 / パーフェクトクリア前半</td></tr>
+    <tr><td>gameOver</td><td>SIMToolkitGeneralBeep.caf</td><td>ゲームオーバー / 4コンボ以上 / パーフェクトクリア後半（重ねがけ）</td></tr>
+    <tr><td>rotate</td><td>key_press_click.caf</td><td>ピース回転時</td></tr>
+  </table>
+  <p>サウンドは設定画面でオン/オフ切り替え可能（<code>UserDefaults["isSoundEnabled"]</code>）。</p>
+
+  <h3>2-13. 設定（切り替え可能項目一覧）</h3>
+  <table>
+    <tr><th>設定項目</th><th>選択肢</th><th>永続化方法</th></tr>
+    <tr><td>サウンド</td><td>オン / オフ</td><td>UserDefaults[isSoundEnabled]</td></tr>
+    <tr><td>ハプティクス</td><td>オン / オフ</td><td>UserDefaults[isHapticEnabled]</td></tr>
+    <tr><td>カラーテーマ</td><td>5 種類（classic/ocean/sakura/neon/monochrome）</td><td>UserDefaults[colorTheme]</td></tr>
+    <tr><td>通知（ストリークリマインダー）</td><td>アプリ初回起動時に許可ダイアログ（設定アプリで管理）</td><td>UserNotifications</td></tr>
+  </table>
+
+  <h3>2-14. 課金（IAP）</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>課金方式</td><td>IAP 買い切り（非消耗型、Non-Consumable）</td></tr>
+    <tr><td>価格</td><td>¥480（Tier 3 相当）</td></tr>
+    <tr><td>内容</td><td>広告すべて除去（Banner / Interstitial / Rewarded 非表示）</td></tr>
+    <tr><td>購入の復元</td><td>設定画面の「購入を復元する」ボタンで <code>AppStore.sync()</code> を呼び出し</td></tr>
+    <tr><td>実装</td><td>StoreKit 2（<code>StoreManager.swift</code>）。Transaction.updates を監視してリアルタイム購入状態を反映</td></tr>
+    <tr><td>Paywall 表示タイミング</td><td>設定画面の「広告を除去する」/ ゲームオーバー画面の「広告を除去して快適にプレイ」リンク</td></tr>
+  </table>
+
+  <h3>2-15. 広告（AdMob）</h3>
+  <table>
+    <tr><th>広告種別</th><th>表示タイミング・仕様</th></tr>
+    <tr>
+      <td>Banner（バナー）</td>
+      <td>ゲーム画面下部に常時表示（IAP 購入後は非表示）</td>
+    </tr>
+    <tr>
+      <td>Interstitial（インタースティシャル）</td>
+      <td>ゲームオーバー後の「もう一度」タップ時に表示。表示頻度: ゲーム終了 3 回に 1 回、かつ前回表示から 90 秒以上経過が条件</td>
+    </tr>
+    <tr>
+      <td>Rewarded（リワード）</td>
+      <td>ゲームオーバー時に任意視聴。報酬: ランダム 1 マス消去でゲーム継続。1 ゲーム 1 回制限。アンドゥの 2〜3 回目も同様に視聴が必要</td>
+    </tr>
+  </table>
+
+  <h3>2-16. その他の機能・演出</h3>
+  <table>
+    <tr><th>機能</th><th>概要</th></tr>
+    <tr>
+      <td>スコアシェア（ShareLink）</td>
+      <td>ゲームオーバー画面でスコア 50 点以上の場合に表示。App Store URL + ハッシュタグ付きテキストを SNS シェア可能</td>
+    </tr>
+    <tr>
+      <td>レビュー依頼（SKStoreReviewController）</td>
+      <td>ハイスコア更新時かつ前回レビュー依頼から 30 日以上経過した場合に App Store レビューダイアログを表示（ゲームオーバー後 1.2 秒後）</td>
+    </tr>
+    <tr>
+      <td>チュートリアル（初回のみ）</td>
+      <td><code>@AppStorage("hasSeenTutorial")</code> が false の場合、ゲーム画面初回起動時にチュートリアルオーバーレイを表示</td>
+    </tr>
+    <tr>
+      <td>ZenParticleBackground</td>
+      <td>ホーム画面にゆっくり動くパーティクル演出（環境演出。ゲーム画面にはなし）</td>
+    </tr>
+    <tr>
+      <td>画面シェイク</td>
+      <td>QUAD / CROSS / PERFECT 時に画面全体をシェイクするアニメーション（<code>shakeTrigger</code> で制御）</td>
+    </tr>
+    <tr>
+      <td>ハイスコアベスト表示切り替え</td>
+      <td>現スコアがハイスコアを超えた瞬間からスコアヘッダーをゴールドカラーに切り替え</td>
+    </tr>
+    <tr>
+      <td>iPad 互換</td>
+      <td>コンテンツ横幅を最大 500pt に制限して iPad で起動した際の極端な引き伸ばしを防止</td>
+    </tr>
+  </table>
+
+  <h3>2-17. 現状の「あるもの / ないもの」マトリクス</h3>
+  <table class="feature-matrix">
+    <tr><th>カテゴリ</th><th>機能</th><th>実装状況</th></tr>
+    <tr><td>ゲームモード</td><td>通常モード（エンドレス）</td><td class="badge-yes">あり</td></tr>
+    <tr><td>ゲームモード</td><td>タイムアタックモード</td><td class="badge-no">なし</td></tr>
+    <tr><td>ゲームモード</td><td>デイリーチャレンジ</td><td class="badge-no">なし</td></tr>
+    <tr><td>ゲームモード</td><td>チュートリアル（初回）</td><td class="badge-yes">あり</td></tr>
+    <tr><td>グリッド</td><td>8×8 固定</td><td class="badge-yes">あり</td></tr>
+    <tr><td>グリッド</td><td>複数グリッドサイズ選択</td><td class="badge-no">なし</td></tr>
+    <tr><td>ピース</td><td>回転（タップ）</td><td class="badge-yes">あり</td></tr>
+    <tr><td>ピース</td><td>ホールド・交換</td><td class="badge-no">なし</td></tr>
+    <tr><td>ピース</td><td>ネクスト表示（次トレイ予告）</td><td class="badge-no">なし</td></tr>
+    <tr><td>スコア演出</td><td>フローティングスコアテキスト</td><td class="badge-yes">あり</td></tr>
+    <tr><td>スコア演出</td><td>全画面フラッシュ</td><td class="badge-yes">あり</td></tr>
+    <tr><td>スコア演出</td><td>パーティクル飛散</td><td class="badge-yes">あり</td></tr>
+    <tr><td>スコア演出</td><td>クロス交差点爆発</td><td class="badge-yes">あり</td></tr>
+    <tr><td>スコア演出</td><td>パーフェクトクリア専用演出</td><td class="badge-yes">あり</td></tr>
+    <tr><td>リテンション</td><td>ストリーク（連続日数）</td><td class="badge-yes">あり</td></tr>
+    <tr><td>リテンション</td><td>ストリーク報酬（N日達成ボーナス等）</td><td class="badge-no">なし</td></tr>
+    <tr><td>リテンション</td><td>通知（毎日 21:00）</td><td class="badge-yes">あり</td></tr>
+    <tr><td>リテンション</td><td>デイリーミッション / タスク</td><td class="badge-no">なし</td></tr>
+    <tr><td>リテンション</td><td>XP / レベルシステム</td><td class="badge-no">なし</td></tr>
+    <tr><td>リテンション</td><td>実績 / バッジ</td><td class="badge-no">なし</td></tr>
+    <tr><td>ランキング</td><td>Game Center / オンラインランキング</td><td class="badge-no">なし</td></tr>
+    <tr><td>救済</td><td>リワード広告（ランダム 1 マス消去）</td><td class="badge-yes">あり</td></tr>
+    <tr><td>救済</td><td>アンドゥ（最大 3 回）</td><td class="badge-yes">あり</td></tr>
+    <tr><td>テーマ</td><td>5 カラーテーマ</td><td class="badge-yes">あり</td></tr>
+    <tr><td>テーマ</td><td>背景・UI スキン変更</td><td class="badge-no">なし</td></tr>
+    <tr><td>SNS</td><td>スコアシェア（ShareLink）</td><td class="badge-yes">あり</td></tr>
+    <tr><td>SNS</td><td>スクリーンショット自動生成・シェア</td><td class="badge-no">なし</td></tr>
+  </table>
+
+  <!-- ====================================================
+       Section 3: ターゲットユーザー像
+  ==================================================== -->
+  <h2>Section 3: ターゲットユーザー像</h2>
+
+  <h3>主ターゲット</h3>
+  <ul>
+    <li><strong>年代</strong>: 20〜50 代（若者層〜働く世代）</li>
+    <li><strong>シーン</strong>: 通勤・休憩・就寝前など「スキマ時間 3〜10 分」の脳トレ用途</li>
+    <li><strong>ニーズ</strong>: 「広告が少なくて集中できる」「脳を使う達成感がある」「始めやすくてやめやすい」</li>
+    <li><strong>ゲームリテラシー</strong>: カジュアル層（毎日ゲームに 1 時間以上は使わない）</li>
+  </ul>
+
+  <h3>副ターゲット</h3>
+  <ul>
+    <li>パズルゲームをある程度やり込んで飽きた層（「回転できる」差別化に惹かれる中堅パズルプレイヤー）</li>
+    <li>色覚配慮が必要なユーザー（モノクロームテーマで対応）</li>
+    <li>BGM / SE をオフにして使いたいユーザー（別アプリの音楽を聴きながらプレイ対応 .ambient モード）</li>
+  </ul>
+
+  <h3>想定しないユーザー</h3>
+  <ul>
+    <li>オンライン対戦や SNS 連携を求めるコアゲーマー層</li>
+    <li>長時間・複雑なストーリーを求めるプレイヤー</li>
+  </ul>
+
+  <!-- ====================================================
+       Section 4: ゲーム性の評価依頼プロンプト（GPT-5向け）
+  ==================================================== -->
+  <h2>Section 4: 評価依頼プロンプト（GPT-5 向けコピペ用）</h2>
+  <p>以下のテキストをそのままコピーして GPT-5（または同等の AI）に投げてください。スクリーンショットを添付する場合は Section 5 のガイドを参照。</p>
+
+  <div class="prompt-label">— PROMPT START —</div>
+  <div class="prompt-box">
+あなたはモバイルゲームのゲームデザイン専門家です。
+以下の資料をもとに、iOS パズルゲーム「PieceZen」のゲーム性を客観的に評価してください。
+
+
+【アプリ概要】
+- ジャンル: カジュアル・パズル（ブロック配置系）
+- プラットフォーム: iOS 18.0+（iPhone 縦向き専用）
+- 配信: リリース済み（2026年4月、日本のみ、v1.2.1）
+- 収益: AdMob（Banner/Interstitial/Rewarded）+ IAP 広告除去 ¥480 買い切り
+- 年齢レーティング: 4+（サブスク・ガチャ・暴力表現なし）
+- 開発体制: 個人開発 1名、週 20 時間（Claude Code 活用）
+- コンセプト: 「静かに集中できるパズル体験」。競合が蛍光色・大音量の刺激を使う中、落ち着いたデザインとシステムサウンドで日常のスキマ時間向けに設計
+
+【基本ゲームループ】
+8×8 グリッドに 19 種類のブロックピース（1〜5マス、タップで 90 度回転可）をドラッグ＆ドロップで配置。
+横列または縦列が埋まると消去してスコアを獲得。
+トレイの 3 ピースをすべて使い切ると次の 3 ピースが補充される。
+どのピースも（4 回転すべてを試しても）グリッドに置けなくなるとゲームオーバー（エンドレス）。
+
+【スコアシステム】
+- 配置: 1 マス = 1 点
+- ライン消去: 20 × ライン数 × max(1, comboCount)
+- 同時消去ボーナス: DOUBLE +30 / TRIPLE +80 / QUAD +200 / CROSS（行+列同時）+150
+- パーフェクトクリア（全64マス消去）: +500
+- コンボ（連続ターン消去）: 2コンボ→ × 2 / 3コンボ→ × 3（上限なし）
+
+【現状の機能一覧】
+■ あり: エンドレスモード / ピース回転 / コンボシステム / DOUBLE!/TRIPLE!/QUAD!/CROSS!/PERFECT! 演出 / アンドゥ（1ゲーム最大3回、2回目以降はリワード広告）/ ゲームオーバー時リワード救済（ランダム1マス消去）/ ストリーク（連続プレイ日数カウント + 毎日21:00通知）/ 5カラーテーマ（classic/ocean/sakura/neon/monochrome）/ スコア統計（グラフ含む）/ スコアSNSシェア / レビュー依頼（ハイスコア更新 + 30日間隔）/ チュートリアル（初回のみ）/ ハプティクス多段階（配置/消去/コンボ/ゲームオーバー/ハイスコア更新）/ サウンド（システムサウンド使用）
+
+■ なし: タイムアタック / デイリーチャレンジ / ネクスト表示 / ホールド / ストリーク報酬 / XP/レベル / 実績/バッジ / Game Center / デイリーミッション / 独自 BGM/SE / スキン変更
+
+【競合アプリ】
+Block Blast!（高刺激・大ヒット）/ 1010!（シンプル・長寿）/ Blockudoku（数独×ブロック）/ Wood Block Puzzle（落ち着いた系で類似）
+
+【v2.0 企画書 URL（参考）】
+https://kotaroblog.github.io/app-specs-personal/piecezen/features/v2.0-roadmap.html
+
+
+---
+
+以下の観点で評価し、それぞれ具体的な根拠とともに回答してください。
+
+【評価観点1】ゲームループの中毒性
+現状のゲームループ（配置→消去→コンボ→ゲームオーバー→リスタート）は中毒性の観点でどう評価できますか？
+"もう1回"と感じさせる心理的メカニズムが機能しているか否かを分析してください。
+
+【評価観点2】飽きさせない仕掛けの過不足
+現状機能の中で「飽き防止」に寄与している要素と、欠けていると感じる要素を列挙してください。
+
+【評価観点3】カジュアル層・コア層それぞれへの適合度
+ターゲット（20〜50 代スキマ時間ユーザー）に対してゲームデザインが適合しているか評価してください。
+またコア層（パズルゲームをやり込む層）にとってのアピールポイントと不足点も指摘してください。
+
+【評価観点4】リテンション施策の有効性
+現状のリテンション施策（ストリーク / 通知 / ハイスコア / アンドゥ）について、D1・D7 継続率向上への寄与度を評価してください。
+特に「ストリーク報酬がない」点のリスクを考察してください。
+
+【評価観点5】競合との差別化
+Block Blast! / 1010! / Blockudoku / Wood Block Puzzle と比較し、PieceZen の現状における独自の強みと弱みを整理してください。
+
+【評価観点6】4+ レーティングで実現可能な強化案
+年齢レーティング 4+（サブスク・ガチャ・暴力表現不可）の制約内で、中毒性・リテンションを高める強化案を提案してください。
+
+【評価観点7】個人開発 週 20h での実装可能な施策
+上記強化案のうち、個人開発 1 名・週 20 時間（Claude Code 活用で実質 3〜5 倍速）という制約内で実装可能と判断するものを優先度順に 5 件以内で絞り込んでください。
+各施策の概算工数（時間）も示してください。
+
+---
+スクリーンショット画像（添付する場合）の対応画面は、依頼文末尾の「Section 5 スクリーンショット添付ガイド」を参照してください。
+  </div>
+  <div class="prompt-label">— PROMPT END —</div>
+
+  <div class="callout callout-info">
+    <strong>補足事項</strong>: v2.0 企画書 URL を渡すことで、評価観点 7 の提案が企画書と重複しないよう促せます。
+    GPT-5 に画像を添付できる場合は、Section 5 のスクリーンショットを 1〜2 枚添えると「ゲームのビジュアル感」も含めた評価が得られます。
+  </div>
+
+  <!-- ====================================================
+       Section 5: スクリーンショット添付ガイド
+  ==================================================== -->
+  <h2>Section 5: スクリーンショット添付ガイド</h2>
+  <p>GPT-5 に依頼する際、下記のスクリーンショットを添付するとビジュアル情報込みの評価が得られます。優先度の高い順に並べています。</p>
+
+  <div class="screenshot-item">
+    <strong>[最優先] ゲーム中 — 通常プレイ状態</strong><br>
+    ファイル例: <code>raw_game_playing.png</code><br>
+    確認できる要素: グリッド・トレイ（3ピース）・スコアヘッダー・アンドゥボタン・バナー広告<br>
+    伝わること: グリッドの密度感、トレイのサイズ感、UIレイアウト全体
+  </div>
+
+  <div class="screenshot-item">
+    <strong>[優先] ゲーム中 — コンボ/ライン消去演出発動中</strong><br>
+    ファイル例: <code>raw_game_combo.png</code><br>
+    確認できる要素: フローティングスコアテキスト・賞賛ポップアップ（"DOUBLE!" 等）・全画面フラッシュ・パーティクル<br>
+    伝わること: フィードバック演出の派手さ・文字サイズ・色使い
+  </div>
+
+  <div class="screenshot-item">
+    <strong>[優先] ゲームオーバー画面</strong><br>
+    ファイル例: <code>raw_gameover.png</code><br>
+    確認できる要素: スコア・ベスト・リワード広告ボタン・もう一度ボタン・シェアボタン・広告除去訴求リンク<br>
+    伝わること: 終了体験・収益導線・リスタートまでの UX 距離
+  </div>
+
+  <div class="screenshot-item">
+    <strong>[あれば] ホーム画面</strong><br>
+    ファイル例: <code>raw_home.png</code><br>
+    確認できる要素: アプリ名・ベストスコア・ストリーク表示・Play ボタン・パーティクル背景<br>
+    伝わること: 世界観・導入体験の落ち着き感
+  </div>
+
+  <div class="screenshot-item">
+    <strong>[あれば] 統計画面</strong><br>
+    ファイル例: <code>raw_statistics.png</code><br>
+    確認できる要素: ベストスコア・今日のベスト・総プレイ回数・平均スコア・スコア推移グラフ（Swift Charts）<br>
+    伝わること: プレイヤーへのフィードバック量・グラフの視覚的質
+  </div>
+
+  <div class="screenshot-item">
+    <strong>[あれば] 設定画面 — テーマ選択部分</strong><br>
+    ファイル例: <code>raw_settings.png</code><br>
+    確認できる要素: 5 テーマの色プレビュー丸・テーマ名一覧<br>
+    伝わること: カスタマイズの幅感
+  </div>
+
+  <div class="screenshot-item">
+    <strong>[あれば] Paywall（課金画面）</strong><br>
+    ファイル例: <code>raw_paywall.png</code><br>
+    ※ 価格表記は App Store 提出用スクリーンショットに掲載不可。テスト環境や価格テキストを非表示にして撮影すること<br>
+    確認できる要素: 広告除去の訴求内容・デザインの清潔感<br>
+    伝わること: 収益化 UX の質
+  </div>
+
+  <h3>スクリーンショット保存先</h3>
+  <p>
+    App Store 提出用スクリーンショットの保存先:
+    <code>/Users/happyboy1002/Desktop/app-screenshots/BlockPuzzle/</code>
+  </p>
+  <div class="callout">
+    <strong>注意</strong>: Paywall / 課金画面のスクリーンショットには価格を写さないこと（App Store レビューガイドライン遵守）。
+    シミュレーターで撮影した raw 画像を使用する場合は個人情報・認証情報が写り込んでいないか事前確認。
+  </div>
+
+</div>
+</body>
+</html>
