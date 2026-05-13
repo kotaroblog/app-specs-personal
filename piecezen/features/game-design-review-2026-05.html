@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>PieceZen - ゲーム性レビュー（GPT-5 / 2026-05-12）</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / ゲーム性レビュー</div>
+
+  <header class="site-header">
+    <h1>PieceZen ゲーム性レビュー</h1>
+    <p>GPT-5 によるゲームデザイン評価（v1.2.1 現状機能 + v2.0 企画書 を対象）</p>
+    <div class="section-meta">
+      <span class="tag">GAME-DESIGN-REVIEW</span>
+      <span class="tag">GPT-5</span>
+      <span class="tag">2026-05-12</span>
+    </div>
+  </header>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-12</td><td>GPT-5 ゲーム性レビュー初版保存</td></tr>
+  </table>
+
+  <h2>レビュー実施概要</h2>
+  <ul class="kv-list">
+    <li><span class="k">レビュア</span><span class="v">ChatGPT (GPT-5) — モバイルゲームデザイン専門家ペルソナ</span></li>
+    <li><span class="k">実施日</span><span class="v">2026-05-12</span></li>
+    <li><span class="k">評価対象</span><span class="v">v1.2.1 現状機能 + v2.0 企画書（参考）</span></li>
+    <li><span class="k">評価軸</span><span class="v">7観点（ループ中毒性 / 飽き防止 / 層別適合度 / リテンション / 競合差別化 / 4+制約内強化 / 個人開発実装可能性）</span></li>
+    <li><span class="k">関連</span><span class="v"><a href="v2.0-roadmap.html">v2.0 企画書</a>（このレビューを踏まえ v3.0 改訂）</span></li>
+  </ul>
+
+  <h2>総評</h2>
+  <div class="callout">
+    <p style="font-size:1.1em; margin-top:0">
+      <strong>PieceZen は "高刺激中毒" ではなく "静かな反復性" に寄せた設計として筋が良い。</strong>
+    </p>
+    <p style="margin-bottom:0">
+      ただし現状は <strong>"1セッションの中毒性は成立しているが、数週間単位のメタ継続が弱い"</strong> 段階。<br>
+      ❌ "未完成" ではなく ⭕ "コアは成立済み"。<br>
+      重要なのは「長期維持の軽い目標レイヤー」をどこまで低コストで足せるか。
+    </p>
+  </div>
+
+  <h2>評価観点1: ゲームループの中毒性</h2>
+  <p><strong>評価: 中〜高（ただし"静かな依存型"）</strong></p>
+  <p>Block Blast! のようなドーパミン直撃型ではなく、最適配置探索・空間整理・危機回避・コンボ継続・"あと1手で助かる" を積み上げるタイプ。</p>
+
+  <h3>"もう1回"を生む心理メカニズム（機能している）</h3>
+  <table>
+    <tr><th>要素</th><th>評価</th></tr>
+    <tr><td><strong>「まだ置けたかも」感</strong></td><td>8×8で認知負荷低 × 回転可 × 3ピース制で「あっちに置けば続いてた」が発生。完全運でも完全実力でもない中間が良い</td></tr>
+    <tr><td><strong>コンボ倍率（上限なし）</strong></td><td>「今切ると損」「次も消したい」を誘発。安全 vs 高期待値配置の葛藤が発生</td></tr>
+    <tr><td><strong>3ピース使い切り区切り</strong></td><td>ミニ目標が自然発生。「あと1個置こう」が起きる。短時間プレイと相性◎</td></tr>
+    <tr><td><strong>リワード救済（1マス消去）</strong></td><td>Pay to Win 感なし、"まだ助かるかも" あり。広告視聴率とセッション延長に寄与</td></tr>
+  </table>
+
+  <h3>中毒性を阻害している要素</h3>
+  <ul>
+    <li><strong>ネクスト情報欠如による"理不尽死"</strong> — 中級者以上で運負け感が出やすい</li>
+    <li><strong>長期目標の欠如</strong> — スコア更新のみ → 数日後に「次は？」になりやすい</li>
+    <li><strong>劇的瞬間の少なさ</strong> — SNS拡散力が弱い</li>
+  </ul>
+
+  <h2>評価観点2: 飽きさせない仕掛けの過不足</h2>
+
+  <h3>機能している要素</h3>
+  <ul>
+    <li><strong>コンボ</strong> — 単なる整理ゲームを"攻めるパズル"に変えている（最重要）</li>
+    <li><strong>回転</strong> — 19ピースでも思考空間を広げる、コスパ◎</li>
+    <li><strong>テーマ変更</strong> — 静かなゲームと相性が良い（特に monochrome / sakura は睡眠前用途と親和性）</li>
+    <li><strong>統計・グラフ</strong> — 自己ベスト・平均推移を見るだけで再起動理由になる</li>
+    <li><strong>アンドゥ</strong> — "理不尽死"を減らしリテンションに効く</li>
+  </ul>
+
+  <h3>不足している要素</h3>
+  <table>
+    <tr><th>要素</th><th>意味</th></tr>
+    <tr><td><strong>短期目標</strong></td><td>今日だけの課題・テーマ・ミッションがない → 毎回同じ体験</td></tr>
+    <tr><td><strong>成長の可視化</strong></td><td>「上手くなった」「深く理解した」感覚が薄い</td></tr>
+    <tr><td><strong>プレイスタイル分化</strong></td><td>全員が高スコア狙いに収束（PERFECT特化・COMBO特化・長寿命特化などがない）</td></tr>
+    <tr><td><strong>収集</strong></td><td>テーマ解放・バッジ・称号 が不足</td></tr>
+  </table>
+
+  <h2>評価観点3: カジュアル層・コア層への適合度</h2>
+
+  <h3>カジュアル層適合度: 非常に高い（特に30〜50代）</h3>
+  <ul>
+    <li>縦持ち・即開始</li>
+    <li>音が静か（市場での差別化）</li>
+    <li>ルール理解5秒</li>
+    <li>時間制限なし（中年層に刺さる）</li>
+  </ul>
+
+  <h3>カジュアル層の弱点</h3>
+  <p><strong>初回インパクトが弱い → 広告映えしにくい。</strong> Block Blast! は爆発・連鎖・数字増加が強いが、PieceZen は「良さが後から分かる」タイプ。UA（ユーザー獲得）が難しい。</p>
+
+  <h3>コア層適合度: 中程度</h3>
+  <p>最適化・期待値管理・生存戦略を楽しめる。回転・コンボ継続・盤面管理は良い。</p>
+
+  <h3>コア層への不足点</h3>
+  <ul>
+    <li><strong>深掘りシステム不足</strong> — ネクスト管理・ホールド・特殊条件がなく研究余地が浅い</li>
+    <li><strong>運の比率</strong> — 上級者ほど気にする。「上手くても死ぬ」が一定ある</li>
+  </ul>
+
+  <h2>評価観点4: リテンション施策の有効性</h2>
+  <table>
+    <tr><th>指標</th><th>評価</th><th>備考</th></tr>
+    <tr><td>D1</td><td>良い</td><td>ハイスコア更新 / アンドゥ / "あと1回" / 通知 が効いている</td></tr>
+    <tr><td>D7</td><td>やや弱い</td><td>「1週間後の新体験」が不足</td></tr>
+  </table>
+
+  <div class="callout">
+    <h3 style="margin-top:0">ストリークの危険性</h3>
+    <p><strong>現状のストリークは "見る人は見る、見ない人は完全無視"。報酬がない = 行動動機が弱い。</strong></p>
+    <p>ストリークは本来 喪失回避・積み上げ・習慣化を使う設計。報酬なしだと「失っても痛くない」ので継続圧が弱い。</p>
+    <p style="margin-bottom:0"><strong>ただし豪華報酬は不要。</strong>PieceZen の方向性なら「テーマ解放・今日の一言・穏やかな演出変化・小さな称号」で十分。</p>
+  </div>
+
+  <h2>評価観点5: 競合との差別化</h2>
+  <table>
+    <tr><th>競合</th><th>PieceZen の強み</th><th>PieceZen の弱み</th></tr>
+    <tr><td>Block Blast!</td><td>落ち着き / 疲れにくさ / 静音性 / 大人向け</td><td>爆発力 / 即時快感 / SNS映え / 中毒性の強さ</td></tr>
+    <tr><td>1010!</td><td>コンボ深い / 回転あり / 演出豊富</td><td>純粋ミニマル性で負ける</td></tr>
+    <tr><td>Blockudoku</td><td>認知負荷低 / 疲れない</td><td>長期研究性 / モード多様性</td></tr>
+    <tr><td>Wood Block Puzzle</td><td>UX現代的 / ハプティクス / 統計 / 回転</td><td>"木の安心感" / ASMR感 / シニア層訴求</td></tr>
+  </table>
+
+  <div class="callout">
+    <h3 style="margin-top:0">最大の差別化ポイント: 「刺激を減らしたこと」</h3>
+    <p style="margin-bottom:0">モバイル市場は疲れる・うるさい・広告圧強い方向へ行きすぎている。<strong>"静かな常駐アプリ"</strong> という立ち位置は成立可能。特に日本市場と相性が良い。</p>
+  </div>
+
+  <h2>評価観点6: 4+ レーティングで可能な強化案</h2>
+
+  <h3>優先度A</h3>
+  <table>
+    <tr><th>施策</th><th>理由</th></tr>
+    <tr><td><strong>1. デイリーチャレンジ</strong></td><td>最重要。D7向上 / 毎日の理由 / 実装軽い</td></tr>
+    <tr><td><strong>2. 実績/バッジ</strong></td><td>1000ライン消去・10コンボ・PERFECT 5回 など。4+でも問題なし</td></tr>
+    <tr><td><strong>3. テーマ解放</strong></td><td>ストリークや実績と連動。ガチャ不要</td></tr>
+  </table>
+
+  <h3>優先度B</h3>
+  <ul>
+    <li><strong>4. ウィークリーハイスコア</strong> — Game Center なしでも可能</li>
+    <li><strong>5. "今日の盤面"</strong> — 固定シード。SNS共有と相性が良い</li>
+    <li><strong>6. 穏やかなアンロック</strong> — 7日継続で雨音テーマ / 30日で夜テーマ など</li>
+  </ul>
+
+  <h3>優先度C</h3>
+  <ul>
+    <li><strong>7. ネクスト1表示</strong> — 中級者定着に効くが、ゲーム性変化が大きい</li>
+  </ul>
+
+  <h2>評価観点7: 個人開発・週20h で実装可能な優先施策 TOP5</h2>
+  <table>
+    <tr><th>順位</th><th>施策</th><th>工数</th><th>効果</th></tr>
+    <tr><td>1位</td><td><strong>デイリーチャレンジ</strong></td><td>12〜20h</td><td>極めて高い。既存スコアイベント流用可能</td></tr>
+    <tr><td>2位</td><td><strong>実績/バッジ</strong></td><td>10〜18h</td><td>高い。ローカル保存で成立、Game Center 不要</td></tr>
+    <tr><td>3位</td><td><strong>ストリーク報酬（超軽量版）</strong></td><td>6〜10h</td><td>高い。7日でテーマ / 30日で称号 程度</td></tr>
+    <tr><td>4位</td><td><strong>今日の盤面（固定シード）</strong></td><td>8〜16h</td><td>中〜高。毎日の理由 / SNS相性◎</td></tr>
+    <tr><td>5位</td><td><strong>統計の強化</strong></td><td>6〜12h</td><td>中。平均コンボ・最長生存・最頻使用形（コア層に効く）</td></tr>
+  </table>
+
+  <h2>結論: ゲームデザインの現在地</h2>
+  <div class="callout">
+    <p>PieceZen は <strong>"未完成"ではなく、"コアは成立済み"</strong> の段階。</p>
+    <p>個人開発パズルで最も難しい <strong>"なんとなく続けてしまう"</strong> 感覚を作ることに成功している。</p>
+    <p style="margin-bottom:0">
+      今後必要なのは大規模機能追加より：
+      <strong>毎日起動する理由 / 小さな積み上げ / 軽い自己表現</strong>
+      を <strong>静かな世界観のまま</strong> 増やすこと。
+      これにより「高刺激競争」に巻き込まれず、独自ポジションを維持できる。
+    </p>
+  </div>
+
+  <h2>v2.0 企画書への影響</h2>
+  <p>このレビューを受けて <a href="v2.0-roadmap.html">v2.0 企画書</a> を v3.0 に改訂：</p>
+  <ul>
+    <li><strong>v2.0 縮小</strong>: コンボ強化 / パーフェクト演出 / ハプティクス / ストリーク報酬軽量版 のみ（17〜27h）</li>
+    <li><strong>v2.1 再編成</strong>: デイリーチャレンジ + 実績/バッジ + レベルXP + スキン拡張 を集中投入（メタ層構築）</li>
+    <li><strong>v2.2 降格</strong>: Near Miss / 配置吸着感 / 終了画面再設計 / 統計強化（触感磨き込み）</li>
+    <li><strong>v2.3 以降</strong>: Game Center 連携 / 世界ランキング / デイリーミッション</li>
+  </ul>
+
+  <h2>関連仕様書</h2>
+  <ul>
+    <li><a href="v2.0-roadmap.html">v2.0 大型アップデート企画書（v3.0 改訂版）</a></li>
+    <li><a href="v2.0-review-2026-05.html">v2.0 外部レビューレポート（GPT-5 / 2026-05-12 / UX軸）</a></li>
+  </ul>
+
+  <footer class="site-footer">最終更新: 2026-05-12（v1.0）</footer>
+</div>
+</body>
+</html>
