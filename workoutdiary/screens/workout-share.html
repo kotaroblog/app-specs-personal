@@ -13,19 +13,32 @@
   <header class="site-header">
     <h1>シェア画面（WorkoutShareSheet）</h1>
     <p>ワークアウト結果のSNS共有用カード生成</p>
-    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-SHARE-01</span></div>
+    <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: WD-SHARE-01</span></div>
   </header>
 
   <h2>目的・役割</h2>
-  <p>WorkoutSession や StatsView の結果を画像化してSNSにシェアする画面。5テーマ + Instagram Stories 対応。</p>
+  <p>WorkoutSession や StatsView の結果を画像化してSNSにシェアする画面。5テーマ + Instagram Stories 対応。v1.0.6 よりカード種類に「月次サマリー」「部位別ダイジェスト」を追加、Instagram Story シェアの安定性を改善。</p>
 
   <h2>UI 構成</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
     <tr><td>テーマ選択</td><td>Picker</td><td>Default / Dark / Minimal / Ocean / Sunset</td></tr>
+    <tr><td>カード種類選択</td><td>Picker</td><td>Daily / PR / Weekly / Progress / Monthly / Body Part（後2種はPremium限定）</td></tr>
+    <tr><td>期間切替ボタン</td><td>SegmentedControl</td><td>カード種類「Body Part」選択時のみ表示。月 / 週 を切替</td></tr>
     <tr><td>プレビュー</td><td>ShareCardView</td><td>生成された画像のプレビュー</td></tr>
     <tr><td>「シェア」ボタン</td><td>Button</td><td>UIActivityViewController 起動</td></tr>
-    <tr><td>「Instagram Stories」</td><td>Button</td><td>専用フォーマットで Instagram に直接</td></tr>
+    <tr><td>「Instagram Stories」</td><td>Button</td><td>専用フォーマットで Instagram に直接遷移</td></tr>
+  </table>
+
+  <h2>カード種類仕様</h2>
+  <table>
+    <tr><th>カード種類</th><th>無料/プレミアム</th><th>概要</th></tr>
+    <tr><td>Daily</td><td>無料</td><td>当日のトレーニング結果</td></tr>
+    <tr><td>PR</td><td>無料</td><td>自己ベスト記録</td></tr>
+    <tr><td>Weekly</td><td>無料</td><td>週間サマリー</td></tr>
+    <tr><td>Progress</td><td>プレミアム</td><td>進捗グラフ</td></tr>
+    <tr><td>Monthly</td><td>プレミアム</td><td>月次サマリー（v1.0.6追加）</td></tr>
+    <tr><td>Body Part</td><td>プレミアム</td><td>部位別ダイジェスト・期間切替あり（v1.0.6追加）</td></tr>
   </table>
 
   <h2>テーマ仕様</h2>
@@ -43,6 +56,18 @@
     <li class="done">ShareViewModel が画像生成を統括</li>
     <li class="done">ImageRenderer で UIImage 生成</li>
     <li class="done">Instagram Stories 用は別フォーマット（縦長）</li>
+    <li class="done">Instagram Story シェア: PNG→JPEG(quality 0.9)変換でサイズ削減（v1.0.6）</li>
+    <li class="done">UIPasteboard に localOnly: true を指定（v1.0.6）</li>
+    <li class="done">UIApplication.shared.open に completionHandler を追加してログ出力、Story編集画面への正常遷移を実現（v1.0.6）</li>
+    <li class="done">Monthly / Body Part カードは isPremium=true ユーザーのみ選択可</li>
+  </ul>
+
+  <h2>関連ファイル</h2>
+  <ul>
+    <li>WorkoutShareSheet.swift</li>
+    <li>ShareViewModel.swift</li>
+    <li>ShareCardType.swift</li>
+    <li>InstagramShareService.swift</li>
   </ul>
 
   <h2>関連</h2>
@@ -51,9 +76,13 @@
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-05-13</td><td>v1.0.6: カード種類にMonthly・Body Partを追加（Premium限定）、部位別カードに期間切替ボタン追加、Instagram Story シェアをJPEG化+localOnly+completionHandlerで安定化</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-05-13</footer>
 </div>
 </body>
 </html>

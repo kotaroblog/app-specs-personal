@@ -13,22 +13,31 @@
   <header class="site-header">
     <h1>セット追加画面（AddWorkoutView）</h1>
     <p>新しいセットの種目・重量・レップを入力</p>
-    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-ADD-01</span></div>
+    <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: WD-ADD-01</span></div>
   </header>
 
   <h2>目的・役割</h2>
-  <p>WorkoutSessionView から sheet で起動。種目を選択し、重量・レップ（または時間・距離）を入力する画面。</p>
+  <p>WorkoutSessionView から sheet で起動。種目を選択し、重量・レップ（または時間・距離）を入力する画面。v1.0.6 よりクイック調整ボタンと最近使った種目セクションを追加。</p>
 
   <h2>UI 構成</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>最近使った種目</td><td>横スクロールリスト</td><td>直近5件のユニーク種目チップ。タップで部位選択をスキップしてセット入力シートへ直接遷移。中触覚フィードバック（UIImpactFeedbackGenerator.medium）付き</td></tr>
     <tr><td>種目セレクタ</td><td>Picker</td><td>カテゴリ → 種目の2段階</td></tr>
-    <tr><td>重量入力</td><td>NumberField</td><td>有酸素以外で表示</td></tr>
-    <tr><td>レップ入力</td><td>NumberField</td><td>有酸素以外で表示</td></tr>
+    <tr><td>重量クイック調整</td><td>QuickAdjustFields</td><td>有酸素以外で表示。−5 / −2.5 / [TextField] / +2.5 / +5 のボタン群。プレート単位で素早く調整。軽い触覚フィードバック（light）付き</td></tr>
+    <tr><td>Repsクイック調整</td><td>QuickAdjustFields</td><td>有酸素以外で表示。−5 / −1 / [TextField] / +1 / +5 のボタン群。軽い触覚フィードバック（light）付き</td></tr>
     <tr><td>時間入力</td><td>NumberField</td><td>有酸素時に表示（分）</td></tr>
     <tr><td>距離入力</td><td>NumberField</td><td>有酸素時に表示（km）</td></tr>
     <tr><td>前回値表示</td><td>Text</td><td>同種目の前回 weight × reps を参考表示</td></tr>
     <tr><td>「追加」ボタン</td><td>Button</td><td>WorkoutSet INSERT</td></tr>
+  </table>
+
+  <h2>セット入力行レイアウト（v1.0.6〜）</h2>
+  <p>各セット行を縦2段構成に変更。</p>
+  <table>
+    <tr><th>段</th><th>内容</th></tr>
+    <tr><td>1段目（重量行）</td><td>−5 / −2.5 / [重量TextField] / +2.5 / +5</td></tr>
+    <tr><td>2段目（Reps行）</td><td>−5 / −1 / [RepsTextField] / +1 / +5</td></tr>
   </table>
 
   <h2>状態</h2>
@@ -45,12 +54,25 @@
     <li class="done">exercise.useCardioInput で入力フィールド切替</li>
     <li class="done">前回値は @Query で同種目の最新 WorkoutSet を取得して表示</li>
     <li class="done">追加後 PRDetector でPR検出</li>
+    <li class="done">最近使った種目: sessions から直近5件のユニーク種目を抽出（AddWorkoutView.swift）</li>
+    <li class="done">クイック調整ボタン: Views/Components/QuickAdjustFields.swift に実装</li>
+    <li class="done">触覚フィードバック: 重量/Repsボタン=light、最近使った種目タップ=medium</li>
+  </ul>
+
+  <h2>関連ファイル</h2>
+  <ul>
+    <li>AddWorkoutView.swift</li>
+    <li>Views/Components/QuickAdjustFields.swift</li>
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-05-13</td><td>v1.0.6: クイック調整ボタン追加（重量±2.5/5、Reps±1/5）、最近使った種目セクション追加、セット行を縦2段構成に変更</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-05-13</footer>
 </div>
 </body>
 </html>
