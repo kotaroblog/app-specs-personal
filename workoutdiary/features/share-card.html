@@ -12,12 +12,12 @@
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / シェアカード</div>
   <header class="site-header">
     <h1>シェアカード機能</h1>
-    <p>5テーマ + Instagram Stories 対応のSNS共有（v1.0.6: 月次/部位別カード追加）</p>
+    <p>5テーマ + Instagram Stories 対応のSNS共有（v1.0.7: 月次/部位別カード追加）</p>
     <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">機能ID: WD-FEAT-SHARE</span></div>
   </header>
 
   <h2>概要</h2>
-  <p>WorkoutSession や StatsView の結果を画像化してSNSに共有する機能。5テーマから選択可能、Instagram Storiesへの直接シェア対応。v1.0.6 でカード種類に「月次サマリー」「部位別ダイジェスト」を追加、Instagram Story 遷移バグを修正。</p>
+  <p>WorkoutSession や StatsView の結果を画像化してSNSに共有する機能。5テーマから選択可能、Instagram Storiesへの直接シェア対応。v1.0.7 でカード種類に「月次サマリー」「部位別ダイジェスト」を追加、Instagram Story 遷移バグを修正。</p>
 
   <h2>カード種類仕様</h2>
   <table>
@@ -26,8 +26,8 @@
     <tr><td>PR</td><td>無料</td><td>全期間</td><td>自己ベスト記録</td></tr>
     <tr><td>Weekly</td><td>無料</td><td>直近7日</td><td>週間サマリー</td></tr>
     <tr><td>Progress</td><td>プレミアム</td><td>指定期間</td><td>進捗グラフ</td></tr>
-    <tr><td>Monthly（v1.0.6追加）</td><td>プレミアム</td><td>閲覧月の1日〜末日</td><td>トレ日数・総セット数・総ボリューム(kg)・PR数・最多部位・月間TOP種目5件</td></tr>
-    <tr><td>Body Part（v1.0.6追加）</td><td>プレミアム</td><td>月 or 週（切替可）</td><td>6部位別セット数の横棒グラフ・総セット数</td></tr>
+    <tr><td>Monthly（v1.0.7追加）</td><td>プレミアム</td><td>閲覧月の1日〜末日</td><td>トレ日数・総セット数・総ボリューム(kg)・PR数・最多部位・月間TOP種目5件</td></tr>
+    <tr><td>Body Part（v1.0.7追加）</td><td>プレミアム</td><td>月 or 週（切替可）</td><td>6部位別セット数の横棒グラフ・総セット数</td></tr>
   </table>
 
   <h2>月次サマリーカード（Monthly）詳細</h2>
@@ -65,7 +65,7 @@
     <li>Instagram Stories: JPEG変換(quality 0.9) → UIPasteboard(localOnly:true) → <code>instagram-stories://share</code> で直接Instagram Story編集画面へ遷移</li>
   </ol>
 
-  <h2>Instagram Stories 対応（v1.0.6改善後）</h2>
+  <h2>Instagram Stories 対応（v1.0.7改善後）</h2>
   <pre><code>// JPEG変換でサイズ削減
 let imageData = uiImage.jpegData(compressionQuality: 0.9)
 // localOnly指定でセキュリティ向上
@@ -93,18 +93,18 @@ UIApplication.shared.open(
     <li>ShareViewModel.swift</li>
     <li>ShareCardType.swift</li>
     <li>InstagramShareService.swift</li>
-    <li>MonthlySummaryCardView.swift / MonthlySummaryCalculator.swift / MonthlySummaryData.swift（v1.0.6追加）</li>
-    <li>BodyPartDigestCardView.swift / BodyPartDigestCalculator.swift / BodyPartDigestData.swift（v1.0.6追加）</li>
+    <li>MonthlySummaryCardView.swift / MonthlySummaryCalculator.swift / MonthlySummaryData.swift（v1.0.7追加）</li>
+    <li>BodyPartDigestCardView.swift / BodyPartDigestCalculator.swift / BodyPartDigestData.swift（v1.0.7追加）</li>
   </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
-    <tr><td>1.1</td><td>2026-05-13</td><td>v1.0.6: 月次サマリーカード・部位別ダイジェストカード追加（Premium限定）、Instagram Story シェアのJPEG化+localOnly+completionHandler対応でバグ修正</td></tr>
+    <tr><td>1.1</td><td>2026-05-14</td><td>v1.0.7: 月次サマリーカード・部位別ダイジェストカード追加（Premium限定）、Instagram Story シェアのJPEG化+localOnly+completionHandler対応でバグ修正</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-13</footer>
+  <footer class="site-footer">最終更新: 2026-05-14</footer>
 </div>
 </body>
 </html>
