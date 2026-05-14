@@ -15,7 +15,7 @@
     <h1>トレーニング記録画面（WorkoutSessionView）</h1>
     <p>1日分のトレーニングセッションを入力・編集する中心画面</p>
     <div class="section-meta">
-      <span class="tag done">v1.0</span>
+      <span class="tag done">v1.1</span>
       <span class="tag">画面ID: WD-TRAINING-01</span>
     </div>
   </header>
@@ -28,6 +28,7 @@
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
     <tr><td>日付セレクタ</td><td>DatePicker</td><td>編集対象の日付選択</td></tr>
     <tr><td>セッションリスト</td><td>List</td><td>その日の WorkoutSet（種目ごとグループ）</td></tr>
+    <tr><td>編集・削除アイコン（v1.0.7変更）</td><td>HStack（各セット行右端）</td><td>編集アイコン（square.and.pencil）と削除アイコン（trash）を常時表示。旧仕様の左スワイプ削除・長押しコンテキストメニューは廃止</td></tr>
     <tr><td>セット追加ボタン</td><td>Button</td><td>AddWorkoutView を sheet 表示</td></tr>
     <tr><td>テンプレート適用ボタン</td><td>Button</td><td>TemplateListView を sheet 表示</td></tr>
     <tr><td>インターバルタイマー</td><td>Button</td><td>IntervalTimerView を sheet 表示</td></tr>
@@ -81,7 +82,15 @@
     <li class="done">PRDetector でセット保存時に過去最大値比較</li>
     <li class="done">テンプレート適用時は経験・目標で重量・レップを自動補正</li>
     <li class="done">scenePhase 監視でインターバルタイマー中断時処理</li>
+    <li class="done">各セット行に編集・削除アイコン常時表示。左スワイプ削除・長押しコンテキストメニューを廃止し操作を統一（v1.0.7）</li>
+    <li class="done">種目削除確認ダイアログを日本語化 — 「%@のセットをすべて削除しますか？」（v1.0.7、Localizable.xcstrings更新）</li>
     <li>非同期保存中の入力ロック（v1.x）</li>
+  </ul>
+
+  <h2>関連ファイル</h2>
+  <ul>
+    <li>WorkoutSessionView.swift</li>
+    <li>Localizable.xcstrings（種目削除ダイアログ日本語化）</li>
   </ul>
 
   <h2>関連</h2>
@@ -96,9 +105,10 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-05-14</td><td>v1.0.7: 編集・削除アイコンを各セット行右端に常時表示へ変更（左スワイプ削除・長押しコンテキストメニュー廃止）、種目削除ダイアログを日本語化</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-05-14</footer>
 </div>
 </body>
 </html>

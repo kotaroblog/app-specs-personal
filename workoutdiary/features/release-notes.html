@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - アップデートお知らせ機能（What's New）</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / アップデートお知らせ機能</div>
+
+  <header class="site-header">
+    <h1>アップデートお知らせ機能（What's New）</h1>
+    <p>新バージョン起動時にリリースノートをシート表示し、更新内容をユーザーに通知する</p>
+    <div class="section-meta">
+      <span class="tag done">v1.0</span>
+      <span class="tag">機能ID: WD-FEAT-RELEASENOTES</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>アプリ更新後の初回起動時に「What's New」シートを自動表示し、バージョンごとのリリースノートをユーザーに伝える機能。オンボーディングと重複しないよう制御され、設定画面からもいつでも閲覧できる。リリースノートはアプリ内ハードコードで管理する。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/settings.html">設定画面（WD-SETTINGS-01）</a> — 「App Info」セクションに「What's New」エントリを常設</li>
+  </ul>
+
+  <h2>モデル仕様</h2>
+  <table>
+    <tr><th>プロパティ</th><th>型</th><th>説明</th></tr>
+    <tr><td>version</td><td>String</td><td>バージョン文字列（例: "1.0.7"）</td></tr>
+    <tr><td>date</td><td>String</td><td>リリース日（例: "2026-05-14"）</td></tr>
+    <tr><td>highlights</td><td>[ReleaseHighlight]</td><td>変更点の配列</td></tr>
+  </table>
+  <table>
+    <tr><th>ReleaseHighlight プロパティ</th><th>型</th><th>説明</th></tr>
+    <tr><td>icon</td><td>String</td><td>SF Symbols アイコン名</td></tr>
+    <tr><td>titleKey</td><td>String</td><td>ローカライズキー（en/ja対応）</td></tr>
+    <tr><td>descriptionKey</td><td>String</td><td>ローカライズキー（en/ja対応）</td></tr>
+  </table>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant App as ContentView
+  participant Svc as ReleaseNotesService
+  participant UD as UserDefaults
+  participant UI as WhatsNewView
+
+  App->>Svc: checkShouldShowWhatsNew()
+  Svc->>UD: get("lastSeenReleaseVersion")
+  UD-->>Svc: 前回バージョン or nil
+  Svc->>Svc: 現在バージョンと比較
+  alt 新バージョン かつ 初回起動でない
+    Svc-->>App: shouldShow = true
+    App->>UI: sheet 表示
+    UI-->>App: 閉じる
+    App->>Svc: markAsSeen(version:)
+    Svc->>UD: set("lastSeenReleaseVersion", 現在バージョン)
+  else 初回起動 or 同バージョン
+    Svc-->>App: shouldShow = false
+  end
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>UserDefaults キー <code>lastSeenReleaseVersion</code> で前回起動バージョンを管理する</li>
+    <li>現在バージョンが <code>lastSeenReleaseVersion</code> より大きい場合のみシートを表示する</li>
+    <li><code>lastSeenReleaseVersion</code> が存在しない（初回起動）場合はシートを表示しない。オンボーディングを優先させるため</li>
+    <li>表示後に <code>lastSeenReleaseVersion</code> を現在バージョンに更新する</li>
+    <li>設定画面「App Info」セクションの「What's New」エントリは常時表示。タップで WhatsNewView をシート表示する</li>
+    <li>リリースノートは en / ja 両対応（Localizable.xcstrings によるローカライズ）</li>
+    <li>リリースノートのデータはコードにハードコード（ReleaseNotesService 内配列）で管理する。サーバー取得は行わない</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>UserDefaults</td><td>lastSeenReleaseVersion の読み書き</td><td>Keychain 不要（機密情報なし）</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>バージョン文字列が取得できない（Bundle.main.infoDictionary 異常）</td><td>シート表示をスキップし、Logger で warning を出力</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">ReleaseNote.swift — データモデル（Models/）</li>
+    <li class="done">ReleaseNotesService.swift — バージョン比較・UserDefaults 管理（Services/）</li>
+    <li class="done">WhatsNewView.swift — シート表示UI（Views/Settings/）</li>
+    <li class="done">ContentView.swift — アプリ起動時に checkShouldShowWhatsNew() を呼び出し</li>
+    <li class="done">SettingsView.swift — 「App Info」セクションに「What's New」エントリ追加</li>
+    <li class="done">en/ja ローカライズ対応（Localizable.xcstrings）</li>
+    <li>将来的にサーバーから動的取得する場合は ReleaseNotesService のデータソースのみ変更（インターフェースは変えない）</li>
+  </ul>
+
+  <h2>関連ファイル</h2>
+  <ul>
+    <li>Models/ReleaseNote.swift</li>
+    <li>Services/ReleaseNotesService.swift</li>
+    <li>Views/Settings/WhatsNewView.swift</li>
+    <li>ContentView.swift</li>
+    <li>Views/Settings/SettingsView.swift</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-14</td><td>初版作成（v1.0.7実装分）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-14</footer>
+</div>
+</body>
+</html>
