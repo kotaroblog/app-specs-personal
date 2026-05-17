@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>SandTodo - SwiftUI 演出・技術デザイン仕様書</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  /* カラーチップ */
+  .color-chip {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.12);
+    vertical-align: middle;
+    margin-right: 0.35em;
+    flex-shrink: 0;
+  }
+  .color-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin: 0.3em 0;
+  }
+  .color-row code {
+    font-size: 0.85em;
+  }
+  .palette-block {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6em;
+    margin: 0.8em 0 1.2em;
+  }
+  .palette-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    background: var(--color-surface, #f5f5f5);
+    border-radius: 6px;
+    padding: 0.3em 0.6em;
+    font-size: 0.85em;
+  }
+  .chip-lg {
+    width: 1.4em;
+    height: 1.4em;
+    border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+  .phase-badge {
+    display: inline-block;
+    padding: 0.15em 0.55em;
+    border-radius: 4px;
+    font-size: 0.78em;
+    font-weight: bold;
+    background: var(--color-accent-soft, #e8e8e8);
+    color: var(--color-text, #333);
+    margin-right: 0.4em;
+  }
+  .ng { color: #c0392b; font-weight: bold; }
+  .ok { color: #27ae60; font-weight: bold; }
+  blockquote.final-message {
+    font-size: 1.15rem;
+    font-weight: bold;
+    border-left: 4px solid var(--color-accent, #888);
+    padding: 0.8rem 1.2rem;
+    margin: 1.2rem 0;
+    background: var(--color-surface, #f5f5f5);
+    border-radius: 0 8px 8px 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← Personal App Specs</a> / <a href="./">SandTodo</a></div>
+
+  <header class="site-header">
+    <h1>Sand ToDo — SwiftUI 演出・技術デザイン仕様書</h1>
+    <p>v1.0 · 2026-05-17 · 個人開発</p>
+  </header>
+
+  <ul class="kv-list">
+    <li><span class="k">作成日</span><span class="v">2026-05-17</span></li>
+    <li><span class="k">対象バージョン</span><span class="v">v1.0 MVP</span></li>
+    <li><span class="k">技術スタック</span><span class="v">Swift 6 / SwiftUI / SwiftData / iOS 18.0+</span></li>
+    <li><span class="k">関連ドキュメント</span><span class="v"><a href="concept.html">企画書</a></span></li>
+  </ul>
+
+  <!-- ========== 1. コンセプト ========== -->
+  <h2>1. コンセプト（演出方針の核）</h2>
+
+  <p>このアプリは「タスク管理」ではなく、<strong>「重荷が少しずつ崩れ落ちていく感覚」</strong>を体験として設計する。機能の豊富さではなく、1回のチェックで得られる感情密度が競争力の源泉。</p>
+
+  <h3>ユーザーが感じるべき感情</h3>
+  <ul>
+    <li>解放感 — 重荷が消えた</li>
+    <li>軽さ — タスクが減ったことが体でわかる</li>
+    <li>静かな達成感 — 派手ではないが「やった」という余韻</li>
+    <li>整っている感覚 — 画面がきれいに落ち着く</li>
+    <li>少しだけ気持ちいい余韻 — またやりたいと思わせる</li>
+  </ul>
+
+  <h3>方向性の定義</h3>
+  <p>ゲーム化・ポイント化・バッジ化とは逆方向。目指すのは <strong>禅 / ASMR / 触感UI / 静かな物理感</strong> に近い体験。</p>
+
+  <!-- ========== 2. UI 哲学 ========== -->
+  <h2>2. UI 哲学</h2>
+
+  <p><strong>UIは主役ではない。主役は「砂」と「崩壊演出」。</strong></p>
+
+  <ul>
+    <li>薄い / 控えめ / 無機質すぎない</li>
+    <li>情報量を抑える / 余白重視</li>
+    <li>要素が主張しすぎない — 視線は砂へ</li>
+  </ul>
+
+  <h3>キーワード</h3>
+  <p>Sand &nbsp;·&nbsp; Quiet &nbsp;·&nbsp; Soft &nbsp;·&nbsp; Weight &nbsp;·&nbsp; Collapse &nbsp;·&nbsp; Dust &nbsp;·&nbsp; Calm &nbsp;·&nbsp; Zen &nbsp;·&nbsp; Air &nbsp;·&nbsp; Minimal</p>
+
+  <!-- ========== 3. カラーパレット ========== -->
+  <h2>3. カラーパレット</h2>
+
+  <h3>ライトモード（朝・白砂・静かな部屋）</h3>
+  <div class="palette-block">
+    <div class="palette-item">
+      <span class="chip-lg" style="background:#F6F2EA;"></span>
+      <div>
+        <div style="font-weight:bold;">Background</div>
+        <code>#F6F2EA</code>
+      </div>
+    </div>
+    <div class="palette-item">
+      <span class="chip-lg" style="background:#EFE7DA;"></span>
+      <div>
+        <div style="font-weight:bold;">Surface</div>
+        <code>#EFE7DA</code>
+      </div>
+    </div>
+    <div class="palette-item">
+      <span class="chip-lg" style="background:#D9C6A5;"></span>
+      <div>
+        <div style="font-weight:bold;">Sand</div>
+        <code>#D9C6A5</code>
+      </div>
+    </div>
+    <div class="palette-item">
+      <span class="chip-lg" style="background:#4A4036;"></span>
+      <div>
+        <div style="font-weight:bold;">Text</div>
+        <code>#4A4036</code>
+      </div>
+    </div>
+    <div class="palette-item">
+      <span class="chip-lg" style="background:#8A7E71;"></span>
+      <div>
+        <div style="font-weight:bold;">Secondary Text</div>
+        <code>#8A7E71</code>
+      </div>
+    </div>
+  </div>
+  <p>アクセント: Warm Gray / Dust Beige / Clay Brown</p>
+
+  <h3>ダークモード（夜・月・黒砂・砂丘）</h3>
+  <div class="palette-block">
+    <div class="palette-item">
+      <span class="chip-lg" style="background:#111418; border-color:rgba(255,255,255,0.15);"></span>
+      <div>
+        <div style="font-weight:bold;">Background</div>
+        <code>#111418</code>
+      </div>
+    </div>
+    <div class="palette-item">
+      <span class="chip-lg" style="background:#1A1F24; border-color:rgba(255,255,255,0.15);"></span>
+      <div>
+        <div style="font-weight:bold;">Surface</div>
+        <code>#1A1F24</code>
+      </div>
+    </div>
+    <div class="palette-item">
+      <span class="chip-lg" style="background:#8C7A5B; border-color:rgba(255,255,255,0.15);"></span>
+      <div>
+        <div style="font-weight:bold;">Sand</div>
+        <code>#8C7A5B</code>
+      </div>
+    </div>
+    <div class="palette-item">
+      <span class="chip-lg" style="background:#ECE6DC; border-color:rgba(255,255,255,0.15);"></span>
+      <div>
+        <div style="font-weight:bold;">Text</div>
+        <code>#ECE6DC</code>
+      </div>
+    </div>
+    <div class="palette-item">
+      <span class="chip-lg" style="background:#9A958E; border-color:rgba(255,255,255,0.15);"></span>
+      <div>
+        <div style="font-weight:bold;">Secondary Text</div>
+        <code>#9A958E</code>
+      </div>
+    </div>
+  </div>
+
+  <h3>ダークモード設計原則</h3>
+  <p>単なる色反転禁止。ライトとダークで<strong>世界観そのものを変える</strong>。ライト = 朝の白砂浜、ダーク = 夜の砂丘・月明かり。</p>
+
+  <!-- ========== 4. タイポグラフィ ========== -->
+  <h2>4. タイポグラフィ</h2>
+
+  <table>
+    <thead>
+      <tr><th>分類</th><th>フォント候補</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>iOSネイティブ（推奨）</td><td>SF Pro / SF Rounded（限定的に使用）</td></tr>
+      <tr><td>世界観優先（検討）</td><td>Inter / Manrope / IBM Plex Sans / Satoshi</td></tr>
+    </tbody>
+  </table>
+
+  <h3>避けるフォント特性</h3>
+  <p>極太 / ポップ / ゲーム感 / 丸文字すぎる / サイバー系</p>
+
+  <h3>目指す質感</h3>
+  <p>静か・空気感・少し高級・紙っぽい</p>
+
+  <!-- ========== 5. レイアウト ========== -->
+  <h2>5. レイアウト</h2>
+
+  <ul class="kv-list">
+    <li><span class="k">Card spacing</span><span class="v">12〜20pt</span></li>
+    <li><span class="k">Horizontal padding</span><span class="v">20〜28pt</span></li>
+    <li><span class="k">Vertical breathing</span><span class="v">多め（余白を詰めない）</span></li>
+    <li><span class="k">Corner Radius</span><span class="v">16〜24pt</span></li>
+    <li><span class="k">Shadow</span><span class="v"><code>.shadow(color: .black.opacity(0.05), radius: 12, y: 4)</code></span></li>
+  </ul>
+
+  <h3>画面構成</h3>
+  <table>
+    <thead>
+      <tr><th>画面</th><th>主要要素</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Home</td><td>今日のタスク / 砂山 / タスクカード / 小さな進捗表示</td></tr>
+      <tr><td>完了時</td><td>崩壊アニメ / 粒子 / 微振動 / 軽い余韻</td></tr>
+      <tr><td>1日終了</td><td>砂が静かに流れる / 小さな達成表示 / 夜モード演出</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 6. SwiftUI 技術構成 ========== -->
+  <h2>6. SwiftUI 技術構成</h2>
+
+  <table>
+    <thead>
+      <tr><th>カテゴリ</th><th>採用技術</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>UI</td><td>SwiftUI</td></tr>
+      <tr><td>状態管理</td><td>@Observable / @State / @Bindable / MVVM 軽量構成</td></tr>
+      <tr><td>アニメーション</td><td>SwiftUI Animation / PhaseAnimator / TimelineView / matchedGeometryEffect</td></tr>
+      <tr><td>粒子演出</td><td>Canvas / Metal Shader（Phase 3 以降、必要な場合のみ）</td></tr>
+    </tbody>
+  </table>
+
+  <h3>View 構成例</h3>
+<pre><code>ZStack {
+    SandPileView(progress: progress)
+
+    VStack(spacing: 16) {
+        TaskCard(task)
+    }
+}</code></pre>
+
+  <!-- ========== 7. SandPileView 設計 ========== -->
+  <h2>7. SandPileView 設計（実装フェーズ戦略）</h2>
+
+  <p>最初からリアル物理を実装しない。重要なのは「気持ちよさ」であり、アニメーション品質よりも<strong>感情密度</strong>を優先する。</p>
+
+  <table>
+    <thead>
+      <tr><th>フェーズ</th><th>実装内容</th><th>目標</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="phase-badge">Phase 1</span> MVP</td>
+        <td>PNG / WebP 砂画像 + scale 変化 + offset 変化 + opacity 変化 + 粒子少量</td>
+        <td>リリース判断 PoC（2〜3時間想定）</td>
+      </tr>
+      <tr>
+        <td><span class="phase-badge">Phase 2</span></td>
+        <td>Canvas 粒子 + 崩壊方向制御 + 重力感</td>
+        <td>v1.1 以降に検討</td>
+      </tr>
+      <tr>
+        <td><span class="phase-badge">Phase 3</span></td>
+        <td>Metal Shader + distortion + fluid 感</td>
+        <td>必要と判断した場合のみ</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 8. タスク完了演出 ========== -->
+  <h2>8. タスク完了演出</h2>
+
+  <p><strong>最重要ポイント: 「速すぎない」。</strong><br>
+  「ぱっ・シュッ・即消え」ではなく<strong>「サラッと崩れる」</strong>感覚を最優先する。</p>
+
+  <table>
+    <thead>
+      <tr><th>演出要素</th><th>時間</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>崩壊</td><td>0.35〜0.55 秒</td></tr>
+      <tr><td>粒子余韻</td><td>0.7 秒以内</td></tr>
+      <tr><td>Haptic</td><td>即時（チェック瞬間）</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 9. アニメーション設計 ========== -->
+  <h2>9. アニメーション設計</h2>
+
+  <h3>タスクチェック手順</h3>
+  <ol>
+    <li>タップ</li>
+    <li>微振動（Haptic 即時）</li>
+    <li>カードを少し沈ませる（scale down 小）</li>
+    <li>崩壊開始</li>
+    <li>砂粒が流れる</li>
+    <li>残りカード再配置（spring アニメ）</li>
+  </ol>
+
+  <h3>推奨 Animation</h3>
+<pre><code>withAnimation(
+    .spring(
+        response: 0.45,
+        dampingFraction: 0.82
+    )
+)</code></pre>
+
+  <!-- ========== 10. Haptic ========== -->
+  <h2>10. Haptic</h2>
+
+  <p>視覚演出と同等、または<strong>それ以上に重要な可能性がある</strong>。完了チェック時の触感がユーザーの「気持ちよさ」を決定づける。</p>
+
+<pre><code>.sensoryFeedback(
+    .impact(weight: .light),
+    trigger: completed
+)</code></pre>
+
+  <p>調整候補: <code>.soft</code> / <code>.rigid</code> / <code>.impact</code> の組み合わせ。実機テストで決定する。</p>
+
+  <!-- ========== 11. 粒子演出ルール ========== -->
+  <h2>11. 粒子演出ルール</h2>
+
+  <p>粒子は<strong>少ない・軽い・空気感</strong>が原則。多量の粒子は「砂崩れ体験」ではなく「ゲームSE」になる。</p>
+
+  <table>
+    <thead>
+      <tr><th>判定</th><th>演出</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="ng">NG</td>
+        <td>爆発 / 火花 / 派手 / ソシャゲ感 / 大量粒子</td>
+      </tr>
+      <tr>
+        <td class="ok">OK</td>
+        <td>風 / 砂塵 / サラサラ / 微細 / 少量で空気感</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 12. サウンド ========== -->
+  <h2>12. サウンド</h2>
+
+  <p>入れるなら極小。ユーザーが気づかない程度のアンビエント演出を目指す。</p>
+
+  <table>
+    <thead>
+      <tr><th>判定</th><th>内容</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="ok">推奨</td>
+        <td>サラ... / コト... / 粒落ち系（環境音に溶け込む音）</td>
+      </tr>
+      <tr>
+        <td class="ng">NG</td>
+        <td>ポコン / かわいいSE / ゲームSE / 通知音的な音</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 13. タスクカード設計 ========== -->
+  <h2>13. タスクカード設計</h2>
+
+  <ul>
+    <li>薄い / 少し浮く / 影は弱い / 紙と石の中間の質感</li>
+    <li>Corner Radius: 16〜24pt</li>
+    <li>Shadow: 弱め（<code>.shadow(color: .black.opacity(0.05), radius: 12, y: 4)</code>）</li>
+    <li>グラスモーフィズムは薄く適用（厚くすると主張が強くなりすぎる）</li>
+    <li>テキスト階層: タスクタイトル（大） / カテゴリ・時間（小・薄色）</li>
+  </ul>
+
+  <!-- ========== 14. パフォーマンス ========== -->
+  <h2>14. パフォーマンス</h2>
+
+  <p>粒子演出は最適化を怠るとフレームレートが低下し、体験が損なわれる。</p>
+
+  <table>
+    <thead>
+      <tr><th>判定</th><th>内容</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="ok">推奨</td>
+        <td>fake particle（opacity / scale アニメ） / image sequence / Canvas ベース描画</td>
+      </tr>
+      <tr>
+        <td class="ng">避ける</td>
+        <td>何百もの View 生成 / 毎フレーム geometry 更新 / 過剰 blur / SwiftUI diffing 多発</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 15. Claude Code 実装優先順位 ========== -->
+  <h2>15. Claude Code 実装優先順位</h2>
+
+  <ol>
+    <li>静的 UI（Home / TaskCard / SandPile）</li>
+    <li>タスク完了演出（scale / particle / haptic）</li>
+    <li>ダークモード</li>
+    <li>Canvas 粒子（Phase 2）</li>
+    <li>Shader 最適化（Phase 3、必要な場合のみ）</li>
+  </ol>
+
+  <!-- ========== 16. MVP スコープ ========== -->
+  <h2>16. MVP スコープ</h2>
+
+  <table>
+    <thead>
+      <tr><th>判定</th><th>項目</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>MUST</strong></td>
+        <td>気持ちいいチェック / 軽い振動 / 崩壊感 / 空気感 / 高 fps（60fps 維持）</td>
+      </tr>
+      <tr>
+        <td><strong>NOT NEEDED</strong></td>
+        <td>複雑な管理機能 / AI / カレンダー同期 / 高機能タグ / ソーシャル機能</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 17. 参考体験 ========== -->
+  <h2>17. 参考体験</h2>
+
+  <table>
+    <thead>
+      <tr><th>カテゴリ</th><th>参考プロダクト</th><th>参照ポイント</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>世界観</td>
+        <td>Things 3 / Monument Valley / Journey / Forest</td>
+        <td>完了アニメの洗練 / 触感UI / 砂の表現 / 体験への没入感</td>
+      </tr>
+      <tr>
+        <td>UI感</td>
+        <td>Apple Weather / Calm / Headspace（初期）</td>
+        <td>余白の使い方 / 静かな視覚リズム / 感情への寄り添い方</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 18. 最終メッセージ ========== -->
+  <h2>18. 最終メッセージ</h2>
+
+  <blockquote class="final-message">
+    「タスクを消した」ではなく「重さが崩れていく」感覚。
+  </blockquote>
+
+  <table>
+    <thead>
+      <tr><th>やらないこと</th><th>優先すること</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>リアル物理 / 高機能化 / 派手演出 / ゲーム化</td>
+        <td>気持ちよさ密度 / 余白 / 静かな触感 / 感情体験の一貫性</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 関連ドキュメント ========== -->
+  <h2>関連ドキュメント</h2>
+  <ul>
+    <li><a href="concept.html">企画書 v1.1</a> — コンセプト・ペルソナ・マネタイズ・MVP・KPI</li>
+    <li><a href="./">SandTodo 仕様書ポータル トップ</a></li>
+  </ul>
+
+  <!-- ========== 変更履歴 ========== -->
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1.0</td><td>2026-05-17</td><td>初版作成</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-17</footer>
+</div>
+</body>
+</html>

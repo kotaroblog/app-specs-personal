@@ -50,12 +50,23 @@
   <p>単なるアニメではなく「<strong>状態変化を感情で理解させるUI</strong>」。物理演算はリアルにしすぎない（UIミニマル／崩れ0.3〜0.6秒／粒子少なめ／指追従／少し誇張）。</p>
 
   <h3>近い感覚の参考プロダクト</h3>
-  <ul>
-    <li>Forest — 「木が育つ」集中体験</li>
-    <li>Journey — 砂の表現</li>
-    <li>Monument Valley — 触感UI</li>
-    <li>Things 3 — 完了アニメの洗練</li>
-  </ul>
+  <table>
+    <thead>
+      <tr><th>カテゴリ</th><th>プロダクト</th><th>参照ポイント</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>世界観</td>
+        <td>Things 3 / Monument Valley / Journey / Forest</td>
+        <td>完了アニメの洗練 / 触感UI / 砂の表現 / 没入体験</td>
+      </tr>
+      <tr>
+        <td>UI感</td>
+        <td>Apple Weather / Calm / Headspace（初期）</td>
+        <td>余白 / 静かな視覚リズム / 感情への寄り添い方</td>
+      </tr>
+    </tbody>
+  </table>
 
   <h3>モックアップ 4画面イメージ</h3>
   <table>
@@ -64,7 +75,7 @@
     </thead>
     <tbody>
       <tr><td>1</td><td>タスクリスト</td><td>砂山の上に半透明グラスモーフィズム風タスクカード5件、進捗20%カード</td></tr>
-      <tr><td>2</td><td>完了演出中</td><td>タスクが✓に変化、砂が爆発的に飛散、「スワイプで完了」ガイド</td></tr>
+      <tr><td>2</td><td>完了演出中</td><td>タスクが✓に変化、砂が<strong>サラサラと静かに崩れ始める</strong>（注: モック画像は強調表現で、実装は「禅・ASMR」寄りの静かな崩壊感を採用）、「スワイプで完了」ガイド</td></tr>
       <tr><td>3</td><td>進行中</td><td>進捗60%、タスク2件残り、砂山が小さくなっている</td></tr>
       <tr><td>4</td><td>1日の終わり</td><td>ダークモード・夜空・月・小さく残った砂山、「100%」「小さな一歩の積み重ねが、大きな変化になります」</td></tr>
     </tbody>
@@ -155,7 +166,13 @@
   <p>タスク件数に応じてAI生成砂山画像を切替（0件→空砂漠、5件以上→大砂山）。グラスモーフィズム風カード重ね表示。</p>
 
   <h3>MVP-2: スワイプ完了 + 砂崩れアニメ</h3>
-  <p>SwiftUI Canvas + 粒子物理で実装。右スワイプで✓マーク表示、砂粒子0.3〜0.6秒飛散アニメ。</p>
+  <p><strong>Phase 戦略</strong>で実装する。</p>
+  <ul>
+    <li><strong>Phase 1（MVP）</strong>: PNG 砂画像 + scale / offset / opacity 変化（リアル物理不要）</li>
+    <li><strong>Phase 2</strong>: Canvas 粒子 + 崩壊方向制御</li>
+    <li><strong>Phase 3</strong>: Metal Shader（必要な場合のみ）</li>
+  </ul>
+  <p>崩壊 0.35〜0.55 秒、粒子余韻 0.7 秒以内、Haptic 即時。<strong>「サラッと崩れる」感覚を最優先</strong>し、爆発・火花・派手・ソシャゲ感は禁止。詳細は <a href="design-spec.html">デザイン・技術仕様書</a> 参照。</p>
 
   <h3>MVP-3: 1日の終わり画面</h3>
   <p>23:59〜0:00のタイミングで残タスク数に応じた砂が流れ落ちる演出。ダークモード・月・進捗%・一言メッセージを表示。</p>
@@ -269,11 +286,18 @@
 
   <ol>
     <li>Adobe Fireflyで砂山ステート別画像（0〜5段階）を生成し、生成ログを保存する</li>
-    <li>SwiftUI Canvas粒子アニメ PoC（2〜3時間）で実現性を確認する</li>
+    <li>SwiftUI <strong>Phase 1 PoC</strong>（PNG 砂画像 + scale / offset / opacity + Haptic、2〜3時間想定）で実現性確認。Phase 2 以降への進行可否を判断する</li>
     <li>アプリ名最終決定: J-PlatPat + App Store検索を実施する</li>
     <li>デザインカンプをFigma化（タスク追加・設定・初回起動画面も整理）</li>
     <li>仕様書ポータルに画面仕様・データモデルを追加する</li>
   </ol>
+
+  <!-- ========== 関連ドキュメント ========== -->
+  <h2>関連ドキュメント</h2>
+  <ul>
+    <li><a href="design-spec.html">デザイン・技術仕様書 v1.0</a> — SwiftUI 演出方針・カラーパレット・Phase 戦略・実装優先順位</li>
+    <li><a href="./">SandTodo 仕様書ポータル トップ</a></li>
+  </ul>
 
   <!-- ========== 変更履歴 ========== -->
   <h2>変更履歴</h2>
@@ -283,6 +307,7 @@
     </thead>
     <tbody>
       <tr><td>1.0</td><td>2026-05-17</td><td>初版作成</td></tr>
+      <tr><td>1.1</td><td>2026-05-17</td><td>デザイン・技術仕様書との整合（演出表現修正、Phase戦略追記、参考体験追加、関連ドキュメントリンク追加）</td></tr>
     </tbody>
   </table>
 
