@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - v1.0.8 機能ロードマップ企画書</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / v1.0.8 機能ロードマップ企画書</div>
+
+  <header class="site-header">
+    <h1>v1.0.8 機能ロードマップ企画書</h1>
+    <p>product-strategist評価（2026-05-17）の Sランク4項目を v1.0.8 で実装する</p>
+    <div class="section-meta">
+      <span class="tag">draft</span>
+      <span class="tag">企画ID: WD-PLAN-V108</span>
+    </div>
+  </header>
+
+  <h2>背景</h2>
+  <p>v1.0.7 リリース後の戦略評価で、現アプリは「日本版 Hevy-lite × 記録最速UX」路線で勝ち筋が見えていると判定された。スコア上の最大ボトルネックはマネタイズ B+ と SNS 拡散導線（Instagram Story 一時停止中）。v1.0.8 ではこの2軸を補強し、年間¥143,000の収益目標達成を後押しする。</p>
+
+  <h2>v1.0.8 で実装する Sランク4項目</h2>
+
+  <h3>① 体重記録機能（最優先・実装コスト低）</h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>ダイエット層を獲得し、継続率と通知効率を上げる</td></tr>
+    <tr><td>主要UI</td><td>統計タブに「体重」セクションを追加（折れ線グラフ + 入力ボタン）。設定からゴール体重を設定可能</td></tr>
+    <tr><td>データモデル</td><td>新規 <code>BodyWeightEntry</code>（id / date / value(kg) / note）を SwiftData @Model で追加</td></tr>
+    <tr><td>通知</td><td>朝の体重記録リマインダー（オプション）。ストリーク危機通知と独立</td></tr>
+    <tr><td>シェア連携</td><td>月次サマリーカードに「体重推移」を1行追加（前月比 +/- kg）</td></tr>
+    <tr><td>Free/Premium</td><td>記録は Free、過去30日以上のグラフ表示は Premium（ライト感あるロック）</td></tr>
+    <tr><td>見積もり</td><td>10〜15時間（モデル・グラフ・通知・ローカライズ込み）</td></tr>
+  </table>
+
+  <h3>② Instagram Story 復活（Facebook App ID 取得後）</h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>筋トレ界隈のスクショ/ストーリー文化に乗り、SNS拡散を取り戻す</td></tr>
+    <tr><td>前提作業</td><td>Facebook for Developers でアプリ登録、App ID 取得（スマホで再挑戦）</td></tr>
+    <tr><td>主要変更</td><td>InstagramShareService に <code>com.instagram.sharedSticker.sourceApplication</code> を追加、URL に <code>?source_application=&lt;APP_ID&gt;</code> を付与</td></tr>
+    <tr><td>UI復活</td><td>ShareCardFormat.availableCases から filter を外すだけ（実装は v1.0.7 で残してある）</td></tr>
+    <tr><td>追加対応</td><td>TikTok / Threads 縦長フォーマット用に別 case を追加（Story と画像サイズ共通化）</td></tr>
+    <tr><td>見積もり</td><td>3〜5時間（App ID取得が別タスク）</td></tr>
+  </table>
+
+  <h3>③ PRタイムライン（SNS相性最強）</h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>「ベンチ100kg達成」「スクワット更新」のような自動カードでSNS拡散を促進</td></tr>
+    <tr><td>主要UI</td><td>統計タブに「PR履歴」セクションを新設。時系列で過去のPR達成日・種目・記録を一覧表示。各PRをタップでシェアカード起動</td></tr>
+    <tr><td>データソース</td><td>既存の PRDetector を毎セッション保存時に呼び出して <code>PersonalRecordLog</code>（@Model）に記録</td></tr>
+    <tr><td>マイグレーション</td><td>過去セッションを起動時に1度だけ走査して PR ログを生成（重い処理は async）</td></tr>
+    <tr><td>シェアカード追加</td><td>「PR Milestone」カード — 該当種目の初回100kg到達などキリ番達成時に特別デザイン</td></tr>
+    <tr><td>Free/Premium</td><td>PR履歴閲覧は Free、PRシェアカードは Premium（既存通り）</td></tr>
+    <tr><td>見積もり</td><td>15〜20時間（マイグレーション・グラフ・シェア統合）</td></tr>
+  </table>
+
+  <h3>④ 週次レポート強化（Paywall導線兼用）</h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>毎週日曜にプッシュで「今週の成果」を要約し、Paywall への自然な誘導点にする</td></tr>
+    <tr><td>主要UI</td><td>毎週日曜21:00 にローカル通知 →タップで WeeklyReportView（フルスクリーン）→「シェア・保存はPremium」CTA</td></tr>
+    <tr><td>レポート内容</td><td>総セット数 / 総ボリューム(kg) / PR更新数 / 継続日数 / 部位別バランス / 来週の提案（任意）</td></tr>
+    <tr><td>共有形式</td><td>既存の WeeklySummaryCardView を全画面プレビュー化、Premium で画像保存 / SNSシェア</td></tr>
+    <tr><td>通知設定</td><td>既存 NotificationService に <code>scheduleWeeklyReport(weekday: 1, hour: 21)</code> 追加</td></tr>
+    <tr><td>見積もり</td><td>8〜12時間（通知・全画面UI・Paywall導線）</td></tr>
+  </table>
+
+  <h2>実装順序とマイルストーン</h2>
+  <table>
+    <tr><th>週</th><th>作業</th><th>累積工数</th></tr>
+    <tr><td>Week 1</td><td>① 体重記録モデル・グラフ・通知</td><td>15h</td></tr>
+    <tr><td>Week 2</td><td>③ PR履歴データレイヤ + マイグレーション</td><td>27h</td></tr>
+    <tr><td>Week 3</td><td>③ PR履歴UI + シェアカード統合</td><td>35h</td></tr>
+    <tr><td>Week 4</td><td>④ 週次レポート全画面UI + 通知</td><td>45h</td></tr>
+    <tr><td>Week 5</td><td>② Story復活（App ID取得済み前提）+ TikTok縦長カード</td><td>50h</td></tr>
+    <tr><td>Week 6</td><td>仕上げ・ローカライズ・コードレビュー・申請準備</td><td>56h</td></tr>
+  </table>
+  <p>※ ユーザーの開発時間: 平日2h × 5日 + 土日10h = 週20h。約3週間で完了見込み。マイルストーンはバッファ込みで6週設定。</p>
+
+  <h2>リリース目標</h2>
+  <ul>
+    <li>v1.0.8 リリース目標日: 2026-07-01（v1.0.7 リリース後 約1.5ヶ月）</li>
+    <li>TestFlight 配布: 2026-06-20</li>
+    <li>App Store Connect 申請: 2026-06-25</li>
+  </ul>
+
+  <h2>成功指標（KPI）</h2>
+  <table>
+    <tr><th>指標</th><th>v1.0.7 基準</th><th>v1.0.8 目標</th></tr>
+    <tr><td>月DL</td><td>未確定</td><td>1,500（評価シミュレーションベース）</td></tr>
+    <tr><td>課金転換率</td><td>未確定</td><td>1.8%</td></tr>
+    <tr><td>D7継続率</td><td>未確定</td><td>+5pt（体重記録・週次レポート効果）</td></tr>
+    <tr><td>SNSシェア数</td><td>未確定</td><td>Story復活で月50件以上</td></tr>
+  </table>
+
+  <h2>除外する機能（後回しの判断）</h2>
+  <ul>
+    <li>AI トレ提案 — コスト高・期待値高すぎ・個人開発で保守重い</li>
+    <li>SNSフィード / コミュニティ — Hevy が既に占有、差別化困難</li>
+    <li>Advanced Stats（高度分析）— 大半のユーザーは見ない、Premium価値としては弱い</li>
+  </ul>
+
+  <h2>関連ドキュメント</h2>
+  <ul>
+    <li><a href="../">WorkoutDiary 仕様書ポータル</a></li>
+    <li><a href="../features/share-card.html">share-card.html（PR Milestone 追加先）</a></li>
+    <li><a href="../features/notification.html">notification.html（週次レポート通知の追加先）</a></li>
+    <li>メモリ: project_workoutdiary_eval_2026_05.md（評価結果サマリ）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0 (draft)</td><td>2026-05-17</td><td>初版作成。product-strategist評価のSランク4項目を企画化</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-17</footer>
+</div>
+</body>
+</html>

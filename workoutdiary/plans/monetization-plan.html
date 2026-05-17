@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - マネタイズ強化企画書</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / マネタイズ強化企画書</div>
+
+  <header class="site-header">
+    <h1>マネタイズ強化企画書</h1>
+    <p>評価マネタイズスコア B+ を A- へ引き上げる。Premium価格・Paywall・広告配置の3軸改善</p>
+    <div class="section-meta">
+      <span class="tag">draft</span>
+      <span class="tag">企画ID: WD-PLAN-MONETIZE</span>
+    </div>
+  </header>
+
+  <h2>現状と課題</h2>
+  <p>v1.0.7時点で Premium 構成は「広告非表示 / PR・Weekly・Monthly・BodyPart・Graph カード / CSV エクスポート」。便利だが「絶対課金したい」までは行きにくいと評価された。年額¥143,000 達成のためには、価格・機能・導線の3軸を同時に強化する必要がある。</p>
+
+  <h2>1. 価格戦略</h2>
+
+  <h3>現状価格</h3>
+  <table>
+    <tr><th>プラン</th><th>価格</th><th>位置づけ</th></tr>
+    <tr><td>月額</td><td>¥480</td><td>妥当〜やや安い</td></tr>
+    <tr><td>年額</td><td>¥3,800</td><td>月額換算 ¥317（34%オフ）</td></tr>
+  </table>
+
+  <h3>引き上げプラン</h3>
+  <p>¥480 → ¥600 への引き上げは可能。ただし「記録以外の価値」が必要。以下の3条件のうち最低1つを v1.0.8 で追加してから実施。</p>
+  <table>
+    <tr><th>条件</th><th>v1.0.8 計画状況</th></tr>
+    <tr><td>Progress Photo</td><td>Aランク・後続バージョンで検討</td></tr>
+    <tr><td>Advanced Stats</td><td>Bランク・優先度低</td></tr>
+    <tr><td>クラウド同期</td><td>Aランク・後続バージョンで検討</td></tr>
+    <tr><td>PR タイムライン</td><td><strong>v1.0.8 で実装予定（Sランク）</strong></td></tr>
+    <tr><td>週次レポート強化</td><td><strong>v1.0.8 で実装予定（Sランク）</strong></td></tr>
+  </table>
+  <p>→ v1.0.8 のSランク2項目（PR タイムライン / 週次レポート強化）が完了次第、v1.0.9 で価格改定を実施可能。</p>
+
+  <h3>段階的価格戦略</h3>
+  <table>
+    <tr><th>バージョン</th><th>月額</th><th>年額</th><th>注釈</th></tr>
+    <tr><td>v1.0.7（現行）</td><td>¥480</td><td>¥3,800</td><td>維持</td></tr>
+    <tr><td>v1.0.8</td><td>¥480</td><td>¥3,800</td><td>新機能投入。価格据え置きで認知拡大</td></tr>
+    <tr><td>v1.0.9</td><td>¥600</td><td>¥4,800</td><td>新規購入のみ値上げ。既存ユーザーはGrandfathering（StoreKit 2 標準動作）</td></tr>
+  </table>
+
+  <h2>2. Paywall 表出ポイントの追加</h2>
+
+  <h3>現状の3トリガー</h3>
+  <ul>
+    <li>オンボーディング末尾</li>
+    <li>PR達成後（既存）</li>
+    <li>Premium機能タップ時</li>
+  </ul>
+
+  <h3>追加する2トリガー</h3>
+  <table>
+    <tr><th>トリガー</th><th>タイミング</th><th>訴求文言例</th></tr>
+    <tr><td>週次レポート起動時（v1.0.8で実装）</td><td>毎週日曜21時の通知タップ後、レポート全画面表示の末尾</td><td>「今週も頑張った成果を画像で保存・シェアしよう」</td></tr>
+    <tr><td>30日継続達成時</td><td>ストリーク30日達成オーバーレイの直後</td><td>「30日続いた記録をクラウドで安全に保存しませんか」※クラウド同期実装後</td></tr>
+  </table>
+
+  <h3>Paywall 表示頻度ルール</h3>
+  <ul>
+    <li>同一ユーザーへの自動Paywall（オンボ以外）は <strong>24時間に1回まで</strong> に制限</li>
+    <li>「Later」を3回押されたら7日間表示しない（押し売り回避）</li>
+    <li>機能タップ時の Paywall はクールタイム適用外（ユーザーが能動的にアクセスしている）</li>
+  </ul>
+
+  <h2>3. Premium 機能ラインアップの強化（v1.0.8以降）</h2>
+
+  <h3>v1.0.8 で追加する Premium 価値</h3>
+  <table>
+    <tr><th>機能</th><th>Premium要素</th><th>訴求軸</th></tr>
+    <tr><td>PRタイムライン</td><td>PR Milestone カードのシェア</td><td>「達成の瞬間を美しく残す」</td></tr>
+    <tr><td>週次レポート</td><td>レポート画像保存 / SNSシェア</td><td>「振り返って、見せて、続ける」</td></tr>
+    <tr><td>体重記録</td><td>30日以上のグラフ表示</td><td>「長期トレンドを把握する」</td></tr>
+  </table>
+
+  <h3>v1.0.9 以降の候補（A〜Bランク）</h3>
+  <table>
+    <tr><th>機能</th><th>強さ</th><th>実装重さ</th></tr>
+    <tr><td>Progress Photo（簡易版・月1 Before/After）</td><td>★★★</td><td>中</td></tr>
+    <tr><td>クラウド同期（iCloud）</td><td>★★★</td><td>中〜大</td></tr>
+    <tr><td>Advanced Stats（月総ボリューム・部位比率）</td><td>★★</td><td>小</td></tr>
+    <tr><td>Apple Watch 連携強化</td><td>★★</td><td>大</td></tr>
+  </table>
+
+  <h2>4. 広告配置の見直し</h2>
+
+  <h3>現状</h3>
+  <ul>
+    <li>バナー: 全画面に常設（ContentView 下部）</li>
+    <li>リワード: 一部 Premium 機能の一時解放</li>
+  </ul>
+
+  <h3>改善方針：画面ごとに広告分離</h3>
+  <table>
+    <tr><th>画面</th><th>現状</th><th>改善後</th><th>理由</th></tr>
+    <tr><td>トレーニング（入力・記録）</td><td>バナーあり</td><td><strong>バナー非表示</strong></td><td>記録中の集中阻害を防ぐ。継続率を最優先</td></tr>
+    <tr><td>種目一覧</td><td>バナーあり</td><td>バナーあり</td><td>閲覧画面なので影響少</td></tr>
+    <tr><td>カレンダー</td><td>バナーあり</td><td>バナーあり</td><td>閲覧画面なので影響少</td></tr>
+    <tr><td>統計</td><td>バナーあり</td><td>バナーあり</td><td>閲覧画面なので影響少</td></tr>
+    <tr><td>設定</td><td>バナーあり</td><td>バナーあり</td><td>閲覧画面なので影響少</td></tr>
+  </table>
+  <p>実装案：<code>BannerAdView</code> を表示する条件に「現在のタブ != .training」を追加。</p>
+
+  <h3>リワード広告の活用拡大</h3>
+  <ul>
+    <li>「今日だけPremium」リワードは継続。Story 復活時にも Story シェアを1日解放対象に</li>
+    <li>新規追加：「週次レポート画像を1回だけシェア」リワード — Paywall 直前のクッション</li>
+  </ul>
+
+  <h2>5. 収益シミュレーション（v1.0.8 リリース後3ヶ月）</h2>
+  <table>
+    <tr><th>指標</th><th>仮定値</th></tr>
+    <tr><td>月DL</td><td>1,500</td></tr>
+    <tr><td>課金転換率</td><td>1.8% → 2.2%（Paywall追加・PR/週次レポート効果）</td></tr>
+    <tr><td>月新規課金者</td><td>33人</td></tr>
+    <tr><td>年額比率</td><td>40%（13人）</td></tr>
+    <tr><td>月額比率</td><td>60%（20人）</td></tr>
+    <tr><td>年額売上</td><td>13 × ¥3,800 = ¥49,400</td></tr>
+    <tr><td>月額売上</td><td>20 × ¥480 × 3ヶ月 = ¥28,800</td></tr>
+    <tr><td>広告売上（推定）</td><td>¥10,000〜¥15,000</td></tr>
+    <tr><td>3ヶ月小計</td><td>約¥90,000</td></tr>
+  </table>
+  <p>年間に換算すると¥143,000は射程圏内。v1.0.9 で価格改定後は更に上振れ余地。</p>
+
+  <h2>6. 計測すべき指標</h2>
+  <table>
+    <tr><th>指標</th><th>計測方法</th></tr>
+    <tr><td>Paywall 表示数 / 種別</td><td>StoreKit 2 + 内部Logger（os.log）でトリガー別カウント</td></tr>
+    <tr><td>Paywall 閉じる率</td><td>表示数 / 閉じる数</td></tr>
+    <tr><td>課金転換率</td><td>App Store Connect の sales レポート</td></tr>
+    <tr><td>解約率</td><td>App Store Connect のサブスクメトリクス</td></tr>
+    <tr><td>リワード視聴率</td><td>RewardedAdManager のログ集計</td></tr>
+  </table>
+
+  <h2>7. リスクと回避策</h2>
+  <table>
+    <tr><th>リスク</th><th>回避策</th></tr>
+    <tr><td>値上げで新規DLが落ちる</td><td>段階的に上げる（v1.0.9で月¥600）。年額のお得感を強調</td></tr>
+    <tr><td>Paywall追加で離脱率が上がる</td><td>24時間クールタイム・「Later」3回ルールで押し売り回避</td></tr>
+    <tr><td>入力画面の広告除去で広告売上が落ちる</td><td>他画面で十分カバー。継続率改善の方が長期で効く</td></tr>
+    <tr><td>Apple審査でPaywall表現がリジェクトされる</td><td>特商法・利用規約リンク常設、無料機能の明示を維持</td></tr>
+  </table>
+
+  <h2>関連ドキュメント</h2>
+  <ul>
+    <li><a href="v1.0.8-roadmap.html">v1.0.8 機能ロードマップ</a></li>
+    <li><a href="../features/storekit.html">storekit.html（StoreKit 2 実装仕様）</a></li>
+    <li><a href="../features/admob.html">admob.html（広告実装仕様）</a></li>
+    <li><a href="../screens/paywall.html">paywall.html（Paywall画面仕様）</a></li>
+    <li>メモリ: project_revenue_strategy.md / project_workoutdiary_eval_2026_05.md</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0 (draft)</td><td>2026-05-17</td><td>初版作成。product-strategist評価のマネタイズB+→A-引き上げ計画</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-17</footer>
+</div>
+</body>
+</html>
