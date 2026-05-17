@@ -18,13 +18,11 @@
   <table>
     <tr><th>要素</th><th>説明</th></tr>
     <tr><td>科目選択カード</td><td>登録済み Subject 一覧から選択</td></tr>
-    <tr><td>科目検索バー</td><td>科目名でインクリメンタル検索（v1.0.5追加）</td></tr>
     <tr><td>タイマー表示</td><td>HH:MM:SS / 経過時間</td></tr>
     <tr><td>STARTボタン</td><td>タイマー開始</td></tr>
     <tr><td>一時停止 / 停止</td><td>実行中のみ表示</td></tr>
     <tr><td>ポモドーロモードトグル</td><td>集中25分/休憩5分の自動切替</td></tr>
-    <tr><td>学習メモ入力欄</td><td>セッション終了前にメモを入力できるフィールド（v1.0.5追加）</td></tr>
-    <tr><td>セッション履歴</td><td>本日のセッション一覧（メモ付き）</td></tr>
+    <tr><td>セッション履歴</td><td>本日のセッション一覧</td></tr>
   </table>
 
   <h2>状態</h2>
@@ -45,23 +43,20 @@
 
   <h2>使用するデータモデル</h2>
   <pre><code>StudySession（保存対象）+ Subject（科目選択）
-TimerViewModel { isRunning, isPaused, elapsedSeconds, currentSubject, isPomodoroMode, pomodoroPhase }
-StudySession.memo: String?  // v1.0.5追加</code></pre>
+TimerViewModel { isRunning, isPaused, elapsedSeconds, currentSubject, isPomodoroMode, pomodoroPhase }</code></pre>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li class="done">UserDefaults 経由でタイマー永続化（24時間境界）</li>
     <li class="done">scenePhase 監視でバックグラウンド時の経過時間補正</li>
     <li class="done">Live Activity と連動（startActivity / updateActivity / endActivity）</li>
-    <li class="done">科目検索バー（v1.0.5）：Subject 一覧を名前でフィルタリング</li>
-    <li class="done">学習メモ（v1.0.5）：STOP時に最大200文字のメモを入力 → StudySession.memo に保存</li>
   </ul>
 
   <h2>関連</h2>
   <ul><li><a href="../features/timer.html">タイマー機能仕様書</a></li><li><a href="../features/live-activity.html">Live Activity機能</a></li></ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr><tr><td>1.1</td><td>2026-05-17</td><td>v1.0.5対応: 科目検索バー・学習メモ入力欄を追加</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-17</footer>
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
 </div></body></html>

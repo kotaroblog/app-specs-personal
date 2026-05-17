@@ -13,15 +13,7 @@
 
   <h2>概要</h2>
   <p>毎日定時に「今日の勉強は始めましたか？少しずつ頑張りましょう！」のリマインダーを送る機能。
-  v1.0.5から復習リマインダー（学習セッション終了後に指定時間後へ通知）を追加。
   ローカル通知のみで、サーバー不要。</p>
-
-  <h2>通知種別</h2>
-  <table>
-    <tr><th>種別</th><th>通知ID</th><th>説明</th><th>追加バージョン</th></tr>
-    <tr><td>デイリーリマインダー</td><td><code>"dailyReminder"</code></td><td>毎日定時に学習開始を促す</td><td>v1.0</td></tr>
-    <tr><td>復習リマインダー</td><td><code>"reviewReminder_[sessionID]"</code></td><td>セッション終了後N時間後に「復習しよう」通知</td><td>v1.0.5</td></tr>
-  </table>
 
   <h2>NotificationService API</h2>
   <pre><code>final class NotificationService {
@@ -30,13 +22,12 @@
     func requestAuthorization() async throws
     func setEnabled(_ enabled: Bool, hour: Int, minute: Int)
     func scheduleDailyReminder(hour: Int, minute: Int)
-
-    // v1.0.5追加
-    func scheduleReviewReminder(sessionID: String, subjectName: String, afterHours: Int)
-    func cancelReviewReminder(sessionID: String)
 }</code></pre>
 
-  <h2>処理フロー（デイリーリマインダー）</h2>
+  <h2>通知ID</h2>
+  <p><code>"dailyReminder"</code></p>
+
+  <h2>処理フロー</h2>
   <ol>
     <li>初回 ON 時に <code>requestAuthorization([.alert, .sound, .badge])</code></li>
     <li>許可されたら <code>UNCalendarNotificationTrigger</code> を作成</li>
@@ -44,23 +35,8 @@
     <li>OFF 時に <code>removePendingNotificationRequests(withIdentifiers:)</code></li>
   </ol>
 
-  <h2>処理フロー（復習リマインダー）（v1.0.5追加）</h2>
-  <ol>
-    <li>セッション完了時に <code>scheduleReviewReminder(sessionID:subjectName:afterHours:)</code> を呼び出し</li>
-    <li><code>UNTimeIntervalNotificationTrigger</code> で指定秒数後に配信</li>
-    <li>通知文面: 「[科目名] の復習をしましょう！記憶の定着には繰り返しが大事です。」</li>
-    <li>ユーザーが設定で OFF にすると既存の pending 通知もキャンセル</li>
-  </ol>
-
-  <h2>ビジネスルール（v1.0.5）</h2>
-  <ul>
-    <li>復習リマインダーはプレミアム限定（無料ユーザーは動画ボーナス適用中のみ利用可）</li>
-    <li>間隔設定: 1時間 / 3時間 / 6時間 / 12時間 / 24時間 から選択</li>
-    <li>同一セッションへの復習リマインダーは1件のみ（重複スケジュール不可）</li>
-  </ul>
-
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr><tr><td>1.1</td><td>2026-05-17</td><td>v1.0.5対応: 復習リマインダー機能・API・ビジネスルールを追加</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-17</footer>
+  <footer class="site-footer">最終更新: 2026-05-09</footer>
 </div></body></html>
