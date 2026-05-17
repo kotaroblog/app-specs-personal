@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>SandTodo - 企画書 v1.0</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← Felix App Specs</a> / <a href="./">SandTodo</a></div>
+
+  <header class="site-header">
+    <h1>SandTodo 企画書</h1>
+    <p>砂崩れ体験ToDoアプリ · v1.0 · 2026-05-17</p>
+  </header>
+
+  <ul class="kv-list">
+    <li><span class="k">作成日</span><span class="v">2026-05-17</span></li>
+    <li><span class="k">開発区分</span><span class="v">個人開発</span></li>
+    <li><span class="k">プラットフォーム</span><span class="v">iOS（Swift 6 / SwiftUI / SwiftData / XcodeGen / iOS 18.0+）</span></li>
+    <li><span class="k">Bundle ID（予定）</span><span class="v"><code>com.happyboy1002.SandTodo</code></span></li>
+    <li><span class="k">バージョン</span><span class="v">v1.0</span></li>
+  </ul>
+
+  <!-- ========== 1. コンセプト ========== -->
+  <h2>1. コンセプト</h2>
+
+  <h3>一文要約</h3>
+  <p>砂山が積み上がり、崩れ落ちることでタスクの重さと解放感を体で理解できるToDoアプリ。</p>
+
+  <h3>キャッチコピー</h3>
+  <blockquote style="font-size:1.15rem; font-weight:bold; border-left:4px solid var(--color-accent, #888); padding-left:1rem; margin:1rem 0;">
+    「こなした仕事が、砂になって崩れる」
+  </blockquote>
+
+  <h3>中核アイデア</h3>
+  <ul>
+    <li>「完了 = 消える」ではなく「<strong>完了 = 崩れる</strong>」</li>
+    <li>砂は「積まれていた仕事が減った」「重荷が崩れ落ちた」「処理した感覚」を視覚的に伝える素材</li>
+    <li>木・ガラス・紙にはない「積み上がる／崩れる／流れる」の3つを同時表現</li>
+    <li>タスクが積もるほど砂山が大きくなる</li>
+    <li>完了でサラサラ崩れる</li>
+    <li>勢いよくスワイプで一気崩壊</li>
+    <li>1日終わりに砂が流れ落ちる</li>
+    <li>未完了は翌日に少し残る</li>
+  </ul>
+
+  <p>単なるアニメではなく「<strong>状態変化を感情で理解させるUI</strong>」。物理演算はリアルにしすぎない（UIミニマル／崩れ0.3〜0.6秒／粒子少なめ／指追従／少し誇張）。</p>
+
+  <h3>近い感覚の参考プロダクト</h3>
+  <ul>
+    <li>Forest — 「木が育つ」集中体験</li>
+    <li>Journey — 砂の表現</li>
+    <li>Monument Valley — 触感UI</li>
+    <li>Things 3 — 完了アニメの洗練</li>
+  </ul>
+
+  <h3>モックアップ 4画面イメージ</h3>
+  <table>
+    <thead>
+      <tr><th>#</th><th>画面</th><th>状態説明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>タスクリスト</td><td>砂山の上に半透明グラスモーフィズム風タスクカード5件、進捗20%カード</td></tr>
+      <tr><td>2</td><td>完了演出中</td><td>タスクが✓に変化、砂が爆発的に飛散、「スワイプで完了」ガイド</td></tr>
+      <tr><td>3</td><td>進行中</td><td>進捗60%、タスク2件残り、砂山が小さくなっている</td></tr>
+      <tr><td>4</td><td>1日の終わり</td><td>ダークモード・夜空・月・小さく残った砂山、「100%」「小さな一歩の積み重ねが、大きな変化になります」</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 2. ペルソナ ========== -->
+  <h2>2. ペルソナ 3案</h2>
+
+  <h3>A: 焦りを感じるサラリーマン</h3>
+  <ul>
+    <li><span class="k">年齢・属性</span> 28〜35歳 IT/商社/メーカー</li>
+    <li>Todoist管理疲れ、MS To Doは無機質と感じている</li>
+    <li>求めていること: 重荷が消える体験、感情的な解放感</li>
+  </ul>
+
+  <h3>B: 自己管理に悩む大学生・若手社会人</h3>
+  <ul>
+    <li><span class="k">年齢・属性</span> 20〜25歳</li>
+    <li>Forest/Habiticaを3日で辞める。Things 3は¥1,200で高い</li>
+    <li>求めていること: 可愛さ・気持ちよさ重視のタスク管理</li>
+  </ul>
+
+  <h3>C: 副業フリーランス30代前半</h3>
+  <ul>
+    <li><span class="k">年齢・属性</span> 30〜35歳 エンジニア/ライター/デザイナー</li>
+    <li>Notion重い、たすくま学習コスト高い</li>
+    <li>求めていること: 1日終わりの切り替えルーティン、シンプルさ</li>
+  </ul>
+
+  <!-- ========== 3. 差別化軸 ========== -->
+  <h2>3. 差別化軸</h2>
+
+  <table>
+    <thead>
+      <tr><th>比較対象</th><th>相手の強み</th><th>SandTodoの差別化</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Things 3</td>
+        <td>UI完成度・タグ/エリア管理</td>
+        <td>「完了=消える」ではなく「完了=崩れる」体験。プロジェクト管理しない代わりに感情UIに全振り</td>
+      </tr>
+      <tr>
+        <td>Forest</td>
+        <td>集中×木育成</td>
+        <td>Forestはネガティブ動機（木を枯らしたくない）。SandTodoはポジティブ解放感。併用可能</td>
+      </tr>
+      <tr>
+        <td>Habitica</td>
+        <td>ゲームRPG化</td>
+        <td>Habiticaは複雑。SandTodoは「砂」1比喩で完結</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>ポジション: 管理ツールではなく感情体験ツール</strong></p>
+
+  <!-- ========== 4. マネタイズ ========== -->
+  <h2>4. マネタイズ</h2>
+
+  <h3>推奨モデル: 広告 + 買い切り課金</h3>
+  <table>
+    <thead>
+      <tr><th>プラン</th><th>内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>無料版</td><td>タスク5件/日・砂崩れアニメ全機能・AdMobバナー表示</td></tr>
+      <tr><td>買い切り ¥250</td><td>広告非表示・タスク無制限・テーマカラー変更</td></tr>
+    </tbody>
+  </table>
+
+  <h3>価格根拠</h3>
+  <p>Forest¥650、Things 3¥1,200、自社CHROMATIC¥240。¥250はジュース1本感覚で転換率最大化を狙う。</p>
+
+  <h3>月額案について</h3>
+  <p>月額¥380は非推奨。ToDoジャンルは無料代替が多くサブスク離脱率が高い。</p>
+
+  <h3>広告配置方針</h3>
+  <ul>
+    <li>バナー: タスクリスト最下部のみ</li>
+    <li>インタースティシャル: 1日の終わり画面の演出後に1回のみ（演出中は絶対に表示しない）</li>
+  </ul>
+
+  <!-- ========== 5. MVP ========== -->
+  <h2>5. MVP（v1.0 必須機能）</h2>
+
+  <h3>MVP-1: 砂山ビジュアルのタスクリスト</h3>
+  <p>タスク件数に応じてAI生成砂山画像を切替（0件→空砂漠、5件以上→大砂山）。グラスモーフィズム風カード重ね表示。</p>
+
+  <h3>MVP-2: スワイプ完了 + 砂崩れアニメ</h3>
+  <p>SwiftUI Canvas + 粒子物理で実装。右スワイプで✓マーク表示、砂粒子0.3〜0.6秒飛散アニメ。</p>
+
+  <h3>MVP-3: 1日の終わり画面</h3>
+  <p>23:59〜0:00のタイミングで残タスク数に応じた砂が流れ落ちる演出。ダークモード・月・進捗%・一言メッセージを表示。</p>
+
+  <h3>v1.1以降（次フェーズ候補）</h3>
+  <ul>
+    <li>リピートタスク・リマインダー</li>
+    <li>カテゴリ/タグ（慎重に検討）</li>
+    <li>Apple Watch対応</li>
+    <li>ウィジェット</li>
+    <li>統計画面</li>
+    <li>テーマ複数展開</li>
+    <li>未完了タスクの翌日繰り越し演出</li>
+  </ul>
+
+  <!-- ========== 6. アプリ命名候補 ========== -->
+  <h2>6. アプリ命名候補</h2>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>候補名</th><th>評価</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td><strong>SandTodo</strong>（現仮称・推奨）</td><td>意味が即伝達、日本人読みやすい</td></tr>
+      <tr><td>2</td><td>Sandle</td><td>sandal（サンダル）との混同リスクあり</td></tr>
+      <tr><td>3</td><td>Dune Task</td><td>映画「DUNE」商標リスクのため不可</td></tr>
+      <tr><td>4</td><td>SandFlow</td><td>要J-PlatPat調査</td></tr>
+      <tr><td>5</td><td>Suna</td><td>シンプルすぎ、衝突リスクあり</td></tr>
+      <tr><td>6</td><td>GrainDo</td><td>検索性低</td></tr>
+      <tr><td>7</td><td>Cascado</td><td>クリアだが検索性低</td></tr>
+      <tr><td>8</td><td>SandMark</td><td>意味が伝わりにくい</td></tr>
+      <tr><td>9</td><td>Sarara</td><td>擬音語、地名同名リスク</td></tr>
+      <tr><td>10</td><td><strong>SandDone</strong>（推奨）</td><td>コンセプト「完了=崩れる」を体現</td></tr>
+    </tbody>
+  </table>
+
+  <p>推奨は <strong>SandDone</strong> または <strong>SandTodo</strong>。申請前に J-PlatPat + App Store検索の確認が必須。</p>
+
+  <!-- ========== 7. 想定リスク ========== -->
+  <h2>7. 想定リスク</h2>
+
+  <table>
+    <thead>
+      <tr><th>リスク</th><th>重大度</th><th>対策</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>AI画像商用ライセンス</td>
+        <td><span class="tag warn">高</span></td>
+        <td>Adobe Fireflyのみ使用。Midjourney/DALL-Eは不可。生成ログを必ず保存する</td>
+      </tr>
+      <tr>
+        <td>砂崩れアニメ実装難度</td>
+        <td><span class="tag warn">中〜高</span></td>
+        <td>v1.0は粒子数30〜50に絞る。Vortex OSS検討</td>
+      </tr>
+      <tr>
+        <td>ToDoジャンル飽和</td>
+        <td><span class="tag warn">高</span></td>
+        <td>オーガニック依存しない。TikTok UI動画拡散を主軸に据える</td>
+      </tr>
+      <tr>
+        <td>競合参入容易性</td>
+        <td><span class="tag">中</span></td>
+        <td>大手は参入しにくいニッチ。先行者優位 + ASOで防御</td>
+      </tr>
+      <tr>
+        <td>「かわいい系」誤解離脱</td>
+        <td><span class="tag">低〜中</span></td>
+        <td>和風・禅・ミニマルのトーンで「大人のアプリ」を徹底するデザイン方針</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 8. 市場性 ========== -->
+  <h2>8. 市場性</h2>
+
+  <ul class="kv-list">
+    <li><span class="k">年間売上目標への寄与</span><span class="v">中〜高</span></li>
+    <li><span class="k">期待月次貢献</span><span class="v">1.5〜2.5万円/月（ポートフォリオの30〜50%）</span></li>
+    <li><span class="k">必要DAU</span><span class="v">500〜1,000</span></li>
+    <li><span class="k">必要総DL</span><span class="v">2,000〜5,000</span></li>
+    <li><span class="k">SNS拡散ポテンシャル</span><span class="v">高（最大の強み）</span></li>
+  </ul>
+
+  <p>砂崩れの瞬間がTikTok動画として完結する形式。2026年5月TikTok開始と同期リリースで集客効率を最大化できる。</p>
+  <p><strong>注意</strong>: ToDo業界の30日継続率は10%以下が相場。砂崩れアニメの完成度が唯一の武器であり、ここに開発リソースを集中させる。</p>
+
+  <!-- ========== 9. KPI ========== -->
+  <h2>9. KPI</h2>
+
+  <table>
+    <thead>
+      <tr><th>KPI</th><th>30日目標</th><th>90日目標</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>総DL</td><td>500</td><td>2,000</td></tr>
+      <tr><td>DAU</td><td>80〜150</td><td>300〜500</td></tr>
+      <tr><td>課金ユーザー</td><td>15〜30</td><td>80〜150</td></tr>
+      <tr><td>課金転換率</td><td>3%</td><td>3〜5%</td></tr>
+      <tr><td>AdMob月収益</td><td>¥500〜¥2,000</td><td>¥3,000〜¥8,000</td></tr>
+      <tr><td>買切月収益</td><td>¥3,000〜¥6,000</td><td>¥12,000〜¥25,000</td></tr>
+      <tr><td>30日継続率</td><td>12%</td><td>15%</td></tr>
+      <tr><td>TikTok再生/本</td><td>5,000</td><td>50,000</td></tr>
+      <tr><td>App Store評価</td><td>4.0+</td><td>4.2+</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ========== 10. 次フェーズ優先アクション ========== -->
+  <h2>10. 次フェーズ優先アクション</h2>
+
+  <ol>
+    <li>Adobe Fireflyで砂山ステート別画像（0〜5段階）を生成し、生成ログを保存する</li>
+    <li>SwiftUI Canvas粒子アニメ PoC（2〜3時間）で実現性を確認する</li>
+    <li>アプリ名最終決定: J-PlatPat + App Store検索を実施する</li>
+    <li>デザインカンプをFigma化（タスク追加・設定・初回起動画面も整理）</li>
+    <li>仕様書ポータルに画面仕様・データモデルを追加する</li>
+  </ol>
+
+  <!-- ========== 変更履歴 ========== -->
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1.0</td><td>2026-05-17</td><td>初版作成</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-17</footer>
+</div>
+</body>
+</html>
