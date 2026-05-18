@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - カレンダー画面</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / カレンダー画面</div>
+
+  <header class="site-header">
+    <h1>カレンダー画面（CalendarScreen）</h1>
+    <p>日 / 週 / 月の3ビュー切替で学習実績を可視化するリニューアル版カレンダー</p>
+    <div class="section-meta">
+      <span class="tag done">v1.0</span>
+      <span class="tag">画面ID: SS-CAL-02</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    旧 CalendarHeatmapView（SS-CAL-01）を置き換える新カレンダー画面。
+    日・週・月の3ビューをタブで切り替え、試験日カウントダウン・学習タイムライン・月次ヒートマップを統合し、
+    ユーザーが自身の学習リズムを多角的に把握できるようにする。
+    やることリスト（StudyTask）との連携により、計画と実績を同一画面で確認できる。
+  </p>
+
+  <h2>画面構成概要</h2>
+  <table>
+    <tr><th>コンポーネント</th><th>種類</th><th>説明</th></tr>
+    <tr><td>CountdownCard</td><td>カード</td><td>試験日までのカウントダウン（UserSettings.examDate 連携）。試験日未設定時は非表示</td></tr>
+    <tr><td>ViewModeTabs</td><td>セグメントコントロール</td><td>今日 / 週 / 月 の3タブ。タップで即切替</td></tr>
+    <tr><td>DayCalendarView</td><td>スクロールビュー</td><td>「今日」タブの中身（→ 後述）</td></tr>
+    <tr><td>WeekCalendarView</td><td>スクロールビュー</td><td>「週」タブの中身（→ 後述）</td></tr>
+    <tr><td>MonthCalendarView</td><td>グリッド + 展開領域</td><td>「月」タブの中身（→ 後述）</td></tr>
+  </table>
+
+  <h2>DayCalendarView（今日ビュー）</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>ミニ週ストリップ</td><td>当週7日を横並び。タップした日付を selectedDate に更新。当日は accent 色の円形バッジ</td></tr>
+    <tr><td>日付ヘッダ + ナビ</td><td>「YYYY年MM月DD日（曜）」表示。左右シェブロンで前後1日移動</td></tr>
+    <tr><td>ヒーローカード</td><td>緑グラデ背景。選択日の合計学習時間・日次目標・達成率（%）を大きく表示</td></tr>
+    <tr><td>やることリスト</td><td>その日付に紐づく StudyTask（period=day）のリスト。チェック・編集・削除・追加TextField 付き</td></tr>
+    <tr><td>科目別実績バー</td><td>科目ごとの当日学習時間を横バーで表示（Subject.colorHex）</td></tr>
+  </table>
+
+  <h2>WeekCalendarView（週ビュー）</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>週サマリカード</td><td>週合計時間 / 週次目標 / 達成率リングを上部に表示</td></tr>
+    <tr><td>週次タイムライン</td><td>月曜始まり7列 × 06時〜23時（hour height = 40pt）の縦グリッド。StudySession を科目色のブロックで描画</td></tr>
+    <tr><td>今日列ハイライト</td><td>今日の列に accent 5% の背景色を適用</td></tr>
+    <tr><td>現在時刻ライン（NOW）</td><td>今週のみ表示。赤い横線で現在時刻を示す</td></tr>
+    <tr><td>週次科目別積み上げ</td><td>今週の科目別累積時間を横長バー + 2列グリッドで一覧表示</td></tr>
+  </table>
+
+  <h2>MonthCalendarView（月ビュー）</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>7×6 グリッド</td><td>月曜始まり。当月外の日はグレーアウト</td></tr>
+    <tr><td>今日セル</td><td>accent 色の円形バッジで日付を強調</td></tr>
+    <tr><td>曜日色分け</td><td>日曜 = #E85D75、土曜 = #4A90E2</td></tr>
+    <tr><td>科目色バー</td><td>各セル上部に学習した科目の色バー（最大3科目）</td></tr>
+    <tr><td>実績ドット</td><td>各セル下部に StudySession の存在を示すドット（最大3）</td></tr>
+    <tr><td>次回予定ピン</td><td>次回予定日セルの右上にピンアイコンを表示</td></tr>
+    <tr><td>日タップ展開</td><td>タップで selectedDate を更新 → グリッド下に DayCalendarView をインライン展開</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>選択日に記録なし（日ビュー）</td><td>ヒーローカードに「0時間 0分」、科目別実績なしメッセージ</td></tr>
+    <tr><td>今週に記録なし（週ビュー）</td><td>タイムライン空白。週サマリは0表示</td></tr>
+    <tr><td>試験日未設定</td><td>CountdownCard を非表示</td></tr>
+    <tr><td>やることリスト空（日ビュー）</td><td>「やることを追加しましょう」プレースホルダー</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>タイムラインブロックタップ（週ビュー）</td><td>セッション詳細シート（モーダル）</td></tr>
+    <tr><td>「📝 記録して完了」タップ（やることリスト）</td><td>ManualStudyEntrySheet（モーダル）</td></tr>
+    <tr><td>月ビューで日タップ</td><td>同画面内 DayCalendarView をインライン展開</td></tr>
+    <tr><td>CountdownCard の試験日タップ</td><td>設定画面（試験日設定セクション）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// 学習セッション
+@Model final class StudySession {
+    var id: UUID
+    var startTime: Date
+    var endTime: Date?
+    var duration: TimeInterval
+    var subject: Subject?
+}
+
+// 科目
+@Model final class Subject {
+    var id: UUID
+    var name: String
+    var colorHex: String
+}
+
+// ユーザー設定（試験日カウントダウン用）
+@Model final class UserSettings {
+    var dailyGoalMinutes: Int?
+    var examDate: Date?
+}
+
+// やることリスト（日ビューで利用）
+@Model final class StudyTask {
+    var id: UUID
+    var periodRawValue: String   // "day" / "week" / "month"
+    var title: String
+    var isCompleted: Bool
+    var periodStart: Date
+    var periodEnd: Date
+    var linkedSessionID: UUID?
+    var completedAt: Date?
+    var sortOrder: Int
+    var createdAt: Date
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">旧 CalendarHeatmapView / DayDetailSheet は削除済み。SS-CAL-01 の画面IDは旧仕様として残す</li>
+    <li class="done">CalendarScreen が親 View。ViewModeTabs の選択状態を @State で保持</li>
+    <li class="done">selectedDate は CalendarScreen が管理し、各子ビューに Binding で渡す</li>
+    <li class="done">WeekCalendarView のタイムラインは ScrollView で縦スクロール。水平は固定7列（GeometryReader で列幅算出）</li>
+    <li class="done">MonthCalendarView の inline 展開は AnyLayout / if selectedDate != nil で制御</li>
+    <li class="done">テーマカラーは AppTheme.accent（#58CC02）。カードは cardShadow() 修飾子で統一</li>
+    <li class="done">StudyTask の @Query は periodStart/periodEnd で当日範囲をフィルタ</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="goal-edit.html">目標・やることリスト画面（GoalEditSheet）</a></li>
+    <li><a href="../features/task-list.html">やることリスト機能仕様書</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-18</td><td>初版作成（旧 SS-CAL-01 CalendarHeatmapView を置き換えるリニューアル版）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-18</footer>
+</div>
+</body>
+</html>

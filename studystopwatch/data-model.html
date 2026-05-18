@@ -21,6 +21,7 @@
   <div class="mermaid">
 erDiagram
   Subject ||--o{ StudySession : has
+  StudySession ||--o| StudyTask : "linked via linkedSessionID"
   UserSettings {
     Int dailyGoalMinutes
     Bool reminderEnabled
@@ -43,6 +44,18 @@ erDiagram
     Date startTime
     Date endTime
     TimeInterval duration
+  }
+  StudyTask {
+    UUID id
+    String periodRawValue
+    String title
+    Bool isCompleted
+    Date periodStart
+    Date periodEnd
+    UUID linkedSessionID
+    Date completedAt
+    Int sortOrder
+    Date createdAt
   }
   </div>
 
@@ -84,6 +97,26 @@ erDiagram
     var examDate: Date?
 }</code></pre>
 
+  <h2>StudyTask</h2>
+  <pre><code>@Model final class StudyTask {
+    var id: UUID = UUID()
+    var periodRawValue: String = "day"   // TaskPeriod.rawValue: "day" / "week" / "month"
+    var title: String = ""
+    var isCompleted: Bool = false
+    var periodStart: Date = Date()       // 期間開始（例: 今日0時）
+    var periodEnd: Date = Date()         // 期間終了（例: 今日23:59:59）
+    var linkedSessionID: UUID?           // 「記録して完了」時に紐づく StudySession.id
+    var completedAt: Date?               // 完了日時
+    var sortOrder: Int = 0
+    var createdAt: Date = Date()
+}
+
+enum TaskPeriod: String {
+    case day   = "day"
+    case week  = "week"
+    case month = "month"
+}</code></pre>
+
   <h2>StudyActivityAttributes（Live Activity）</h2>
   <pre><code>struct StudyActivityAttributes: ActivityAttributes {
     var subjectName: String
@@ -117,6 +150,7 @@ erDiagram
   <h2>Enum 一覧</h2>
   <ul>
     <li><code>GoalType</code>: regularExam / highSchoolEntrance / universityEntrance</li>
+    <li><code>TaskPeriod</code>: day / week / month（StudyTask の期間種別）</li>
     <li><code>ShareCardType</code>: daily / summary / heatmap / graph</li>
     <li><code>ShareCardTheme</code>: 複数テーマ（無料/プレミアム）</li>
     <li><code>ShareSummaryPeriod</code>: week / month</li>
@@ -131,7 +165,11 @@ erDiagram
   </div>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-05-18</td><td>StudyTask モデル・TaskPeriod enum を追加。ER 図を更新</td></tr>
+  </table>
 
   <script>
     mermaid.initialize({
@@ -140,7 +178,7 @@ erDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-05-18</footer>
 </div>
 </body>
 </html>

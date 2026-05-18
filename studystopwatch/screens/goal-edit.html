@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 目標・やることリスト画面</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 目標・やることリスト画面</div>
+
+  <header class="site-header">
+    <h1>目標・やることリスト画面（GoalEditSheet）</h1>
+    <p>今日 / 今週 / 今月の目標時間設定 + やることリスト管理</p>
+    <div class="section-meta">
+      <span class="tag done">v1.1</span>
+      <span class="tag">画面ID: SS-GOAL-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    ユーザーが「今日 / 今週 / 今月」単位の学習目標時間を設定し、あわせてやることリスト（StudyTask）を管理するシート。
+    ホーム画面の CompactGoalCard からモーダルとして呼び出される。
+    v1.1 でやることリストセクションを追加し、計画→実行→記録の流れをアプリ内で完結できるようにした。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>期間タブ</td><td>セグメントコントロール</td><td>今日 / 今週 / 今月 の切り替え</td></tr>
+    <tr><td>目標時間スライダー</td><td>Slider + TextField</td><td>分単位で入力。今日は 1〜480 分、今週・今月は上限を自動スケール</td></tr>
+    <tr><td>やることリスト</td><td>List セクション</td><td>選択期間に紐づく StudyTask の一覧（後述）</td></tr>
+    <tr><td>保存ボタン</td><td>Button（.prominent）</td><td>目標時間を UserSettings に保存してシートを閉じる</td></tr>
+  </table>
+
+  <h2>やることリストセクション</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>タスク行（チェックボックス）</td><td>タップでシンプル完了。isCompleted = true、completedAt = now をセット</td></tr>
+    <tr><td>タスク行（「📝 記録して完了」ボタン）</td><td>科目選択 → ManualStudyEntrySheet 起動 → 保存と同時にタスク完了。StudySession.id を linkedSessionID に格納</td></tr>
+    <tr><td>タスク行（タイトルタップ）</td><td>インライン編集 TextField を展開してタイトルを変更</td></tr>
+    <tr><td>タスク行（trash アイコン）</td><td>タスク削除（確認アラートなし、即時削除）</td></tr>
+    <tr><td>追加 TextField</td><td>「やることを入力」プレースホルダー。入力なしの場合、追加ボタンは disabled グレー</td></tr>
+    <tr><td>追加ボタン</td><td>TextField が空でなければ新規 StudyTask を生成・保存</td></tr>
+    <tr><td>完了率タイル（週/月のみ）</td><td>今週 / 今月の「完了率% ・ 完了数 / 全体数」を集計カードとして上部に表示</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>タスクなし</td><td>「やることをリストに追加しましょう」空状態メッセージ</td></tr>
+    <tr><td>全タスク完了</td><td>「すべて完了！」メッセージ + チェックマークアイコン</td></tr>
+    <tr><td>「記録して完了」→ ManualStudyEntrySheet 起動中</td><td>シートが前面に表示される。キャンセル時はタスク未完了のまま</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「📝 記録して完了」タップ</td><td>ManualStudyEntrySheet（モーダル）。onSaved コールバックでタスク完了フラグをセット</td></tr>
+    <tr><td>保存 / キャンセル</td><td>呼び出し元（ホーム画面 / カレンダー画面）に戻る</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// 目標時間（UserSettings）
+@Model final class UserSettings {
+    var dailyGoalMinutes: Int?
+    // 週次・月次目標は今後追加予定
+}
+
+// やることリスト
+@Model final class StudyTask {
+    var id: UUID = UUID()
+    var periodRawValue: String = "day"   // "day" / "week" / "month"
+    var title: String = ""
+    var isCompleted: Bool = false
+    var periodStart: Date = Date()
+    var periodEnd: Date = Date()
+    var linkedSessionID: UUID?           // 「記録して完了」時に紐づく StudySession.id
+    var completedAt: Date?
+    var sortOrder: Int = 0
+    var createdAt: Date = Date()
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">GoalEditSheet は .sheet モディファイアで表示。期間タブは @State var selectedPeriod: TaskPeriod</li>
+    <tr></tr>
+    <li class="done">StudyTask の @Query は periodRawValue == selectedPeriod.rawValue AND periodStart &lt;= now AND periodEnd &gt;= now でフィルタ</li>
+    <li class="done">「記録して完了」は ManualStudyEntrySheet に initialNote + onSaved クロージャを渡し、保存完了後にタスクの isCompleted を true にセット</li>
+    <li class="done">タスク追加時の periodStart / periodEnd は selectedPeriod に応じて今日の0時〜23:59:59 / 今週月曜〜日曜 / 今月1日〜末日 で算出</li>
+    <li class="done">trash アイコン削除は modelContext.delete(task) を即時実行</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="home.html">ホーム画面（CompactGoalCard 経由で呼び出し）</a></li>
+    <li><a href="calendar.html">カレンダー画面（DayCalendarView 内でも呼び出し）</a></li>
+    <li><a href="../features/task-list.html">やることリスト機能仕様書</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-18</td><td>初版作成（目標時間設定シートとして）</td></tr>
+    <tr><td>1.1</td><td>2026-05-18</td><td>やることリストセクションを追加（StudyTask 対応）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-18</footer>
+</div>
+</body>
+</html>

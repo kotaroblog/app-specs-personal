@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - やることリスト機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / やることリスト機能</div>
+
+  <header class="site-header">
+    <h1>やることリスト機能</h1>
+    <p>今日 / 今週 / 今月単位で学習タスクを管理し、セッション記録と連携して完了できる機能</p>
+    <div class="section-meta">
+      <span class="tag done">v1.0</span>
+      <span class="tag">機能ID: SS-FEAT-TASK-01</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    ユーザーが「今日やること」「今週やること」「今月やること」を事前に登録し、
+    学習セッション終了と同時にタスクを完了できる機能。
+    タスクは <code>StudyTask</code> モデルで管理され、期間種別（day / week / month）ごとに独立したリストとして表示される。
+    ホーム画面の CompactGoalCard にはタスク進捗（N/M 件）が表示され、学習計画の意識化を促す。
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/goal-edit.html">目標・やることリスト画面（GoalEditSheet）</a> — タスクの作成・編集・削除・完了操作の主要 UI</li>
+    <li><a href="../screens/calendar.html">カレンダー画面（DayCalendarView）</a> — 選択日のタスクをインライン表示・操作</li>
+    <li><a href="../screens/home.html">ホーム画面</a> — CompactGoalCard でタスク件数（N/M）を表示</li>
+  </ul>
+
+  <h2>処理フロー</h2>
+
+  <h3>タスク追加フロー</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant V as GoalEditSheet
+  participant VM as ViewModel
+  participant DB as SwiftData
+
+  U->>V: タイトルを TextField に入力
+  U->>V: 「追加」ボタンをタップ
+  V->>VM: addTask(title, period)
+  VM->>VM: periodStart / periodEnd を算出
+  VM->>DB: modelContext.insert(StudyTask)
+  DB-->>VM: 保存完了
+  VM-->>V: @Query 経由でリスト更新
+  V-->>U: 追加したタスクが一覧に表示
+  </div>
+
+  <h3>「記録して完了」フロー</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant V as GoalEditSheet
+  participant MES as ManualStudyEntrySheet
+  participant VM as ViewModel
+  participant DB as SwiftData
+
+  U->>V: 「📝 記録して完了」ボタンをタップ
+  V->>MES: .sheet で表示（initialNote, onSaved クロージャを渡す）
+  U->>MES: 科目・時間・メモを入力して保存
+  MES->>DB: modelContext.insert(StudySession)
+  MES->>VM: onSaved(session.id) コールバック呼び出し
+  VM->>DB: task.isCompleted = true, task.completedAt = now, task.linkedSessionID = session.id
+  DB-->>VM: 保存完了
+  VM-->>V: @Query 経由でリスト更新（タスクが完了状態に）
+  V-->>U: チェックマーク付きで完了表示
+  </div>
+
+  <h3>シンプル完了フロー</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant V as GoalEditSheet
+  participant VM as ViewModel
+  participant DB as SwiftData
+
+  U->>V: チェックボックスをタップ
+  V->>VM: toggleComplete(task)
+  VM->>DB: task.isCompleted = true, task.completedAt = now
+  DB-->>VM: 保存完了
+  VM-->>V: リスト更新（チェックマーク付き）
+  V-->>U: 完了表示
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>タスクは期間（day / week / month）ごとに独立。同じタイトルでも期間が異なれば別レコード</li>
+    <li>periodStart / periodEnd は登録時の選択期間から算出し、固定値で保存する（後から期間が変わっても影響なし）</li>
+    <li>「記録して完了」でキャンセルした場合、タスクは未完了のまま維持する</li>
+    <li>完了済みタスクの再オープン（チェック解除）は可能。isCompleted = false、completedAt = nil、linkedSessionID = nil にリセットする</li>
+    <li>タスクの sortOrder はユーザーが並び替えた順序を保持（デフォルトは createdAt 昇順）</li>
+    <li>1期間あたりのタスク上限は設けない</li>
+    <li>週 / 月ビューでは完了率（完了数 / 全体数 × 100）を整数で表示する（小数点以下切り捨て）</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>SwiftData（StudyTask）</td><td>タスクの永続化・@Query での取得</td><td>AppGroup 共有なし（Widget 非対応）</td></tr>
+    <tr><td>SwiftData（StudySession）</td><td>「記録して完了」時に生成されるセッション</td><td>linkedSessionID で紐づけ</td></tr>
+    <tr><td>ManualStudyEntrySheet</td><td>手動セッション記録 UI</td><td>onSaved / initialNote を追加拡張済み</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>タスク追加時のタイトルが空文字</td><td>追加ボタンを disabled にして保存させない</td></tr>
+    <tr><td>SwiftData 保存失敗</td><td>Logger でエラーログを出力。UI 上は変更なし（楽観的更新しない）</td></tr>
+    <tr><td>「記録して完了」でセッション保存後にタスク更新が失敗</td><td>Logger でエラーログを出力。セッションは保存済みのため再試行は不要（タスクを手動で完了させることで回復可能）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">StudyTask は @Model final class。全プロパティにデフォルト値あり（マイグレーション対応）</li>
+    <li class="done">@Query のフィルタは periodRawValue と periodStart/periodEnd の範囲条件を組み合わせる</li>
+    <li class="done">ManualStudyEntrySheet への拡張: initialNote: String? パラメータ、onSaved: ((UUID) -> Void)? コールバックを追加</li>
+    <li class="done">CompactGoalCard（ホーム画面）は today の StudyTask を別 @Query で取得し「N/M件」を表示</li>
+    <li class="done">TaskPeriod enum: day / week / month の rawValue は String</li>
+    <li class="done">print() デバッグ禁止。os.log（Logger）を使用</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-18</td><td>初版作成</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-18</footer>
+</div>
+</body>
+</html>
