@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - v1.2 パネル数選択アップデート仕様書</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / v1.2 パネル数選択アップデート</div>
+
+  <header class="site-header">
+    <h1>v1.2 パネル数選択アップデート 仕様書</h1>
+    <p>2/4/6/8パネルから選べる新カスタマイズ軸 — v1.0.1・v1.1.0 を統合した大型リリース</p>
+    <div class="section-meta">
+      <span class="tag" style="background:rgba(52,199,89,0.15); color:#34C759; border-color:#34C759;">審査中</span>
+      <span class="tag">機能ID: CR-FEAT-V1-2</span>
+      <span class="tag">バージョン: 1.2.0 (Build 4)</span>
+    </div>
+  </header>
+
+  <!-- ===================== リリース概要 ===================== -->
+  <h2>リリース概要</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>バージョン</td><td>1.2.0 (Build 4)</td></tr>
+    <tr><td>審査提出日</td><td>2026-05-19</td></tr>
+    <tr><td>リリースステータス</td><td>審査中</td></tr>
+    <tr><td>目的</td><td>パネル数選択による難易度カスタマイズ軸の新設 + v1.0.1・v1.1.0 の統合提出</td></tr>
+    <tr><td>同梱内容</td><td>v1.0.1（特商法対応）+ v1.1.0（ドーパミン強化）+ v1.2.0（パネル数選択）</td></tr>
+    <tr><td>開発区分</td><td>個人開発</td></tr>
+    <tr><td>必要OS</td><td>iOS 18.0+</td></tr>
+  </table>
+
+  <!-- ===================== v1.2 主要新機能 ===================== -->
+  <h2>主要新機能: パネル数選択</h2>
+
+  <h3>概要</h3>
+  <p>
+    従来 2×2 固定（4パネル）だったゲーム盤面を、プレイヤーが <strong>2 / 4 / 6 / 8</strong> から選べるように拡張。
+    難易度モード（NORMAL / FAST / INSANE）と独立したカスタマイズ軸として機能する。
+    パネル数が増えると記憶すべき色の組み合わせパターンが増加し、視覚的な難易度が上がる。
+  </p>
+
+  <h3>PanelCount enum</h3>
+  <pre><code>enum PanelCount: Int, CaseIterable, Identifiable {
+    case two = 2     // 1×2 グリッド
+    case four = 4    // 2×2 グリッド（v1.0 既存仕様）
+    case six = 6     // 2×3 グリッド
+    case eight = 8   // 2×4 グリッド
+}</code></pre>
+
+  <h3>グリッド配置</h3>
+  <table>
+    <tr><th>パネル数</th><th>行×列</th><th>想定難易度感</th></tr>
+    <tr><td>2</td><td>1×2</td><td>超高速判定で集中力勝負。スピード重視プレイヤー向け</td></tr>
+    <tr><td>4</td><td>2×2</td><td>v1.0 標準。バランス型</td></tr>
+    <tr><td>6</td><td>2×3</td><td>記憶すべき組み合わせ増加。複雑度アップ</td></tr>
+    <tr><td>8</td><td>2×4</td><td>最高難度の記憶パターン。上級者向け</td></tr>
+  </table>
+
+  <h3>UI 変更（GameView）</h3>
+  <ul>
+    <li>GameView に PanelCount セレクター（ピル型ボタン）を追加</li>
+    <li>セレクター配置: 難易度 Picker の近接位置（idle 状態でのみ操作可能）</li>
+    <li>パネル数変更後はゲームリセット → 新パネル数でラウンド開始</li>
+    <li>プレイ中はセレクターを無効化（誤操作防止）</li>
+  </ul>
+
+  <h3>処理フロー（パネル数変更）</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant GV as GameView
+  participant GVM as GameViewModel
+  participant UDF as UserDefaults
+
+  U->>GV: PanelCount セレクターをタップ（idle 状態のみ）
+  GV->>GVM: panelCount = .six（例）
+  GVM->>GVM: resetGame()
+  GVM->>UDF: chromatic_selected_panel_count 保存
+  GVM-->>GV: グリッドを 2×3 に再レイアウト
+  GV-->>U: 新パネル数のゲーム盤面を表示
+  U->>GV: START タップ
+  GV->>GVM: startGame()
+  GVM-->>GV: 選択パネル数でラウンド開始
+  </div>
+
+  <!-- ===================== ベストスコア管理 ===================== -->
+  <h2>ベストスコア管理</h2>
+
+  <h3>ストレージキー体系</h3>
+  <p>パネル数×難易度の組み合わせごとに独立したベストスコアを記録する。</p>
+  <table>
+    <tr><th>キーパターン</th><th>例</th><th>説明</th></tr>
+    <tr><td><code>chromatic_best_score_p{N}_{speed}</code></td><td><code>chromatic_best_score_p4_normal</code></td><td>パネル数4・NORMAL のベスト</td></tr>
+    <tr><td></td><td><code>chromatic_best_score_p4_fast</code></td><td>パネル数4・FAST のベスト</td></tr>
+    <tr><td></td><td><code>chromatic_best_score_p4_insane</code></td><td>パネル数4・INSANE のベスト</td></tr>
+    <tr><td></td><td><code>chromatic_best_score_p8_insane</code></td><td>パネル数8・INSANE のベスト</td></tr>
+  </table>
+  <p><code>N</code> は 2 / 4 / 6 / 8、<code>{speed}</code> は <code>normal</code> / <code>fast</code> / <code>insane</code> の 3 値。合計 12 エントリ。</p>
+
+  <h3>旧キーからのマイグレーション</h3>
+  <table>
+    <tr><th>旧キー（パネル数なし）</th><th>移行先</th><th>処理タイミング</th></tr>
+    <tr><td><code>chromatic_best_score_normal</code></td><td><code>chromatic_best_score_p4_normal</code></td><td>初回起動時に自動マイグレーション</td></tr>
+    <tr><td><code>chromatic_best_score_fast</code></td><td><code>chromatic_best_score_p4_fast</code></td><td>同上</td></tr>
+    <tr><td><code>chromatic_best_score_insane</code></td><td><code>chromatic_best_score_p4_insane</code></td><td>同上</td></tr>
+  </table>
+  <p>マイグレーション済みフラグ: <code>chromatic_best_score_migrated_v1_2</code>（Bool）。二重マイグレーション防止。</p>
+  <p style="color:#FF9500;">注意: 旧キーのデータは上書きせず、移行後も残す（後方互換）。旧キーへのアクセスは削除しない。</p>
+
+  <!-- ===================== Game Center 連携 ===================== -->
+  <h2>Game Center リーダーボード</h2>
+  <p>
+    Game Center へのスコア送信は <strong>パネル数 4（2×2）のみ</strong> に限定する。
+    v1.0 時点のリーダーボード（<code>normal</code> / <code>fast</code> / <code>insane</code> 各 1 本、計 3 本）との整合性を維持するため、
+    パネル数 2 / 6 / 8 のスコアはローカルのみ保存し、リーダーボードには反映しない。
+  </p>
+  <table>
+    <tr><th>パネル数</th><th>Game Center 送信</th><th>理由</th></tr>
+    <tr><td>2</td><td>なし</td><td>既存リーダーボードとスコア互換性なし</td></tr>
+    <tr><td>4</td><td>あり（3難易度）</td><td>v1.0 既存仕様を継承</td></tr>
+    <tr><td>6</td><td>なし</td><td>同上</td></tr>
+    <tr><td>8</td><td>なし</td><td>同上</td></tr>
+  </table>
+  <p>将来的にパネル数別リーダーボードを追加する場合は、App Store Connect での新規リーダーボード登録が必要。</p>
+
+  <!-- ===================== UserDefaults キー ===================== -->
+  <h2>UserDefaults 新規キー一覧（v1.2 追加分）</h2>
+  <table>
+    <tr><th>キー</th><th>型</th><th>用途</th></tr>
+    <tr><td><code>chromatic_selected_panel_count</code></td><td>Int</td><td>直近のパネル数選択値（2/4/6/8）。デフォルト: 4</td></tr>
+    <tr><td><code>chromatic_best_score_p2_normal</code></td><td>Int</td><td>パネル数2・NORMAL ベスト</td></tr>
+    <tr><td><code>chromatic_best_score_p2_fast</code></td><td>Int</td><td>パネル数2・FAST ベスト</td></tr>
+    <tr><td><code>chromatic_best_score_p2_insane</code></td><td>Int</td><td>パネル数2・INSANE ベスト</td></tr>
+    <tr><td><code>chromatic_best_score_p4_normal</code></td><td>Int</td><td>パネル数4・NORMAL ベスト（旧キーからマイグレーション）</td></tr>
+    <tr><td><code>chromatic_best_score_p4_fast</code></td><td>Int</td><td>パネル数4・FAST ベスト（旧キーからマイグレーション）</td></tr>
+    <tr><td><code>chromatic_best_score_p4_insane</code></td><td>Int</td><td>パネル数4・INSANE ベスト（旧キーからマイグレーション）</td></tr>
+    <tr><td><code>chromatic_best_score_p6_normal</code></td><td>Int</td><td>パネル数6・NORMAL ベスト</td></tr>
+    <tr><td><code>chromatic_best_score_p6_fast</code></td><td>Int</td><td>パネル数6・FAST ベスト</td></tr>
+    <tr><td><code>chromatic_best_score_p6_insane</code></td><td>Int</td><td>パネル数6・INSANE ベスト</td></tr>
+    <tr><td><code>chromatic_best_score_p8_normal</code></td><td>Int</td><td>パネル数8・NORMAL ベスト</td></tr>
+    <tr><td><code>chromatic_best_score_p8_fast</code></td><td>Int</td><td>パネル数8・FAST ベスト</td></tr>
+    <tr><td><code>chromatic_best_score_p8_insane</code></td><td>Int</td><td>パネル数8・INSANE ベスト</td></tr>
+    <tr><td><code>chromatic_best_score_migrated_v1_2</code></td><td>Bool</td><td>旧キーマイグレーション済みフラグ</td></tr>
+  </table>
+
+  <!-- ===================== 同梱内容：v1.0.1 / v1.1.0 ===================== -->
+  <h2>同梱内容（v1.0.1 / v1.1.0 統合）</h2>
+  <p>
+    v1.2.0 は v1.0.1（特商法対応）と v1.1.0（ドーパミン強化）を含む大型統合リリースとして審査提出している。
+    各バージョンの詳細仕様は <a href="v1-1-dopamine-update.html">v1.1 ドーパミン強化アップデート仕様書</a> を参照。
+  </p>
+
+  <h3>v1.0.1 由来（特商法対応）</h3>
+  <ul>
+    <li>特商法に基づく表記 HTML 追加、設定画面からのリンク設置</li>
+    <li>利用規約 第7条（アプリ内課金）新設</li>
+    <li>PrivacyInfo.xcprivacy 追加（AdMob / StoreKit 対応）</li>
+  </ul>
+
+  <h3>v1.1.0 由来（ドーパミン強化）</h3>
+  <ul>
+    <li>Daily Challenge（日替わり 50 ラウンド、絵文字グリッドシェア）</li>
+    <li>ストリーク強化（大型炎表示、シールド週 1 回、マイルストーン演出）</li>
+    <li>Juice 演出（HapticsManager 6 パターン、ParticleBurst、ScreenShake、NewBestFlash）</li>
+    <li>Surprise 演出 4 種（RAINBOW BURST / GOLDEN ROUND / ECHO / FLOW MOMENT、5.5% 発火）</li>
+    <li>Near Miss 演出（ベスト直前・マイルストーン直前の「あと一歩」訴求）</li>
+    <li>速度カーブ 6 段階化（旧 5 段階）</li>
+    <li>通知リマインダー（毎日 21 時）</li>
+  </ul>
+
+  <!-- ===================== App Store Connect メタデータ ===================== -->
+  <h2>App Store Connect メタデータ（v1.2.0 用）</h2>
+
+  <h3>プロモーション用テキスト</h3>
+  <blockquote style="border-left:4px solid #007AFF; margin:1rem 0; padding:0.75rem 1rem; background:rgba(0,122,255,0.08); border-radius:0 8px 8px 0;">
+    <p style="margin:0; color:#ccc; font-size:0.95em;">
+      【v1.2 大型アップデート】2/4/6/8パネルから選べる新モード追加。毎日24時更新のデイリーチャレンジで全プレイヤーと同じ問題に挑戦。連続プレイストリーク、Near Miss演出、サプライズ発火など没入感が大幅進化。
+    </p>
+    <p style="margin:0.5rem 0 0; color:#888; font-size:0.85em;">158文字 / 採用済</p>
+  </blockquote>
+  <p>スクリーンショット・概要・最新情報テキストも v1.2.0 用に更新済み。</p>
+
+  <!-- ===================== アーキテクチャ ===================== -->
+  <h2>アーキテクチャ・変更ファイル一覧</h2>
+  <pre><code>新規ファイル（v1.2）:
+（なし。既存ファイルの修正のみ）
+
+修正ファイル（v1.2 パネル数選択）:
+├── Models/PanelCount.swift          # PanelCount enum（新規追加 or GameViewModel に内包）
+├── ViewModels/GameViewModel.swift   # panelCount プロパティ追加、bestScore キー体系変更、
+│                                    # マイグレーション処理、GC 送信条件分岐
+└── Views/Game/GameView.swift        # PanelCount セレクター（ピル型ボタン）追加、
+                                     # グリッドの動的レイアウト切り替え</code></pre>
+
+  <!-- ===================== ビジネスルール ===================== -->
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>パネル数はゲーム開始前（idle 状態）にのみ変更可能。プレイ中は変更不可</li>
+    <li>パネル数を変更するとゲームは即座にリセットされる（スコア消失なし）</li>
+    <li>ベストスコアはパネル数×難易度の組み合わせ（12 通り）ごとに独立管理</li>
+    <li>Game Center へのスコア送信はパネル数 4 のみ（既存リーダーボードとの互換性維持）</li>
+    <li>Daily Challenge はパネル数設定に依存しない独立モード（常に 4 パネル固定）</li>
+    <li>旧ユーザーのベストスコアはパネル数 4 として自動マイグレーション（二重実行防止あり）</li>
+  </ul>
+
+  <!-- ===================== エラー処理 ===================== -->
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>マイグレーション処理中のクラッシュ</td><td><code>chromatic_best_score_migrated_v1_2</code> フラグが false のまま残るため次回起動時に再試行。べき等な処理なので問題なし</td></tr>
+    <tr><td>PanelCount の不正値が UserDefaults に保存されていた場合</td><td>デフォルト値（4）にフォールバックして起動継続</td></tr>
+    <tr><td>パネル数変更時のグリッドレイアウト崩れ</td><td>resetGame() 後に再描画するため発生しない。ただし動的に変更した場合は ForEach の id 変更で強制再構築</td></tr>
+  </table>
+
+  <!-- ===================== 関連仕様書 ===================== -->
+  <h2>関連仕様書</h2>
+  <ul>
+    <li><a href="v1-1-dopamine-update.html">v1.1 ドーパミン強化アップデート</a> — Daily Challenge・ストリーク強化・Juice 演出（v1.2.0 に統合提出）</li>
+    <li><a href="game-logic.html">ゲームロジック</a> — 速度加速・マイルストーン（パネル数非依存）</li>
+    <li><a href="game-center.html">Game Center</a> — リーダーボード 3 本（panel=4 のみ送信）</li>
+    <li><a href="../screens/game.html">ゲーム画面（CR-GAME-01）</a> — idle / プレイ中 UI（PanelCount セレクター追加）</li>
+    <li><a href="../data-model.html">データモデル</a> — UserDefaults キー全体像</li>
+  </ul>
+
+  <!-- ===================== 変更履歴 ===================== -->
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-19</td><td>初版作成（v1.2.0 審査提出に合わせて新規作成）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-19</footer>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+  });
+</script>
+</body>
+</html>
