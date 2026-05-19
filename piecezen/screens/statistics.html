@@ -2,32 +2,107 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
-<title>PieceZen - 統計</title>
+<title>脳活ピース - 脳活記録（統計）</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / 統計</div>
-  <header class="site-header"><h1>統計画面（StatisticsView）</h1><p>過去のスコア・プレイ履歴</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: PZ-STATS-01</span></div></header>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen（脳活ピース）</a> / 脳活記録</div>
+
+  <header class="site-header">
+    <h1>脳活記録画面（StatisticsView）</h1>
+    <p>「あなたの脳活記録」コンセプトで再設計（v1.3.0〜）。4指標・週次グラフ・家族共有機能を搭載</p>
+    <div class="section-meta">
+      <span class="tag done">v1.1</span>
+      <span class="tag">画面ID: PZ-STATS-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    ユーザーの継続プレイを可視化し、達成感と継続モチベーションを高める。
+    ご家族への共有機能を通じて「家族で続ける脳活習慣」を促進する。
+  </p>
 
   <h2>UI 構成</h2>
+
+  <h3>上部サマリー（4指標カード）</h3>
   <table>
-    <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>ベストスコア</td><td>HighScoreRecord 表示</td></tr>
-    <tr><td>今日のベスト</td><td>本日プレイ分の最高</td></tr>
-    <tr><td>総プレイ回数</td><td>StatRecord の総数</td></tr>
-    <tr><td>平均スコア</td><td>StatRecord の平均</td></tr>
-    <tr><td>スコア推移グラフ</td><td>直近20ゲーム（SwiftUI Charts）</td></tr>
-    <tr><td>直近10ゲームリスト</td><td>各回のスコア + プレイ日時</td></tr>
+    <tr><th>指標名</th><th>データソース</th><th>表示形式</th></tr>
+    <tr><td>連続日数</td><td><code>StreakManager.currentStreak</code></td><td>〇日</td></tr>
+    <tr><td>ベストスコア</td><td><code>HighScoreRecord</code></td><td>3桁区切り数値</td></tr>
+    <tr><td>総プレイ回数</td><td><code>StatRecord</code> 件数</td><td>〇回</td></tr>
+    <tr><td>最大コンボ（v1.3 新規）</td><td><code>StatRecord.maxCombo</code> 全期間最大</td><td>×〇</td></tr>
   </table>
+
+  <h3>今週のスコア推移グラフ</h3>
+  <ul>
+    <li>実装: SwiftUI Charts（iOS 16+ 標準）</li>
+    <li>グラフ種別: 棒グラフ（Bar Chart）</li>
+    <li>週起点: 月曜固定（<code>Locale</code> 非依存）</li>
+    <li>曜日ラベル: 月 / 火 / 水 / 木 / 金 / 土 / 今日（当日のみ「今日」、<code>Calendar.current.isDateInToday(date)</code> で判定）</li>
+    <li>各曜日の最高スコアを表示（プレイなしの日はバー非表示）</li>
+  </ul>
+
+  <h3>ご家族に記録を共有ボタン</h3>
+  <ul>
+    <li>実装: <code>ShareLink</code>（ネイティブ Share Sheet）</li>
+    <li>送信先例: LINE / メッセージ / メール等</li>
+    <li>共有テキスト（動的生成）例:</li>
+  </ul>
+  <pre><code>【脳活ピース・記録】
+連続日数: 14日 / ベストスコア: 3,840 / 総プレイ回数: 42回 / 最大コンボ: ×8</code></pre>
+  <p>共有テキストはローカル生成のみ（ネットワーク通信なし）。</p>
+
+  <h3>直近10ゲーム履歴リスト</h3>
+  <table>
+    <tr><th>項目</th><th>説明</th></tr>
+    <tr><td>スコア</td><td>3桁区切り</td></tr>
+    <tr><td>プレイ日時</td><td>yyyy/MM/dd HH:mm 形式</td></tr>
+    <tr><td>最大コンボ（v1.3 新規）</td><td>×〇 形式。旧データは ×0 表示</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>説明</th></tr>
+    <tr><td>初回表示（プレイ履歴なし）</td><td>サマリーカードはすべて 0 / グラフは空 / 履歴リストは「まだ記録がありません」を表示</td></tr>
+    <tr><td>通常表示</td><td>全指標・グラフ・履歴を表示</td></tr>
+    <tr><td>共有シート表示中</td><td>Share Sheet がオーバーレイ表示。統計画面は背後で残る</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <ul>
+    <li>HomeView の「脳活記録」ボタン → 本画面（Sheet または NavigationLink）</li>
+    <li>閉じるボタン → HomeView へ戻る</li>
+    <li>共有ボタン → Share Sheet（モーダル）</li>
+  </ul>
 
   <h2>使用するデータモデル</h2>
   <pre><code>HighScoreRecord（@Query）
-StatRecord（@Query, sort: .reverse）</code></pre>
+StatRecord（@Query, sort: .reverse, limit: 10 for list / 全件 for graph）
+StreakManager.currentStreak（@Observable）</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul>
+    <li>最大コンボは <code>StatRecord.maxCombo</code> の <code>max()</code> で全件から求める</li>
+    <li>週次グラフのデータは <code>StatRecord</code> から当週分をフィルタし、曜日ごとに最高スコアを集計する</li>
+    <li>グラフ高さは固定 160pt 程度（スクロールビュー内でもレイアウト崩れなし）</li>
+    <li>共有ボタンの <code>ShareLink</code> のラベルには <code>Image(systemName: "square.and.arrow.up")</code> + テキストを使用</li>
+    <li>旧 <code>StatRecord</code>（<code>maxCombo</code> なし）は <code>default 0</code> で自動マイグレーション済み。表示上は ×0 となる</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/v1-3-rebranding.html">v1.3.0 リリース仕様書</a>（本画面のリニューアル仕様）</li>
+    <li><a href="../data-model.html">データモデル仕様書</a>（StatRecord.maxCombo 追加）</li>
+  </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-05-19</td><td>v1.3.0 対応: 画面名を「統計」→「脳活記録」へリネーム。4指標（連続日数・ベストスコア・総プレイ回数・最大コンボ）・週次グラフ・ShareLink 家族共有・直近10ゲーム最大コンボ表示を追加</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-05-19（v1.1）</footer>
 </div></body></html>

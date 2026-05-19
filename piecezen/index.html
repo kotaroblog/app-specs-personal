@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>PieceZen - Specs</title>
+<title>脳活ピース（PieceZen）- Specs</title>
 <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
@@ -12,12 +12,12 @@
   <div class="breadcrumb"><a href="../">← Personal App Specs</a></div>
 
   <header class="site-header">
-    <h1>PieceZen</h1>
-    <p>8×8グリッドのブロック配置パズル · Bundle ID: <code>com.happyboy1002.BlockPuzzle</code></p>
+    <h1>脳活ピース <small style="font-size:0.55em; font-weight:normal; color:var(--muted,#888)">旧: PieceZen</small></h1>
+    <p>8×8グリッドのブロック配置パズル（シニア向けリブランディング済） · Bundle ID: <code>com.happyboy1002.BlockPuzzle</code></p>
   </header>
 
   <div class="callout">
-    プロジェクト名は <code>BlockPuzzle</code>（ローカルパス・Bundle ID）、ストア表示名は <strong>PieceZen</strong>。仕様書ではストア名で統一。
+    プロジェクト名は <code>BlockPuzzle</code>（ローカルパス・Bundle ID）、ストア表示名は <strong>脳活ピース</strong>（v1.3.0〜。旧: PieceZen）。仕様書ではストア名で統一。
   </div>
 
   <h2>概要</h2>
@@ -28,7 +28,7 @@
     <li><span class="k">マネタイズ</span><span class="v">広告（Banner/Interstitial/Rewarded） + IAP（広告除去）</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
     <li><span class="k">リリース時期</span><span class="v">2026年4月</span></li>
-    <li><span class="k">バージョン</span><span class="v">v1.2 (build 15)</span></li>
+    <li><span class="k">バージョン</span><span class="v">v1.3.0 (build 20)</span></li>
     <li><span class="k">配信地域</span><span class="v">日本のみ</span></li>
     <li><span class="k">対応デバイス</span><span class="v">iPhone（縦向き専用）</span></li>
   </ul>
@@ -55,15 +55,20 @@
     <a class="card" href="screens/game.html"><div class="title">ゲーム</div><div class="desc">メインゲーム画面</div><div class="meta"><span class="tag">PZ-GAME-01</span></div></a>
     <a class="card" href="screens/game-over.html"><div class="title">ゲーム終了</div><div class="desc">救済リワード広告含む</div><div class="meta"><span class="tag">PZ-OVER-01</span></div></a>
     <a class="card" href="screens/settings.html"><div class="title">設定</div><div class="desc">サウンド・テーマ・課金</div><div class="meta"><span class="tag">PZ-SET-01</span></div></a>
-    <a class="card" href="screens/statistics.html"><div class="title">統計</div><div class="desc">スコア推移グラフ</div><div class="meta"><span class="tag">PZ-STATS-01</span></div></a>
+    <a class="card" href="screens/statistics.html"><div class="title">脳活記録（旧: 統計）</div><div class="desc">4指標・週次グラフ・家族共有（v1.3.0〜）</div><div class="meta"><span class="tag">PZ-STATS-01</span></div></a>
     <a class="card" href="screens/paywall.html"><div class="title">Paywall</div><div class="desc">広告除去IAP</div><div class="meta"><span class="tag">PZ-PAY-01</span></div></a>
   </div>
 
   <h2>機能仕様書</h2>
   <div class="card-grid">
+    <a class="card" href="features/v1-3-rebranding.html">
+      <div class="title">v1.3.0 リリース仕様書「脳活ピース」リブランディング</div>
+      <div class="desc">アプリ名変更・文字サイズ3段階・高コントラストテーマ・脳活記録（週次グラフ・家族共有）・StatRecord.maxCombo 追加</div>
+      <div class="meta"><span class="tag">PZ-FEAT-V1-3</span><span class="tag">v1.3.0</span><span class="tag">2026-05-19 審査提出</span></div>
+    </a>
     <a class="card" href="features/v4.0-rebranding-roadmap.html">
-      <div class="title">v4.0 リブランディング企画書「脳活ピース」（最新戦略）</div>
-      <div class="desc">DL 0問題を受けてシニア層向けボケ防止アプリへ全面ピボット。改名・UI刷新・ASO全面更新の段階計画</div>
+      <div class="title">v4.0 リブランディング企画書「脳活ピース」（上位戦略）</div>
+      <div class="desc">DL 0問題を受けてシニア層向けボケ防止アプリへ全面ピボット。改名・UI刷新・ASO全面更新の段階計画（v1.3.0で先行実装フェーズ完了）</div>
       <div class="meta"><span class="tag">REBRAND</span><span class="tag">v4.0</span><span class="tag">2026年6月〜</span></div>
     </a>
     <a class="card" href="features/game-logic.html"><div class="title">ゲームロジック</div><div class="desc">配置・消去・スコア・コンボ</div></a>
@@ -89,7 +94,7 @@
     </a>
   </div>
 
-  <footer class="site-footer">最終更新: 2026-05-13</footer>
+  <footer class="site-footer">最終更新: 2026-05-19</footer>
 </div>
 </body>
 </html>

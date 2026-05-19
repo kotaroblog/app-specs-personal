@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>脳活ピース - v1.3.0 リリース仕様書「脳活ピース」リブランディング</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen（脳活ピース）</a> / v1.3.0 リリース仕様書</div>
+
+  <header class="site-header">
+    <h1>v1.3.0 リリース仕様書「脳活ピース」リブランディング</h1>
+    <p>アプリ表示名を PieceZen → 脳活ピース へ変更。シニア向けアクセシビリティ・統計画面リニューアル・データモデル拡張を含む先行実装フェーズ</p>
+    <div class="section-meta">
+      <span class="tag">PZ-FEAT-V1-3</span>
+      <span class="tag">v1.3.0 (Build 20)</span>
+      <span class="tag">審査提出: 2026-05-19</span>
+    </div>
+  </header>
+
+  <!-- ========================================================
+       変更履歴
+  ======================================================== -->
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-19</td><td>初版作成（v1.3.0 審査提出日）</td></tr>
+  </table>
+
+  <!-- ========================================================
+       1. 概要
+  ======================================================== -->
+  <h2>1. 概要</h2>
+
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>アプリ表示名（変更前）</td><td>PieceZen</td></tr>
+    <tr><td>アプリ表示名（変更後）</td><td><strong>脳活ピース</strong></td></tr>
+    <tr><td>Bundle ID</td><td><code>com.happyboy1002.BlockPuzzle</code>（変更なし）</td></tr>
+    <tr><td>バージョン</td><td>1.3.0 (Build 20)</td></tr>
+    <tr><td>審査提出予定日</td><td>2026-05-19</td></tr>
+    <tr><td>開発区分</td><td>個人開発</td></tr>
+    <tr><td>必要OS</td><td>iOS 18.0+</td></tr>
+    <tr><td>コード commit</td><td><code>6dd22d0</code>（<a href="https://github.com/kotaroblog/BlockPuzzle" target="_blank">kotaroblog/BlockPuzzle</a>）</td></tr>
+  </table>
+
+  <h3>ピボット根拠</h3>
+  <p>
+    <a href="v4.0-rebranding-roadmap.html">v4.0 リブランディング企画書</a>で定義した「DL 0問題への対応」として、
+    シニア向けアクセシビリティ機能と統計画面リニューアル（脳活記録）を v1.3.0 で先行実装する。
+    Bundle ID を維持するため既存ユーザーへの影響はなく、段階的にリブランディングを進める足がかりとする。
+  </p>
+
+  <!-- ========================================================
+       2. リブランディング全体方針
+  ======================================================== -->
+  <h2>2. リブランディング全体方針</h2>
+
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>ターゲット層</td><td>シニア世代（60代・70代）特化</td></tr>
+    <tr><td>コンセプト</td><td>1日3分の脳活習慣 / 見やすい設計 / 家族で共有</td></tr>
+    <tr><td>Bundle ID</td><td>維持（既存ユーザーへの影響なし）</td></tr>
+    <tr><td>IAP</td><td>広告除去 ¥480（<code>com.happyboy1002.BlockPuzzle.removeAds</code>）維持</td></tr>
+    <tr><td>AdMob</td><td>維持（Ad Unit ID・広告配置変更なし）</td></tr>
+  </table>
+
+  <!-- ========================================================
+       3. 主要新機能
+  ======================================================== -->
+  <h2>3. 主要新機能</h2>
+
+  <!-- 3-1 -->
+  <h3>3-1. シニア向けアクセシビリティ（v4.0 ロードマップの先行実装）</h3>
+
+  <h4>文字サイズ3段階調整</h4>
+  <table>
+    <tr><th>段階</th><th>DynamicTypeSize</th><th>概要</th></tr>
+    <tr><td>標準</td><td><code>.large</code></td><td>システムデフォルト</td></tr>
+    <tr><td>大きい</td><td><code>.xLarge</code></td><td>+1 サイズアップ</td></tr>
+    <tr><td>特大</td><td><code>.accessibility1</code></td><td>標準比 30% 以上拡大</td></tr>
+  </table>
+  <ul>
+    <li>永続化キー: <code>@AppStorage("fontSizeLevel")</code></li>
+    <li>適用方法: <code>ContentView</code> の <code>.dynamicTypeSize()</code> でアプリ全体に一括反映</li>
+    <li>設定画面から切替可能</li>
+  </ul>
+
+  <h4>シニア向け高コントラストテーマ（ColorTheme.seniorContrast）</h4>
+  <ul>
+    <li>WCAG AA 基準（コントラスト比 4.5:1 以上）準拠</li>
+    <li>色覚多様性（赤緑色覚異常）にも配慮した配色</li>
+    <li>既存5テーマ（classic / ocean / sakura / neon / monochrome）と合わせて <strong>6テーマ体制</strong> へ</li>
+  </ul>
+
+  <!-- 3-2 -->
+  <h3>3-2. 統計画面リニューアル「脳活記録」</h3>
+  <p>従来の <code>StatisticsView</code> を「あなたの脳活記録」コンセプトで再設計。詳細は <a href="../screens/statistics.html">統計画面（脳活記録）仕様書</a> を参照。</p>
+
+  <h4>指標4種類</h4>
+  <table>
+    <tr><th>指標名</th><th>データソース</th></tr>
+    <tr><td>連続日数</td><td><code>StreakManager.currentStreak</code></td></tr>
+    <tr><td>ベストスコア</td><td><code>HighScoreRecord</code></td></tr>
+    <tr><td>総プレイ回数</td><td><code>StatRecord</code> 件数</td></tr>
+    <tr><td>最大コンボ（v1.3 新規）</td><td><code>StatRecord.maxCombo</code> の全期間最大</td></tr>
+  </table>
+
+  <h4>今週のスコア推移グラフ</h4>
+  <ul>
+    <li>月曜始まりの棒グラフ（SwiftUI Charts）</li>
+    <li>曜日ラベル: 月 / 火 / 水 / 木 / 金 / 土 / 今日</li>
+    <li>各曜日の最高スコアを表示</li>
+  </ul>
+
+  <h4>ご家族に記録を共有（ShareLink）</h4>
+  <p>LINE / メッセージなどで送信できる Share Sheet 連携ボタン。共有テキスト例：</p>
+  <pre><code>【脳活ピース・記録】
+連続日数: 14日 / ベストスコア: 3,840 / 総プレイ回数: 42回 / 最大コンボ: ×8</code></pre>
+
+  <h4>直近10ゲーム履歴の最大コンボ表示</h4>
+  <p>従来のスコア + プレイ日時に加え、各ゲームの最大コンボを追加表示。</p>
+
+  <!-- 3-3 -->
+  <h3>3-3. データモデル拡張（StatRecord.maxCombo 追加）</h3>
+  <p>詳細は <a href="../data-model.html">データモデル仕様書</a> を参照。</p>
+
+  <pre><code>@Model final class StatRecord {
+    var score: Int = 0
+    var playedAt: Date = Date()
+    var maxCombo: Int = 0  // ★ v1.3.0 追加
+}</code></pre>
+
+  <ul>
+    <li>旧データは <code>default 0</code> で SwiftData 自動マイグレーション（<code>@Model</code> デフォルト値機能）</li>
+    <li><code>GameEngine</code> に <code>maxComboInSession: Int</code> プロパティを追加</li>
+    <li><code>startNewGame()</code> でリセット</li>
+    <li><code>saveStatRecord()</code> で <code>maxCombo</code> を永続化</li>
+  </ul>
+
+  <!-- 3-4 -->
+  <h3>3-4. リブランディング全画面反映</h3>
+
+  <table>
+    <tr><th>変更箇所</th><th>内容</th></tr>
+    <tr><td>Info.plist <code>CFBundleDisplayName</code></td><td>脳活ピース に変更</td></tr>
+    <tr><td>HomeView アプリタイトル</td><td>脳活ピース に変更</td></tr>
+    <tr><td>GameOverView シェアテキスト</td><td>ハッシュタグを <code>#脳活ピース #脳トレ</code> に変更（新記録時・通常時の両テンプレート）</td></tr>
+    <tr><td>NotificationManager リマインダー</td><td>21時リマインダーのタイトル/本文をシニア向け文言に変更</td></tr>
+    <tr><td>PaywallContentSections</td><td>価格比較行ラベルをシニア向け文言に変更</td></tr>
+    <tr><td>GameEngine コメント</td><td>脳活ピース 表記に統一</td></tr>
+  </table>
+
+  <!-- ========================================================
+       4. App Store メタデータ
+  ======================================================== -->
+  <h2>4. App Store メタデータ刷新（v1.3.0）</h2>
+
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>アプリ名（30字以内）</td><td><strong>脳活ピース - 60代からのボケ予防パズル</strong>（19字）</td></tr>
+    <tr><td>サブタイトル（30字以内）</td><td><strong>1日3分の脳活習慣、シニアの見やすい設計</strong>（19字）</td></tr>
+    <tr><td>キーワード（100字以内）</td><td>脳トレ,シニア,高齢者,ボケ予防,認知機能,大きい文字,簡単操作,習慣化,アクセシビリティ,4+,ピース,空間認識</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>表記注意</strong>: 「ボケ予防」は医療効能表現のリスクがあるためモニタリング要。Apple ガイドライン 1.4（Health and Fitness）に抵触しないか審査結果を確認する。
+  </div>
+
+  <h3>プロモーション用テキスト（158字）</h3>
+  <blockquote>
+    【v1.3.0 シニア向け大幅リニューアル】文字サイズ3段階拡大、高コントラスト表示、WCAG AA基準のアクセシビリティに対応。60代・70代から始める1日3分の脳活パズル習慣。広告はゲーム終了3回に1回のみ、プレイ中は表示なし。
+  </blockquote>
+
+  <h3>説明文（本文）</h3>
+  <pre>毎日3分の脳活パズルを習慣に。
+認知機能の維持に役立つと言われるブロックパズルを、シンプルに・続けやすく設計しました。
+
+■ 脳活ピースとは
+8×8のグリッドにブロックピースを置いて、横・縦のラインを揃えて消すパズルです。
+時間制限なし。自分のペースで、じっくり考えられます。
+
+■ シニアの方に配慮した設計
+・文字サイズ3段階切替（標準 / 大きい / 特大）
+・見やすい高コントラストテーマ（WCAG AA基準準拠）
+・色覚多様性への配慮
+・シンプルな操作、チュートリアル付き
+
+■ 脳活記録で続ける習慣
+・連続日数・ベストスコア・最大コンボを記録
+・今週のスコア推移グラフ
+・ご家族に記録を共有（LINE・メッセージ送信対応）
+
+■ ゲーム機能
+・コンボ最大8倍の達成感
+・アンドゥ機能（操作ミスも安心）
+・6つのカラーテーマ
+・ハイスコア挑戦・ストリーク記録
+
+■ 広告について
+広告はゲーム終了3回に1回のみ表示。プレイ中は広告なし。
+買い切り¥480で広告完全除去できます。</pre>
+
+  <h3>最新情報（リリースノート）</h3>
+  <pre>【v1.3.0 シニア向けアクセシビリティ大幅強化】
+
+■ アプリ名を「脳活ピース」に変更しました
+■ 文字サイズを3段階で切り替えられるようになりました（標準 / 大きい / 特大）
+■ 見やすい高コントラストテーマを追加しました（WCAG AA基準準拠）
+■ 統計画面を「脳活記録」としてリニューアルしました
+  - 連続日数・ベストスコア・最大コンボ・総プレイ回数を表示
+  - 今週のスコア推移グラフ（月〜日）
+  - ご家族に記録を共有できるボタンを追加
+■ 最大コンボ記録を新規追加しました
+
+いつもご利用ありがとうございます。引き続き毎日の脳活習慣をお楽しみください。</pre>
+
+  <!-- ========================================================
+       5. スクリーンショット
+  ======================================================== -->
+  <h2>5. スクリーンショット（v1.3.0 / 6枚）</h2>
+
+  <p>保存先: <code>/Users/happyboy1002/Desktop/app-screenshots/BlockPuzzle/v1.3.0/resized/</code></p>
+
+  <table>
+    <tr><th>#</th><th>ファイル名</th><th>メインキャプション</th><th>サブキャプション</th></tr>
+    <tr>
+      <td>1</td>
+      <td><code>ss1_daily_brain_final.png</code></td>
+      <td>毎日3分の脳活習慣</td>
+      <td>8×8 ブロックパズルで認知機能を維持</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><code>ss2_combo_focus_final.png</code></td>
+      <td>集中力が自然と高まる</td>
+      <td>最大8倍のコンボ倍率で達成感</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><code>ss3_accessibility_final.png</code></td>
+      <td>見やすさを自分に合わせて</td>
+      <td>6カラーテーマ・高コントラスト対応・WCAG AA基準準拠</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><code>ss4_family_share_final.png</code></td>
+      <td>ご家族と共有 毎日の記録</td>
+      <td>脳活記録画面・週次グラフ・LINE共有</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><code>ss5_font_size_final.png</code></td>
+      <td>文字も、大きく</td>
+      <td>3段階切替（標準 / 大きい / 特大）</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><code>ss6_ad_free_final.png</code></td>
+      <td>広告を消してもっと集中</td>
+      <td>買い切り訴求（広告除去 ¥480）</td>
+    </tr>
+  </table>
+
+  <!-- ========================================================
+       6. 処理フロー
+  ======================================================== -->
+  <h2>6. 処理フロー（maxCombo 永続化）</h2>
+
+  <pre><code>// GameEngine 内の処理概要
+
+// ゲーム開始時
+func startNewGame() {
+    maxComboInSession = 0
+    // ... 既存初期化処理
+}
+
+// コンボ更新時（既存処理に追記）
+func updateCombo(_ newCombo: Int) {
+    if newCombo > maxComboInSession {
+        maxComboInSession = newCombo
+    }
+}
+
+// ゲーム終了・統計保存時
+func saveStatRecord(context: ModelContext) {
+    let record = StatRecord()
+    record.score = currentScore
+    record.playedAt = Date()
+    record.maxCombo = maxComboInSession   // ★ v1.3.0 追加
+    context.insert(record)
+}</code></pre>
+
+  <!-- ========================================================
+       7. ビジネスルール
+  ======================================================== -->
+  <h2>7. ビジネスルール</h2>
+
+  <ul>
+    <li>医療効能の断定表現禁止: 「予防効果がある」→「〜と言われています」「〜をサポートします」等に統一</li>
+    <li>アクセシビリティ設定はアプリ再起動後も保持（<code>@AppStorage</code> で永続化）</li>
+    <li><code>seniorContrast</code> テーマは設定画面のテーマ選択リストに追加するが、旧5テーマは削除しない</li>
+    <li><code>maxCombo</code> の旧データは 0 扱い（SwiftData デフォルト値。既存ユーザーへの影響なし）</li>
+    <li>共有テキストの内容はローカル生成のみ（ネットワーク通信なし）</li>
+  </ul>
+
+  <!-- ========================================================
+       8. 外部連携
+  ======================================================== -->
+  <h2>8. 外部連携</h2>
+
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>ShareLink / UIActivityViewController</td><td>脳活記録の家族共有</td><td>ネイティブ Share Sheet。LINE / メッセージ等</td></tr>
+    <tr><td>SwiftUI Charts</td><td>週次スコア推移グラフ</td><td>iOS 16+ 標準ライブラリ</td></tr>
+    <tr><td>AdMob</td><td>インタースティシャル広告（3ゲームに1回）</td><td>変更なし</td></tr>
+    <tr><td>StoreKit 2</td><td>広告除去IAP</td><td>変更なし</td></tr>
+  </table>
+
+  <!-- ========================================================
+       9. リスクと対応
+  ======================================================== -->
+  <h2>9. リスクと対応</h2>
+
+  <table>
+    <tr><th>リスク</th><th>対応</th></tr>
+    <tr>
+      <td>Apple 審査での「医療系訴求」誤判定</td>
+      <td>「ボケ予防」等の断定表現を避け「〜と言われています」「習慣化サポート」に統一。ガイドライン 1.4 を審査前に再確認</td>
+    </tr>
+    <tr>
+      <td>アプリ名変更でストア表示が乱れる</td>
+      <td>審査通過後に App Store Connect で変更を確定させる（レビュー中は仮表示のまま）</td>
+    </tr>
+    <tr>
+      <td><code>maxCombo</code> マイグレーション失敗</td>
+      <td>SwiftData の <code>@Model</code> デフォルト値機能を使用。失敗時は <code>VersionedSchema</code> でフォールバック</td>
+    </tr>
+    <tr>
+      <td>高コントラストテーマで既存スタイルが崩れる</td>
+      <td>既存テーマとは独立した <code>ColorTheme.seniorContrast</code> として実装。既存テーマに影響なし</td>
+    </tr>
+  </table>
+
+  <!-- ========================================================
+       10. 実装メモ
+  ======================================================== -->
+  <h2>10. 実装メモ</h2>
+
+  <ul>
+    <li><code>dynamicTypeSize</code> の適用は <code>ContentView</code> ルートで行い、全 View に自動伝播させる</li>
+    <li>曜日ラベル「今日」は <code>Calendar.current.isDateInToday(date)</code> で判定し、当日のみ「今日」表示</li>
+    <li>グラフの週開始は <code>Calendar.current.firstWeekday</code> ではなく月曜固定（<code>Locale</code> に依存しない）</li>
+    <li>共有ボタンの <code>ShareLink</code> はコンテンツを動的生成するため <code>PreviewProvider</code> にはモックデータを使用</li>
+    <li><code>maxComboInSession</code> はゲームセッション中のみのメモリ変数。SwiftData への書き込みはゲーム終了時のみ</li>
+  </ul>
+
+  <!-- ========================================================
+       11. 関連仕様書
+  ======================================================== -->
+  <h2>11. 関連仕様書</h2>
+
+  <ul>
+    <li><a href="v4.0-rebranding-roadmap.html">v4.0 リブランディング企画書「脳活ピース」</a>（本リリースの上位計画）</li>
+    <li><a href="../screens/statistics.html">統計画面（脳活記録）仕様書</a>（PZ-STATS-01）</li>
+    <li><a href="../data-model.html">データモデル仕様書</a>（StatRecord.maxCombo 追加）</li>
+    <li><a href="../aso.html">ASOキーワード戦略</a>（v4.0 メタデータ）</li>
+  </ul>
+
+  <footer class="site-footer">最終更新: 2026-05-19</footer>
+</div>
+</body>
+</html>
