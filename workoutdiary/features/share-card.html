@@ -12,12 +12,12 @@
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / シェアカード</div>
   <header class="site-header">
     <h1>シェアカード機能</h1>
-    <p>5テーマ + Instagram Stories 対応のSNS共有（v1.0.7: 月次/部位別カード追加）</p>
-    <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">機能ID: WD-FEAT-SHARE</span></div>
+    <p>5テーマ + Instagram Stories 対応のSNS共有（v1.0.8: 写真保存・ウォーターマーク・解像度 Premium 差分化）</p>
+    <div class="section-meta"><span class="tag done">v1.2</span><span class="tag">機能ID: WD-FEAT-SHARE</span></div>
   </header>
 
   <h2>概要</h2>
-  <p>WorkoutSession や StatsView の結果を画像化してSNSに共有する機能。5テーマから選択可能、Instagram Storiesへの直接シェア対応。v1.0.7 でカード種類に「月次サマリー」「部位別ダイジェスト」を追加、Instagram Story 遷移バグを修正。</p>
+  <p>WorkoutSession や StatsView の結果を画像化してSNSに共有する機能。5テーマから選択可能、Instagram Storiesへの直接シェア対応。v1.0.7 でカード種類に「月次サマリー」「部位別ダイジェスト」を追加、Instagram Story 遷移バグを修正。v1.0.8 でシェアシートに「写真に保存」ボタンを追加し、無料ユーザー向けウォーターマークと解像度 Premium 差分化を実装。</p>
 
   <h2>カード種類仕様</h2>
   <table>
@@ -57,11 +57,56 @@
     <tr><td>Sunset</td><td>プレミアム</td><td>夕焼けグラデーション</td></tr>
   </table>
 
+  <h2>無料 / Premium 差分テーブル（v1.0.8追加）</h2>
+  <table>
+    <tr><th>項目</th><th>無料</th><th>Premium</th><th>備考</th></tr>
+    <tr><td>ウォーターマーク</td><td>あり（右下に半透明カプセルバッジ "via WorkoutDiary"）</td><td>なし</td><td>WatermarkView を overlay で合成</td></tr>
+    <tr><td>書き出し解像度</td><td>@2x（renderScale = 2.0）</td><td>@3x（renderScale = 3.0）</td><td>SNSシェアには2xで十分。3xとの明確な差を課金訴求に活用</td></tr>
+    <tr><td>カードテーマ</td><td>Default / Dark / Minimal</td><td>Ocean / Sunset 追加</td><td>テーマは v1.0.7 以前から差分あり</td></tr>
+    <tr><td>カード種類</td><td>Daily / PR / Weekly</td><td>Progress / Monthly / Body Part 追加</td><td>同上</td></tr>
+    <tr><td>写真保存後トースト</td><td>表示4秒 + Premium訴求リンク表示</td><td>表示1.5秒・リンクなし</td><td>無料時は訴求時間を確保</td></tr>
+  </table>
+
+  <h2>写真に保存機能（v1.0.8追加）</h2>
+  <h3>PhotoLibrarySaver（Services層）</h3>
+  <ul>
+    <li>写真ライブラリへの書き込み専用権限 <code>NSPhotoLibraryAddUsageDescription</code> を <code>.addOnly</code> で要求</li>
+    <li>大きな UIImage を直接渡すとメモリ起因でクラッシュするため、PNG として一時ファイル（<code>tmp/workout-share-{UUID}.png</code>）に書き出し後、<code>PHAssetCreationRequest.addResource(with: .photo, fileURL:)</code> で保存</li>
+    <li>保存後に <code>defer</code> で一時ファイルを削除</li>
+    <li>権限エラー / エンコードエラー / ライブラリエラーをそれぞれ <code>SaveError</code> enum で区別して呼び出し元に throw</li>
+  </ul>
+  <pre><code>// 権限取得 → 一時ファイル書き出し → PHAssetCreationRequest
+let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+// ...
+let request = PHAssetCreationRequest.forAsset()
+request.addResource(with: .photo, fileURL: fileURL, options: nil)</code></pre>
+
+  <h3>UX フロー</h3>
+  <ol>
+    <li>「写真に保存」ボタンをタップ → <code>isSavingToPhotos = true</code>（ProgressView 表示）</li>
+    <li><code>PhotoLibrarySaver.save(image)</code> を非同期実行</li>
+    <li>成功 → 成功トーストを表示（無料: 4秒 / Premium: 1.5秒）</li>
+    <li>無料ユーザーのみ、トースト下に「✨ Premiumで透かしなし・高解像度に →」ボタンを表示してPaywallシートへ誘導</li>
+    <li>権限拒否 → 「設定アプリを開く」アラート表示</li>
+    <li>保存失敗 → 「保存に失敗しました」アラート表示</li>
+  </ol>
+
+  <h2>ウォーターマーク（v1.0.8追加）</h2>
+  <ul>
+    <li>共通コンポーネント <code>WatermarkView</code>（Views/Components/）を実装</li>
+    <li>フォント: system size 10 / semibold、前景色 white.opacity(0.95)</li>
+    <li>背景: <code>black.opacity(0.35)</code> の <code>Capsule</code> シェイプ</li>
+    <li>合成: <code>ShareViewModel.renderSingle</code> 内で <code>StoreManager.shared.isPremium</code> を判定し、非 Premium 時のみ overlay（bottomTrailing）で追加</li>
+    <li>Instagram Story フォーマット時も同様に適用される（<code>overlay</code> は共通パス）</li>
+  </ul>
+
   <h2>処理フロー</h2>
   <ol>
     <li>ShareViewModel が選択テーマ・カード種類でViewを構築</li>
-    <li><code>ImageRenderer</code> で UIImage 生成</li>
+    <li><code>renderSingle</code> 内で isPremium 判定 → 非 Premium 時は <code>WatermarkView</code> を overlay で合成</li>
+    <li><code>ImageRenderer</code> で UIImage 生成（scale = <code>renderScale(isPremium:)</code>）</li>
     <li>標準シェア: <code>UIActivityViewController</code> で共有</li>
+    <li>写真保存: <code>PhotoLibrarySaver.save</code>（一時ファイル経由）</li>
     <li>Instagram Stories: JPEG変換(quality 0.9) → UIPasteboard(localOnly:true) → <code>instagram-stories://share</code> で直接Instagram Story編集画面へ遷移</li>
   </ol>
 
@@ -83,6 +128,8 @@ UIApplication.shared.open(
   <h2>ビジネスルール</h2>
   <ul>
     <li>プレミアムテーマ・Monthly・Body Part カードは isPremium=true ユーザーのみ選択可</li>
+    <li>ウォーターマーク・解像度差分は isPremium=false の場合に自動適用（ユーザー操作不要）</li>
+    <li>写真保存後の Premium 訴求トーストは saveToPhotos 完了時のみ表示（SNSシェアフローでは非表示）</li>
     <li>Instagram 未インストール時は通常 ShareSheet にフォールバック</li>
     <li>画像内にApp Storeリンク（QRコード or テキスト）含む</li>
   </ul>
@@ -91,8 +138,11 @@ UIApplication.shared.open(
   <ul>
     <li>WorkoutShareSheet.swift</li>
     <li>ShareViewModel.swift</li>
+    <li>ShareCardFormat.swift（renderScale / isPremiumOnly）</li>
     <li>ShareCardType.swift</li>
     <li>InstagramShareService.swift</li>
+    <li>PhotoLibrarySaver.swift（Services層、v1.0.8追加）</li>
+    <li>WatermarkView.swift（Views/Components/、v1.0.8追加）</li>
     <li>MonthlySummaryCardView.swift / MonthlySummaryCalculator.swift / MonthlySummaryData.swift（v1.0.7追加）</li>
     <li>BodyPartDigestCardView.swift / BodyPartDigestCalculator.swift / BodyPartDigestData.swift（v1.0.7追加）</li>
   </ul>
@@ -102,9 +152,10 @@ UIApplication.shared.open(
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-14</td><td>v1.0.7: 月次サマリーカード・部位別ダイジェストカード追加（Premium限定）、Instagram Story シェアのJPEG化+localOnly+completionHandler対応でバグ修正</td></tr>
+    <tr><td>1.2</td><td>2026-05-19</td><td>v1.0.8: 写真に保存機能追加（PhotoLibrarySaver / 一時ファイル経由・権限.addOnly）、無料ユーザー向けウォーターマーク追加（WatermarkView）、解像度 Premium 差分化（無料@2x / Premium@3x / ShareCardFormat.renderScale）、保存トーストに Premium 訴求リンク追加（無料時4秒表示）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-14</footer>
+  <footer class="site-footer">最終更新: 2026-05-19</footer>
 </div>
 </body>
 </html>

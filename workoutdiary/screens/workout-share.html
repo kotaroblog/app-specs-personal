@@ -12,22 +12,33 @@
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / シェア</div>
   <header class="site-header">
     <h1>シェア画面（WorkoutShareSheet）</h1>
-    <p>ワークアウト結果のSNS共有用カード生成</p>
-    <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: WD-SHARE-01</span></div>
+    <p>ワークアウト結果のSNS共有用カード生成（v1.0.8: 写真保存・ウォーターマーク・Premium訴求トースト追加）</p>
+    <div class="section-meta"><span class="tag done">v1.2</span><span class="tag">画面ID: WD-SHARE-01</span></div>
   </header>
 
   <h2>目的・役割</h2>
-  <p>WorkoutSession や StatsView の結果を画像化してSNSにシェアする画面。5テーマ + Instagram Stories 対応。v1.0.7 よりカード種類に「月次サマリー」「部位別ダイジェスト」を追加、Instagram Story シェアの安定性を改善。</p>
+  <p>WorkoutSession や StatsView の結果を画像化してSNSにシェアする画面。5テーマ + Instagram Stories 対応。v1.0.7 よりカード種類に「月次サマリー」「部位別ダイジェスト」を追加、Instagram Story シェアの安定性を改善。v1.0.8 で写真への直接保存に対応、無料ユーザー向けウォーターマーク・高解像度差分で課金訴求を強化。</p>
 
   <h2>UI 構成</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
     <tr><td>テーマ選択</td><td>Picker</td><td>Default / Dark / Minimal / Ocean / Sunset</td></tr>
-    <tr><td>カード種類選択</td><td>Picker</td><td>Daily / PR / Weekly / Progress / Monthly / Body Part（後2種はPremium限定）</td></tr>
+    <tr><td>カード種類選択</td><td>Picker</td><td>Daily / PR / Weekly / Progress / Monthly / Body Part（後3種はPremium限定）</td></tr>
     <tr><td>期間切替ボタン</td><td>SegmentedControl</td><td>カード種類「Body Part」選択時のみ表示。月 / 週 を切替</td></tr>
-    <tr><td>プレビュー</td><td>ShareCardView</td><td>生成された画像のプレビュー</td></tr>
-    <tr><td>「シェア」ボタン</td><td>Button</td><td>UIActivityViewController 起動</td></tr>
+    <tr><td>プレビュー</td><td>ShareCardPreviewView</td><td>生成された画像のプレビュー（無料時はウォーターマーク付き）</td></tr>
+    <tr><td>「シェア」ボタン</td><td>Button（プライマリ）</td><td>UIActivityViewController 起動</td></tr>
+    <tr><td>「写真に保存」ボタン</td><td>Button（セカンダリ）v1.0.8追加</td><td>PhotoLibrarySaver.save を呼び出し写真ライブラリへ直接保存。保存中は ProgressView を表示</td></tr>
     <tr><td>「Instagram Stories」</td><td>Button</td><td>専用フォーマットで Instagram に直接遷移</td></tr>
+    <tr><td>保存成功トースト</td><td>overlay（top alignment）v1.0.8追加</td><td>保存完了時に画面上部にカプセル型トーストを表示。無料ユーザーには Premium 訴求リンクを追加表示</td></tr>
+  </table>
+
+  <h2>アラート・通知一覧</h2>
+  <table>
+    <tr><th>トリガー</th><th>種類</th><th>内容</th></tr>
+    <tr><td>写真保存成功</td><td>トースト（成功）</td><td>「写真に保存しました」。無料ユーザーには下部に「✨ Premiumで透かしなし・高解像度に →」ボタン（タップでPaywall表示）</td></tr>
+    <tr><td>写真権限拒否</td><td>Alert</td><td>「設定アプリを開く」ボタンで UIApplication.openSettingsURLString に誘導</td></tr>
+    <tr><td>写真保存失敗</td><td>Alert</td><td>「保存に失敗しました。再試行してください」</td></tr>
+    <tr><td>Instagram 未インストール</td><td>Alert</td><td>「Instagramが見つかりません」</td></tr>
   </table>
 
   <h2>カード種類仕様</h2>
@@ -60,14 +71,31 @@
     <li class="done">UIPasteboard に localOnly: true を指定（v1.0.7）</li>
     <li class="done">UIApplication.shared.open に completionHandler を追加してログ出力、Story編集画面への正常遷移を実現（v1.0.7）</li>
     <li class="done">Monthly / Body Part カードは isPremium=true ユーザーのみ選択可</li>
+    <li class="done">写真保存: PhotoLibrarySaver.save（一時ファイル経由でメモリ起因クラッシュを回避）（v1.0.8）</li>
+    <li class="done">写真権限: NSPhotoLibraryAddUsageDescription を .addOnly で要求（v1.0.8）</li>
+    <li class="done">WatermarkView を renderSingle の overlay（bottomTrailing）で合成 — isPremium=false 時のみ表示（v1.0.8）</li>
+    <li class="done">ShareCardFormat.renderScale(isPremium:) で無料@2x / Premium@3x を切替（v1.0.8）</li>
+    <li class="done">保存成功トーストの表示時間: 無料1.5秒→4秒に延長し、Premium 訴求リンクのタップ時間を確保（v1.0.8）</li>
   </ul>
+
+  <h2>状態変数（v1.0.8追加分）</h2>
+  <table>
+    <tr><th>変数名</th><th>型</th><th>説明</th></tr>
+    <tr><td>isSavingToPhotos</td><td>Bool</td><td>写真保存処理中フラグ。ProgressView 表示制御 / 二重タップ防止に使用</td></tr>
+    <tr><td>showSaveSuccessToast</td><td>Bool</td><td>成功トースト表示フラグ</td></tr>
+    <tr><td>showPermissionDeniedAlert</td><td>Bool</td><td>写真権限拒否アラートフラグ</td></tr>
+    <tr><td>showSaveFailedAlert</td><td>Bool</td><td>保存失敗アラートフラグ</td></tr>
+  </table>
 
   <h2>関連ファイル</h2>
   <ul>
     <li>WorkoutShareSheet.swift</li>
     <li>ShareViewModel.swift</li>
+    <li>ShareCardFormat.swift</li>
     <li>ShareCardType.swift</li>
     <li>InstagramShareService.swift</li>
+    <li>PhotoLibrarySaver.swift（Services/、v1.0.8追加）</li>
+    <li>WatermarkView.swift（Views/Components/、v1.0.8追加）</li>
   </ul>
 
   <h2>関連</h2>
@@ -80,9 +108,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-14</td><td>v1.0.7: カード種類にMonthly・Body Partを追加（Premium限定）、部位別カードに期間切替ボタン追加、Instagram Story シェアをJPEG化+localOnly+completionHandlerで安定化</td></tr>
+    <tr><td>1.2</td><td>2026-05-19</td><td>v1.0.8: 「写真に保存」ボタン追加（PhotoLibrarySaver / 権限.addOnly / ProgressView / アラート3種）、ウォーターマーク（WatermarkView）合成、解像度差分化（@2x無料 / @3x Premium）、保存成功トーストにPremium訴求リンク追加（無料時4秒表示）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-14</footer>
+  <footer class="site-footer">最終更新: 2026-05-19</footer>
 </div>
 </body>
 </html>
