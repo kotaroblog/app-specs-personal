@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>FeatureFlag 運用 - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>FeatureFlag 運用</h1>
+    <p>新UI投入時のリスク管理と即時ロールバック手段</p>
+  </header>
+
+  <h2>目的</h2>
+  <p>
+    v1.0 リリース直前に大幅な UI 変更（DesignsHomeView）を投入するため、リリース後にクラッシュ・UX 不具合が発覚した場合に、
+    <strong>コード変更・再申請を経ず</strong>に旧UIへ即時切替できる経路を確保する。
+  </p>
+
+  <h2>実装方式</h2>
+  <ul class="kv-list">
+    <li><span class="k">実装ファイル</span><span class="v"><code>App/FeatureFlags.swift</code></span></li>
+    <li><span class="k">永続化方式</span><span class="v">@AppStorage(UserDefaults)</span></li>
+    <li><span class="k">フラグキー</span><span class="v"><code>useDesignHome</code></span></li>
+    <li><span class="k">デフォルト値</span><span class="v">true（新UI有効）</span></li>
+    <li><span class="k">スコープ</span><span class="v">v1.0 では DesignsHomeView の表示切替のみ</span></li>
+  </ul>
+
+  <h2>コード構造</h2>
+  <pre><code>// App/FeatureFlags.swift
+enum FeatureFlags {
+    static let useDesignHomeKey = "useDesignHome"
+    static let useDesignHomeDefault = true
+
+    static var useDesignHome: Bool {
+        UserDefaults.standard.object(forKey: useDesignHomeKey) as? Bool
+            ?? useDesignHomeDefault
+    }
+}
+
+// App/RootView.swift
+@AppStorage(FeatureFlags.useDesignHomeKey)
+private var useDesignHome: Bool = FeatureFlags.useDesignHomeDefault
+
+var body: some View {
+    if hasCompletedOnboarding {
+        if useDesignHome {
+            DesignsHomeView()
+        } else {
+            HomeView()
+        }
+    } else {
+        OnboardingView { ... }
+    }
+}</code></pre>
+
+  <h2>ユーザー操作経路</h2>
+  <p>
+    リリースビルドでも、ユーザー自身が以下の手順で新旧UIを切替えられる。
+  </p>
+  <ol>
+    <li>アプリ起動</li>
+    <li>右上の歯車アイコンタップ → SettingsView</li>
+    <li>「β機能」セクションの「新しいホーム画面を使う」トグルを操作</li>
+    <li>シートを閉じる → 次回起動時に切替が反映</li>
+  </ol>
+
+  <h2>運用シナリオ</h2>
+  <table>
+    <thead>
+      <tr><th>シナリオ</th><th>対応</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>リリース後にDesignsHomeViewでクラッシュ報告</td>
+        <td>SNS・サポートメールで「設定 → β機能 → 新しいホーム画面を使う を OFF」を案内。同時に修正版を準備</td>
+      </tr>
+      <tr>
+        <td>特定機種で UI 崩れ</td>
+        <td>ユーザーに個別切替を案内。次バージョンで該当機種向け修正をリリース</td>
+      </tr>
+      <tr>
+        <td>v1.1 で新UIが安定</td>
+        <td>β機能セクションを削除し、旧 HomeView を完全に廃止</td>
+      </tr>
+      <tr>
+        <td>TestFlight 検証中に致命的バグ発見</td>
+        <td>FeatureFlags.useDesignHomeDefault を false に戻して再ビルド・提出</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>セキュリティ・プライバシー</h2>
+  <ul>
+    <li>UserDefaults に保存される値は Bool 1個のみで機密性なし</li>
+    <li>外部送信されない（リモート切替ではなくローカル切替のみ）</li>
+    <li>App Privacy 申告への追加項目は不要</li>
+  </ul>
+
+  <h2>v1.1 以降のロードマップ</h2>
+  <ul>
+    <li>新UIで重大バグ報告がゼロなら、v1.1リリースと同時に旧 HomeView を削除</li>
+    <li>削除と同時に <code>FeatureFlags.useDesignHome</code> 関連コードと SettingsView の「β機能」セクションを削除</li>
+    <li>残置期間の目安: <strong>v1.0 リリース後 1〜2 ヶ月</strong></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0</td><td>2026-05-20</td><td>初版作成。FeatureFlag 運用方針を確立。</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-20</footer>
+</div>
+</body>
+</html>

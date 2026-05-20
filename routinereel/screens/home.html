@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ホーム画面 - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>ホーム画面（DesignsHomeView）</h1>
+    <p>v1.0 から導入される新ホーム画面。FeatureFlag で旧 HomeView と切替可能。</p>
+  </header>
+
+  <h2>基本情報</h2>
+  <ul class="kv-list">
+    <li><span class="k">画面ID</span><span class="v">home</span></li>
+    <li><span class="k">実装ファイル</span><span class="v"><code>Views/Designs/DesignsHomeView.swift</code></span></li>
+    <li><span class="k">導入バージョン</span><span class="v">v1.0</span></li>
+    <li><span class="k">FeatureFlag</span><span class="v"><code>useDesignHome</code>（デフォルト true）</span></li>
+    <li><span class="k">旧画面</span><span class="v"><code>Views/Home/HomeView.swift</code>（FeatureFlag false 時に表示）</span></li>
+    <li><span class="k">背景色</span><span class="v">#FAF9F7（朝の光感）</span></li>
+  </ul>
+
+  <h2>画面構成</h2>
+  <ul class="kv-list">
+    <li><span class="k">①上部バー</span><span class="v">アプリ名「RoutineReel」+ Pro バッジ（無料時はPaywall起動・Pro時は表示のみ）+ 設定アイコン</span></li>
+    <li><span class="k">②Heroセクション</span><span class="v">時間帯別挨拶 + 🔥連続日数 + 日付 + メインコピー + 感情コピー（時間帯別） + 「次に撮影」CTA</span></li>
+    <li><span class="k">③Quick Start</span><span class="v">横スクロール4プリセット（morning / night / workout / study）175×240pt カード</span></li>
+    <li><span class="k">④マイルーティン</span><span class="v">縦並びカード（タップで confirmationDialog 起動）+ 新規ルーティン作成ボタン</span></li>
+    <li><span class="k">⑤最近の動画</span><span class="v">VideoListView への導線（横スクロールサムネ + 「すべて見る」）</span></li>
+    <li><span class="k">⑥下部</span><span class="v">バナー広告（無料時のみ）+ 5タブバー + 中央＋ボタン</span></li>
+  </ul>
+
+  <h2>遷移一覧（7遷移）</h2>
+  <table>
+    <thead>
+      <tr><th>トリガー</th><th>遷移先</th><th>表示方法</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>設定アイコン</td><td>SettingsView</td><td>sheet</td></tr>
+      <tr><td>中央＋ / Quick Start / 新規ルーティン作成ボタン</td><td>PresetSelectView</td><td>sheet</td></tr>
+      <tr><td>ルーティンカード → 編集する</td><td>RoutineEditView</td><td>sheet（item-based）</td></tr>
+      <tr><td>ルーティンカード → 全ステップ続けて撮影 / 「次に撮影」CTA</td><td>ShootingView</td><td>fullScreenCover（item-based）</td></tr>
+      <tr><td>ルーティンカード → クリップライブラリを開く</td><td>ClipLibraryView</td><td>sheet（item-based / NavigationStack 内）</td></tr>
+      <tr><td>最近の動画 → すべて見る / サムネタップ</td><td>VideoListView</td><td>sheet（NavigationStack 内）</td></tr>
+      <tr><td>Pro バッジ（無料時）</td><td>PaywallView</td><td>sheet</td></tr>
+    </tbody>
+  </table>
+
+  <h2>課金壁とサブスク連携</h2>
+  <ul class="kv-list">
+    <li><span class="k">無料ルーティン上限</span><span class="v">2件まで（<code>maxFreeRoutines = 2</code>）</span></li>
+    <li><span class="k">3件目作成時</span><span class="v">PaywallView 自動起動</span></li>
+    <li><span class="k">複製時の課金壁</span><span class="v">無料上限到達中は Paywall 起動して複製拒否</span></li>
+    <li><span class="k">バナー広告</span><span class="v">無料時のみタブバー上に常時表示（高さ50pt）</span></li>
+    <li><span class="k">Pro バッジ</span><span class="v">Pro時は非インタラクティブ（情報のみ）、無料時は Paywall 起動ボタン</span></li>
+  </ul>
+
+  <h2>通知ルーティング</h2>
+  <p>
+    リマインダー通知タップで起動された場合、<code>NotificationRouter.shared.pendingRoutineId</code> を監視し、
+    該当ルーティンの撮影画面（ShootingView）を fullScreenCover で起動する。
+  </p>
+  <ul class="kv-list">
+    <li><span class="k">トリガー</span><span class="v"><code>.onAppear</code> および <code>.onChange(of: pendingRoutineId)</code></span></li>
+    <li><span class="k">二重発火防止</span><span class="v"><code>oldValue != nil</code> ガードで nil リセット時の不要再発火を防止</span></li>
+    <li><span class="k">処理後</span><span class="v"><code>pendingRoutineId = nil</code> でクリア</span></li>
+  </ul>
+
+  <h2>マイクロアニメーション</h2>
+  <ul class="kv-list">
+    <li><span class="k">Hero フェードイン</span><span class="v">opacity 0→1 + offset 6→0 を easeOut 0.45秒、感情コピーは 0.15秒遅延、CTA は 0.25秒遅延の spring</span></li>
+    <li><span class="k">Quick Start カード</span><span class="v">appear時 spring(0.55, 0.85) でフェード+スライドアップ</span></li>
+    <li><span class="k">中央＋ボタン</span><span class="v">静的ハロー（pink 0.15）+ 押下時 scale 0.90 spring</span></li>
+    <li><span class="k">「次に撮影」CTA</span><span class="v">押下時 scale 0.97 spring、ハロー・脈動なし</span></li>
+  </ul>
+
+  <h2>ロールバック方式</h2>
+  <p>
+    リリース後に新Home UIで不具合が発生した場合、<a href="../features/feature-flag.html">FeatureFlag運用</a> 経由でユーザー自身が
+    設定画面の「β機能 → 新しいホーム画面を使う」トグルを OFF にすれば、旧 HomeView に即時切替可能。
+    コード変更・再申請は不要。
+  </p>
+
+  <h2>v1.1 で予定される改善</h2>
+  <ul>
+    <li><strong>連続日数の実データ算出</strong> — 現在は <code>mockStreakDays = 7</code> 固定</li>
+    <li><strong>DesignsHomeView の200行ルール準拠</strong> — 現在525行。サブView分割で対応予定</li>
+    <li><strong>マイルーティン「すべて見る」展開画面</strong> — 現在は3件まで表示で省略</li>
+    <li><strong>DesignsRecordPreviewView の本番接続</strong> — 撮影画面の完全リデザイン</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0</td><td>2026-05-20</td><td>初版作成。DesignsHomeView を FeatureFlag で本番投入。7遷移・課金壁・通知ルーティング統合済み。</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-20</footer>
+</div>
+</body>
+</html>
