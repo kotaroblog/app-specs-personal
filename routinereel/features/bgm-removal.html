@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BGM機能削除の意思決定記録 - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>BGM機能削除の意思決定記録</h1>
+    <p>v1.0 リリース直前に BGM 機能を完全削除した経緯と影響範囲</p>
+  </header>
+
+  <h2>決定日</h2>
+  <p><strong>2026-05-21</strong>（リリース予定 8日前）</p>
+
+  <h2>削除理由（6点）</h2>
+
+  <h3>① TikTok 投稿時に BGM は使われない</h3>
+  <p>TikTok の morning routine 投稿者の 99% が TikTok 内蔵のトレンド楽曲を選択。アプリで焼き込んだ BGM は TikTok アルゴリズム上不利（トレンド楽曲の方が露出が増える）ため、投稿者は意識的に外す。<strong>RoutineReel の BGM 焼き込み機能は実質的に使われない</strong>。</p>
+
+  <h3>② アプリ容量の無駄</h3>
+  <ul>
+    <li>全 BGM ファイル合計 <strong>約 34MB</strong></li>
+    <li>特に bgm_morning_01.m4a が 9.93MB と突出</li>
+    <li>削除前アプリ全体サイズに対する BGM の割合が大きく、初回 DL の躊躇要因に</li>
+  </ul>
+
+  <h3>③ 楽曲ライセンス・著作権リスク</h3>
+  <ul>
+    <li>楽曲の商用利用ライセンスの管理状態が不明確</li>
+    <li>後発で問題が発覚すると App Store BAN リスク</li>
+    <li>個人開発で楽曲管理を継続するのは負担大</li>
+  </ul>
+
+  <h3>④ 「習慣記録プロダクト」の哲学と矛盾</h3>
+  <ul>
+    <li>アプリ全体の方向性は Opal / Stoic を参考にした「静かなプロダクト」</li>
+    <li>BGM 機能は CapCut 寄りの「動画編集アプリ」機能</li>
+    <li>「動画編集アプリ感」を意図的に外してきたのに、BGM が裏で引き戻していた</li>
+  </ul>
+
+  <h3>⑤ Pro 特典の他の柱が十分強い</h3>
+  <p>BGM を抜いても、月¥480 の価値は以下4つで十分担保される:</p>
+  <ul>
+    <li>ルーティン無制限・ステップ無制限</li>
+    <li>透かしなし書き出し（バイラル投稿者には必須）</li>
+    <li>全フィルタ・全フォント解放</li>
+    <li>広告非表示 + 無制限保存</li>
+  </ul>
+
+  <h3>⑥ 保守コスト</h3>
+  <p>BGMPlayer / VideoCompositionService.addBGM / BGMTrack / BGMチップUI / 試聴処理 などの保守コストが継続的に発生。削除により <strong>関連コード ~335行削減</strong>。</p>
+
+  <h2>削除した内容</h2>
+
+  <h3>Swift コード（コミット <code>c76a91c</code>）</h3>
+  <ul>
+    <li><code>Models/BGMTrack.swift</code> 削除（10曲のメタデータ・freeTracks/proTracks 分類）</li>
+    <li><code>Services/BGMPlayer.swift</code> 削除（試聴用 AVAudioPlayer）</li>
+    <li><code>Services/VideoCompositionService.swift</code>:
+      <ul>
+        <li><code>CompositionConfig.bgmFileName</code> プロパティ削除</li>
+        <li><code>addBGM()</code> メソッド削除（~70行）</li>
+        <li><code>CompositionError.bgmNotFound</code> / <code>bgmTrackNotFound</code> 削除</li>
+        <li>元音声ミュート処理は残置（BGMなしモードとして動作）</li>
+      </ul>
+    </li>
+    <li><code>ViewModels/PreviewViewModel.swift</code>:
+      <ul>
+        <li><code>selectedBGM</code> / <code>bgmPlayer</code> プロパティ削除</li>
+        <li><code>changeBGM()</code> メソッド削除</li>
+        <li><code>togglePlayback</code> / <code>stopPlayback</code> から BGM 処理削除</li>
+        <li><code>saveToApp</code> / <code>saveToPhotoLibrary</code> の BGM再合成分岐削除</li>
+        <li>既存合成済み動画をそのまま使う構造へ簡素化</li>
+      </ul>
+    </li>
+    <li><code>Views/Preview/PreviewView.swift</code>:
+      <ul>
+        <li><code>BGMSectionView</code> 削除（45行）</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3>バイナリ削除（34MB）</h3>
+  <ul>
+    <li>bgm_lofi_01.m4a / bgm_lofi_02.m4a / bgm_lofi_03.m4a</li>
+    <li>bgm_morning_01.m4a / bgm_morning_02.m4a</li>
+    <li>bgm_pop_01.m4a / bgm_pop_02.m4a</li>
+    <li>bgm_chill_01.m4a / bgm_chill_02.m4a / bgm_chill_03.m4a</li>
+  </ul>
+
+  <h3>UI / Paywall 文言修正</h3>
+  <ul>
+    <li>サブコピー「透かしなし・BGM追加・無制限保存」→「透かしなし・無制限保存・広告非表示」</li>
+    <li>特典行「全BGM・全フィルタ解放」→「全フィルタ・全フォント解放」（アイコン: music.note → wand.and.stars）</li>
+  </ul>
+
+  <h2>残置した要素（リスク回避）</h2>
+
+  <h3>Models/Video.swift の bgmName プロパティ</h3>
+  <p><code>var bgmName: String = ""</code> を残置。</p>
+  <ul class="kv-list">
+    <li><span class="k">理由</span><span class="v">SwiftData @Model のスキーマ変更を避ける（マイグレーション設定なしで起動失敗するリスク）</span></li>
+    <li><span class="k">現状</span><span class="v">PreviewViewModel から書き込まれることはない（未使用フィールド）</span></li>
+    <li><span class="k">対応予定</span><span class="v">v1.1 でマイグレーション設定付きで削除</span></li>
+  </ul>
+
+  <h2>影響範囲（コミット統計）</h2>
+  <ul class="kv-list">
+    <li><span class="k">コミット</span><span class="v"><code>c76a91c feat: BGM機能を完全削除（v1.0 リリース直前）</code></span></li>
+    <li><span class="k">変更ファイル</span><span class="v">16 files</span></li>
+    <li><span class="k">追加行</span><span class="v">+19</span></li>
+    <li><span class="k">削除行</span><span class="v">-354</span></li>
+    <li><span class="k">バイナリ削減</span><span class="v">約 34MB</span></li>
+  </ul>
+
+  <h2>App Store Connect 入力資料の更新タスク（リリース時）</h2>
+  <p>Drive の <code>05_リリース・運用/App Store Connect 入力資料.md</code> の以下を必ず更新:</p>
+  <ul>
+    <li>説明文の「BGM」言及（プリセット説明・主な機能・Pro特典・キーワード）すべて削除</li>
+    <li>「BGM・フィルター」セクション → 「フィルター・フォント」セクション</li>
+    <li>プレミアム特典説明から「全BGM」削除</li>
+    <li>キーワードから「BGM」削除・別キーワードに置換</li>
+  </ul>
+
+  <h2>v1.0 リリース後の検証ポイント</h2>
+  <ul>
+    <li>App Store レビュー欄に「BGM がない」というネガティブフィードバックが集中していないか観察</li>
+    <li>もし集中するようなら v1.2 で軽量 BGM（無料2-3曲・著作権クリア素材）の再導入を検討</li>
+    <li>ただし v1.2 で再導入する場合も、TikTok 投稿時の使用率を計測してから判断</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成。BGM完全削除の意思決定を記録</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-21</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>私の記録 - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>私の記録（VideoListView）</h1>
+    <p>「保存した動画」から「私の記録」へ。utility app 感を消し、ユーザー個人の記録感を強める。</p>
+  </header>
+
+  <h2>基本情報</h2>
+  <ul class="kv-list">
+    <li><span class="k">画面ID</span><span class="v">video-list</span></li>
+    <li><span class="k">実装ファイル</span><span class="v"><code>Views/Library/VideoListView.swift</code></span></li>
+    <li><span class="k">表示方式</span><span class="v">sheet（NavigationStack内）</span></li>
+    <li><span class="k">起動経路</span><span class="v">ホーム「最近の動画 → すべて見る」/ サムネタップ / 作品タブ</span></li>
+    <li><span class="k">ナビタイトル</span><span class="v">私の記録</span></li>
+    <li><span class="k">背景色</span><span class="v">#FAF9F7</span></li>
+  </ul>
+
+  <h2>画面構成</h2>
+  <ul class="kv-list">
+    <li><span class="k">動画一覧</span><span class="v">2列グリッド（旧3列から変更）・縦並び LazyVGrid</span></li>
+    <li><span class="k">空状態</span><span class="v">film.stack アイコン + 「まだ記録がありません」</span></li>
+    <li><span class="k">サムネタップ</span><span class="v">VideoPlayerSheet（黒地・没入再生）</span></li>
+    <li><span class="k">contextMenu</span><span class="v">シェア / 削除</span></li>
+  </ul>
+
+  <h2>動画セル</h2>
+  <ul class="kv-list">
+    <li><span class="k">サムネ</span><span class="v">aspectRatio 9:16・cornerRadius DesignsRadius.xl (22)・designsCardShadow</span></li>
+    <li><span class="k">再生バッジ</span><span class="v">右下に小さく play.fill 円（黒 opacity 0.35）</span></li>
+    <li><span class="k">メタデータ</span><span class="v">サムネ外にカード外配置・最小限の情報（ルーティン名 + 月日のみ）</span></li>
+    <li><span class="k">押下</span><span class="v">DesignsPressableButtonStyle scale 0.97</span></li>
+  </ul>
+
+  <h2>VideoPlayerSheet（再生中・黒地維持）</h2>
+  <p>動画コンテンツの視認性を優先するため、再生中のみ純黒背景を採用（Home UI統一の例外）。</p>
+  <ul class="kv-list">
+    <li><span class="k">上部</span><span class="v">閉じる × / シェア / 削除（赤 opacity 0.85）</span></li>
+    <li><span class="k">中央</span><span class="v">VideoPlayer aspectRatio 9:16</span></li>
+    <li><span class="k">下部</span><span class="v">ルーティン名 + 撮影日時</span></li>
+    <li><span class="k">player</span><span class="v">AVPlayer + onAppear で auto play / onDisappear で pause</span></li>
+  </ul>
+
+  <h2>削除処理</h2>
+  <ol>
+    <li>pendingDelete に Video セット → alert 表示</li>
+    <li>「削除」確定で <code>VideoStorageService.deleteVideo()</code>（ファイル + サムネ削除）</li>
+    <li><code>modelContext.delete(video)</code> で SwiftData レコード削除</li>
+  </ol>
+
+  <h2>シェア処理</h2>
+  <ul class="kv-list">
+    <li><span class="k">ファイル確認</span><span class="v"><code>FileManager.default.fileExists(atPath:)</code> で存在チェック</span></li>
+    <li><span class="k">シート</span><span class="v">ShareSheet（UIActivityViewController）で TikTok/Instagram/AirDrop等へ</span></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。3列→2列、サムネ大型化、ナビタイトルを「保存した動画」→「私の記録」、空状態コピー刷新、accent orange は black背景に維持</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-21</footer>
+</div>
+</body>
+</html>

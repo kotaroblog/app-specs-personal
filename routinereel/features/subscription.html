@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>サブスクリプション設計 - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>サブスクリプション設計</h1>
+    <p>価格戦略・Pro特典・課金壁設計・v1.1値上げ計画</p>
+  </header>
+
+  <h2>v1.0 価格設定</h2>
+  <ul class="kv-list">
+    <li><span class="k">月額</span><span class="v">¥480（<code>com.happyboy1002.RoutineReel.monthly</code>）</span></li>
+    <li><span class="k">年額</span><span class="v">¥3,800（<code>com.happyboy1002.RoutineReel.yearly</code>）</span></li>
+    <li><span class="k">無料トライアル</span><span class="v">年額に7日間無料</span></li>
+    <li><span class="k">月換算（年額）</span><span class="v">¥317（34%オフ訴求）</span></li>
+    <li><span class="k">デフォルト推奨</span><span class="v">年額（おすすめバッジ付き）</span></li>
+    <li><span class="k">サブスクグループ</span><span class="v">RoutineReel Pro</span></li>
+  </ul>
+
+  <h2>Pro 特典（BGM削除後・4項目）</h2>
+  <table>
+    <thead>
+      <tr><th>特典</th><th>無料の制限</th><th>Pro</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>ルーティン無制限</td><td>2件まで</td><td>無制限</td></tr>
+      <tr><td>ステップ無制限</td><td>5ステップまで</td><td>無制限</td></tr>
+      <tr><td>透かしなしの書き出し</td><td>「RoutineReel」透かし焼き込み</td><td>透かしなし</td></tr>
+      <tr><td>全フィルタ・全フォント解放</td><td>フィルタ3種 / フォント2種</td><td>フィルタ8種 / フォント6種</td></tr>
+      <tr><td>アプリ内保存無制限</td><td>3件まで</td><td>無制限</td></tr>
+      <tr><td>広告非表示</td><td>バナー広告 + インタースティシャル</td><td>すべて非表示</td></tr>
+    </tbody>
+  </table>
+
+  <h2>課金壁発火タイミング</h2>
+  <ol>
+    <li><strong>ルーティン3件目作成時</strong>: 中央＋ボタン / Quick Start カード / 新規ルーティン作成ボタン / 複製ボタン</li>
+    <li><strong>ステップ6つ目追加時</strong>: RoutineEditView 内</li>
+    <li><strong>Pro限定フィルタタップ</strong>: PreviewView</li>
+    <li><strong>Pro限定フォントタップ</strong>: RoutineEditView</li>
+    <li><strong>アプリ内保存上限到達時</strong>: PreviewView</li>
+    <li><strong>Pro バッジタップ</strong>: 任意タイミング（情報目的）</li>
+  </ol>
+
+  <h2>競合価格ベンチマーク（2026年・日本市場）</h2>
+
+  <h3>動画編集セグメント（高め）</h3>
+  <ul>
+    <li>CapCut Pro: 月¥1,000 / 年¥7,000</li>
+    <li>VLLO Pro: 月¥800 / 年¥4,400</li>
+    <li>Splice: 月¥1,200 / 年¥7,800</li>
+    <li>VITA Pro: 月¥720 / 年¥4,800</li>
+  </ul>
+
+  <h3>習慣・ジャーナル系（RoutineReelのポジション）</h3>
+  <ul>
+    <li>Stoic Premium: 月¥600 / 年¥6,000</li>
+    <li>Opal: 月¥600 / 年¥6,000</li>
+    <li>Reflectly Premium: 月¥1,200 / 年¥7,800</li>
+    <li>Streaks: 買い切り ¥600</li>
+    <li>Day One Premium: 月¥350 / 年¥3,500</li>
+    <li>Fabulous Premium: 月¥1,500 / 年¥4,500</li>
+  </ul>
+
+  <p><strong>判定</strong>: RoutineReel ¥480 / ¥3,800 は「習慣系の下位寄り」「動画編集系の最安以下」というポジション。Claude評価としては<strong>やや安い</strong>が、v1.0 リリースの参入バリア低下を優先。</p>
+
+  <h2>v1.1 値上げ計画（条件付き）</h2>
+
+  <h3>判断材料（v1.0 リリース後 1〜2 ヶ月で計測）</h3>
+  <ul>
+    <li>App Store レビュー数 50件以上</li>
+    <li>レビュー評価 ★4.0以上を維持</li>
+    <li>Pro転換率 5%以上を維持</li>
+    <li>競合（Stoic / Opal）が同価格帯のまま動かない</li>
+  </ul>
+
+  <h3>推奨値上げ案（v1.1）</h3>
+  <ul class="kv-list">
+    <li><span class="k">月額</span><span class="v">¥480 → <strong>¥600</strong>（Stoic / Opal と同等）</span></li>
+    <li><span class="k">年額</span><span class="v">¥3,800 維持</span></li>
+    <li><span class="k">月換算（年額）</span><span class="v">¥317（変更なし）</span></li>
+    <li><span class="k">割引訴求</span><span class="v">34%オフ → <strong>47%オフ</strong>（年額の魅力UP）</span></li>
+  </ul>
+
+  <h3>値上げのタイミング</h3>
+  <ul>
+    <li>App Store Connect で新商品ID作成 → 既存ユーザーは ¥480 のまま継続</li>
+    <li>新規ユーザーは ¥600 適用</li>
+    <li>リードタイム 1〜2 日（テスト経由）</li>
+  </ul>
+
+  <h2>BGM 機能廃止に伴う Paywall 特典文言の変化</h2>
+  <table>
+    <thead>
+      <tr><th>箇所</th><th>v1.0 リリース直前まで</th><th>v1.0 リリース時</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>サブコピー</td><td>透かしなし・BGM追加・無制限保存</td><td>透かしなし・無制限保存・広告非表示</td></tr>
+      <tr><td>特典行3</td><td>全BGM・全フィルタ解放（music.note）</td><td>全フィルタ・全フォント解放（wand.and.stars）</td></tr>
+    </tbody>
+  </table>
+  <p>詳細は <a href="bgm-removal.html">BGM機能削除の意思決定記録</a> 参照。</p>
+
+  <h2>App Store Connect 入力資料との整合</h2>
+  <p>Drive の <code>05_リリース・運用/App Store Connect 入力資料.md</code> の以下を <strong>v1.0 リリース時に更新必須</strong>:</p>
+  <ul>
+    <li>説明文の BGM 関連記述を全削除</li>
+    <li>プレミアム特典の「全BGM・全フィルタ解放」→「全フィルタ・全フォント解放」</li>
+    <li>キーワード「BGM」を削除し別キーワードに置換</li>
+  </ul>
+
+  <h2>StoreKit 2 実装</h2>
+  <ul class="kv-list">
+    <li><span class="k">SubscriptionManager</span><span class="v">static let shared / @Observable @MainActor / SwiftData非依存</span></li>
+    <li><span class="k">Products.storekit</span><span class="v">Resources/StoreKit/Products.storekit でテスト時のローカル商品定義</span></li>
+    <li><span class="k">isPremium判定</span><span class="v">subscription.transactions に有効な購読が含まれるか + DEBUG時は debugProEnabled</span></li>
+    <li><span class="k">復元</span><span class="v">PaywallView の「購入を復元」ボタンから restorePurchases() 起動</span></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成。BGM削除後の特典4項目、v1.1値上げ計画、競合比較を確立</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-21</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>クリップライブラリ - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>クリップライブラリ（ClipLibraryView）</h1>
+    <p>ルーティンに紐づく全クリップをステップごとに表示。動画生成への導線を Home UI 統一の CTA で提供。</p>
+  </header>
+
+  <h2>基本情報</h2>
+  <ul class="kv-list">
+    <li><span class="k">画面ID</span><span class="v">clip-library</span></li>
+    <li><span class="k">実装ファイル</span><span class="v"><code>Views/Library/ClipLibraryView.swift</code></span></li>
+    <li><span class="k">表示方式</span><span class="v">sheet（NavigationStack内 / item-based）</span></li>
+    <li><span class="k">起動経路</span><span class="v">ルーティンメニュー → クリップライブラリを開く / クリップタブ</span></li>
+    <li><span class="k">背景色</span><span class="v">#FAF9F7</span></li>
+  </ul>
+
+  <h2>画面構成</h2>
+  <ol>
+    <li><strong>ステップセクション</strong>（ルーティンの sortedSteps を順に展開）</li>
+    <li><strong>動画を作るCTA</strong>（クリップが1件以上ある時のみ）</li>
+  </ol>
+
+  <h2>ステップセクション</h2>
+  <ul class="kv-list">
+    <li><span class="k">ヘッダー</span><span class="v">ステップ名（15pt semibold） + 「· 5秒」（11pt light tertiary）+ Spacer + 撮影 Capsuleボタン</span></li>
+    <li><span class="k">撮影ボタン</span><span class="v">accent orange + capsule背景 opacity 0.10 + plus アイコン</span></li>
+    <li><span class="k">クリップ一覧</span><span class="v">横スクロール LazyHStack・spacing DesignsSpacing.sm</span></li>
+    <li><span class="k">空状態</span><span class="v">film アイコン + 「まだクリップがありません」カード（Color.designsCard + designsCardShadow）</span></li>
+  </ul>
+
+  <h2>クリップサムネ（v1.0 で拡大）</h2>
+  <ul class="kv-list">
+    <li><span class="k">サイズ</span><span class="v">92×138pt（旧 80×120pt）</span></li>
+    <li><span class="k">cornerRadius</span><span class="v">DesignsRadius.xl (22pt)（旧 8pt）</span></li>
+    <li><span class="k">shadow</span><span class="v">designsCardShadow</span></li>
+    <li><span class="k">タップ</span><span class="v">ClipPlayerView 起動</span></li>
+    <li><span class="k">日時表記</span><span class="v">時刻のみ（HH:MM）。月日は親セクションで自明なため省略</span></li>
+    <li><span class="k">contextMenu</span><span class="v">削除のみ</span></li>
+  </ul>
+
+  <h2>「動画を作る」CTA（Home CTA 統一）</h2>
+  <ul class="kv-list">
+    <li><span class="k">背景</span><span class="v">LinearGradient pink → orange + RadialGradient 白28%</span></li>
+    <li><span class="k">高さ</span><span class="v">54pt</span></li>
+    <li><span class="k">cornerRadius</span><span class="v">DesignsRadius.xl (22pt)</span></li>
+    <li><span class="k">shadow</span><span class="v">accent pink 28% / radius 12 / y 5</span></li>
+    <li><span class="k">アイコン</span><span class="v">sparkles 13pt</span></li>
+    <li><span class="k">文言</span><span class="v">動画を作る（15pt semibold）</span></li>
+    <li><span class="k">押下</span><span class="v">DesignsPressableButtonStyle scale 0.97</span></li>
+    <li><span class="k">遷移先</span><span class="v">ClipGenerateView（fullScreenCover）</span></li>
+  </ul>
+
+  <h2>削除処理</h2>
+  <ol>
+    <li>pendingDeleteClip に Clip セット → alert 表示</li>
+    <li>「削除」確定で <code>ClipStorageService.deleteClip()</code>（ファイル + サムネ削除）</li>
+    <li><code>modelContext.delete(clip)</code> で SwiftData レコード削除</li>
+  </ol>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。warm white背景、撮影Capsuleボタン化、サムネ拡大、「動画を作る」CTA を Home CTA 統一スタイルへ</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-21</footer>
+</div>
+</body>
+</html>

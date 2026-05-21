@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ペイウォール - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>ペイウォール（PaywallView）</h1>
+    <p>Home UI 統一版。warm white 背景 + pink→orange CTA で「習慣記録プロダクト」の世界観を維持。</p>
+  </header>
+
+  <h2>基本情報</h2>
+  <ul class="kv-list">
+    <li><span class="k">画面ID</span><span class="v">paywall</span></li>
+    <li><span class="k">実装ファイル</span><span class="v"><code>Views/Common/PaywallView.swift</code></span></li>
+    <li><span class="k">表示方式</span><span class="v">sheet（モーダル）</span></li>
+    <li><span class="k">起動経路</span><span class="v">①Pro バッジ ②課金壁発火（ルーティン3件目・複製・Quick Start）③設定画面のPro導線</span></li>
+    <li><span class="k">背景色</span><span class="v">#FAF9F7（純黒禁止）</span></li>
+  </ul>
+
+  <h2>画面構成</h2>
+  <ul class="kv-list">
+    <li><span class="k">①閉じるボタン</span><span class="v">右上 30pt 円・opacity 0.6・存在感弱め</span></li>
+    <li><span class="k">②Hero</span><span class="v">メインコピー「毎日の記録を、もっと心地よく。」+ サブコピー「透かしなし・無制限保存・広告非表示」</span></li>
+    <li><span class="k">③特典リスト</span><span class="v">4項目・SF Symbols（infinity / sparkles / wand.and.stars / square.and.arrow.up）+ soft warm gradient 円背景</span></li>
+    <li><span class="k">④プラン選択</span><span class="v">年額（おすすめ・pink→orange グラデバッジ）+ 月額。Card セレクトUI</span></li>
+    <li><span class="k">⑤購入CTA</span><span class="v">「7日間無料で試す」/「月額プランで始める」 + 補足「いつでもキャンセル可能」</span></li>
+    <li><span class="k">⑥フッター</span><span class="v">「あとで」「購入を復元」（小さく控えめ）</span></li>
+  </ul>
+
+  <h2>Pro 特典（4項目）</h2>
+  <table>
+    <thead>
+      <tr><th>アイコン</th><th>タイトル</th><th>サブテキスト</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>infinity</code></td><td>ルーティン無制限</td><td>撮りたいだけ作成できます</td></tr>
+      <tr><td><code>sparkles</code></td><td>透かしなしの書き出し</td><td>クリーンな動画として保存</td></tr>
+      <tr><td><code>wand.and.stars</code></td><td>全フィルタ・全フォント解放</td><td>雰囲気を自由に演出</td></tr>
+      <tr><td><code>square.and.arrow.up</code></td><td>広告非表示</td><td>集中して記録できる</td></tr>
+    </tbody>
+  </table>
+  <p>※BGM特典は v1.0 で完全削除（<a href="../features/bgm-removal.html">BGM機能削除の意思決定記録</a> 参照）</p>
+
+  <h2>プラン設計</h2>
+  <ul class="kv-list">
+    <li><span class="k">月額</span><span class="v">¥480（<code>com.happyboy1002.RoutineReel.monthly</code>）</span></li>
+    <li><span class="k">年額</span><span class="v">¥3,800・7日間無料トライアル付（<code>com.happyboy1002.RoutineReel.yearly</code>）</span></li>
+    <li><span class="k">月換算（年額）</span><span class="v">¥317（34%オフ訴求）</span></li>
+    <li><span class="k">デフォルト選択</span><span class="v">年額（おすすめバッジ付き）</span></li>
+  </ul>
+
+  <h2>CTA仕様（Home CTA と統一）</h2>
+  <ul class="kv-list">
+    <li><span class="k">高さ</span><span class="v">58pt</span></li>
+    <li><span class="k">cornerRadius</span><span class="v">28pt</span></li>
+    <li><span class="k">背景</span><span class="v">LinearGradient（pink → orange）+ 右上 RadialGradient 白30%（生活感）</span></li>
+    <li><span class="k">shadow</span><span class="v">accent pink 35%・radius 14・y 6</span></li>
+    <li><span class="k">押下</span><span class="v">scale 0.97 spring（DesignsPressableButtonStyle）</span></li>
+    <li><span class="k">無効化</span><span class="v">subscription.isLoading || productToPurchase == nil</span></li>
+  </ul>
+
+  <h2>アクセシビリティ</h2>
+  <ul>
+    <li>閉じるボタン: <code>accessibilityLabel("閉じる")</code></li>
+    <li>プラン選択: <code>"年額プラン ¥3,800、おすすめ"</code> 形式の読み上げ + <code>.isSelected</code> trait</li>
+    <li>購入CTA: <code>accessibilityLabel(purchaseButtonLabel) + accessibilityHint("いつでもキャンセル可能")</code></li>
+    <li>あとで / 購入を復元: それぞれ専用ラベル</li>
+  </ul>
+
+  <h2>Home UI 統一原則の遵守</h2>
+  <ul>
+    <li>✅ 純黒禁止 → warm white</li>
+    <li>✅ 常時animation禁止 → PressableButtonStyle のみ</li>
+    <li>✅ glassmorphism 増やさず → 既存維持</li>
+    <li>✅ 余白を広く → DesignsSpacing.xxl 多用</li>
+    <li>✅ shadow opacity 0.08〜0.12 → DesignsShadowStyle で集約</li>
+    <li>✅ 太字使いすぎ禁止 → Hero以外は medium/regular</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0.2</td><td>2026-05-21</td><td>BGM特典削除に伴いサブコピー・特典行を更新（全BGM→全フィルタ・全フォント）+ アクセシビリティラベル追加</td></tr>
+      <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成（Home UI統一・完全リデザイン）</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-21</footer>
+</div>
+</body>
+</html>

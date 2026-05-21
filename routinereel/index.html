@@ -18,47 +18,40 @@
 
   <h2>概要</h2>
   <ul class="kv-list">
-    <li><span class="k">カテゴリ</span><span class="v">ライフスタイル</span></li>
+    <li><span class="k">カテゴリ</span><span class="v">写真/ビデオ（セカンダリ: ライフスタイル）</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション + 広告</span></li>
-    <li><span class="k">ステータス</span><span class="v">開発中</span></li>
-    <li><span class="k">リリース時期</span><span class="v">2026-05</span></li>
+    <li><span class="k">配信地域</span><span class="v">日本（初回）</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（月¥480 / 年¥3,800）+ Google AdMob</span></li>
+    <li><span class="k">ステータス</span><span class="v">v1.0 リリース準備中</span></li>
+    <li><span class="k">リリース時期</span><span class="v">2026-05-29 目標</span></li>
   </ul>
-
-  <h2>全体仕様書</h2>
-  <div class="card-grid">
-    <a class="card" href="flow.html">
-      <div class="title">画面遷移図</div>
-      <div class="desc">全画面の遷移マップ</div>
-    </a>
-    <a class="card" href="data-model.html">
-      <div class="title">データモデル</div>
-      <div class="desc">SwiftDataモデルの構造とER図</div>
-    </a>
-    <a class="card" href="error-design.html">
-      <div class="title">エラー設計</div>
-      <div class="desc">例外パターン一覧と表示方針</div>
-    </a>
-    <a class="card" href="logging.html">
-      <div class="title">ロギング方針</div>
-      <div class="desc">os.log カテゴリとログレベル</div>
-    </a>
-    <a class="card" href="aso.html">
-      <div class="title">ASOキーワード戦略</div>
-      <div class="desc">App Store最適化の方針</div>
-    </a>
-    <a class="card" href="glossary.html">
-      <div class="title">用語集・ドメイン辞書</div>
-      <div class="desc">ドメイン用語の正典</div>
-    </a>
-  </div>
 
   <h2>画面仕様書</h2>
   <div class="card-grid">
     <a class="card" href="screens/home.html">
       <div class="title">ホーム画面（DesignsHomeView）</div>
-      <div class="desc">v1.0新ホーム画面・7遷移・課金壁・通知ルーティング</div>
+      <div class="desc">v1.0新ホーム画面・8遷移・課金壁・通知ルーティング・削除導線</div>
+    </a>
+    <a class="card" href="screens/paywall.html">
+      <div class="title">ペイウォール（PaywallView）</div>
+      <div class="desc">Home UI統一版・warm white背景・pink→orange CTA・日本語ヘッダ</div>
+    </a>
+    <a class="card" href="screens/settings.html">
+      <div class="title">設定（SettingsView）</div>
+      <div class="desc">Card section化・β機能トグル・Pro導線・開発者メニュー</div>
+    </a>
+    <a class="card" href="screens/shooting.html">
+      <div class="title">撮影画面（ShootingView）</div>
+      <div class="desc">v1.0軽い見た目寄せ・テロップ下部セーフゾーン・ボタン名統一</div>
+    </a>
+    <a class="card" href="screens/video-list.html">
+      <div class="title">私の記録（VideoListView）</div>
+      <div class="desc">2列グリッド・サムネ大型化・記録感を強める</div>
+    </a>
+    <a class="card" href="screens/clip-library.html">
+      <div class="title">クリップライブラリ（ClipLibraryView）</div>
+      <div class="desc">ステップ別クリップ管理・動画を作るCTA統一</div>
     </a>
   </div>
 
@@ -68,6 +61,18 @@
       <div class="title">FeatureFlag 運用</div>
       <div class="desc">新UI投入時のロールバック経路と運用シナリオ</div>
     </a>
+    <a class="card" href="features/subscription.html">
+      <div class="title">サブスクリプション設計</div>
+      <div class="desc">価格戦略・Pro特典・v1.1値上げ計画</div>
+    </a>
+    <a class="card" href="features/design-system.html">
+      <div class="title">DesignSystem</div>
+      <div class="desc">Spacing/Radius/Shadow定数・カラーパレット・アニメーション原則</div>
+    </a>
+    <a class="card" href="features/bgm-removal.html">
+      <div class="title">BGM機能削除の意思決定記録</div>
+      <div class="desc">v1.0で完全削除した理由・影響範囲・残置事項</div>
+    </a>
   </div>
 
   <h2>更新履歴</h2>
@@ -76,12 +81,13 @@
       <tr><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
-      <tr><td>2026-05-20</td><td>v1.0 新Home UI（DesignsHomeView）導入。FeatureFlag運用方針確立。画面仕様書・機能仕様書の初版追加。</td></tr>
-      <tr><td>2026-05-09</td><td>仕様書ポータル初期化。</td></tr>
+      <tr><td>2026-05-21</td><td>v1.0 リリース直前の大幅更新。Paywall/Settings/VideoList/ClipLibrary を Home UI へ統一、BGM機能完全削除、撮影画面のテロップ位置・ボタン名改善、削除導線追加、9仕様書を一括整備</td></tr>
+      <tr><td>2026-05-20</td><td>v1.0 新Home UI（DesignsHomeView）導入。FeatureFlag運用方針確立</td></tr>
+      <tr><td>2026-05-09</td><td>仕様書ポータル初期化</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-20</footer>
+  <footer class="site-footer">最終更新: 2026-05-21</footer>
 </div>
 </body>
 </html>

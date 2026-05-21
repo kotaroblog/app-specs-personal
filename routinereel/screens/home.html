@@ -23,49 +23,84 @@
     <li><span class="k">導入バージョン</span><span class="v">v1.0</span></li>
     <li><span class="k">FeatureFlag</span><span class="v"><code>useDesignHome</code>（デフォルト true）</span></li>
     <li><span class="k">旧画面</span><span class="v"><code>Views/Home/HomeView.swift</code>（FeatureFlag false 時に表示）</span></li>
-    <li><span class="k">背景色</span><span class="v">#FAF9F7（朝の光感）</span></li>
+    <li><span class="k">背景色</span><span class="v">#FAF9F7（warm white、朝の光感）</span></li>
   </ul>
 
   <h2>画面構成</h2>
   <ul class="kv-list">
-    <li><span class="k">①上部バー</span><span class="v">アプリ名「RoutineReel」+ Pro バッジ（無料時はPaywall起動・Pro時は表示のみ）+ 設定アイコン</span></li>
-    <li><span class="k">②Heroセクション</span><span class="v">時間帯別挨拶 + 🔥連続日数 + 日付 + メインコピー + 感情コピー（時間帯別） + 「次に撮影」CTA</span></li>
-    <li><span class="k">③Quick Start</span><span class="v">横スクロール4プリセット（morning / night / workout / study）175×240pt カード</span></li>
+    <li><span class="k">①上部バー</span><span class="v">アプリ名「RoutineReel」+ Pro バッジ（Pro時は表示のみ・無料時はPaywall起動）+ 設定アイコン</span></li>
+    <li><span class="k">②Heroセクション</span><span class="v">メインコピー「今日もルーティンを記録しよう。」+ 時間帯別感情コピー +「次に撮影」CTA</span></li>
+    <li><span class="k">③Quick Start</span><span class="v">横スクロール4プリセット（morning/night/workout/study）175×240pt カード。タップで <strong>直接 RoutineEditView 起動</strong></span></li>
     <li><span class="k">④マイルーティン</span><span class="v">縦並びカード（タップで confirmationDialog 起動）+ 新規ルーティン作成ボタン</span></li>
-    <li><span class="k">⑤最近の動画</span><span class="v">VideoListView への導線（横スクロールサムネ + 「すべて見る」）</span></li>
+    <li><span class="k">⑤最近の動画</span><span class="v">recentVideos が存在する場合のみ表示。横スクロールサムネ +「すべて見る」</span></li>
     <li><span class="k">⑥下部</span><span class="v">バナー広告（無料時のみ）+ 5タブバー + 中央＋ボタン</span></li>
   </ul>
 
-  <h2>遷移一覧（7遷移）</h2>
+  <h2>遷移一覧（8遷移）</h2>
   <table>
     <thead>
       <tr><th>トリガー</th><th>遷移先</th><th>表示方法</th></tr>
     </thead>
     <tbody>
-      <tr><td>設定アイコン</td><td>SettingsView</td><td>sheet</td></tr>
-      <tr><td>中央＋ / Quick Start / 新規ルーティン作成ボタン</td><td>PresetSelectView</td><td>sheet</td></tr>
+      <tr><td>設定アイコン / 設定タブ</td><td>SettingsView</td><td>sheet</td></tr>
+      <tr><td>中央＋ボタン / 新規ルーティン作成ボタン</td><td>PresetSelectView</td><td>sheet</td></tr>
+      <tr><td><strong>Quick Start カード（4種）</strong></td><td>RoutineEditView(preset:)</td><td>sheet（item-based・preset直接指定）</td></tr>
       <tr><td>ルーティンカード → 編集する</td><td>RoutineEditView</td><td>sheet（item-based）</td></tr>
-      <tr><td>ルーティンカード → 全ステップ続けて撮影 / 「次に撮影」CTA</td><td>ShootingView</td><td>fullScreenCover（item-based）</td></tr>
-      <tr><td>ルーティンカード → クリップライブラリを開く</td><td>ClipLibraryView</td><td>sheet（item-based / NavigationStack 内）</td></tr>
-      <tr><td>最近の動画 → すべて見る / サムネタップ</td><td>VideoListView</td><td>sheet（NavigationStack 内）</td></tr>
+      <tr><td>ルーティンカード → 全ステップ続けて撮影 / 「次に撮影」CTA / 通知タップ</td><td>ShootingView</td><td>fullScreenCover（item-based）</td></tr>
+      <tr><td>ルーティンカード → クリップライブラリを開く / クリップタブ</td><td>ClipLibraryView</td><td>sheet（item-based / NavigationStack内）</td></tr>
+      <tr><td>最近の動画 → すべて見る / サムネタップ / 作品タブ</td><td>VideoListView</td><td>sheet（NavigationStack内）</td></tr>
       <tr><td>Pro バッジ（無料時）</td><td>PaywallView</td><td>sheet</td></tr>
     </tbody>
   </table>
+
+  <h2>タブバー挙動（5タブ）</h2>
+  <table>
+    <thead>
+      <tr><th>タブ</th><th>挙動</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>ホーム</td><td>何もしない（現在の画面）</td></tr>
+      <tr><td>クリップ</td><td>routines.first を libraryRoutine にセット → ClipLibraryView。ルーティン無し時は何もしない</td></tr>
+      <tr><td>中央＋</td><td>新規ルーティン作成（PresetSelect or Paywall）</td></tr>
+      <tr><td>作品</td><td>showVideoList = true → VideoListView</td></tr>
+      <tr><td>設定</td><td>showSettings = true → SettingsView</td></tr>
+    </tbody>
+  </table>
+  <p>※ホーム以外のタブはモーダル起動後、selectedTab を即 .home に戻す（タブの選択状態を保持しない）</p>
+
+  <h2>ルーティンメニュー（confirmationDialog）</h2>
+  <p>マイルーティンカードタップ時のアクションシート 5項目:</p>
+  <ol>
+    <li>全ステップ続けて撮影 → ShootingView</li>
+    <li>クリップライブラリを開く → ClipLibraryView</li>
+    <li>編集する → RoutineEditView</li>
+    <li>複製する → duplicate(routine:) で実行</li>
+    <li><strong>削除する</strong>（role: .destructive）→ 削除確認 alert → deleteRoutine() で物理ファイル削除 + cascade delete</li>
+  </ol>
 
   <h2>課金壁とサブスク連携</h2>
   <ul class="kv-list">
     <li><span class="k">無料ルーティン上限</span><span class="v">2件まで（<code>maxFreeRoutines = 2</code>）</span></li>
     <li><span class="k">3件目作成時</span><span class="v">PaywallView 自動起動</span></li>
     <li><span class="k">複製時の課金壁</span><span class="v">無料上限到達中は Paywall 起動して複製拒否</span></li>
+    <li><span class="k">Quick Start タップ時の課金壁</span><span class="v">同上、Paywall起動</span></li>
     <li><span class="k">バナー広告</span><span class="v">無料時のみタブバー上に常時表示（高さ50pt）</span></li>
     <li><span class="k">Pro バッジ</span><span class="v">Pro時は非インタラクティブ（情報のみ）、無料時は Paywall 起動ボタン</span></li>
   </ul>
 
+  <h2>削除処理（deleteRoutine）</h2>
+  <p>ルーティン削除時の物理ファイル + DBレコードの安全な削除順序:</p>
+  <ol>
+    <li><code>Array(routine.clips)</code> スナップショット化（並行更新防止）</li>
+    <li>各 Clip の物理ファイル削除（<code>ClipStorageService.deleteClip</code>）</li>
+    <li><code>Array(routine.videos)</code> スナップショット化</li>
+    <li>各 Video の物理ファイル削除（<code>VideoStorageService.deleteVideo</code>）</li>
+    <li><code>modelContext.delete(routine)</code> で SwiftData cascade 削除</li>
+  </ol>
+  <p>削除確認 alert で紐づくクリップ数・動画数をユーザーに提示。</p>
+
   <h2>通知ルーティング</h2>
-  <p>
-    リマインダー通知タップで起動された場合、<code>NotificationRouter.shared.pendingRoutineId</code> を監視し、
-    該当ルーティンの撮影画面（ShootingView）を fullScreenCover で起動する。
-  </p>
+  <p>リマインダー通知タップで起動された場合、<code>NotificationRouter.shared.pendingRoutineId</code> を監視し、該当ルーティンの撮影画面（ShootingView）を fullScreenCover で起動する。</p>
   <ul class="kv-list">
     <li><span class="k">トリガー</span><span class="v"><code>.onAppear</code> および <code>.onChange(of: pendingRoutineId)</code></span></li>
     <li><span class="k">二重発火防止</span><span class="v"><code>oldValue != nil</code> ガードで nil リセット時の不要再発火を防止</span></li>
@@ -79,20 +114,18 @@
     <li><span class="k">中央＋ボタン</span><span class="v">静的ハロー（pink 0.15）+ 押下時 scale 0.90 spring</span></li>
     <li><span class="k">「次に撮影」CTA</span><span class="v">押下時 scale 0.97 spring、ハロー・脈動なし</span></li>
   </ul>
+  <p>常時アニメーションは意図的に最小化（GPT評価「アニメーション頑張った感」回避のため）。</p>
 
   <h2>ロールバック方式</h2>
-  <p>
-    リリース後に新Home UIで不具合が発生した場合、<a href="../features/feature-flag.html">FeatureFlag運用</a> 経由でユーザー自身が
-    設定画面の「β機能 → 新しいホーム画面を使う」トグルを OFF にすれば、旧 HomeView に即時切替可能。
-    コード変更・再申請は不要。
-  </p>
+  <p>リリース後に新Home UIで不具合が発生した場合、<a href="../features/feature-flag.html">FeatureFlag運用</a> 経由でユーザー自身が設定画面の「β機能 → 新しいホーム画面を使う」トグルを OFF にすれば、旧 HomeView に即時切替可能。コード変更・再申請は不要。</p>
 
   <h2>v1.1 で予定される改善</h2>
   <ul>
-    <li><strong>連続日数の実データ算出</strong> — 現在は <code>mockStreakDays = 7</code> 固定</li>
-    <li><strong>DesignsHomeView の200行ルール準拠</strong> — 現在525行。サブView分割で対応予定</li>
+    <li><strong>連続日数の実データ算出</strong> — v1.0 で削除したストリーク表示の復活（実データベース）</li>
+    <li><strong>DesignsHomeView の200行ルール準拠</strong> — 現在605行。サブView分割で対応予定</li>
     <li><strong>マイルーティン「すべて見る」展開画面</strong> — 現在は3件まで表示で省略</li>
     <li><strong>DesignsRecordPreviewView の本番接続</strong> — 撮影画面の完全リデザイン</li>
+    <li><strong>クリップタブのルーティン選択画面</strong> — 現在は routines.first を開く挙動</li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -101,11 +134,13 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
-      <tr><td>v1.0</td><td>2026-05-20</td><td>初版作成。DesignsHomeView を FeatureFlag で本番投入。7遷移・課金壁・通知ルーティング統合済み。</td></tr>
+      <tr><td>v1.0.3</td><td>2026-05-21</td><td>削除ボタン追加 / Quick Start プリセット直接遷移 / タブ動作（ホーム以外モーダル起動）/ モック削除（7日連続・時間帯別挨拶）</td></tr>
+      <tr><td>v1.0.2</td><td>2026-05-21</td><td>アクセシビリティラベル追加 / クリップタブUX改善（ルーティン無し時何もしない）</td></tr>
+      <tr><td>v1.0</td><td>2026-05-20</td><td>初版作成。DesignsHomeView を FeatureFlag で本番投入</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-20</footer>
+  <footer class="site-footer">最終更新: 2026-05-21</footer>
 </div>
 </body>
 </html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>設定 - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>設定画面（SettingsView）</h1>
+    <p>Card section 化により List/Form 感を完全除去。Stoic/Opal 系の静かな設定画面。</p>
+  </header>
+
+  <h2>基本情報</h2>
+  <ul class="kv-list">
+    <li><span class="k">画面ID</span><span class="v">settings</span></li>
+    <li><span class="k">実装ファイル</span><span class="v"><code>Views/Settings/SettingsView.swift</code></span></li>
+    <li><span class="k">表示方式</span><span class="v">sheet（モーダル）</span></li>
+    <li><span class="k">起動経路</span><span class="v">ホーム上部歯車アイコン / 下部設定タブ</span></li>
+    <li><span class="k">背景色</span><span class="v">#FAF9F7</span></li>
+  </ul>
+
+  <h2>セクション構成</h2>
+  <ol>
+    <li><strong>プラン</strong>: RoutineReel Pro（Pro時:「ご利用ありがとうございます」/ 無料時:「記録をもっと自由に」）</li>
+    <li><strong>一般</strong>: デフォルト撮影秒数 / 動画画質 / タイムスタンプ形式</li>
+    <li><strong>β機能</strong>: 新しいホーム画面を使う（FeatureFlag切替）</li>
+    <li><strong>他のアプリ</strong>: WorkoutDiary / StudyStopwatch（App Store 誘導）</li>
+    <li><strong>情報</strong>: プライバシーポリシー / 利用規約 / サポート / レビューを書く</li>
+    <li><strong>デバッグ</strong>: Pro機能を有効化（#if DEBUG || BETA のみ表示）</li>
+  </ol>
+
+  <h2>Card section 化の原則</h2>
+  <ul class="kv-list">
+    <li><span class="k">レイアウト</span><span class="v">ScrollView + VStack（List/Form 不使用）</span></li>
+    <li><span class="k">セクションヘッダー</span><span class="v">uppercase + tracking 0.4 + tertiary text（控えめ）</span></li>
+    <li><span class="k">カード背景</span><span class="v">Color.designsCard + designsCardShadow</span></li>
+    <li><span class="k">カード角丸</span><span class="v">DesignsRadius.lg (20pt)</span></li>
+    <li><span class="k">row高さ</span><span class="v">最小58pt（呼吸感確保）</span></li>
+    <li><span class="k">アイコン</span><span class="v">SF Symbols・accent orange opacity 0.7（pastel tint）</span></li>
+    <li><span class="k">subtitle opacity</span><span class="v">0.85（メインテキストより薄く）</span></li>
+    <li><span class="k">Divider</span><span class="v">左paddingでアイコン分インデント（24pt + spacing.md）</span></li>
+  </ul>
+
+  <h2>β機能セクション（最重要）</h2>
+  <p>FeatureFlag <code>useDesignHome</code> の切替トグル。リリースビルドでも常時表示。</p>
+  <ul class="kv-list">
+    <li><span class="k">タイトル</span><span class="v">新しいホーム画面を使う</span></li>
+    <li><span class="k">subtitle</span><span class="v">不具合があればオフにしてください</span></li>
+    <li><span class="k">footer</span><span class="v">ホーム画面のデザインを試験的に切り替えられます。</span></li>
+    <li><span class="k">アイコン</span><span class="v">sparkle（accent orange）</span></li>
+    <li><span class="k">永続化</span><span class="v">@AppStorage(FeatureFlags.useDesignHomeKey) Bool = true</span></li>
+    <li><span class="k">即時反映</span><span class="v">トグル変更後シートを閉じると RootView が再評価され、次回起動時に切替</span></li>
+  </ul>
+  <p>→ 詳細は <a href="../features/feature-flag.html">FeatureFlag運用</a> 参照。</p>
+
+  <h2>Pro セクション設計</h2>
+  <ul>
+    <li><strong>"Upgrade Now!"禁止</strong>: アグレッシブな課金誘導は使わない</li>
+    <li><strong>Pro 時</strong>: 静的カード「RoutineReel Pro / ご利用ありがとうございます」</li>
+    <li><strong>無料時</strong>: Button カード「RoutineReel Pro / 記録をもっと自由に」+ chevron right</li>
+    <li>アイコンは crown.fill + soft warm gradient 円背景</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0.2</td><td>2026-05-21</td><td>Pro アップグレードカードにアクセシビリティラベル追加</td></tr>
+      <tr><td>v1.0</td><td>2026-05-21</td><td>List/Form 化 → Card section 化（完全リデザイン）。β機能セクション追加</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-21</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>撮影画面 - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>撮影画面（ShootingView）</h1>
+    <p>v1.0 軽い見た目寄せ版。録画ロジック非接触で REC / Step progress / カウントダウン / テロップ位置 / ボタン名を統一。</p>
+  </header>
+
+  <h2>基本情報</h2>
+  <ul class="kv-list">
+    <li><span class="k">画面ID</span><span class="v">shooting</span></li>
+    <li><span class="k">実装ファイル</span><span class="v"><code>Views/Shooting/ShootingView.swift</code></span></li>
+    <li><span class="k">表示方式</span><span class="v">fullScreenCover（黒地・没入）</span></li>
+    <li><span class="k">v1.1予定</span><span class="v">DesignsRecordPreviewView との本格統合</span></li>
+  </ul>
+
+  <h2>画面構成</h2>
+  <ol>
+    <li><strong>トップバー</strong>: 閉じる × / ルーティン名 + ステップ番号 / バランス用 spacer</li>
+    <li><strong>カメラエリア</strong>: AVCaptureSession プレビュー + テロップオーバーレイ + REC + カウントダウン</li>
+    <li><strong>Step progress バー</strong>: カプセル形状ドット + 現在ステップに波紋アニメ + 残り秒数</li>
+    <li><strong>下部コントロール</strong>: 状態別ボタン（撮り直し/反転 + 録画 + 次へ / 完了 →）</li>
+  </ol>
+
+  <h2>テロップ位置（v1.0で大幅修正）</h2>
+  <p><strong>中央 → 画面下部 1/4 セーフゾーン</strong>へ移動。被写体（顔・体・手元）と重ならないよう vlog 系投稿者の標準位置へ変更。</p>
+  <ul class="kv-list">
+    <li><span class="k">配置方法</span><span class="v">VStack { Spacer(); HStack(ステップ名 + 時刻) } + <code>.padding(.bottom, geo.size.height * 0.22)</code></span></li>
+    <li><span class="k">フォントサイズ</span><span class="v">22pt（18pt → 22pt、視認性UP）</span></li>
+    <li><span class="k">時刻表示</span><span class="v">AppSettings.timestampFormat（24h / 12h / 非表示）</span></li>
+    <li><span class="k">完成動画との整合</span><span class="v">VideoCompositionService 側も <code>renderSize.height * 0.22</code> + フォント係数 0.034 で完全一致</span></li>
+  </ul>
+
+  <h2>REC インジケーター（呼吸する赤）</h2>
+  <ul class="kv-list">
+    <li><span class="k">外側ハロー</span><span class="v">14pt 赤 opacity 0.4 + blur 4 + DesignsPulse (0.7→1.15, 2.0秒周期)</span></li>
+    <li><span class="k">内側ドット</span><span class="v">8pt red + DesignsPulse (0.88→1.0, 2.0秒周期)</span></li>
+    <li><span class="k">「REC」文字</span><span class="v">12pt semibold + tracking 0.5</span></li>
+    <li><span class="k">背景</span><span class="v">Capsule 黒 opacity 0.32</span></li>
+    <li><span class="k">位置</span><span class="v">右上 padding-trailing 16 / top 12</span></li>
+  </ul>
+
+  <h2>カウントダウン</h2>
+  <ul class="kv-list">
+    <li><span class="k">フォント</span><span class="v">128pt ultraLight rounded</span></li>
+    <li><span class="k">色</span><span class="v">white opacity 0.88</span></li>
+    <li><span class="k">トランジション</span><span class="v">scale 1.4 → 1.0 → 0.6 asymmetric + opacity</span></li>
+    <li><span class="k">アニメーション</span><span class="v">spring(0.45, 0.75)</span></li>
+    <li><span class="k">id</span><span class="v">count 値で id 付与（切替時に再描画）</span></li>
+  </ul>
+
+  <h2>Step progress バー（波紋型）</h2>
+  <ul class="kv-list">
+    <li><span class="k">形状</span><span class="v">Capsule (旧: Circle)</span></li>
+    <li><span class="k">サイズ</span><span class="v">現在 22×4 pt / その他 8×4 pt</span></li>
+    <li><span class="k">色</span><span class="v">過去: white opacity 0.7 / 現在: accentOrange / 未来: white opacity 0.25</span></li>
+    <li><span class="k">現在ステップの波紋</span><span class="v">stroke 1.5pt + DesignsRingPulse (scale 1.0→1.18, opacity 0.55→0, 1.8秒周期, 片道)</span></li>
+    <li><span class="k">切替アニメ</span><span class="v">spring(0.35, 0.7)</span></li>
+  </ul>
+
+  <h2>ボタン名統一（v1.0で日本語化・誤解解消）</h2>
+  <table>
+    <thead>
+      <tr><th>状態</th><th>位置</th><th>Before</th><th>After</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>ready</td><td>左</td><td>flip</td><td><strong>反転</strong>（カメラ反転）</td></tr>
+      <tr><td>ready</td><td>右</td><td>skip</td><td><strong>次へ</strong>（このステップを撮らずに次へ）</td></tr>
+      <tr><td>recording/countdown</td><td>中央</td><td>next step (forward.fill)</td><td><strong>完了 →</strong>（checkmark）</td></tr>
+    </tbody>
+  </table>
+  <p>理由: 「skip」「next step」は「飛ばす」誤解を生む。撮影中の主操作は「このステップを終えて次へ」の肯定形が正しい。</p>
+
+  <h2>下部コントロール詳細</h2>
+
+  <h3>ready 状態（撮影開始前）</h3>
+  <ul>
+    <li><strong>左</strong>: 撮り直しボタン（前ステップが撮影済みなら）または 反転ボタン</li>
+    <li><strong>中央</strong>: 録画ボタン（赤 56pt + stroke 68pt）</li>
+    <li><strong>右</strong>: 次へボタン（このステップを撮らずに次へ）</li>
+  </ul>
+
+  <h3>recording / countdown 状態（撮影中）</h3>
+  <ul>
+    <li><strong>中央のみ</strong>: 完了 → ボタン（このステップを確定して次へ）</li>
+    <li>左右は Spacer で省略</li>
+  </ul>
+
+  <h3>transitioning 状態（ステップ間遷移）</h3>
+  <ul>
+    <li><strong>中央</strong>: ProgressView</li>
+  </ul>
+
+  <h2>権限処理</h2>
+  <ul class="kv-list">
+    <li><span class="k">カメラ</span><span class="v">必須・拒否時はアラート「設定を開く」</span></li>
+    <li><span class="k">マイク</span><span class="v">必須・拒否時は同上</span></li>
+    <li><span class="k">写真ライブラリ</span><span class="v">追加のみ・PreviewView 側で要求</span></li>
+  </ul>
+
+  <h2>BGM 機能の扱い</h2>
+  <p>v1.0 で<strong>完全削除</strong>。撮影時の BGM 試聴・合成時の BGM 焼き込みは廃止。詳細は <a href="../features/bgm-removal.html">BGM機能削除の意思決定記録</a> 参照。</p>
+
+  <h2>v1.1 で予定される改善</h2>
+  <ul>
+    <li><strong>DesignsRecordPreviewView との本格統合</strong> — モック背景の生活感（粒子・露出フリッカー・鏡）を実カメラに統合</li>
+    <li><strong>テロップのプリセット別最適化</strong> — 時刻表示を「経過時間」「Day Count」へ切替可能化（workout/study 向け）</li>
+    <li><strong>撮り直しボタンの位置移動</strong> — 誤タップ防止のため遠い位置へ</li>
+    <li><strong>テロップフォント拡大</strong> — 24pt 以上を検討</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0.3</td><td>2026-05-21</td><td>BGM機能削除に伴う関連UIなし（既に試聴UI未実装）</td></tr>
+      <tr><td>v1.0.2</td><td>2026-05-21</td><td>ボタン名統一（skip→次へ、next step→完了 →、flip→反転）/ テロップ位置を中央→画面下部1/4セーフゾーンへ</td></tr>
+      <tr><td>v1.0.1</td><td>2026-05-20</td><td>REC呼吸 / Step progress 波紋 / カウントダウン 128pt rounded（Designs 軽い寄せ）</td></tr>
+      <tr><td>v1.0</td><td>初版</td><td>シーケンス撮影フロー実装</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-21</footer>
+</div>
+</body>
+</html>

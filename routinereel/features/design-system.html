@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>DesignSystem - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>DesignSystem</h1>
+    <p>アプリ全体の Spacing / Radius / Shadow / Color / アニメーション原則を集約</p>
+  </header>
+
+  <h2>実装ファイル</h2>
+  <ul class="kv-list">
+    <li><span class="k">定数集約</span><span class="v"><code>Views/Designs/DesignSystem.swift</code></span></li>
+    <li><span class="k">カラーパレット</span><span class="v"><code>Views/Designs/DesignsColor.swift</code></span></li>
+    <li><span class="k">アニメーション</span><span class="v"><code>Views/Designs/DesignsAnimations.swift</code></span></li>
+  </ul>
+
+  <h2>Spacing（DesignsSpacing）</h2>
+  <table>
+    <thead>
+      <tr><th>定数</th><th>値</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>xxs</td><td>4pt</td><td>アイコンと隣接テキスト</td></tr>
+      <tr><td>xs</td><td>8pt</td><td>チップ内余白</td></tr>
+      <tr><td>sm</td><td>12pt</td><td>カード内 padding</td></tr>
+      <tr><td>md</td><td>16pt</td><td>セクション内 spacing</td></tr>
+      <tr><td>lg</td><td>20pt</td><td>画面横 padding</td></tr>
+      <tr><td>xl</td><td>24pt</td><td>Hero周辺</td></tr>
+      <tr><td>xxl</td><td>32pt</td><td>セクション間</td></tr>
+      <tr><td>xxxl</td><td>36pt</td><td>メインセクション間</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Corner Radius（DesignsRadius）</h2>
+  <table>
+    <thead>
+      <tr><th>定数</th><th>値</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>xs</td><td>8pt</td><td>タグ・小チップ</td></tr>
+      <tr><td>sm</td><td>12pt</td><td>小カード</td></tr>
+      <tr><td>md</td><td>16pt</td><td>標準カード</td></tr>
+      <tr><td>lg</td><td>20pt</td><td>マイルーティンカード</td></tr>
+      <tr><td>xl</td><td>22pt</td><td>CTAボタン / サムネ</td></tr>
+      <tr><td>xxl</td><td>28pt</td><td>Heroカード</td></tr>
+      <tr><td>sheet</td><td>32pt</td><td>Bottom Sheet 上部</td></tr>
+      <tr><td>quickStartCard</td><td>30pt</td><td>Quick Start カード専用</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Shadow（DesignsShadowStyle）</h2>
+  <table>
+    <thead>
+      <tr><th>スタイル</th><th>color</th><th>radius</th><th>y</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>card</td><td>black opacity 0.10</td><td>12</td><td>8</td><td>標準カード</td></tr>
+      <tr><td>subtle</td><td>black opacity 0.04</td><td>8</td><td>2</td><td>脇役カード（マイルーティン）</td></tr>
+      <tr><td>cta</td><td>accentPink opacity 0.28</td><td>12</td><td>5</td><td>CTAボタン用浮遊感</td></tr>
+    </tbody>
+  </table>
+
+  <p>修飾子 <code>.designsCardShadow()</code> でカード影を一括適用。</p>
+
+  <h2>カラーパレット（Color extension）</h2>
+  <table>
+    <thead>
+      <tr><th>定数</th><th>RGB</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>designsBackground</td><td>#FAF9F7</td><td>アプリ全体背景（warm white）</td></tr>
+      <tr><td>designsPrimaryText</td><td>(0.110, 0.110, 0.118)</td><td>主要テキスト（深いチャコール）</td></tr>
+      <tr><td>designsSecondaryText</td><td>(0.498, 0.498, 0.510)</td><td>サブテキスト</td></tr>
+      <tr><td>designsTertiaryText</td><td>(0.659, 0.659, 0.671)</td><td>三次テキスト・補足</td></tr>
+      <tr><td>designsAccentOrange</td><td>(1.000, 0.529, 0.310)</td><td>朝焼けオレンジ</td></tr>
+      <tr><td>designsAccentPink</td><td>(1.000, 0.388, 0.451)</td><td>アクセントピンク</td></tr>
+      <tr><td>designsCard</td><td>white</td><td>カード白</td></tr>
+      <tr><td>designsDivider</td><td>white 0.93</td><td>微妙な区切り線</td></tr>
+      <tr><td>designsProGold</td><td>(0.949, 0.812, 0.475)</td><td>Pro バッジ ゴールド</td></tr>
+    </tbody>
+  </table>
+
+  <h3>プリセット色温度（v1.0 で中性化）</h3>
+  <table>
+    <thead>
+      <tr><th>プリセット</th><th>start</th><th>end</th><th>狙い</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>morning</td><td>朝焼け暖色</td><td>(0.965, 0.435, 0.345)</td><td>朝活女子</td></tr>
+      <tr><td>night</td><td>deep blue</td><td>(0.094, 0.118, 0.275)</td><td>中性 / 男女両対応</td></tr>
+      <tr><td>workout</td><td>cool gray (青寄り)</td><td>(0.220, 0.259, 0.318)</td><td>男性層・筋トレ vlog</td></tr>
+      <tr><td>study</td><td>warm beige</td><td>(0.745, 0.635, 0.518)</td><td>中性 / 知性</td></tr>
+    </tbody>
+  </table>
+
+  <h2>アニメーション原則</h2>
+
+  <h3>許可されたアニメーション</h3>
+  <ul>
+    <li><code>DesignsPressableButtonStyle</code>: 押下時 scale 0.94 spring(0.28, 0.6)</li>
+    <li><code>DesignsFloatModifier</code>: 浮遊（offset Y、永続）— 使用箇所限定</li>
+    <li><code>DesignsPulseModifier</code>: 脈動（scale、永続）— REC indicator のみ</li>
+    <li><code>DesignsRingPulseModifier</code>: 波紋（scale + opacity 片道）— Step progress 現在ステップのみ</li>
+    <li>easeOut フェード（appear時のみ）</li>
+    <li>spring 切替（タブ切替・ステップ切替）</li>
+    <li>blur transition（カウントダウン出現時のみ）</li>
+  </ul>
+
+  <h3>禁止アニメーション</h3>
+  <ul>
+    <li>loop animation（scale bounce 連続）</li>
+    <li>shimmer</li>
+    <li>floating UI（中央＋ボタンも v1.0 で削除）</li>
+    <li>bounce（spring overshoot 過多）</li>
+    <li>常時 gradient shift</li>
+    <li>neon glow</li>
+  </ul>
+
+  <h2>共通コンポーネント</h2>
+  <ul class="kv-list">
+    <li><span class="k">DesignsCardContainer</span><span class="v">padding / cornerRadius / background / shadow を一括適用</span></li>
+    <li><span class="k">designsSheetStyle()</span><span class="v">presentationCornerRadius 32 + presentationDragIndicator + presentationBackground</span></li>
+    <li><span class="k">designsCardShadow()</span><span class="v">標準カード影を1行で適用</span></li>
+  </ul>
+
+  <h2>時間帯別ヘルパー（DesignsGreeting）</h2>
+  <p>v1.0 では Hero モック削除のため未使用化。実データ算出機能（連続日数等）は v1.1 で復活予定。残置:</p>
+  <ul>
+    <li>current: 時間帯別挨拶 + 絵文字（おはよう☀️ / こんにちは🌤 / お疲れさま🌙 / おかえり✨）</li>
+    <li>dateText: 日本語日付（M月d日 曜日）</li>
+    <li>moodCopy: 時間帯別軽コピー（今日もゆっくり始めよう / 少し整えよう / 5分だけ記録する？ / 静かに振り返ろう）</li>
+  </ul>
+
+  <h2>Home UI 統一原則</h2>
+  <ol>
+    <li>純黒禁止（背景は warm white、VideoPlayer 再生中のみ例外）</li>
+    <li>常時アニメーションを最小化（「Dribbble感」回避）</li>
+    <li>glassmorphism を増やさない（既存 ultraThinMaterial / thinMaterial の範囲内）</li>
+    <li>余白を広く（DesignsSpacing.xl 以上を多用）</li>
+    <li>カード cornerRadius は 16〜32 の範囲</li>
+    <li>shadow opacity は 0.04〜0.12 の範囲</li>
+    <li>太字使いすぎ禁止（Hero以外は medium/regular）</li>
+    <li>「足すより止める」精神</li>
+  </ol>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成。DesignSystem.swift / DesignsColor.swift / DesignsAnimations.swift を全画面で参照する基盤確立</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-21</footer>
+</div>
+</body>
+</html>
