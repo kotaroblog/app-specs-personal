@@ -1,0 +1,245 @@
+<!--
+  WorkoutDiary v1.1.0 ホーム画面リデザインモック
+  ================================================
+  作成日  : 2026-05-23
+  バージョン: v1.0 (初版)
+  用途    : v1.1.0 大改修における実装参照モック・外出先確認・共同検討用
+  対象    : app-specs-personal / workoutdiary/plans/
+
+  主要変更ポイント（v1.1.0 リデザイン）
+  - FAB (Floating Action Button) 導入：右下固定の＋ボタンで種目追加
+  - ツールバー ≡ 集約：左上ハンバーガーメニューにサブ機能を集約
+  - ボトムアクションバー：保存・シェアをフローティングバーに集約
+  - 前回値インジケーター：各セット行に前回記録をインライン表示
+  - スワイプアクション廃止 → 編集/削除ボタン常時表示へ（v1.0.8済み）
+  - 「今日」バッジ：日付ナビゲーターに当日を視覚的に強調
+
+  画面パターン
+  - A: エンプティ（当日記録なし）
+  - B: データあり（種目・セット記録済み）
+  - C: 記録中（セット入力シート展開中）
+
+  戦略: 日本版 Hevy-lite × 記録最速UX に振り切ったリデザイン
+  生成: GPT による v1.1.0 リデザイン提案を視覚化
+-->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow">
+  <title>WorkoutDiary Home Redesign Mock</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            ios: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Hiragino Sans', 'sans-serif']
+          },
+          colors: {
+            wd: {
+              green: '#00D9A3',
+              card: '#101010',
+              card2: '#141414',
+              muted: '#9CA3AF',
+              tertiary: '#6B7280',
+              orange: '#F59E0B',
+              red: '#EF4444'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-zinc-950 text-white font-ios">
+  <main class="px-8 py-8">
+    <div class="flex gap-10 items-start justify-center min-w-[1280px]">
+
+      <!-- A -->
+      <section>
+        <h2 class="text-center text-lg font-bold mb-4 tracking-wide">A: エンプティ</h2>
+        <div class="relative w-[393px] h-[852px] rounded-[42px] bg-black border border-zinc-700 shadow-2xl overflow-hidden">
+          <div class="absolute top-0 inset-x-0 h-8 flex items-center justify-between px-8 pt-3 text-[15px] font-semibold">
+            <span>17:19</span><span class="flex gap-1 items-center"><i data-lucide="signal" class="w-4 h-4"></i><i data-lucide="wifi" class="w-4 h-4"></i><span class="bg-yellow-400 text-black rounded-md px-1 text-[11px]">35</span></span>
+          </div>
+          <div class="absolute top-3 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-3xl"></div>
+
+          <div class="pt-12 px-4 h-full relative">
+            <nav class="h-11 flex items-center justify-between">
+              <button class="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center"><i data-lucide="menu" class="w-5 h-5 text-wd-green"></i></button>
+              <h1 class="text-[24px] font-bold tracking-tight">トレーニング</h1>
+              <button class="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center"><i data-lucide="timer" class="w-5 h-5 text-wd-green"></i></button>
+            </nav>
+
+            <div class="mt-4 h-[68px] rounded-[14px] bg-gradient-to-br from-wd-card2 to-wd-card border border-zinc-900 px-4 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full border-[4px] border-wd-green flex items-center justify-center text-xs font-bold text-wd-green"><i data-lucide="check" class="w-4 h-4"></i></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[12px] text-wd-muted">今週のトレーニング</div>
+                <div class="text-[15px] font-bold text-wd-green">4/2 セッション</div>
+              </div>
+              <div class="text-[14px] font-bold text-wd-orange">🔥14日連続</div>
+              <div class="px-3 py-1 rounded-full bg-wd-green/15 text-wd-green text-[12px] font-bold">増量</div>
+            </div>
+
+            <div class="mt-5 flex items-center justify-center gap-4">
+              <button class="text-wd-green"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+              <div class="h-10 rounded-full bg-wd-card2 border border-zinc-800 px-4 flex items-center gap-2">
+                <i data-lucide="calendar-days" class="w-4 h-4 text-wd-green"></i>
+                <span class="text-[15px] font-bold">5月23日(金)</span>
+                <span class="px-2 py-0.5 rounded-full bg-wd-green text-black text-[11px] font-bold">今日</span>
+              </div>
+              <button class="text-wd-green"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
+            </div>
+
+            <div class="h-[520px] flex flex-col items-center justify-center text-center">
+              <div class="w-20 h-20 rounded-[24px] bg-wd-green/10 flex items-center justify-center mb-5"><i data-lucide="dumbbell" class="w-11 h-11 text-wd-green/80"></i></div>
+              <h3 class="text-[17px] font-bold text-wd-muted mb-5">今日のワークアウトを記録しよう</h3>
+              <button class="w-full rounded-[14px] border border-wd-green/70 bg-wd-green/10 p-4 text-left shadow-lg">
+                <div class="flex items-center gap-2 text-wd-green text-[16px] font-bold"><i data-lucide="copy-plus" class="w-5 h-5"></i>前回の記録をコピー</div>
+                <div class="mt-1 text-[12px] text-wd-muted">5/20 · ベンチプレス・スクワット 他2種目</div>
+              </button>
+              <button class="mt-4 rounded-full bg-wd-green/12 px-5 py-3 text-[14px] font-bold text-wd-green flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i>テンプレートから追加</button>
+            </div>
+
+            <button class="absolute right-5 bottom-24 w-14 h-14 rounded-full bg-wd-green text-black shadow-[0_0_30px_rgba(0,217,163,.45)] flex items-center justify-center"><i data-lucide="plus" class="w-8 h-8 stroke-[3]"></i></button>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white rounded-full"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- B -->
+      <section>
+        <h2 class="text-center text-lg font-bold mb-4 tracking-wide">B: データあり</h2>
+        <div class="relative w-[393px] h-[852px] rounded-[42px] bg-black border border-zinc-700 shadow-2xl overflow-hidden">
+          <div class="absolute top-0 inset-x-0 h-8 flex items-center justify-between px-8 pt-3 text-[15px] font-semibold">
+            <span>17:19</span><span class="flex gap-1 items-center"><i data-lucide="signal" class="w-4 h-4"></i><i data-lucide="wifi" class="w-4 h-4"></i><span class="bg-yellow-400 text-black rounded-md px-1 text-[11px]">35</span></span>
+          </div>
+          <div class="absolute top-3 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-3xl"></div>
+
+          <div class="pt-12 px-4 h-full relative">
+            <nav class="h-11 flex items-center justify-between">
+              <button class="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center"><i data-lucide="menu" class="w-5 h-5 text-wd-green"></i></button>
+              <h1 class="text-[24px] font-bold tracking-tight">トレーニング</h1>
+              <button class="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center"><i data-lucide="timer" class="w-5 h-5 text-wd-green"></i></button>
+            </nav>
+
+            <div class="mt-4 h-[68px] rounded-[14px] bg-gradient-to-br from-wd-card2 to-wd-card border border-zinc-900 px-4 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full border-[4px] border-wd-green flex items-center justify-center text-xs font-bold text-wd-green"><i data-lucide="check" class="w-4 h-4"></i></div>
+              <div class="flex-1 min-w-0"><div class="text-[12px] text-wd-muted">今週のトレーニング</div><div class="text-[15px] font-bold text-wd-green">4/2 セッション</div></div>
+              <div class="text-[14px] font-bold text-wd-orange">🔥14日連続</div>
+              <div class="px-3 py-1 rounded-full bg-wd-green/15 text-wd-green text-[12px] font-bold">増量</div>
+            </div>
+
+            <div class="mt-5 flex items-center justify-center gap-4">
+              <button class="text-wd-green"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+              <div class="h-10 rounded-full bg-wd-card2 border border-zinc-800 px-4 flex items-center gap-2"><i data-lucide="calendar-days" class="w-4 h-4 text-wd-green"></i><span class="text-[15px] font-bold">5月23日(金)</span><span class="px-2 py-0.5 rounded-full bg-wd-green text-black text-[11px] font-bold">今日</span></div>
+              <button class="text-wd-green"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
+            </div>
+
+            <div class="mt-4 h-[570px] overflow-hidden pb-24 space-y-3">
+              <div class="rounded-[14px] bg-wd-card2 border border-zinc-900 p-4">
+                <div class="flex items-center gap-2 mb-3"><h3 class="mr-auto text-[18px] font-bold text-wd-green">ベンチプレス</h3><span class="px-3 py-1 rounded-full bg-wd-orange/15 text-wd-orange text-[12px] font-bold">1RM: 92kg</span><span class="px-3 py-1 rounded-full bg-wd-green/15 text-wd-green text-[12px] font-bold">胸</span></div>
+                <div class="space-y-1">
+                  <div class="h-10 flex items-center text-[15px]"><span class="w-14 text-wd-muted font-bold">SET1</span><span class="font-bold text-white">60.0kg</span><span class="mx-2 text-wd-tertiary">×</span><span class="font-bold">10回</span></div>
+                  <div class="h-10 flex items-center text-[15px]"><span class="w-14 text-wd-muted font-bold">SET2</span><span class="font-bold text-white">65.0kg</span><span class="mx-2 text-wd-tertiary">×</span><span class="font-bold">8回</span></div>
+                  <div class="h-10 flex items-center text-[15px]"><span class="w-14 text-wd-muted font-bold">SET3</span><span class="font-bold text-white">70.0kg</span><span class="mx-2 text-wd-tertiary">×</span><span class="font-bold">6回</span><span class="ml-2 px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 text-[11px] font-bold">🏆 PR</span></div>
+                </div>
+                <div class="mt-2 rounded-full bg-zinc-900 px-3 py-2 text-[11px] text-wd-muted flex gap-1 items-center flex-wrap"><span>前回:</span><span class="rounded-full bg-zinc-800 px-2 py-0.5">65kg×8</span><span class="rounded-full bg-zinc-800 px-2 py-0.5">70kg×6</span><span class="rounded-full bg-zinc-800 px-2 py-0.5">75kg×5</span></div>
+                <div class="my-3 h-px bg-zinc-800"></div>
+                <button class="w-full h-10 rounded-xl bg-wd-green/10 text-wd-green text-[14px] font-bold">＋ セットを追加</button>
+              </div>
+
+              <div class="rounded-[14px] bg-wd-card2 border border-zinc-900 p-4">
+                <div class="flex items-center gap-2 mb-3"><h3 class="mr-auto text-[18px] font-bold text-wd-green">スクワット</h3><span class="px-3 py-1 rounded-full bg-wd-orange/15 text-wd-orange text-[12px] font-bold">1RM: 118kg</span><span class="px-3 py-1 rounded-full bg-wd-green/15 text-wd-green text-[12px] font-bold">脚</span></div>
+                <div class="space-y-1">
+                  <div class="h-10 flex items-center text-[15px]"><span class="w-14 text-wd-muted font-bold">SET1</span><span class="font-bold">90.0kg</span><span class="mx-2 text-wd-tertiary">×</span><span class="font-bold">8回</span></div>
+                  <div class="h-10 flex items-center text-[15px]"><span class="w-14 text-wd-muted font-bold">SET2</span><span class="font-bold">95.0kg</span><span class="mx-2 text-wd-tertiary">×</span><span class="font-bold">6回</span></div>
+                </div>
+                <div class="mt-2 rounded-full bg-zinc-900 px-3 py-2 text-[11px] text-wd-muted flex gap-1 items-center flex-wrap"><span>前回:</span><span class="rounded-full bg-zinc-800 px-2 py-0.5">90kg×8</span><span class="rounded-full bg-zinc-800 px-2 py-0.5">92.5kg×6</span></div>
+                <div class="my-3 h-px bg-zinc-800"></div>
+                <button class="w-full h-10 rounded-xl bg-wd-green/10 text-wd-green text-[14px] font-bold">＋ セットを追加</button>
+              </div>
+            </div>
+
+            <div class="absolute left-5 bottom-24 h-12 rounded-full bg-zinc-900/95 border border-zinc-800 shadow-xl flex items-center overflow-hidden">
+              <button class="px-5 h-full flex gap-2 items-center text-[14px] font-bold"><i data-lucide="save" class="w-4 h-4 text-wd-green"></i>保存</button>
+              <div class="w-px h-5 bg-zinc-700"></div>
+              <button class="px-5 h-full flex gap-2 items-center text-[14px] font-bold"><i data-lucide="upload" class="w-4 h-4 text-wd-green"></i>シェア</button>
+            </div>
+            <button class="absolute right-5 bottom-24 w-14 h-14 rounded-full bg-wd-green text-black shadow-[0_0_30px_rgba(0,217,163,.45)] flex items-center justify-center"><i data-lucide="plus" class="w-8 h-8 stroke-[3]"></i></button>
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white rounded-full"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- C -->
+      <section>
+        <h2 class="text-center text-lg font-bold mb-4 tracking-wide">C: 記録中</h2>
+        <div class="relative w-[393px] h-[852px] rounded-[42px] bg-black border border-zinc-700 shadow-2xl overflow-hidden">
+          <div class="absolute top-0 inset-x-0 h-8 flex items-center justify-between px-8 pt-3 text-[15px] font-semibold">
+            <span>17:19</span><span class="flex gap-1 items-center"><i data-lucide="signal" class="w-4 h-4"></i><i data-lucide="wifi" class="w-4 h-4"></i><span class="bg-yellow-400 text-black rounded-md px-1 text-[11px]">35</span></span>
+          </div>
+          <div class="absolute top-3 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-b-3xl"></div>
+
+          <div class="pt-12 px-4 h-full relative">
+            <nav class="h-11 flex items-center justify-between">
+              <button class="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center"><i data-lucide="menu" class="w-5 h-5 text-wd-green"></i></button>
+              <h1 class="text-[24px] font-bold tracking-tight">トレーニング</h1>
+              <button class="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center"><i data-lucide="timer" class="w-5 h-5 text-wd-green"></i></button>
+            </nav>
+
+            <div class="mt-4 h-[68px] rounded-[14px] bg-gradient-to-br from-wd-card2 to-wd-card border border-zinc-900 px-4 flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full border-[4px] border-wd-green flex items-center justify-center text-xs font-bold text-wd-green"><i data-lucide="check" class="w-4 h-4"></i></div>
+              <div class="flex-1 min-w-0"><div class="text-[12px] text-wd-muted">今週のトレーニング</div><div class="text-[15px] font-bold text-wd-green">4/2 セッション</div></div>
+              <div class="text-[14px] font-bold text-wd-orange">🔥14日連続</div>
+              <div class="px-3 py-1 rounded-full bg-wd-green/15 text-wd-green text-[12px] font-bold">増量</div>
+            </div>
+
+            <div class="mt-5 flex items-center justify-center gap-4">
+              <button class="text-wd-green"><i data-lucide="chevron-left" class="w-6 h-6"></i></button>
+              <div class="h-10 rounded-full bg-wd-card2 border border-zinc-800 px-4 flex items-center gap-2"><i data-lucide="calendar-days" class="w-4 h-4 text-wd-green"></i><span class="text-[15px] font-bold">5月23日(金)</span><span class="px-2 py-0.5 rounded-full bg-wd-green text-black text-[11px] font-bold">今日</span></div>
+              <button class="text-wd-green"><i data-lucide="chevron-right" class="w-6 h-6"></i></button>
+            </div>
+
+            <div class="mt-4 rounded-[14px] bg-wd-card2 border border-zinc-900 p-4">
+              <div class="flex items-center gap-2 mb-3"><h3 class="mr-auto text-[18px] font-bold text-wd-green">ベンチプレス</h3><span class="px-3 py-1 rounded-full bg-wd-orange/15 text-wd-orange text-[12px] font-bold">1RM: 92kg</span><span class="px-3 py-1 rounded-full bg-wd-green/15 text-wd-green text-[12px] font-bold">胸</span></div>
+              <div class="space-y-1">
+                <div class="h-10 flex items-center text-[15px]"><span class="w-14 text-wd-muted font-bold">SET1</span><span class="font-bold">60.0kg</span><span class="mx-2 text-wd-tertiary">×</span><span class="font-bold">10回</span></div>
+                <div class="h-10 flex items-center text-[15px]"><span class="w-14 text-wd-muted font-bold">SET2</span><span class="font-bold">65.0kg</span><span class="mx-2 text-wd-tertiary">×</span><span class="font-bold">8回</span></div>
+                <div class="h-10 flex items-center text-[15px]"><span class="w-14 text-wd-muted font-bold">SET3</span><span class="font-bold">70.0kg</span><span class="mx-2 text-wd-tertiary">×</span><span class="font-bold">6回</span></div>
+              </div>
+              <div class="mt-2 rounded-full bg-zinc-900 px-3 py-2 text-[11px] text-wd-muted flex gap-1 items-center flex-wrap"><span>前回:</span><span class="rounded-full bg-zinc-800 px-2 py-0.5">65kg×8</span><span class="rounded-full bg-zinc-800 px-2 py-0.5">70kg×6</span><span class="rounded-full bg-zinc-800 px-2 py-0.5">75kg×5</span></div>
+            </div>
+
+            <div class="absolute inset-x-0 bottom-0 h-[410px] rounded-t-[28px] bg-[#111111] border-t border-zinc-800 shadow-[0_-20px_60px_rgba(0,0,0,.65)] px-5 pt-3">
+              <div class="w-11 h-1.5 bg-zinc-700 rounded-full mx-auto mb-5"></div>
+              <h2 class="text-[20px] font-bold mb-4">セット内容を入力</h2>
+              <button class="w-full h-12 rounded-xl bg-zinc-900 border border-zinc-800 px-4 flex items-center justify-between text-[15px] font-bold mb-4">
+                ベンチプレス <i data-lucide="chevron-down" class="w-5 h-5 text-wd-green"></i>
+              </button>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-[14px] bg-black border border-zinc-800 p-4">
+                  <div class="text-[12px] text-wd-muted mb-2">重量</div>
+                  <div class="text-[30px] font-bold tracking-tight">80.0 <span class="text-[15px] text-wd-muted">kg</span></div>
+                </div>
+                <div class="rounded-[14px] bg-black border border-zinc-800 p-4">
+                  <div class="text-[12px] text-wd-muted mb-2">回数</div>
+                  <div class="text-[30px] font-bold tracking-tight">10 <span class="text-[15px] text-wd-muted">回</span></div>
+                </div>
+              </div>
+              <button class="mt-5 w-full h-13 py-4 rounded-xl bg-wd-green text-black text-[16px] font-bold shadow-[0_0_26px_rgba(0,217,163,.35)]">セットを記録</button>
+              <button class="mt-4 w-full text-center text-[14px] text-wd-muted font-bold">キャンセル</button>
+              <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+  <script>lucide.createIcons();</script>
+</body>
+</html>
