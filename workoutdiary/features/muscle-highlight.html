@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - 筋肉部位ハイライト機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / 筋肉部位ハイライト機能</div>
+
+  <header class="site-header">
+    <h1>筋肉部位ハイライト機能</h1>
+    <p>種目を選択すると、鍛えられる筋肉部位を人体図上にリアルタイムでハイライト表示する機能</p>
+    <div class="section-meta">
+      <span class="tag todo">planning</span>
+      <span class="tag">機能ID: WD-FEAT-MUSCLE-HIGHLIGHT</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>ユーザーが種目を選ぶと、その種目で鍛えられる筋肉部位を人体図上でハイライト表示する機能。主働筋・補助筋・安定筋の3段階で関与度を色分けし、トレーニングの効果を視覚的に伝える。ブラウザプロトタイプ（<code>/Users/happyboy1002/workspace/workout-bodymap-proto/</code>）での検証が完了しており、本仕様書はその結果をまとめてiOS本実装の指針とする。</p>
+
+  <h3>目的・ユーザー価値</h3>
+  <ul>
+    <li>種目に対する筋肉への効き方を視覚的に伝え、ユーザーのトレーニング意識を高める</li>
+    <li>初心者が「どの種目で何が鍛えられるか」を直感的に把握できるようにする</li>
+    <li>種目選択時の納得感を高め、アプリへの継続エンゲージメントを促進する</li>
+  </ul>
+
+  <h3>競合状況</h3>
+  <ul>
+    <li>海外勢（Muscle Booster・Fitbod・Strong）には実装あり</li>
+    <li>国内筋トレアプリではほぼ未実装 → 国内市場での差別化要素</li>
+  </ul>
+
+  <h3>想定配置</h3>
+  <ul>
+    <li>種目詳細画面（種目名タップ時）</li>
+    <li>または種目選択時のサイドパネル / モーダルシート</li>
+  </ul>
+
+  <h2>画面構成</h2>
+  <table>
+    <tr><th>エリア</th><th>内容</th></tr>
+    <tr><td>上部</td><td>選択中の種目名 + 主な効く部位のサマリーテキスト</td></tr>
+    <tr><td>中央</td><td>人体図（前面・背面の2ビュー横並び）</td></tr>
+    <tr><td>左</td><td>種目リスト（カテゴリ: 胸／肩／背中／腕／腹／脚）</td></tr>
+    <tr><td>右</td><td>凡例（主働筋・補助筋・安定筋）＋ 部位一覧</td></tr>
+  </table>
+
+  <h3>レイアウト分岐（iOS）</h3>
+  <ul>
+    <li><strong>iPad / 横向き iPhone</strong>: 左に種目リスト・中央に人体図・右に凡例+部位一覧を並べる3カラム構成</li>
+    <li><strong>縦向き iPhone</strong>: 人体図メイン表示 + ボトムシートに種目リストを格納するパターン</li>
+  </ul>
+
+  <h2>筋肉部位定義（22部位）</h2>
+  <h3>前面（12部位）</h3>
+  <table>
+    <tr><th>ID</th><th>部位名</th></tr>
+    <tr><td><code>chest-upper</code></td><td>大胸筋（上部）</td></tr>
+    <tr><td><code>chest-lower</code></td><td>大胸筋（下部）</td></tr>
+    <tr><td><code>front-delt</code></td><td>三角筋（前部）</td></tr>
+    <tr><td><code>side-delt</code></td><td>三角筋（中部）</td></tr>
+    <tr><td><code>biceps</code></td><td>上腕二頭筋</td></tr>
+    <tr><td><code>forearm</code></td><td>前腕</td></tr>
+    <tr><td><code>abs-upper</code></td><td>腹直筋（上部）</td></tr>
+    <tr><td><code>abs-lower</code></td><td>腹直筋（下部）</td></tr>
+    <tr><td><code>obliques</code></td><td>外腹斜筋</td></tr>
+    <tr><td><code>quads</code></td><td>大腿四頭筋</td></tr>
+    <tr><td><code>adductors</code></td><td>内転筋</td></tr>
+    <tr><td><code>shin</code></td><td>前脛骨筋</td></tr>
+  </table>
+
+  <h3>背面（10部位）</h3>
+  <table>
+    <tr><th>ID</th><th>部位名</th></tr>
+    <tr><td><code>traps-upper</code></td><td>僧帽筋（上部）</td></tr>
+    <tr><td><code>traps-middle</code></td><td>僧帽筋（中下部）</td></tr>
+    <tr><td><code>rear-delt</code></td><td>三角筋（後部）</td></tr>
+    <tr><td><code>lats</code></td><td>広背筋</td></tr>
+    <tr><td><code>triceps</code></td><td>上腕三頭筋</td></tr>
+    <tr><td><code>forearm-back</code></td><td>前腕（背面）</td></tr>
+    <tr><td><code>lower-back</code></td><td>脊柱起立筋</td></tr>
+    <tr><td><code>glutes</code></td><td>臀筋</td></tr>
+    <tr><td><code>hamstrings</code></td><td>ハムストリング</td></tr>
+    <tr><td><code>calves</code></td><td>ふくらはぎ</td></tr>
+  </table>
+
+  <h2>ハイライト色定義</h2>
+  <table>
+    <tr><th>関与度</th><th>ラベル</th><th>カラー</th></tr>
+    <tr><td><code>primary</code></td><td>主働筋</td><td><code>#ff4d4d</code>（赤）</td></tr>
+    <tr><td><code>secondary</code></td><td>補助筋</td><td><code>#ff9d4d</code>（オレンジ）</td></tr>
+    <tr><td><code>stabilizer</code></td><td>安定筋</td><td><code>#ffd84d</code>（黄）</td></tr>
+    <tr><td><code>none</code></td><td>非関与</td><td><code>#9aa1a8</code>（グレー / デフォルト）</td></tr>
+  </table>
+
+  <h2>種目データ（28種目）</h2>
+  <p>プロトタイプ <code>muscles.js</code> で定義。種目ID・名称・カテゴリ・筋肉マッピングの全量を以下に記載する。</p>
+
+  <h3>胸（5種目）</h3>
+  <table>
+    <tr><th>種目名</th><th>主働筋</th><th>補助筋</th><th>安定筋</th></tr>
+    <tr>
+      <td>ベンチプレス</td>
+      <td>大胸筋（下部）</td>
+      <td>大胸筋（上部）・三角筋（前部）・上腕三頭筋</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>インクラインベンチプレス</td>
+      <td>大胸筋（上部）・三角筋（前部）</td>
+      <td>上腕三頭筋</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>デクラインベンチプレス</td>
+      <td>大胸筋（下部）</td>
+      <td>上腕三頭筋</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>腕立て伏せ</td>
+      <td>大胸筋（下部）</td>
+      <td>大胸筋（上部）・上腕三頭筋・三角筋（前部）</td>
+      <td>腹直筋（上部）・腹直筋（下部）</td>
+    </tr>
+    <tr>
+      <td>ダンベルフライ</td>
+      <td>大胸筋（下部）・大胸筋（上部）</td>
+      <td>三角筋（前部）</td>
+      <td>-</td>
+    </tr>
+  </table>
+
+  <h3>肩（4種目）</h3>
+  <table>
+    <tr><th>種目名</th><th>主働筋</th><th>補助筋</th><th>安定筋</th></tr>
+    <tr>
+      <td>ショルダープレス</td>
+      <td>三角筋（前部）・三角筋（中部）</td>
+      <td>上腕三頭筋・僧帽筋（上部）</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>サイドレイズ</td>
+      <td>三角筋（中部）</td>
+      <td>僧帽筋（上部）</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>リアレイズ</td>
+      <td>三角筋（後部）</td>
+      <td>僧帽筋（中下部）</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>シュラッグ</td>
+      <td>僧帽筋（上部）</td>
+      <td>前腕・前腕（背面）</td>
+      <td>-</td>
+    </tr>
+  </table>
+
+  <h3>背中（4種目）</h3>
+  <table>
+    <tr><th>種目名</th><th>主働筋</th><th>補助筋</th><th>安定筋</th></tr>
+    <tr>
+      <td>懸垂</td>
+      <td>広背筋</td>
+      <td>上腕二頭筋・三角筋（後部）・僧帽筋（中下部）</td>
+      <td>前腕</td>
+    </tr>
+    <tr>
+      <td>ラットプルダウン</td>
+      <td>広背筋</td>
+      <td>上腕二頭筋・三角筋（後部）</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>ベントオーバーロウ</td>
+      <td>広背筋・僧帽筋（中下部）</td>
+      <td>上腕二頭筋・三角筋（後部）</td>
+      <td>脊柱起立筋</td>
+    </tr>
+    <tr>
+      <td>デッドリフト</td>
+      <td>脊柱起立筋・臀筋・ハムストリング・僧帽筋（中下部）</td>
+      <td>広背筋・前腕（背面）</td>
+      <td>腹直筋（上部）・腹直筋（下部）</td>
+    </tr>
+  </table>
+
+  <h3>腕（4種目）</h3>
+  <table>
+    <tr><th>種目名</th><th>主働筋</th><th>補助筋</th><th>安定筋</th></tr>
+    <tr>
+      <td>バーベルカール</td>
+      <td>上腕二頭筋</td>
+      <td>前腕</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>ハンマーカール</td>
+      <td>上腕二頭筋・前腕</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>トライセプスエクステンション</td>
+      <td>上腕三頭筋</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>ディップス</td>
+      <td>上腕三頭筋・大胸筋（下部）</td>
+      <td>三角筋（前部）</td>
+      <td>-</td>
+    </tr>
+  </table>
+
+  <h3>腹（4種目）</h3>
+  <table>
+    <tr><th>種目名</th><th>主働筋</th><th>補助筋</th><th>安定筋</th></tr>
+    <tr>
+      <td>クランチ</td>
+      <td>腹直筋（上部）</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>レッグレイズ</td>
+      <td>腹直筋（下部）</td>
+      <td>腹直筋（上部）</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>サイドクランチ</td>
+      <td>外腹斜筋</td>
+      <td>腹直筋（上部）</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>プランク</td>
+      <td>腹直筋（上部）・腹直筋（下部）</td>
+      <td>-</td>
+      <td>三角筋（前部）・臀筋</td>
+    </tr>
+  </table>
+
+  <h3>脚（7種目）</h3>
+  <table>
+    <tr><th>種目名</th><th>主働筋</th><th>補助筋</th><th>安定筋</th></tr>
+    <tr>
+      <td>スクワット</td>
+      <td>大腿四頭筋・臀筋</td>
+      <td>ハムストリング・内転筋</td>
+      <td>脊柱起立筋・腹直筋（上部）</td>
+    </tr>
+    <tr>
+      <td>レッグプレス</td>
+      <td>大腿四頭筋・臀筋</td>
+      <td>ハムストリング</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>ランジ</td>
+      <td>大腿四頭筋・臀筋</td>
+      <td>ハムストリング・内転筋</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>レッグカール</td>
+      <td>ハムストリング</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>レッグエクステンション</td>
+      <td>大腿四頭筋</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>カーフレイズ</td>
+      <td>ふくらはぎ</td>
+      <td>-</td>
+      <td>前脛骨筋</td>
+    </tr>
+    <tr>
+      <td>ヒップスラスト</td>
+      <td>臀筋</td>
+      <td>ハムストリング</td>
+      <td>-</td>
+    </tr>
+  </table>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/exercise-list.html">種目一覧（ExerciseListView）</a> — 種目選択のエントリポイント</li>
+    <li><a href="../screens/workout-session.html">トレーニング記録（WorkoutSessionView）</a> — 種目追加時にサイドパネル or モーダルとして呼び出す想定</li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant V as MuscleHighlightView
+  participant VM as MuscleHighlightViewModel
+  participant DS as ExerciseDataStore
+
+  U->>V: 種目リストから種目をタップ
+  V->>VM: selectExercise(exercise)
+  VM->>DS: muscles(for: exercise.id)
+  DS-->>VM: [MuscleActivation] 返す
+  VM-->>V: highlightedMuscles 更新
+  V->>V: 人体図SVG/Path を 0.25s ease アニメーションで色更新
+  V-->>U: ハイライト後の人体図を表示
+
+  alt 筋肉部位をタップ（v2機能）
+    U->>V: 部位をタップ
+    V->>VM: selectMuscle(muscleId)
+    VM->>DS: exercises(for: muscleId)
+    DS-->>VM: [Exercise] 返す
+    VM-->>V: relatedExercises 更新
+    V-->>U: 部位名 + 関連種目リストをポップオーバー表示
+  end
+  </div>
+
+  <h2>人体図の描画方針</h2>
+  <p>SVG（Webプロトタイプ）または SwiftUI Path（iOS本実装）で5層構造を採用。「教科書イラスト風」をターゲットとし、写真リアル（皮膚色・血管描写）は避ける。</p>
+
+  <table>
+    <tr><th>レイヤー</th><th>役割</th><th>実装</th></tr>
+    <tr>
+      <td>Layer 1（ベース）</td>
+      <td>各筋肉の輪郭 Path。fill 色で関与度を表現</td>
+      <td>SwiftUI <code>Path</code> / SVG <code>&lt;path&gt;</code></td>
+    </tr>
+    <tr>
+      <td>Layer 2（陰影）</td>
+      <td>radialGradient で周辺減光。立体感を付加</td>
+      <td>CSS <code>mix-blend-mode: multiply</code> / SwiftUI <code>.blendMode(.multiply)</code></td>
+    </tr>
+    <tr>
+      <td>Layer 3（ハイライト）</td>
+      <td>中央が明るくなるグラデーション</td>
+      <td>CSS <code>mix-blend-mode: screen</code> / SwiftUI <code>.blendMode(.screen)</code></td>
+    </tr>
+    <tr>
+      <td>Layer 4（筋繊維 Striations）</td>
+      <td>各筋肉の繊維方向に細い線を引き、解剖図感を出す</td>
+      <td>SVG <code>&lt;line&gt;</code> / SwiftUI <code>Path.move + addLine</code></td>
+    </tr>
+    <tr>
+      <td>Layer 5（補助線）</td>
+      <td>鎖骨・腹白線・脊柱ラインなど解剖学的サインライン</td>
+      <td>SVG <code>&lt;path&gt;</code>（stroke のみ）</td>
+    </tr>
+  </table>
+
+  <h2>インタラクション</h2>
+  <table>
+    <tr><th>操作</th><th>動作</th><th>対応バージョン</th></tr>
+    <tr>
+      <td>種目をタップ</td>
+      <td>該当筋肉が 0.25s ease のカラーアニメーションでハイライト。非関与筋はグレーに戻る</td>
+      <td>MVP</td>
+    </tr>
+    <tr>
+      <td>筋肉をタップ</td>
+      <td>該当する種目を逆引きし、関連種目リストをポップオーバー表示</td>
+      <td>v2</td>
+    </tr>
+    <tr>
+      <td>筋肉をホバー（iPad）</td>
+      <td>筋肉名をツールチップ表示</td>
+      <td>v2</td>
+    </tr>
+  </table>
+
+  <h2>iOS 実装方針</h2>
+  <p>3つの実装案を検討。推奨は第1案（SwiftUI Path）。</p>
+
+  <table>
+    <tr><th>案</th><th>方針</th><th>メリット</th><th>デメリット</th></tr>
+    <tr>
+      <td><strong>第1案（推奨）</strong></td>
+      <td>SwiftUI <code>Path</code> + <code>Canvas</code> でネイティブ描画。プロトのSVGパスをパースして <code>Path</code> に変換するヘルパーを実装</td>
+      <td>SwiftUI エコシステムに完全統合。アニメーションが自然。ダークモード対応容易</td>
+      <td>SVG → Path 変換の初期工数が必要</td>
+    </tr>
+    <tr>
+      <td>第2案</td>
+      <td>SVGファイルを Asset として読み込み、<code>SVGKit</code>（OSSライブラリ）で描画</td>
+      <td>SVGをそのまま使える。変換工数ゼロ</td>
+      <td>外部依存。ライブラリのメンテ状況に依存。細かい制御が難しい</td>
+    </tr>
+    <tr>
+      <td>第3案</td>
+      <td>HTML/SVG を <code>WKWebView</code> で表示。プロトコードをほぼそのまま流用</td>
+      <td>実装最速。プロトの検証資産を直接利用可</td>
+      <td>ネイティブUIとの統一感に課題。メモリ・パフォーマンスのオーバーヘッド</td>
+    </tr>
+  </table>
+
+  <h3>Swiftデータモデル</h3>
+  <pre><code>enum Intensity: String, Codable {
+    case primary     // 主働筋
+    case secondary   // 補助筋
+    case stabilizer  // 安定筋
+}
+
+enum MuscleSide: String, Codable {
+    case front, back
+}
+
+struct Muscle: Identifiable {
+    let id: String          // 例: "chest-upper"
+    let label: String       // 例: "大胸筋（上部）"
+    let side: MuscleSide
+}
+
+struct MuscleActivation: Identifiable {
+    let id: String          // Muscle.id
+    let intensity: Intensity
+}
+
+struct ExerciseMuscleData: Identifiable {
+    let id: String          // 例: "bench-press"
+    let name: String        // 例: "ベンチプレス"
+    let category: String    // 例: "胸"
+    let activations: [MuscleActivation]
+}</code></pre>
+
+  <h2>MVP / v2 / v3 段階定義</h2>
+  <table>
+    <tr><th>フェーズ</th><th>内容</th><th>対応種目・部位数</th></tr>
+    <tr>
+      <td><strong>MVP</strong></td>
+      <td>28種目 × 22部位の静的データで人体図ハイライト。種目選択 → ハイライト表示のみ。逆引き・ヒートマップなし</td>
+      <td>28種目 / 22部位</td>
+    </tr>
+    <tr>
+      <td>v2</td>
+      <td>筋肉タップで関連種目を逆引き表示。種目登録時に該当筋肉が自動ハイライト。iPad ホバーツールチップ</td>
+      <td>同上（逆引き機能追加）</td>
+    </tr>
+    <tr>
+      <td>v3</td>
+      <td>過去1週間 / 1ヶ月の累積負荷を筋肉ヒートマップで表示。自分のトレーニング偏りを可視化する「筋肉バランスチェック」</td>
+      <td>実績データと連動</td>
+    </tr>
+  </table>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>筋肉データ（22部位 ID・ラベル）はコードバンドル内の静的 JSON または Swift 定数として保持する。ネットワーク通信不要</li>
+    <li>種目データ（28種目の筋肉マッピング）も同様に静的データとして管理。将来的にはユーザー種目登録時にカスタムマッピングを付与可能とする</li>
+    <li>種目リストの表示順: カテゴリ（胸→肩→背中→腕→腹→脚）→ 各カテゴリ内はアルファベット/名称順</li>
+    <li>1種目に紐付けられる筋肉は任意数（上限なし）。ただし主働筋（primary）は必ず1つ以上</li>
+    <li>同一筋肉に複数の関与度を付けることは禁止（1部位につき intensity は1つ）</li>
+    <li>v3 累積負荷ヒートマップは Premium 機能として提供予定</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>なし（静的データのみ）</td><td>MVP はネットワーク通信なし</td><td>v3 でサーバー側累積計算が必要になる場合あり</td></tr>
+    <tr><td>SwiftData（v3）</td><td>WorkoutSet の累積負荷集計</td><td>v3 実装時に既存クエリを拡張</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr>
+      <td>選択された種目IDに対する筋肉マッピングが存在しない</td>
+      <td>全筋肉をグレー（非関与）のまま表示。エラーは Logger で warning レベルに記録</td>
+    </tr>
+    <tr>
+      <td>SVG / Path データが不正で描画に失敗</td>
+      <td>人体図エリアに「表示できません」プレースホルダーを表示。LogLevel: error で記録</td>
+    </tr>
+    <tr>
+      <td>アニメーション中に種目を連続タップ</td>
+      <td>直前のアニメーションをキャンセルして最新の選択状態を即時反映</td>
+    </tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>プロトタイプのSVGパス座標をそのままSwiftUI Pathに変換する <code>SVGPathParser</code> ヘルパーを先行実装すると工数削減になる</li>
+    <li>SwiftUI <code>withAnimation(.easeInOut(duration: 0.25))</code> で色変更アニメーションを実装。<code>Color</code> は直接アニメーション対象になるため追加対応不要</li>
+    <li>前面・背面の2ビューは <code>HStack</code> または <code>TabView(style: .page)</code> で切り替える。縦向きiPhoneでは <code>TabView</code> 推奨</li>
+    <li>筋肉部位の <code>Path</code> はプロトの <code>bodymap.js</code> 内の SVG path 文字列から変換。変換スクリプトは Node.js で一度だけ実行してSwiftファイルを生成する方法が最速</li>
+    <li>将来の v3 ヒートマップでは同じ <code>MuscleHighlightView</code> に累積負荷 <code>Double</code>（0.0〜1.0）を渡す設計にしておくと拡張が容易</li>
+    <li>ダークモード対応: ハイライト色は変えず、ベースカラー（非関与グレー）とアウトラインだけ Asset Catalog でモード分岐</li>
+    <li><code>#Preview</code> マクロでサンプル種目（ベンチプレス）を選択状態にした状態を必ず記述</li>
+    <li><code>print()</code> デバッグ禁止。<code>Logger(subsystem: "WorkoutDiary", category: "MuscleHighlight")</code> を使用</li>
+  </ul>
+
+  <h2>参考リンク</h2>
+  <ul>
+    <li>ブラウザプロトタイプ（ローカル）: 開発時 <code>http://localhost:5174/</code></li>
+    <li>プロトソースコード: <code>/Users/happyboy1002/workspace/workout-bodymap-proto/</code></li>
+    <li>競合アプリ: Muscle Booster・Fitbod・Strong</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-23</td><td>初版作成。プロトタイプ（workout-bodymap-proto）検証完了を受けて起案</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-23</footer>
+</div>
+</body>
+</html>
