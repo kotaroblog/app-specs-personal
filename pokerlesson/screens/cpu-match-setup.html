@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカーレッスン - CPU対戦セットアップ</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">ポーカーレッスン</a> / CPU対戦セットアップ</div>
+
+  <header class="site-header">
+    <h1>CPU対戦セットアップ</h1>
+    <p>CPU対戦のテーブルサイズ・スタック等を設定してマッチを開始する画面。</p>
+    <div style="margin-top:8px;">
+      <span class="tag">画面ID: SETUP-01</span>
+      <span class="tag">Phase 1</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    CPU対戦を開始する前に、テーブルサイズ（最大プレイヤー数）などのパラメータをユーザーが選択する。
+    Phase 1 で 6max をデフォルト化し、学習密度の高い現代主流のテーブル設定を推奨する。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr>
+      <td>テーブルサイズ選択</td>
+      <td>チップ選択UI（複数選択肢）</td>
+      <td>2max / 6max / 9max から選択。6max に「推奨」バッジを表示</td>
+    </tr>
+    <tr>
+      <td>6max チップの「推奨」バッジ</td>
+      <td>Badge / Overlay</td>
+      <td>Phase 1 で追加。サブタイトル「学習向け・現代主流」を表示</td>
+    </tr>
+    <tr>
+      <td>スタック設定</td>
+      <td>Slider / Stepper</td>
+      <td>初期スタック枚数（BB単位）</td>
+    </tr>
+    <tr>
+      <td>対戦開始ボタン</td>
+      <td>Button（プライマリ）</td>
+      <td>設定確定 → CPU対戦画面へ遷移</td>
+    </tr>
+    <tr>
+      <td>戻るボタン</td>
+      <td>NavigationLink Back</td>
+      <td>ホーム画面に戻る</td>
+    </tr>
+  </table>
+
+  <h2>6max デフォルト化（Phase 1 変更内容）</h2>
+  <table>
+    <tr><th>項目</th><th>変更前</th><th>変更後</th></tr>
+    <tr>
+      <td>テーブルサイズ初期値</td>
+      <td>9</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <td>6max チップの表示</td>
+      <td>通常チップのみ</td>
+      <td>「推奨」バッジ付き + サブタイトル「学習向け・現代主流」</td>
+    </tr>
+  </table>
+  <p>
+    <strong>変更の意図</strong>:
+    6人テーブルは9人より手数が増え学習密度が上がる。
+    また現代のキャッシュゲームの主流であり、席が空きすぎないため対戦UI的にも自然。
+  </p>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr>
+      <td>初期表示</td>
+      <td>テーブルサイズ = 6max 選択済み（デフォルト）、推奨バッジ表示</td>
+    </tr>
+    <tr>
+      <td>6max 選択時</td>
+      <td>チップがハイライト。推奨バッジが目立つ形で表示</td>
+    </tr>
+    <tr>
+      <td>9max / 2max 選択時</td>
+      <td>選択チップがハイライト。推奨バッジは 6max チップに引き続き表示</td>
+    </tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr>
+      <td>「対戦開始」ボタンをタップ</td>
+      <td>CPU対戦画面（<code>setupTableSize</code> を引き継ぐ）</td>
+    </tr>
+    <tr>
+      <td>戻る</td>
+      <td>ホーム画面</td>
+    </tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// Views/CPUMatch/CPUMatchView.swift
+// テーブルサイズの初期値
+@State private var setupTableSize: Int = 6  // Phase 1 で 9 → 6 に変更
+
+// KPI ロギング（画面表示時）
+EventLogger.shared.log(.cpuSetupShown)
+
+// KPI ロギング（対戦開始時）
+EventLogger.shared.log(.cpuSetupStartedMatch)
+EventLogger.shared.log(.cpuMatchStarted(tableSize: setupTableSize))</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>Views/CPUMatch/CPUMatchView.swift</code>: <code>setupTableSize</code> の初期値を <code>6</code> に変更</li>
+    <li><code>Views/CPUMatch/CPUMatchSetupView.swift</code>: <code>tableSizeChip</code> コンポーネントに推奨バッジを追加。バッジは <code>.overlay</code> または <code>ZStack</code> で実装。サブタイトルは <code>Text("学習向け・現代主流")</code></li>
+    <li>推奨バッジのスタイルは既存の「おすすめ」等バッジがあればそれを流用。なければ <code>Capsule</code> + アクセントカラーで実装</li>
+    <li>画面表示時（<code>onAppear</code>）に <code>EventLogger.shared.log(.cpuSetupShown)</code> を呼ぶ</li>
+    <li>「対戦開始」ボタンの <code>action</code> 内で <code>.cpuSetupStartedMatch</code> と <code>.cpuMatchStarted(tableSize:)</code> を順に送信</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="home.html">ホーム画面 (HOME-01)</a></li>
+    <li><a href="../features/kpi-logging.html">KPIイベントロギング (FEAT-02)</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-23</td><td>初版作成（Phase 1: 6max デフォルト化・推奨バッジを反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-23</footer>
+</div>
+</body>
+</html>

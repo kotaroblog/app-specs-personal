@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカーレッスン - ホーム画面</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">ポーカーレッスン</a> / ホーム画面</div>
+
+  <header class="site-header">
+    <h1>ホーム画面</h1>
+    <p>アプリ起動後の最初の画面。学習セッション・CPU対戦・DailyReview への導線を提供する。</p>
+    <div style="margin-top:8px;">
+      <span class="tag">画面ID: HOME-01</span>
+      <span class="tag">Phase 1</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    ユーザーが「今日何をするか」を素早く選択できる起点画面。
+    Phase 1 では DailyReview（TODAY'S NOTE）カードを追加し、
+    本格セッション前の1分完結の習慣化導線を設ける。
+    画面構成はシンプルさを最優先とし、余計な情報・通知・ストリーク表示は置かない。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr>
+      <td>START LESSON カード</td>
+      <td>Button / NavigationLink</td>
+      <td>本格セッション（5〜15分）への主導線。最も目立つビジュアル</td>
+    </tr>
+    <tr>
+      <td>TODAY'S NOTE カード（DailyReview）</td>
+      <td>Button / NavigationLink</td>
+      <td>START LESSON 直下に配置。1日1問の習慣化導線。START LESSON より視覚的に控えめ（フォントサイズ・背景色・パディングを下げる）</td>
+    </tr>
+    <tr>
+      <td>CPU対戦カード</td>
+      <td>Button / NavigationLink</td>
+      <td>CPU対戦セットアップへの導線</td>
+    </tr>
+    <tr>
+      <td>設定ボタン</td>
+      <td>Toolbar Button</td>
+      <td>右上。設定画面へ遷移</td>
+    </tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>TODAY'S NOTE カードの表示</th></tr>
+    <tr>
+      <td>アクティブ（未完了）</td>
+      <td>「TODAY'S NOTE」ラベル + 「1問だけ」案内テキスト。タップ可能</td>
+    </tr>
+    <tr>
+      <td>完了済み（当日中）</td>
+      <td>グレーアウト + チェックマーク + 「今日のノートは終わっています。」テキスト。タップ不可（または軽いフィードバックのみ）</td>
+    </tr>
+    <tr>
+      <td>問題データなし</td>
+      <td>TODAY'S NOTE カードを非表示にする。エラーUIは出さない</td>
+    </tr>
+  </table>
+
+  <h2>DailyReview カードの状態遷移</h2>
+  <table>
+    <tr><th>条件</th><th>カード状態</th><th>判定ロジック</th></tr>
+    <tr>
+      <td>当日未完了 かつ 問題あり</td>
+      <td>アクティブ</td>
+      <td><code>DailyReview.isCompletedToday() == false</code> かつ 問題データが存在</td>
+    </tr>
+    <tr>
+      <td>当日完了済み</td>
+      <td>完了済み（グレーアウト）</td>
+      <td><code>DailyReview.isCompletedToday() == true</code>。<code>@AppStorage("daily_review_last_completed_at")</code> を <code>Calendar.isDateInToday</code> で判定</td>
+    </tr>
+    <tr>
+      <td>翌日</td>
+      <td>アクティブ（リセット）</td>
+      <td>日付が変わると <code>isCompletedToday()</code> が false を返す</td>
+    </tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th><th>条件</th></tr>
+    <tr>
+      <td>START LESSON カードをタップ</td>
+      <td>レッスン選択画面</td>
+      <td>常時</td>
+    </tr>
+    <tr>
+      <td>TODAY'S NOTE カードをタップ</td>
+      <td>QuizView（isDailyReview=true）</td>
+      <td>アクティブ状態のみ</td>
+    </tr>
+    <tr>
+      <td>CPU対戦カードをタップ</td>
+      <td>CPUMatchSetupView</td>
+      <td>常時</td>
+    </tr>
+    <tr>
+      <td>設定ボタンをタップ</td>
+      <td>設定画面</td>
+      <td>常時</td>
+    </tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// DailyReview 状態判定
+DailyReview.isCompletedToday()  // @AppStorage から読み取り
+
+// DailyReview 問題選定（カードタップ時）
+DailyReview.select(from: questions, tendency: playerTendency)
+// → DailyReviewSelection(question: Question, source: DailyReviewSource)
+
+// KPI ロギング（カード表示時）
+EventLogger.shared.log(.dailyReviewCardShown(source: selection.source))</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>TODAY'S NOTE カードは START LESSON カード直下に配置する（CardGrid や VStack で順序固定）</li>
+    <li>カードのビジュアル差分: TODAY'S NOTE は背景色を <code>.systemGray6</code>、パディングを 12pt（START LESSON は 20pt）など控えめに設定する</li>
+    <li><code>dailyReviewCard</code> は <code>@ViewBuilder</code> のサブビューとして切り出し、HomeView の本体を 200行以下に保つ</li>
+    <li>ホーム画面の <code>onAppear</code> で <code>DailyReview.select()</code> を呼び出し、選定結果を <code>@State</code> に保持する</li>
+    <li><code>lesson_started_after_daily</code> の判定: START LESSON タップ時に <code>@AppStorage("daily_review_last_completed_at")</code> との差分を確認し、600秒以内なら EventLogger に送信</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../features/daily-review.html">DailyReview 機能仕様書 (FEAT-01)</a></li>
+    <li><a href="../features/kpi-logging.html">KPIイベントロギング (FEAT-02)</a></li>
+    <li><a href="cpu-match-setup.html">CPU対戦セットアップ (SETUP-01)</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-23</td><td>初版作成（Phase 1: DailyReview カード追加を反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-23</footer>
+</div>
+</body>
+</html>
