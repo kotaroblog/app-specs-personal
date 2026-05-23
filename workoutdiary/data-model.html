@@ -10,7 +10,7 @@
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">WorkoutDiary</a> / データモデル</div>
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">WorkoutDiary</a> / データモデル</div>
 
   <header class="site-header">
     <h1>データモデル</h1>
@@ -20,43 +20,74 @@
   <h2>ER 図</h2>
   <div class="mermaid">
 erDiagram
-  Workout ||--o{ Exercise : has
-  Exercise ||--o{ ExerciseSet : has
+  WorkoutSession ||--o{ WorkoutSet : has
+  WorkoutSet }o--|| Exercise : references
+  WorkoutTemplate ||--o{ TemplateEntry : has
 
-  Workout {
+  WorkoutSession {
     UUID id
     Date date
     String note
-    Date createdAt
+  }
+  WorkoutSet {
+    UUID id
+    Double weight
+    Int reps
+    Int order
+    Double duration
+    Double distance
   }
   Exercise {
     UUID id
     String name
     String category
-    Int order
+    String memo
+    Bool useCardioInput
+    Date createdAt
   }
-  ExerciseSet {
+  WorkoutTemplate {
     UUID id
+    String name
+    Date createdAt
+    IntArray assignedWeekdays
+  }
+  TemplateEntry {
+    UUID id
+    String exerciseName
+    String exerciseCategory
     Double weight
     Int reps
+    Int sets
     Int order
+    Double duration
+    Double distance
+    Bool isCardio
   }
   </div>
 
-  <h2>Workout</h2>
+  <h2>WorkoutSession</h2>
   <pre><code>@Model
-final class Workout {
+final class WorkoutSession {
     var id: UUID = UUID()
     var date: Date = Date()
-    var note: String?
-    var createdAt: Date = Date()
+    var note: String = ""
 
-    @Relationship(deleteRule: .cascade)
-    var exercises: [Exercise] = []
+    @Relationship(deleteRule: .cascade, inverse: \WorkoutSet.session)
+    var sets: [WorkoutSet] = []
+}</code></pre>
 
-    init(date: Date = .now) {
-        self.date = date
-    }
+  <h2>WorkoutSet</h2>
+  <pre><code>@Model
+final class WorkoutSet {
+    var id: UUID = UUID()
+    var weight: Double = 0
+    var reps: Int = 0
+    var order: Int = 0
+    var duration: Double = 0   // 有酸素: 分
+    var distance: Double = 0   // 有酸素: km
+
+    var exercise: Exercise?
+    var session: WorkoutSession?
 }</code></pre>
 
   <h2>Exercise</h2>
@@ -64,35 +95,103 @@ final class Workout {
 final class Exercise {
     var id: UUID = UUID()
     var name: String = ""
-    var category: String = ""
-    var order: Int = 0
+    var category: String = ""  // ExerciseCategory.rawValue
+    var memo: String = ""
+    var createdAt: Date = Date()
+    var useCardioInput: Bool = false
 
-    @Relationship(deleteRule: .cascade)
-    var sets: [ExerciseSet] = []
+    @Relationship(deleteRule: .cascade, inverse: \WorkoutSet.exercise)
+    var sets: [WorkoutSet] = []
 
-    var workout: Workout?
+    var isCardio: Bool {
+        category == ExerciseCategory.cardio.rawValue || useCardioInput
+    }
+}
+
+/// 部位カテゴリ（v1.1.0: color プロパティ追加）
+enum ExerciseCategory: String, CaseIterable, Identifiable {
+    case chest      // 胸
+    case back       // 背中
+    case shoulders  // 肩
+    case arms       // 腕
+    case legs       // 脚
+    case abs        // 腹筋
+    case cardio     // 有酸素
+    case other      // その他
+
+    var displayName: String { ... }  // 日本語表示名
+
+    /// 部位カラー（カレンダーヒートマップ・凡例で使用、v1.1.0）
+    var color: Color {
+        switch self {
+        case .chest:     Color(red: 0.95, green: 0.35, blue: 0.40)  // 赤
+        case .back:      Color(red: 0.30, green: 0.55, blue: 0.95)  // 青
+        case .shoulders: Color(red: 0.95, green: 0.75, blue: 0.20)  // 黄
+        case .arms:      Color(red: 0.95, green: 0.55, blue: 0.25)  // オレンジ
+        case .legs:      Color(red: 0.30, green: 0.75, blue: 0.45)  // 緑
+        case .abs:       Color(red: 0.70, green: 0.45, blue: 0.90)  // 紫
+        case .cardio:    Color(red: 0.30, green: 0.80, blue: 0.85)  // シアン
+        case .other:     Color(white: 0.55)                         // グレー
+        }
+    }
 }</code></pre>
 
-  <h2>ExerciseSet</h2>
+  <h2>WorkoutTemplate（v1.1.0: assignedWeekdays 追加）</h2>
   <pre><code>@Model
-final class ExerciseSet {
+final class WorkoutTemplate {
     var id: UUID = UUID()
+    var name: String = ""
+    var createdAt: Date = Date()
+
+    /// 曜日固定ルーティン（v1.1.0）
+    /// 0=日曜, 1=月曜, 2=火曜, 3=水曜, 4=木曜, 5=金曜, 6=土曜
+    /// 空配列の場合は曜日固定なし（任意日のテンプレートとして使用可能）
+    var assignedWeekdays: [Int] = []
+
+    @Relationship(deleteRule: .cascade, inverse: \TemplateEntry.template)
+    var entries: [TemplateEntry] = []
+
+    var sortedEntries: [TemplateEntry] {
+        entries.sorted { $0.order < $1.order }
+    }
+
+    /// 指定日（曜日基準）にこのルーティンが該当するか（v1.1.0）
+    func appliesTo(date: Date) -> Bool {
+        guard !assignedWeekdays.isEmpty else { return false }
+        // Calendar.weekday: 1=Sunday...7=Saturday → 0=Sunday に正規化
+        let weekday = Calendar.current.component(.weekday, from: date) - 1
+        return assignedWeekdays.contains(weekday)
+    }
+}</code></pre>
+
+  <h2>TemplateEntry</h2>
+  <pre><code>@Model
+final class TemplateEntry {
+    var id: UUID = UUID()
+    var exerciseName: String = ""
+    var exerciseCategory: String = ""
     var weight: Double = 0
     var reps: Int = 0
+    var sets: Int = 1
     var order: Int = 0
+    var duration: Double = 0   // 有酸素: 分
+    var distance: Double = 0   // 有酸素: km
+    var isCardio: Bool = false
 
-    var exercise: Exercise?
+    var template: WorkoutTemplate?
 }</code></pre>
 
   <h2>マイグレーション方針</h2>
   <div class="callout warn">
-    SwiftDataの<code>@Model</code>は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する。
+    SwiftDataの <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定すること。<br><br>
+    <strong>v1.1.0 マイグレーション</strong>: <code>WorkoutTemplate.assignedWeekdays: [Int] = []</code> を追加。デフォルト空配列のため、既存データに影響なし（SwiftData lightweight migration で自動対応）。
   </div>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-05-23</td><td>v1.1.0: WorkoutTemplate に assignedWeekdays: [Int]（デフォルト空配列）と appliesTo(date:) を追加。ExerciseCategory に color プロパティ（8部位カラー定義）を追加。ER図を実装と整合するよう全面修正</td></tr>
   </table>
 
   <script>
@@ -102,9 +201,7 @@ final class ExerciseSet {
     });
   </script>
 
-  <footer class="site-footer">
-    最終更新: 2026-05-09
-  </footer>
+  <footer class="site-footer">最終更新: 2026-05-23</footer>
 </div>
 </body>
 </html>

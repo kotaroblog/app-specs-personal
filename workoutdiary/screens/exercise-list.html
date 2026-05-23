@@ -13,26 +13,38 @@
   <header class="site-header">
     <h1>種目一覧画面（ExerciseListView）</h1>
     <p>種目マスタの一覧・追加・編集</p>
-    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-EXERCISE-01</span></div>
+    <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: WD-EXERCISE-01</span></div>
   </header>
 
   <h2>目的・役割</h2>
-  <p>登録済みの種目（Exercise）を一覧表示し、追加・編集・削除を行う画面。カテゴリ別フィルタ対応。</p>
+  <p>登録済みの種目（Exercise）を一覧表示し、追加・編集・削除・ワークアウト追加を行う画面。カテゴリ別フィルタ対応。v1.1.0 で行の操作 UI を「➕・✏️・🗑」アイコン常時表示に刷新し、スワイプアクションを廃止した。</p>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（v1.1.0 以降）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>カテゴリフィルタ</td><td>Picker</td><td>胸/背中/肩/腕/脚/腹筋/有酸素/その他</td></tr>
+    <tr><td>カテゴリフィルタ</td><td>Picker（segmented 等）</td><td>胸/背中/肩/腕/脚/腹筋/有酸素/その他 でフィルタ</td></tr>
     <tr><td>種目リスト</td><td>List</td><td>名前・カテゴリ・有酸素フラグ表示</td></tr>
-    <tr><td>追加ボタン</td><td>NavigationLink</td><td>ExerciseFormView へ</td></tr>
-    <tr><td>削除アクション</td><td>Swipe</td><td>確認ダイアログ後削除</td></tr>
+    <tr><td>➕（ワークアウト追加）アイコン</td><td>Button（各行右端）</td><td>タップで AddWorkoutView を該当種目プリセット状態で起動。行タップと同機能</td></tr>
+    <tr><td>✏️（編集）アイコン</td><td>Button（各行右端）</td><td>ExerciseFormView（編集モード）を起動</td></tr>
+    <tr><td>🗑（削除）アイコン</td><td>Button（各行右端）</td><td>確認ダイアログ後に削除</td></tr>
+    <tr><td>追加ボタン</td><td>ToolbarItem / NavigationLink</td><td>ExerciseFormView（新規）を起動</td></tr>
   </table>
+
+  <div class="callout">
+    <strong>v1.1.0 変更点</strong><br>
+    - スワイプアクション（削除）を廃止<br>
+    - 各行に「➕（ワークアウト追加）・✏️（編集）・🗑（削除）」アイコンを常時表示<br>
+    - 行タップ / ➕アイコンタップ = AddWorkoutView（該当種目プリセット）に統一<br>
+    - セルタップ = ExerciseFormView（編集）だった旧仕様を廃止
+  </div>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>セルタップ</td><td>ExerciseFormView（編集mode）</td></tr>
+    <tr><td>行タップ / ➕アイコンタップ</td><td>AddWorkoutView（該当種目プリセット状態、sheet）</td></tr>
+    <tr><td>✏️アイコンタップ</td><td>ExerciseFormView（編集モード）</td></tr>
     <tr><td>追加ボタン</td><td>ExerciseFormView（新規）</td></tr>
+    <tr><td>🗑アイコンタップ</td><td>確認ダイアログ → 削除 or キャンセル</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
@@ -42,25 +54,42 @@
     var category: String  // ExerciseCategory.rawValue
     var memo: String
     var createdAt: Date
-    var useCardioInput: Bool
+    var useCardioInput: Bool = false
+}
+
+// v1.1.0 追加: 部位カラー
+enum ExerciseCategory: String, CaseIterable {
+    case chest, back, shoulders, arms, legs, abs, cardio, other
+
+    var color: Color { ... }  // 8部位のカラー定義（カレンダーヒートマップ等で使用）
+    var displayName: String   // 日本語表示名
 }</code></pre>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li class="done">初回起動時に <code>insertDefaultExercises()</code> でデフォルト種目を挿入</li>
+    <li class="done">初回起動時に insertDefaultExercises() でデフォルト種目を挿入</li>
     <li class="done">削除時は @Relationship(deleteRule: .cascade) で関連 WorkoutSet も削除</li>
+    <li class="done">v1.1.0: スワイプ削除廃止。「➕・✏️・🗑」アイコンを各行右端に常時表示</li>
+    <li class="done">v1.1.0: 行タップ = ➕アイコンタップ = AddWorkoutView（プリセット）に統一</li>
+    <li class="done">v1.1.0: ExerciseCategory に color プロパティ追加（カレンダーヒートマップ用）</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
     <li><a href="workout-session.html">トレーニング記録画面</a></li>
+    <li><a href="add-workout.html">セット追加画面</a></li>
     <li><a href="../features/migration.html">マイグレーション機能</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-05-23</td><td>v1.1.0: スワイプ削除廃止→「➕/✏️/🗑」アイコン常時表示に変更、行タップ=AddWorkoutViewプリセット起動に統一、ExerciseCategory.color プロパティ追記</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-05-23</footer>
 </div>
 </body>
 </html>

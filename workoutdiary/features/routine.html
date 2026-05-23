@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - ルーティン機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / ルーティン機能</div>
+
+  <header class="site-header">
+    <h1>ルーティン機能</h1>
+    <p>曜日固定のトレーニングテンプレートを「今日のルーティン」として自動提案する機能（v1.1.0）</p>
+    <div class="section-meta">
+      <span class="tag done">v1.0</span>
+      <span class="tag">機能ID: WD-FEAT-ROUTINE</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>「ルーティン機能」は WorkoutTemplate（旧称: テンプレート）に曜日割り当て（assignedWeekdays）を付与し、その日の曜日に対応したルーティンをトレーニング記録画面・カレンダー画面に自動提案する機能。ユーザーはワークアウトを開始する際に何をすべきかを迷わず、1タップでルーティンを適用できる。</p>
+
+  <h3>目的・ユーザー価値</h3>
+  <ul>
+    <li>「今日は何をやるべきか」迷いをなくし、記録開始までの摩擦を最小化する</li>
+    <li>スプリット（胸の日/背中の日）を維持しやすくする</li>
+    <li>週間トレーニング計画をカレンダーで視覚的に確認できる（予定ドット）</li>
+  </ul>
+
+  <h3>想定ユーザー</h3>
+  <ul>
+    <li>週3〜4回以上トレーニングし、部位別スプリットを組んでいるユーザー</li>
+    <li>特定の曜日に固定メニューを行うルーティンワーカー</li>
+  </ul>
+
+  <h2>データモデル</h2>
+  <pre><code>@Model
+final class WorkoutTemplate {
+    var id: UUID = UUID()
+    var name: String = ""
+    var createdAt: Date = Date()
+
+    /// 割り当て曜日（v1.1.0）: 0=日曜, 1=月曜, ..., 6=土曜
+    /// 空配列の場合は曜日固定なし（テンプレートとして手動適用のみ）
+    var assignedWeekdays: [Int] = []
+
+    @Relationship(deleteRule: .cascade, inverse: \TemplateEntry.template)
+    var entries: [TemplateEntry] = []
+
+    var sortedEntries: [TemplateEntry] { entries.sorted { $0.order < $1.order } }
+
+    /// 指定日の曜日がこのルーティンの担当曜日かどうかを返す
+    func appliesTo(date: Date) -> Bool {
+        guard !assignedWeekdays.isEmpty else { return false }
+        let weekday = Calendar.current.component(.weekday, from: date) - 1
+        return assignedWeekdays.contains(weekday)
+    }
+}</code></pre>
+
+  <div class="callout">
+    <strong>マイグレーション</strong><br>
+    <code>assignedWeekdays: [Int] = []</code> はデフォルト空配列のため、SwiftData lightweight migration で既存データへの影響なし。
+  </div>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/template-list.html">ルーティン選択（TemplateListView）</a> — ルーティン一覧・適用・曜日バッジ表示</li>
+    <li><a href="../screens/workout-session.html">トレーニング記録画面（WorkoutSessionView）</a> — エンプティCTA「今日のルーティン」プライマリ提案</li>
+    <li><a href="../screens/calendar.html">カレンダー画面（CalendarView）</a> — 未来日の予定ドット・BottomSheet ルーティンセクション</li>
+  </ul>
+  <p>SaveTemplateView / EditTemplateView でも曜日選択 UI（WeekdayPicker）を表示する（別途仕様書なし、TemplateListView 仕様書参照）。</p>
+
+  <h2>処理フロー: 今日のルーティン適用</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant V as WorkoutSessionView
+  participant RSS as RoutineSuggestionService
+  participant DB as SwiftData
+
+  V->>RSS: todaysRoutine(for: selectedDate, in: templates)
+  RSS-->>V: WorkoutTemplate? (曜日一致の先頭1件)
+
+  alt ルーティンあり
+    V->>V: エンプティCTA「今日のルーティン」プライマリカード表示
+    U->>V: カードをタップ
+    V->>RSS: applyRoutine(_:to:existingSession:modelContext:exercises:)
+    RSS->>DB: WorkoutSession INSERT (新規) or 既存に追記
+    RSS->>DB: WorkoutSet × entries.sets 数だけ INSERT
+    RSS-->>V: 挿入セット数を返す
+    V->>V: currentSession が更新されワークアウトリスト表示
+  else ルーティンなし
+    V->>V: エンプティCTA「ルーティンから追加」セカンダリボタン表示
+    U->>V: ボタンをタップ
+    V->>V: TemplateListView sheet 表示
+  end
+  </div>
+
+  <h2>処理フロー: カレンダー予定ドット生成</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant V as CalendarView
+  participant DB as SwiftData
+  participant RSS as RoutineSuggestionService
+
+  V->>DB: @Query で当月の WorkoutSession + WorkoutTemplate を取得
+  loop 月内の各日
+    V->>V: セッションあり → 部位カラードット生成
+    V->>RSS: routines(for: date, in: templates)
+    alt 未来日 かつ 実績なし かつ ルーティンあり
+      RSS-->>V: [WorkoutTemplate] 返す
+      V->>V: 予定ドット（枠線スタイル）を描画
+    end
+  end
+  </div>
+
+  <h2>RoutineSuggestionService</h2>
+  <pre><code>/// 指定日のルーティン提案・適用を行うサービス（v1.1.0）
+@MainActor
+enum RoutineSuggestionService {
+
+    /// 指定日に割り当てられたルーティンを全て返す
+    static func routines(for date: Date, in templates: [WorkoutTemplate]) -> [WorkoutTemplate]
+
+    /// 指定日に該当する先頭1件のルーティンを返す（なければ nil）
+    static func todaysRoutine(for date: Date, in templates: [WorkoutTemplate]) -> WorkoutTemplate?
+
+    /// ルーティンの全エントリを WorkoutSession に展開する
+    /// - existingSession があれば末尾に追加、なければ新規に WorkoutSession を作成
+    /// - Returns: 挿入したセット数
+    @discardableResult
+    static func applyRoutine(
+        _ routine: WorkoutTemplate,
+        to date: Date,
+        existingSession: WorkoutSession?,
+        modelContext: ModelContext,
+        exercises: [Exercise]
+    ) -> Int
+}</code></pre>
+
+  <h2>WeekdayPicker UI コンポーネント</h2>
+  <p>SaveTemplateView / EditTemplateView で使用する曜日選択 UI。</p>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>ファイル</td><td>Views/Components/WeekdayPicker.swift</td></tr>
+    <tr><td>表示</td><td>日〜土の7ボタンを横並びで表示。選択状態は AppTheme.accent で塗りつぶし</td></tr>
+    <tr><td>バインディング</td><td>@Binding var selectedWeekdays: [Int]</td></tr>
+    <tr><td>複数選択</td><td>可。同一ルーティンに月・水・金など複数曜日を割り当て可能</td></tr>
+    <tr><td>表示形式</td><td>「日」「月」「火」「水」「木」「金」「土」（1文字ラベル）</td></tr>
+  </table>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>1つのルーティンに複数曜日を割り当て可能（例: 月・水・金）</li>
+    <li>同一曜日に複数のルーティンが割り当てられている場合、<code>RoutineSuggestionService.todaysRoutine</code> は先頭1件のみを返す（作成日降順クエリ結果の先頭）</li>
+    <li>assignedWeekdays が空配列のルーティンは「曜日固定なし」として、自動提案の対象外（TemplateListView から手動適用のみ）</li>
+    <li>ルーティン適用は「末尾追加」。既存セッションがあれば既存セットの後ろに挿入し、上書きはしない</li>
+    <li>TemplateEntry.exerciseName と一致する Exercise が見つからない場合、そのエントリはスキップ（名前変更・削除されたケースへの対応）</li>
+    <li>セット数上限: TemplateListView の loadTemplate では min(entry.sets, 20) で上限制御</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>SwiftData ModelContext</td><td>WorkoutSession / WorkoutSet の INSERT</td><td>@MainActor 必須</td></tr>
+    <tr><td>Calendar.current</td><td>曜日判定（component(.weekday, from:)）</td><td>1=Sunday を 0 に正規化して使用</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>TemplateEntry に対応する Exercise が存在しない（名前変更・削除）</td><td>そのエントリをスキップして処理を継続。エラー表示なし</td></tr>
+    <tr><td>assignedWeekdays に無効値（0〜6 外）が含まれる</td><td>appliesTo(date:) 内で contains 判定が false になるため影響なし</td></tr>
+    <tr><td>ルーティン適用後のセット数が多すぎる（テンプレート由来）</td><td>TemplateListView: min(entry.sets, 20) で上限制御</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">RoutineSuggestionService は @MainActor enum（状態なし、静的メソッドのみ）</li>
+    <li class="done">WorkoutTemplate.appliesTo(date:) は Calendar.weekday から 1 を引いて 0-based に正規化（0=日曜）</li>
+    <li class="done">WorkoutSessionView の todaysRoutine は @Query から取得した templates を RoutineSuggestionService に渡す computed property</li>
+    <li class="done">エンプティCTA のプライマリカードは AppTheme.accent 背景 + 黒文字 + shadow(accent.opacity(0.4), radius: 10)</li>
+    <li class="done">WeekdayPicker は SaveTemplateView / EditTemplateView の「曜日選択」セクションに配置</li>
+    <li class="done">CalendarView の予定ドットは枠線スタイル（stroke）で実績ドット（fill）と区別</li>
+    <li>通知リマインダー（v1.2.0 実装予定）: ルーティン当日の朝に「今日は〇〇の日です」プッシュ通知</li>
+  </ul>
+
+  <h2>新規追加ファイル一覧（v1.1.0）</h2>
+  <table>
+    <tr><th>ファイル</th><th>役割</th></tr>
+    <tr><td>Services/RoutineSuggestionService.swift</td><td>曜日判定・ルーティン展開サービス</td></tr>
+    <tr><td>Views/Components/WeekdayPicker.swift</td><td>曜日選択 UI コンポーネント</td></tr>
+    <tr><td>Views/Workout/ExerciseCard.swift</td><td>ExerciseCard を WorkoutSessionView から切り出した View</td></tr>
+    <tr><td>Views/Workout/WorkoutBottomActionBar.swift</td><td>ボトムアクションバー・FAB・クイックアクションチップ</td></tr>
+    <tr><td>Services/WorkoutCopyService.swift</td><td>「前回をコピー」セッション丸コピーサービス（AddWorkoutView 内の種目単位コピーとは別）</td></tr>
+  </table>
+
+  <h2>将来拡張</h2>
+  <ul>
+    <li><strong>v1.2.0 予定</strong>: ルーティン当日の朝に「今日は〇〇の日です」ローカルプッシュ通知リマインダー</li>
+    <li>ルーティン適用時の重量・レップ自動補正（ユーザーの直近実績から上限・下限を調整）</li>
+    <li>複数ルーティン候補がある場合のピッカー UI（現状は先頭1件を使用）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-23</td><td>初版作成（v1.1.0 実装内容をまとめて記載）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-23</footer>
+</div>
+</body>
+</html>

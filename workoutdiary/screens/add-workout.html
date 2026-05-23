@@ -13,24 +13,41 @@
   <header class="site-header">
     <h1>セット追加画面（AddWorkoutView）</h1>
     <p>新しいセットの種目・重量・レップを入力</p>
-    <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: WD-ADD-01</span></div>
+    <div class="section-meta"><span class="tag done">v1.2</span><span class="tag">画面ID: WD-ADD-01</span></div>
   </header>
 
   <h2>目的・役割</h2>
-  <p>WorkoutSessionView から sheet で起動。種目を選択し、重量・レップ（または時間・距離）を入力する画面。v1.0.7 よりクイック調整ボタンと最近使った種目セクションを追加。</p>
+  <p>WorkoutSessionView から FAB タップで sheet 起動。種目を選択し、重量・レップ（または時間・距離）を入力する画面。v1.0.7 でクイック調整ボタンと最近使った種目セクションを追加。v1.1.0 で「前回をコピー」ボタンを追加し、QuickWeightField / QuickRepsField の縦書き問題を修正。</p>
 
   <h2>UI 構成</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
     <tr><td>最近使った種目</td><td>横スクロールリスト</td><td>直近5件のユニーク種目チップ。タップで部位選択をスキップしてセット入力シートへ直接遷移。中触覚フィードバック（UIImpactFeedbackGenerator.medium）付き</td></tr>
-    <tr><td>種目セレクタ</td><td>Picker</td><td>カテゴリ → 種目の2段階</td></tr>
-    <tr><td>重量クイック調整</td><td>QuickAdjustFields</td><td>有酸素以外で表示。−5 / −2.5 / [TextField] / +2.5 / +5 のボタン群。プレート単位で素早く調整。軽い触覚フィードバック（light）付き</td></tr>
-    <tr><td>Repsクイック調整</td><td>QuickAdjustFields</td><td>有酸素以外で表示。−5 / −1 / [TextField] / +1 / +5 のボタン群。軽い触覚フィードバック（light）付き</td></tr>
-    <tr><td>時間入力</td><td>NumberField</td><td>有酸素時に表示（分）</td></tr>
-    <tr><td>距離入力</td><td>NumberField</td><td>有酸素時に表示（km）</td></tr>
+    <tr><td>部位選択</td><td>カテゴリ選択グリッド</td><td>胸/背中/肩/腕/脚/腹筋/有酸素/その他</td></tr>
+    <tr><td>種目選択</td><td>部位フィルタ済みリスト</td><td>部位選択後に該当種目を表示</td></tr>
+    <tr><td>前回をコピーボタン（v1.1.0）</td><td>Button（種目名直下）</td><td>「doc.on.clipboard.fill」アイコン + 前回セッションのこの種目のセット数と重量サマリを表示。タップで重量・回数・セット数を一括復元。前回値がない場合は非表示</td></tr>
+    <tr><td>重量クイック調整</td><td>QuickAdjustFields</td><td>有酸素以外で表示。−5 / −2.5 / [TextField] / +2.5 / +5 のボタン群。横並び2段（1段目: 重量行、2段目: Reps行）</td></tr>
+    <tr><td>Reps クイック調整</td><td>QuickAdjustFields</td><td>−5 / −1 / [TextField] / +1 / +5。軽い触覚フィードバック（light）付き</td></tr>
+    <tr><td>時間・距離入力</td><td>NumberField</td><td>有酸素時に表示（分・km）</td></tr>
+    <tr><td>1RM 推定プレビュー</td><td>Text</td><td>Epley 式で推定した1RMを参考表示</td></tr>
     <tr><td>前回値表示</td><td>Text</td><td>同種目の前回 weight × reps を参考表示</td></tr>
-    <tr><td>「追加」ボタン</td><td>Button</td><td>WorkoutSet INSERT</td></tr>
+    <tr><td>「追加」ボタン</td><td>ToolbarItem（confirmationAction）</td><td>WorkoutSet INSERT。入力未完了時は disabled</td></tr>
   </table>
+
+  <h2>前回をコピーボタン（v1.1.0）</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>表示位置</td><td>セット入力シート内、種目名直下</td></tr>
+    <tr><td>表示条件</td><td>同種目の前回セッション記録が1件以上ある場合のみ表示</td></tr>
+    <tr><td>動作</td><td>前回セッションの同種目のセット（重量・回数・セット数）を入力欄に一括コピー</td></tr>
+    <tr><td>プレビュー表示</td><td>最大3セットのサマリ（例「60.0kg×10rep, 65.0kg×8rep ...+2 more」）をボタン内に小文字で表示</td></tr>
+    <tr><td>関連ファイル</td><td>AddWorkoutView.swift（lastSetsForSelectedExercise / applyPreviousSets）</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>v1.1.0 修正: QuickWeightField / QuickRepsField の縦書き問題</strong><br>
+    −2.5 / +2.5 のボタンラベルが縦書きになっていた問題（lineLimit(1) + fixedSize() の未設定）を修正。1行横並びで正常表示されるようになった。
+  </div>
 
   <h2>セット入力行レイアウト（v1.0.7〜）</h2>
   <p>各セット行を縦2段構成に変更。</p>
@@ -43,26 +60,38 @@
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>未入力</td><td>追加ボタン無効</td></tr>
+    <tr><td>種目未選択</td><td>部位選択グリッド表示</td></tr>
+    <tr><td>種目選択済（セット入力シート）</td><td>「前回をコピー」ボタン（前回値あり時） + セット入力フォーム</td></tr>
+    <tr><td>未入力</td><td>追加ボタン disabled</td></tr>
     <tr><td>入力済</td><td>追加ボタン有効</td></tr>
-    <tr><td>追加成功 + PR</td><td>祝賀演出</td></tr>
+    <tr><td>追加成功 + PR</td><td>祝賀演出（WorkoutSessionView overlay）</td></tr>
     <tr><td>追加成功（PRなし）</td><td>sheet を閉じる</td></tr>
   </table>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li class="done">exercise.useCardioInput で入力フィールド切替</li>
-    <li class="done">前回値は @Query で同種目の最新 WorkoutSet を取得して表示</li>
+    <li class="done">exercise.useCardioInput で入力フィールド切替（有酸素 / 筋力）</li>
+    <li class="done">前回値は sessions から同種目の最新 WorkoutSet を取得して表示</li>
     <li class="done">追加後 PRDetector でPR検出</li>
-    <li class="done">最近使った種目: sessions から直近5件のユニーク種目を抽出（AddWorkoutView.swift）</li>
-    <li class="done">クイック調整ボタン: Views/Components/QuickAdjustFields.swift に実装</li>
+    <li class="done">最近使った種目: sessions から直近5件のユニーク種目を抽出</li>
+    <li class="done">クイック調整ボタン: Views/Components/QuickAdjustFields.swift</li>
     <li class="done">触覚フィードバック: 重量/Repsボタン=light、最近使った種目タップ=medium</li>
+    <li class="done">v1.1.0: 「前回をコピー」ボタン（copyPreviousButton）追加。lastSetsForSelectedExercise → applyPreviousSets で入力欄を一括更新</li>
+    <li class="done">v1.1.0: QuickWeightField / QuickRepsField の縦書き問題を修正（lineLimit(1) + fixedSize()）</li>
+    <li class="done">preSelectedExercise: Exercise? 引数で種目プリセット起動に対応（ExerciseListView / CalendarView から利用）</li>
   </ul>
 
   <h2>関連ファイル</h2>
   <ul>
-    <li>AddWorkoutView.swift</li>
+    <li>Views/Workout/AddWorkoutView.swift</li>
     <li>Views/Components/QuickAdjustFields.swift</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="workout-session.html">トレーニング記録画面</a></li>
+    <li><a href="exercise-list.html">種目一覧</a></li>
+    <li><a href="../features/pr-detection.html">PR検出機能</a></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -70,9 +99,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-14</td><td>v1.0.7: クイック調整ボタン追加（重量±2.5/5、Reps±1/5）、最近使った種目セクション追加、セット行を縦2段構成に変更</td></tr>
+    <tr><td>1.2</td><td>2026-05-23</td><td>v1.1.0: 「前回をコピー」ボタン追加（種目名直下・前回セット一括コピー）、QuickWeightField/QuickRepsFieldの縦書き問題修正（lineLimit+fixedSize）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-14</footer>
+  <footer class="site-footer">最終更新: 2026-05-23</footer>
 </div>
 </body>
 </html>

@@ -15,52 +15,65 @@
     <h1>トレーニング記録画面（WorkoutSessionView）</h1>
     <p>1日分のトレーニングセッションを入力・編集する中心画面</p>
     <div class="section-meta">
-      <span class="tag done">v1.1</span>
+      <span class="tag done">v1.2</span>
       <span class="tag">画面ID: WD-TRAINING-01</span>
     </div>
   </header>
 
   <h2>目的・役割</h2>
-  <p>選択した日付のトレーニングセッションを表示・編集する画面。種目ごとにセットを追加し、PR検出・テンプレート適用・インターバルタイマー・シェアを操作できる。アプリの主機能画面。</p>
+  <p>選択した日付のトレーニングセッションを表示・編集する画面。種目ごとにセットを追加し、PR検出・ルーティン適用・インターバルタイマー・シェアを操作できる。アプリの主機能画面。v1.1.0 でホーム画面を全面リデザインし、最速記録 UX を実現した。</p>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（v1.1.0 リデザイン後）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>日付セレクタ</td><td>DatePicker</td><td>編集対象の日付選択</td></tr>
-    <tr><td>セッションリスト</td><td>List</td><td>その日の WorkoutSet（種目ごとグループ）</td></tr>
-    <tr><td>編集・削除アイコン（v1.0.7変更）</td><td>HStack（各セット行右端）</td><td>編集アイコン（square.and.pencil）と削除アイコン（trash）を常時表示。旧仕様の左スワイプ削除・長押しコンテキストメニューは廃止</td></tr>
-    <tr><td>セット追加ボタン</td><td>Button</td><td>AddWorkoutView を sheet 表示</td></tr>
-    <tr><td>テンプレート適用ボタン</td><td>Button</td><td>TemplateListView を sheet 表示</td></tr>
-    <tr><td>インターバルタイマー</td><td>Button</td><td>IntervalTimerView を sheet 表示</td></tr>
-    <tr><td>PR祝賀</td><td>Overlay</td><td>PR検出時に演出</td></tr>
-    <tr><td>シェアボタン</td><td>Toolbar</td><td>WorkoutShareSheet 起動</td></tr>
+    <tr><td>週間進捗バッジ</td><td>WeeklyProgressBadge</td><td>画面上部。今週のトレーニング回数・ストリーク表示。週間目標設定時のみ</td></tr>
+    <tr><td>日付セレクター</td><td>HStack + DatePicker popover</td><td>「今日」バッジ付き（Calendar.isDateInToday が true の日に緑Capsuleで表示）。前後矢印でも日付移動可</td></tr>
+    <tr><td>エンプティCTA（記録なし時）</td><td>VStack</td><td>「今日のルーティン」プライマリCTA（緑塗りカード + 種目プレビュー）を最優先表示。ルーティン未該当日は「ルーティンから追加」セカンダリボタン（Capsule）を表示</td></tr>
+    <tr><td>クイックアクションチップ（記録あり時）</td><td>横スクロール HStack</td><td>workoutList 上部に表示。「ルーティンから追加」チップのみ。今日のルーティン該当日は非表示</td></tr>
+    <tr><td>ExerciseCard（記録あり時）</td><td>LazyVStack</td><td>種目ごとのカード View（ExerciseCard.swift）。種目ヘッダー右端に削除アイコン。各セット行に編集・削除アイコン常時表示</td></tr>
+    <tr><td>FAB（右下固定）</td><td>WorkoutFAB</td><td>56pt 円形。タップで AddWorkoutView を sheet 表示。safeAreaInset(edge: .bottom) で常時表示</td></tr>
+    <tr><td>ボトムアクションバー（左下、データあり時）</td><td>WorkoutBottomActionBar</td><td>「保存（テンプレート保存）」「シェア」の2ボタンをCapsule形状でまとめる。データなし時は非表示</td></tr>
+    <tr><td>ツールバー</td><td>NavigationStack toolbar</td><td>右端にインターバルタイマーボタン（timer アイコン）のみ。v1.0 の ≡メニューは廃止</td></tr>
+    <tr><td>PR祝賀</td><td>Overlay</td><td>PR検出時に PRCelebrationView を演出</td></tr>
+    <tr><td>実績祝賀</td><td>Overlay</td><td>AchievementService 経由でバッジ解除時</td></tr>
+  </table>
+
+  <h2>エンプティ CTA 階層（v1.1.0）</h2>
+  <table>
+    <tr><th>優先度</th><th>表示条件</th><th>UI</th><th>アクション</th></tr>
+    <tr><td>プライマリ</td><td>今日の曜日に割り当てられたルーティンが1件以上ある</td><td>緑塗りカード（AppTheme.accent）+ ルーティン名 + 種目プレビュー1行</td><td>RoutineSuggestionService.applyRoutine() を即時実行</td></tr>
+    <tr><td>セカンダリ</td><td>ルーティン未該当（todaysRoutine == nil）</td><td>「ルーティンから追加」Capsule ボタン（accent.opacity(0.15)）</td><td>TemplateListView sheet 表示</td></tr>
   </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>記録なし</td><td>「セットを追加して記録を始めましょう」</td></tr>
-    <tr><td>記録あり</td><td>種目別グループのリスト</td></tr>
-    <tr><td>PR検出</td><td>PR祝賀演出 + Paywall（POST-PR、v1.0.5）</td></tr>
+    <tr><td>記録なし・ルーティン該当日</td><td>エンプティCTA（プライマリ：今日のルーティンカード）</td></tr>
+    <tr><td>記録なし・ルーティン非該当日</td><td>エンプティCTA（セカンダリ：「ルーティンから追加」）</td></tr>
+    <tr><td>記録あり</td><td>クイックアクションチップ + ExerciseCard リスト + FAB + ボトムアクションバー</td></tr>
+    <tr><td>PR検出</td><td>PRCelebrationView overlay → POST-PR Paywall / シェアプロンプト</td></tr>
+    <tr><td>週間目標達成</td><td>週間目標達成アラート</td></tr>
+    <tr><td>実績解除</td><td>AchievementCelebrationView overlay</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>セット追加</td><td>AddWorkoutView (sheet)</td></tr>
-    <tr><td>セルタップ</td><td>EditWorkoutSetView (sheet)</td></tr>
-    <tr><td>テンプレート適用</td><td>TemplateListView (sheet)</td></tr>
-    <tr><td>テンプレ保存</td><td>SaveTemplateView (sheet)</td></tr>
-    <tr><td>インターバルタイマー</td><td>IntervalTimerView (sheet)</td></tr>
-    <tr><td>シェア</td><td>WorkoutShareSheet (sheet)</td></tr>
-    <tr><td>PR検出 → Paywall</td><td>PaywallView</td></tr>
+    <tr><td>FAB タップ</td><td>AddWorkoutView (sheet)</td></tr>
+    <tr><td>今日のルーティンCTA タップ</td><td>即時 applyRoutine（sheet なし）</td></tr>
+    <tr><td>「ルーティンから追加」タップ</td><td>TemplateListView (sheet)</td></tr>
+    <tr><td>セット編集アイコンタップ</td><td>EditWorkoutSetView (sheet)</td></tr>
+    <tr><td>テンプレート保存（ボトムバー「保存」）</td><td>SaveTemplateView (sheet)</td></tr>
+    <tr><td>シェア（ボトムバー「シェア」）</td><td>WorkoutShareSheet (sheet)</td></tr>
+    <tr><td>インターバルタイマー（ツールバー）</td><td>IntervalTimerView (sheet)</td></tr>
+    <tr><td>PR検出 → Paywall</td><td>PaywallView (sheet)</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
   <pre><code>@Model final class WorkoutSession {
     var id: UUID
     var date: Date
-    var note: String?
+    var note: String
     @Relationship(deleteRule: .cascade, inverse: \WorkoutSet.session)
     var sets: [WorkoutSet] = []
 }
@@ -72,32 +85,51 @@
     var reps: Int
     var order: Int
     var session: WorkoutSession?
-    var duration: Double  // 有酸素分
-    var distance: Double  // 有酸素km
+    var duration: Double  // 有酸素: 分
+    var distance: Double  // 有酸素: km
+}
+
+// ルーティン機能（v1.1.0）
+@Model final class WorkoutTemplate {
+    var id: UUID
+    var name: String
+    var createdAt: Date
+    var assignedWeekdays: [Int] = []  // 0=日, 1=月, ..., 6=土。空配列=曜日固定なし
+    var entries: [TemplateEntry] = []
+
+    func appliesTo(date: Date) -> Bool  // 曜日判定メソッド
 }</code></pre>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li class="done">SwiftData @Query で対象日の WorkoutSession を取得</li>
     <li class="done">PRDetector でセット保存時に過去最大値比較</li>
-    <li class="done">テンプレート適用時は経験・目標で重量・レップを自動補正</li>
     <li class="done">scenePhase 監視でインターバルタイマー中断時処理</li>
-    <li class="done">各セット行に編集・削除アイコン常時表示。左スワイプ削除・長押しコンテキストメニューを廃止し操作を統一（v1.0.7）</li>
-    <li class="done">種目削除確認ダイアログを日本語化 — 「%@のセットをすべて削除しますか？」（v1.0.7、Localizable.xcstrings更新）</li>
+    <li class="done">v1.0.7: 各セット行に編集・削除アイコン常時表示（左スワイプ廃止）</li>
+    <li class="done">v1.1.0: ツールバーをタイマー1個のみに整理（≡メニュー廃止）</li>
+    <li class="done">v1.1.0: FAB を safeAreaInset(edge: .bottom) で右下に固定</li>
+    <li class="done">v1.1.0: WorkoutBottomActionBar（保存・シェア）をデータあり時のみ左下に表示</li>
+    <li class="done">v1.1.0: 日付セレクターに「今日」バッジ（Capsule、AppTheme.accent）</li>
+    <li class="done">v1.1.0: RoutineSuggestionService で todaysRoutine を算出してエンプティCTAに反映</li>
+    <li class="done">v1.1.0: ExerciseCard を独立 View（Views/Workout/ExerciseCard.swift）に切り出し</li>
+    <li class="done">v1.1.0: クイックアクションチップ（QuickActionChip）を workoutList 先頭に表示</li>
     <li>非同期保存中の入力ロック（v1.x）</li>
   </ul>
 
   <h2>関連ファイル</h2>
   <ul>
-    <li>WorkoutSessionView.swift</li>
-    <li>Localizable.xcstrings（種目削除ダイアログ日本語化）</li>
+    <li>Views/Workout/WorkoutSessionView.swift</li>
+    <li>Views/Workout/ExerciseCard.swift（v1.1.0 新規切り出し）</li>
+    <li>Views/Workout/WorkoutBottomActionBar.swift（v1.1.0 新規）— WorkoutFAB / QuickActionChip も内包</li>
+    <li>Services/RoutineSuggestionService.swift（v1.1.0 新規）</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
     <li><a href="add-workout.html">セット追加画面</a></li>
-    <li><a href="template-list.html">テンプレート選択</a></li>
+    <li><a href="template-list.html">ルーティン選択</a></li>
     <li><a href="interval-timer.html">インターバルタイマー</a></li>
+    <li><a href="../features/routine.html">ルーティン機能</a></li>
     <li><a href="../features/pr-detection.html">PR検出機能</a></li>
   </ul>
 
@@ -106,9 +138,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-14</td><td>v1.0.7: 編集・削除アイコンを各セット行右端に常時表示へ変更（左スワイプ削除・長押しコンテキストメニュー廃止）、種目削除ダイアログを日本語化</td></tr>
+    <tr><td>1.2</td><td>2026-05-23</td><td>v1.1.0: ホーム画面リデザイン全体（ツールバー整理・FAB導入・ボトムアクションバー・日付セレクター「今日」バッジ・エンプティCTA階層化・クイックアクションチップ・ExerciseCard切り出し・ルーティン提案CTA）を反映</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-14</footer>
+  <footer class="site-footer">最終更新: 2026-05-23</footer>
 </div>
 </body>
 </html>

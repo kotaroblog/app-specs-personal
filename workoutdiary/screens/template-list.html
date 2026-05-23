@@ -4,28 +4,47 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>WorkoutDiary - テンプレート選択</title>
+<title>WorkoutDiary - ルーティン選択</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / テンプレート選択</div>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / ルーティン選択</div>
   <header class="site-header">
-    <h1>テンプレート選択（TemplateListView）</h1>
-    <p>保存済みのワークアウトテンプレートを選択して適用</p>
-    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: WD-TEMPLATE-01</span></div>
+    <h1>ルーティン選択（TemplateListView）</h1>
+    <p>保存済みのルーティン（ワークアウトテンプレート）を一覧・適用・編集する</p>
+    <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: WD-TEMPLATE-01</span></div>
   </header>
 
   <h2>目的・役割</h2>
-  <p>頻繁に行うメニュー（例: 胸の日 / 脚の日 / プッシュデー）をテンプレートとして保存・適用する画面。</p>
+  <p>頻繁に行うメニュー（例: 胸の日 / 脚の日 / プッシュデー）をルーティンとして保存・適用する画面。v1.1.0 でラベルを「テンプレート」から「ルーティン」へ変更し、曜日バッジ表示・「➕/✏️/🗑」アイコン常時表示を追加した。内部モデル名 WorkoutTemplate は互換維持のため変更なし。</p>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（v1.1.0 以降）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>テンプレートリスト</td><td>List</td><td>名前 + エントリ数表示</td></tr>
-    <tr><td>「適用」ボタン</td><td>Button</td><td>WorkoutSession にエントリを一括追加</td></tr>
-    <tr><td>「保存」ボタン</td><td>NavigationLink</td><td>SaveTemplateView 起動</td></tr>
-    <tr><td>削除アクション</td><td>Swipe</td><td>確認後削除</td></tr>
+    <tr><td>ルーティンリスト</td><td>List（insetGrouped）</td><td>ルーティン名・曜日バッジ・エントリプレビュー（種目名・重量×回数×セット数）を表示</td></tr>
+    <tr><td>曜日バッジ</td><td>Capsule Text</td><td>assignedWeekdays が空でない場合、ルーティン名横に「月・水・金」形式で表示（AppTheme.accent）</td></tr>
+    <tr><td>➕（ワークアウト追加）アイコン</td><td>Button（各行右端）</td><td>タップで loadTemplate() を実行し dismiss。行タップと同機能</td></tr>
+    <tr><td>✏️（編集）アイコン</td><td>Button（各行右端）</td><td>EditTemplateView を sheet 表示</td></tr>
+    <tr><td>🗑（削除）アイコン</td><td>Button（各行右端）</td><td>削除確認ダイアログを表示後に削除。確認なし即削除ではない</td></tr>
+    <tr><td>エンプティ表示</td><td>ContentUnavailableView 相当</td><td>テンプレートが0件の場合「No Templates」を表示</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>v1.1.0 変更点</strong><br>
+    - UIラベル「テンプレート」→「ルーティン」に全置換（navigationTitle / ボタンラベル等）<br>
+    - スワイプアクション削除を廃止し、「➕・✏️・🗑」アイコンを各行右端に常時表示<br>
+    - assignedWeekdays をもとに曜日バッジを表示<br>
+    - 行タップ / ➕アイコンタップ = ルーティン適用して dismiss（確認ダイアログ廃止）<br>
+    内部モデル名（WorkoutTemplate）・localstoreキー等は変更なし（SwiftData互換維持）
+  </div>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>行タップ / ➕タップ</td><td>loadTemplate() 実行 → dismiss（WorkoutSession に追加して閉じる）</td></tr>
+    <tr><td>✏️タップ</td><td>EditTemplateView (sheet)</td></tr>
+    <tr><td>🗑タップ</td><td>削除確認ダイアログ → 削除 or キャンセル</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
@@ -33,7 +52,13 @@
     var id: UUID
     var name: String
     var createdAt: Date
-    @Relationship(deleteRule: .cascade) var entries: [TemplateEntry] = []
+    // v1.1.0 追加：曜日固定ルーティン
+    var assignedWeekdays: [Int] = []   // 0=日, 1=月, ..., 6=土。空=曜日固定なし
+    @Relationship(deleteRule: .cascade, inverse: \TemplateEntry.template)
+    var entries: [TemplateEntry] = []
+
+    var sortedEntries: [TemplateEntry] { ... }
+    func appliesTo(date: Date) -> Bool  // 曜日判定
 }
 
 @Model final class TemplateEntry {
@@ -43,22 +68,45 @@
     var reps: Int
     var sets: Int
     var order: Int
-    var duration: Double
-    var distance: Double
-    var isCardio: Bool
+    var duration: Double   // 有酸素: 分
+    var distance: Double   // 有酸素: km
+    var isCardio: Bool = false
 }</code></pre>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li class="done">適用時に WorkoutSet を sets 数だけ INSERT</li>
-    <li class="done">経験・目標で重量・レップを自動補正</li>
-    <li class="done">初回起動時に <code>insertDefaultTemplates()</code> でデフォルト挿入</li>
+    <li class="done">適用時に WorkoutSet を entry.sets 数だけ INSERT（safeSets = min(entry.sets, 20) で上限制御）</li>
+    <li class="done">経験・目標で重量・レップを自動補正（UserProfile.goal / UserProfile.experience 参照）</li>
+    <li class="done">初回起動時に insertDefaultTemplates() でデフォルト挿入</li>
+    <li class="done">v1.1.0: スワイプ削除を廃止し「➕・✏️・🗑」アイコン常時表示に変更</li>
+    <li class="done">v1.1.0: 曜日バッジ weekdayBadge(_ weekdays:) で「月・水・金」形式に変換</li>
+    <li class="done">v1.1.0: 行タップ = ➕アイコンタップ（loadTemplate → dismiss）に統一</li>
+    <li class="done">TemplateListView は WorkoutSessionView から sheet 表示（date: Date を引数で受け取る）</li>
+  </ul>
+
+  <h2>関連ファイル</h2>
+  <ul>
+    <li>Views/Workout/TemplateListView.swift</li>
+    <li>Views/Workout/SaveTemplateView.swift</li>
+    <li>Views/Workout/EditTemplateView.swift</li>
+    <li>Views/Components/WeekdayPicker.swift（v1.1.0 新規）</li>
+    <li>Models/WorkoutTemplate.swift</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="workout-session.html">トレーニング記録画面</a></li>
+    <li><a href="../features/routine.html">ルーティン機能</a></li>
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-05-23</td><td>v1.1.0: UIラベル「テンプレート」→「ルーティン」全置換、スワイプ削除廃止→「➕/✏️/🗑」アイコン常時表示、曜日バッジ追加、行タップ=適用（確認ダイアログ廃止）、assignedWeekdays・appliesTo 追記</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-05-23</footer>
 </div>
 </body>
 </html>

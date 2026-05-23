@@ -12,70 +12,112 @@
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / カレンダー</div>
   <header class="site-header">
     <h1>カレンダー画面（CalendarView）</h1>
-    <p>月単位のトレーニング履歴を可視化</p>
-    <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: WD-CALENDAR-01</span></div>
+    <p>月単位のトレーニング履歴を部位ヒートマップで可視化</p>
+    <div class="section-meta"><span class="tag done">v1.2</span><span class="tag">画面ID: WD-CALENDAR-01</span></div>
   </header>
 
   <h2>目的・役割</h2>
-  <p>月単位のカレンダーでトレーニング日をハイライト表示し、過去のセッションへ素早くアクセスする画面。v1.0.7 からカレンダー上でその日の記録を直接追加・編集できるようになった。</p>
+  <p>月単位のカレンダーでトレーニング日を部位カラーで可視化し、過去のセッションへ素早くアクセスする閲覧専用画面。v1.1.0 では編集機能を撤廃して閲覧に特化し、部位ヒートマップ・BottomSheet 詳細・ルーティン予定ドット・凡例セクションを追加した。</p>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（v1.1.0 リデザイン後）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
     <tr><td>月ナビゲーション</td><td>HStack</td><td>前月・次月・年月表示</td></tr>
-    <tr><td>カレンダーグリッド</td><td>LazyVGrid</td><td>日付グリッド、セッション日を強調表示</td></tr>
+    <tr><td>カレンダーグリッド</td><td>LazyVGrid</td><td>日付グリッド。各セルに部位カラードット（最大3つ）を表示。ドットはその日にトレーニングした部位の色（ExerciseCategory.color）</td></tr>
+    <tr><td>予定ドット（未来日）</td><td>カレンダーセル内 枠線スタイルドット</td><td>未来日かつ実績なしの日に、曜日ルーティンから導出した予定ドット（枠線のみ、塗りなし）を表示</td></tr>
+    <tr><td>部位カラー凡例</td><td>カレンダー下部 HStack</td><td>8部位（胸・背中・肩・腕・脚・腹筋・有酸素・その他）のカラーと名称をラベル表示</td></tr>
     <tr><td>ストリーク表示</td><td>Text</td><td>「連続Nログイン」</td></tr>
-    <tr><td>選択日サマリ</td><td>VStack</td><td>セット数・トータルボリューム</td></tr>
-    <tr><td>種目リスト（v1.0.7追加）</td><td>List</td><td>選択日にセッションがある場合、種目名を一覧表示。タップで AddWorkoutView を該当種目プリセット状態で起動</td></tr>
-    <tr><td>ワークアウトを記録／編集ボタン（v1.0.7追加）</td><td>Button</td><td>常時表示。タップで AddWorkoutView シートを起動。同日のセッションがあれば追記、なければ新規作成</td></tr>
-    <tr><td>PRセレブレーションオーバーレイ（v1.0.7追加）</td><td>Overlay</td><td>PR達成時にカレンダー上でもアニメーション演出を表示</td></tr>
+    <tr><td>日付タップ BottomSheet</td><td>sheet(.fraction)</td><td>日付タップ時に表示。日付・部位タグ（カラーピル）・サマリ統計（種目数/総セット/最大重量）・種目リスト（閲覧専用）・本日のルーティンセクション（曜日ルーティンがある場合）を表示</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>v1.1.0 廃止事項</strong><br>
+    以下の要素は v1.1.0 で撤廃し、カレンダーを閲覧専用画面に変更した。<br>
+    - 「ワークアウトを記録／編集」ボタン<br>
+    - 種目タップ → AddWorkoutView 遷移<br>
+    - PRセレブレーションオーバーレイ（カレンダー上）<br>
+    編集はトレーニング記録画面（WorkoutSessionView）で一元管理する。
+  </div>
+
+  <h2>BottomSheet 詳細（v1.1.0）</h2>
+  <table>
+    <tr><th>セクション</th><th>内容</th><th>表示条件</th></tr>
+    <tr><td>日付・ヘッダー</td><td>選択日付（yyyy年M月d日 曜日）</td><td>常時</td></tr>
+    <tr><td>部位タグ</td><td>その日の部位をカラーピル（ExerciseCategory.color）で一覧</td><td>セッションあり</td></tr>
+    <tr><td>サマリ統計</td><td>種目数 / 総セット数 / 最大重量</td><td>セッションあり</td></tr>
+    <tr><td>種目リスト</td><td>種目名（閲覧専用）。先頭文字を部位カラーで丸装飾</td><td>セッションあり</td></tr>
+    <tr><td>本日のルーティン</td><td>曜日ルーティン名と種目プレビュー</td><td>その日の曜日に割り当てられたルーティンがある場合</td></tr>
+    <tr><td>空表示</td><td>「この日の記録はありません」</td><td>セッションなし</td></tr>
+  </table>
+
+  <h2>部位カラー（ExerciseCategory.color）</h2>
+  <table>
+    <tr><th>部位</th><th>rawValue</th><th>カラー</th></tr>
+    <tr><td>胸</td><td>chest</td><td>赤（0.95, 0.35, 0.40）</td></tr>
+    <tr><td>背中</td><td>back</td><td>青（0.30, 0.55, 0.95）</td></tr>
+    <tr><td>肩</td><td>shoulders</td><td>黄（0.95, 0.75, 0.20）</td></tr>
+    <tr><td>腕</td><td>arms</td><td>オレンジ（0.95, 0.55, 0.25）</td></tr>
+    <tr><td>脚</td><td>legs</td><td>緑（0.30, 0.75, 0.45）</td></tr>
+    <tr><td>腹筋</td><td>abs</td><td>紫（0.70, 0.45, 0.90）</td></tr>
+    <tr><td>有酸素</td><td>cardio</td><td>シアン（0.30, 0.80, 0.85）</td></tr>
+    <tr><td>その他</td><td>other</td><td>グレー（white: 0.55）</td></tr>
   </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>セッションあり（日付未選択）</td><td>日付セルに塗りつぶし・カウント表示</td></tr>
-    <tr><td>セッションなし（日付未選択）</td><td>日付セルのみ</td></tr>
-    <tr><td>日付選択・セッションあり</td><td>選択日サマリ + 種目リスト + 「ワークアウトを記録／編集」ボタン</td></tr>
-    <tr><td>日付選択・セッションなし</td><td>選択日サマリ（空） + 「ワークアウトを記録／編集」ボタン</td></tr>
-    <tr><td>PR達成</td><td>PRセレブレーションオーバーレイ表示（AddWorkoutView 経由でのセット追加時）</td></tr>
+    <tr><td>通常表示</td><td>グリッド。実績日は部位カラードット、未来の予定日は枠線ドット</td></tr>
+    <tr><td>日付タップ（セッションあり）</td><td>BottomSheet: 部位タグ + サマリ + 種目リスト（+ ルーティンセクション）</td></tr>
+    <tr><td>日付タップ（セッションなし）</td><td>BottomSheet: 「記録なし」（+ ルーティンセクション）</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>日付タップ</td><td>同画面内で選択日を更新（WorkoutSessionView へは遷移しない）</td></tr>
-    <tr><td>種目タップ（セッションあり）</td><td>AddWorkoutView (sheet)　該当種目をプリセット</td></tr>
-    <tr><td>「ワークアウトを記録／編集」ボタンタップ</td><td>AddWorkoutView (sheet)　新規 or 追記モード</td></tr>
+    <tr><td>日付タップ</td><td>BottomSheet を sheet 表示（同画面内、編集不可）</td></tr>
+    <tr><td>前月・次月ボタン</td><td>同画面内でグリッドを更新</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
-  <pre><code>// CalendarView.swift 内で参照
-@Model final class WorkoutSession { ... }
-@Model final class WorkoutSet { ... }</code></pre>
+  <pre><code>// CalendarView が参照するモデル
+@Model final class WorkoutSession { ... }  // 実績データ取得
+@Model final class WorkoutTemplate {
+    var assignedWeekdays: [Int] = []  // 予定ドット導出に使用
+    func appliesTo(date: Date) -> Bool
+}
+
+// 部位カラー（v1.1.0）
+enum ExerciseCategory: String {
+    var color: Color { ... }  // 8部位のカラー定義
+}</code></pre>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li class="done">SwiftData @Query で月単位のセッション取得</li>
-    <li class="done">AchievementService.calculateStreak() でストリーク計算</li>
-    <li class="done">日付選択後に同日セッションの有無を判定し AddWorkoutView の初期化モードを切り替え（v1.0.7）</li>
-    <li class="done">種目タップ時に selectedExercise を AddWorkoutView へ渡してプリセット（v1.0.7）</li>
-    <li class="done">PRセレブレーションオーバーレイを CalendarView 上でも表示（v1.0.7）</li>
-    <li>ヒートマップ風の濃淡表現（v1.x）</li>
+    <li class="done">AchievementService.shared.calculateStreak() でストリーク計算</li>
+    <li class="done">v1.0.7: 日付選択後に種目リスト表示・AddWorkoutView プリセット起動、PRセレブレーションオーバーレイ対応（v1.1.0 で廃止）</li>
+    <li class="done">v1.1.0: 日付セルに部位カラードット最大3つ（ExerciseCategory.color 使用）</li>
+    <li class="done">v1.1.0: 未来日かつ実績なしの日に予定ドット（WorkoutTemplate.assignedWeekdays から導出）</li>
+    <li class="done">v1.1.0: 日付タップで BottomSheet 詳細（部位タグ・サマリ統計・閲覧専用種目リスト）</li>
+    <li class="done">v1.1.0: BottomSheet 内「本日のルーティン」セクション（曜日ルーティンがある場合）</li>
+    <li class="done">v1.1.0: カレンダー下部に部位カラー凡例セクション</li>
+    <li class="done">v1.1.0: 編集・削除・記録ボタンを撤廃して閲覧専用化</li>
   </ul>
 
   <h2>関連ファイル</h2>
   <ul>
-    <li>CalendarView.swift</li>
-    <li>AddWorkoutView.swift</li>
+    <li>Views/CalendarView.swift（またはアプリ内対応ファイル）</li>
+    <li>Models/Exercise.swift（ExerciseCategory.color 定義）</li>
+    <li>Models/WorkoutTemplate.swift（assignedWeekdays / appliesTo）</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
     <li><a href="workout-session.html">トレーニング記録画面</a></li>
-    <li><a href="add-workout.html">セット追加画面</a></li>
+    <li><a href="template-list.html">ルーティン選択</a></li>
+    <li><a href="../features/routine.html">ルーティン機能</a></li>
     <li><a href="../features/achievement.html">実績・ストリーク機能</a></li>
-    <li><a href="../features/pr-detection.html">PR検出機能</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -83,9 +125,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-14</td><td>v1.0.7: 日付選択後に種目リスト表示・タップでAddWorkoutViewプリセット起動、「ワークアウトを記録／編集」ボタン常設、PRセレブレーションオーバーレイ対応</td></tr>
+    <tr><td>1.2</td><td>2026-05-23</td><td>v1.1.0: 編集機能を撤廃して閲覧専用化。日付セルに部位カラードット（最大3つ）、未来日に予定ドット（枠線）、日付タップ BottomSheet（部位タグ・サマリ・種目リスト・ルーティンセクション）、部位カラー凡例セクション追加</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-14</footer>
+  <footer class="site-footer">最終更新: 2026-05-23</footer>
 </div>
 </body>
 </html>
