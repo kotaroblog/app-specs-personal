@@ -13,21 +13,23 @@
   <header class="site-header">
     <h1>種目一覧画面（ExerciseListView）</h1>
     <p>種目マスタの一覧・追加・編集</p>
-    <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: WD-EXERCISE-01</span></div>
+    <div class="section-meta"><span class="tag done">v1.2</span><span class="tag">画面ID: WD-EXERCISE-01</span></div>
   </header>
 
   <h2>目的・役割</h2>
-  <p>登録済みの種目（Exercise）を一覧表示し、追加・編集・削除・ワークアウト追加を行う画面。カテゴリ別フィルタ対応。v1.1.0 で行の操作 UI を「➕・✏️・🗑」アイコン常時表示に刷新し、スワイプアクションを廃止した。</p>
+  <p>登録済みの種目（Exercise）を一覧表示し、追加・編集・削除を行う画面。カテゴリ別フィルタ対応。v1.1.0 で行の操作 UI を「➕・✏️・🗑」アイコン常時表示に刷新し、v1.1.1 でさらに管理用 UI に振り切った刷新を実施した（タップ動作変更・部位カラー統一・メタ情報表示・スワイプ操作・ExerciseStatsCalculator 導入）。</p>
 
-  <h2>UI 構成（v1.1.0 以降）</h2>
+  <h2>UI 構成（v1.1.1 以降）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>カテゴリフィルタ</td><td>Picker（segmented 等）</td><td>胸/背中/肩/腕/脚/腹筋/有酸素/その他 でフィルタ</td></tr>
-    <tr><td>種目リスト</td><td>List</td><td>名前・カテゴリ・有酸素フラグ表示</td></tr>
-    <tr><td>➕（ワークアウト追加）アイコン</td><td>Button（各行右端）</td><td>タップで AddWorkoutView を該当種目プリセット状態で起動。行タップと同機能</td></tr>
-    <tr><td>✏️（編集）アイコン</td><td>Button（各行右端）</td><td>ExerciseFormView（編集モード）を起動</td></tr>
-    <tr><td>🗑（削除）アイコン</td><td>Button（各行右端）</td><td>確認ダイアログ後に削除</td></tr>
-    <tr><td>追加ボタン</td><td>ToolbarItem / NavigationLink</td><td>ExerciseFormView（新規）を起動</td></tr>
+    <tr><td>カテゴリフィルタ</td><td>ScrollView 横並び Chip ボタン</td><td>胸/背中/肩/腕/脚/腹筋/有酸素/その他でフィルタ。選択中の部位カラーで光らせる</td></tr>
+    <tr><td>Section ヘッダー</td><td>部位カラー左ボーダー (3px)</td><td>部位名 + 件数（例: 「胸 (5)」）を左ボーダー付きで表示</td></tr>
+    <tr><td>種目行</td><td>List 行</td><td>頭文字バッジ（部位カラー fill opacity 0.18 + strokeBorder）+ 種目名 + メタ情報</td></tr>
+    <tr><td>メタ情報</td><td>Text（サブタイトル）</td><td>「PR 100kg · 先週 · 計47セット」を相対表示（今日/昨日/N日前/先週/2週間前/1ヶ月以上前）</td></tr>
+    <tr><td>行タップ</td><td>NavigationLink / onTapGesture</td><td>ExerciseFormView（編集画面）へ直行（v1.1.1 変更: 旧 AddWorkoutView プリセット起動を廃止）</td></tr>
+    <tr><td>左スワイプ</td><td>swipeActions</td><td>削除アクション → Undo Toast（保留中削除パターン）</td></tr>
+    <tr><td>右スワイプ</td><td>swipeActions</td><td>編集アクション → ExerciseFormView（編集モード）</td></tr>
+    <tr><td>追加ボタン</td><td>ToolbarItem</td><td>ExerciseFormView（新規モード）を起動</td></tr>
   </table>
 
   <div class="callout">
@@ -38,13 +40,32 @@
     - セルタップ = ExerciseFormView（編集）だった旧仕様を廃止
   </div>
 
+  <div class="callout">
+    <strong>v1.1.1 変更点（種目一覧刷新）</strong><br>
+    - <strong>タップ動作変更</strong>: 行タップ → ExerciseFormView（編集画面）へ直行。ワークアウト追加ではなく管理用 UI に振り切り<br>
+    - <strong>「➕・✏️・🗑」アイコン廃止</strong>: 行が広く使えるようスワイプ操作に移行<br>
+    - <strong>スワイプ操作</strong>: 左スワイプで削除（Undo Toast）、右スワイプで編集<br>
+    - <strong>部位カラー統一</strong>: Section ヘッダーに部位カラーの左ボーダー（3px 縦線）と件数表示<br>
+    - <strong>頭文字バッジを部位カラー化</strong>: opacity 0.18 fill + strokeBorder + minimumScaleFactor(0.7) で日本語対応<br>
+    - <strong>メタ情報表示</strong>: 「PR 100kg · 先週 · 計47セット」を相対表示<br>
+    - <strong>ExerciseStatsCalculator 導入</strong>: 各行の統計値をメモ化キャッシュから取得（詳細は <a href="../features/exercise-stats.html">ExerciseStatsCalculator 機能仕様書</a>）
+  </div>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態変数</th><th>型</th><th>説明</th></tr>
+    <tr><td>pendingDeletionIDs</td><td>Set&lt;UUID&gt;</td><td>Undo Toast 保留中の削除 ID。この ID を持つ種目は @Query フィルターで除外して表示</td></tr>
+    <tr><td>selectedCategory</td><td>ExerciseCategory?</td><td>選択中の部位フィルタ（nil = 全表示）</td></tr>
+    <tr><td>statsCalculator</td><td>ExerciseStatsCalculator</td><td>種目統計値のメモ化キャッシュ（@State で保持）</td></tr>
+  </table>
+
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>行タップ / ➕アイコンタップ</td><td>AddWorkoutView（該当種目プリセット状態、sheet）</td></tr>
-    <tr><td>✏️アイコンタップ</td><td>ExerciseFormView（編集モード）</td></tr>
-    <tr><td>追加ボタン</td><td>ExerciseFormView（新規）</td></tr>
-    <tr><td>🗑アイコンタップ</td><td>確認ダイアログ → 削除 or キャンセル</td></tr>
+    <tr><td>行タップ</td><td>ExerciseFormView（編集モード）</td></tr>
+    <tr><td>右スワイプ「編集」</td><td>ExerciseFormView（編集モード）</td></tr>
+    <tr><td>左スワイプ「削除」</td><td>Undo Toast 表示 → 5秒後に確定 or 「元に戻す」でキャンセル</td></tr>
+    <tr><td>追加ボタン（ナビゲーションバー）</td><td>ExerciseFormView（新規モード）</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
@@ -72,12 +93,20 @@ enum ExerciseCategory: String, CaseIterable {
     <li class="done">v1.1.0: スワイプ削除廃止。「➕・✏️・🗑」アイコンを各行右端に常時表示</li>
     <li class="done">v1.1.0: 行タップ = ➕アイコンタップ = AddWorkoutView（プリセット）に統一</li>
     <li class="done">v1.1.0: ExerciseCategory に color プロパティ追加（カレンダーヒートマップ用）</li>
+    <li class="done">v1.1.1: タップ動作 → ExerciseFormView（編集）へ直行に変更。管理用 UI に振り切り</li>
+    <li class="done">v1.1.1: 「➕・✏️・🗑」アイコン廃止、スワイプ操作（左=削除/右=編集）に変更</li>
+    <li class="done">v1.1.1: Section ヘッダーに部位カラー左ボーダー（3px）と件数表示</li>
+    <li class="done">v1.1.1: 頭文字バッジを部位カラー化（fill opacity 0.18 + strokeBorder + minimumScaleFactor 0.7）</li>
+    <li class="done">v1.1.1: メタ情報「PR · 最終使用日（相対） · 累計セット数」を ExerciseStatsCalculator から取得</li>
+    <li class="done">v1.1.1: pendingDeletionIDs（Set&lt;UUID&gt;）で保留中削除を管理し、Undo Toast に登録</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
     <li><a href="workout-session.html">トレーニング記録画面</a></li>
     <li><a href="add-workout.html">セット追加画面</a></li>
+    <li><a href="../features/undo-toast.html">Undo Toast システム</a></li>
+    <li><a href="../features/exercise-stats.html">ExerciseStatsCalculator</a></li>
     <li><a href="../features/migration.html">マイグレーション機能</a></li>
     <li><a href="../data-model.html">データモデル</a></li>
   </ul>
@@ -87,9 +116,10 @@ enum ExerciseCategory: String, CaseIterable {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-23</td><td>v1.1.0: スワイプ削除廃止→「➕/✏️/🗑」アイコン常時表示に変更、行タップ=AddWorkoutViewプリセット起動に統一、ExerciseCategory.color プロパティ追記</td></tr>
+    <tr><td>1.2</td><td>2026-05-24</td><td>v1.1.1: 種目一覧刷新。タップ動作をExerciseFormView（編集）直行に変更、「➕/✏️/🗑」アイコン廃止→スワイプ操作（左=Undo Toast削除/右=編集）、Section ヘッダー部位カラー左ボーダー+件数、頭文字バッジ部位カラー化、メタ情報表示（PR・相対日時・累計セット数）、ExerciseStatsCalculator 導入、pendingDeletionIDs による保留中削除パターン</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-23</footer>
+  <footer class="site-footer">最終更新: 2026-05-24</footer>
 </div>
 </body>
 </html>

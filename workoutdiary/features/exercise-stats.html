@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - ExerciseStatsCalculator</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / ExerciseStatsCalculator</div>
+
+  <header class="site-header">
+    <h1>ExerciseStatsCalculator</h1>
+    <p>種目ごとの統計値（PR・最終使用日・累計セット数）をメモ化して提供するサービス（v1.1.1）</p>
+    <div class="section-meta">
+      <span class="tag done">v1.0</span>
+      <span class="tag">機能ID: WD-FEAT-EXERCISE-STATS</span>
+    </div>
+  </header>
+
+  <h2>概要・目的</h2>
+  <p>ExerciseListView の各行では「PR 100kg · 先週 · 計47セット」形式のメタ情報を表示する。このメタ情報を算出するには全 WorkoutSession × 全 WorkoutSet を種目ごとにフィルタリングする必要があり、素朴な実装だと View body の再描画のたびに <code>sessions.flatMap { ... }.filter { ... }</code> を全種目分繰り返すことになる（種目数 × セット数の計算量爆発）。</p>
+  <p><code>ExerciseStatsCalculator</code> は算出結果を <code>[Exercise.id: ExerciseStats]</code> のキャッシュに保持し、セッション状態が変化したときのみキャッシュを破棄することでこの問題を解決する。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/exercise-list.html">種目一覧（ExerciseListView）</a> — 各行のメタ情報表示で利用</li>
+  </ul>
+
+  <h2>計算する統計値の定義</h2>
+  <pre><code>struct ExerciseStats {
+    let pr: Double?           // 最大重量（kg）。1セットも記録がない or 全て weight=0 の場合は nil
+    let prReps: Int?          // PR 時の回数。pr が nil の場合は nil
+    let lastUsedDate: Date?   // 最終使用日（WorkoutSet.session.date の最大値）
+    let totalSets: Int        // 累計セット数（種目に紐づく WorkoutSet の総数）
+    let totalSessions: Int    // 累計セッション数（種目を含むユニーク日数）
+
+    static let empty: ExerciseStats  // 全 nil / 全 0（記録なし時に返す）
+}</code></pre>
+
+  <table>
+    <tr><th>フィールド</th><th>表示例</th><th>算出方法</th></tr>
+    <tr><td>pr</td><td>「PR 100 kg」</td><td>matchingSets.max(by: { $0.weight &lt; $1.weight })?.weight。0 の場合は nil 扱い</td></tr>
+    <tr><td>prReps</td><td>「PR 100 kg × 5 回」（詳細画面用）</td><td>最大 weight のセットの reps</td></tr>
+    <tr><td>lastUsedDate</td><td>「先週」「3日前」（相対表示）</td><td>matchingSets.compactMap { $0.session?.date }.max()</td></tr>
+    <tr><td>totalSets</td><td>「計 47 セット」</td><td>matchingSets.count</td></tr>
+    <tr><td>totalSessions</td><td>（詳細画面用）</td><td>Set(matchingSets.compactMap { $0.session?.id }).count</td></tr>
+  </table>
+
+  <h3>最終使用日の相対表示フォーマット</h3>
+  <table>
+    <tr><th>経過時間</th><th>表示テキスト</th></tr>
+    <tr><td>当日</td><td>今日</td></tr>
+    <tr><td>1日前</td><td>昨日</td></tr>
+    <tr><td>2〜6日前</td><td>N日前</td></tr>
+    <tr><td>7〜13日前</td><td>先週</td></tr>
+    <tr><td>14〜27日前</td><td>2週間前</td></tr>
+    <tr><td>28日以上前</td><td>1ヶ月以上前</td></tr>
+  </table>
+
+  <h2>メモ化シグネチャの設計</h2>
+  <pre><code>private struct SessionsSignature: Equatable {
+    let sessionCount: Int
+    let totalSets: Int
+
+    init(sessions: [WorkoutSession]) {
+        self.sessionCount = sessions.count
+        self.totalSets = sessions.reduce(0) { $0 + $1.sets.count }
+    }
+}
+</code></pre>
+
+  <p>セッション数と総セット数の2値でセッション状態の変化を検知する。セット追加・削除・セッション追加・削除のいずれかが発生すると必ず値が変化する。ただし「同じセッション数・同じセット数で値だけが変更された場合」はキャッシュが破棄されない（値変更時は totalSets は変わらないため検出できない）。</p>
+
+  <div class="callout warn">
+    <strong>制約: セット値変更時のキャッシュ非無効化</strong><br>
+    既存セットの weight や reps を変更した場合（追加・削除なし）、シグネチャが変化しないためキャッシュが残る。<br>
+    ExerciseListView では PR や最終使用日を表示するにすぎないため、セット値変更後に再表示されるまでの遅延は許容する設計判断。<br>
+    確実な再描画が必要な場合は <code>invalidate()</code> を呼ぶこと。
+  </div>
+
+  <h2>クラス定義</h2>
+  <pre><code>@MainActor
+@Observable
+final class ExerciseStatsCalculator {
+    private var cache: [UUID: ExerciseStats] = [:]
+    private var lastSignature: SessionsSignature = .init(sessionCount: -1, totalSets: -1)
+
+    /// 指定種目の統計値を返す。キャッシュヒットしない場合は計算して保存する
+    func stats(for exercise: Exercise, sessions: [WorkoutSession]) -> ExerciseStats
+
+    /// テスト用 / 強制再計算用（セット値変更後に確実に再計算したい場合）
+    func invalidate()
+}</code></pre>
+
+  <h2>処理フロー: stats(for:sessions:) の呼び出し</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant V as ExerciseListView
+  participant C as ExerciseStatsCalculator
+  participant Cache as cache[Exercise.id]
+
+  V->>C: stats(for: exercise, sessions: sessions)
+  C->>C: SessionsSignature(sessions: sessions) を計算
+  alt シグネチャが変化（セッション追加/削除 等）
+    C->>Cache: cache.removeAll()
+    C->>C: lastSignature を更新
+  end
+  alt キャッシュヒット
+    Cache-->>C: ExerciseStats を返す
+  else キャッシュミス
+    C->>C: compute(for: exercise, sessions: sessions)
+    C->>Cache: 結果を保存
+    Cache-->>C: ExerciseStats を返す
+  end
+  C-->>V: ExerciseStats
+  </div>
+
+  <h2>View body 再描画との関係</h2>
+  <p>ExerciseListView では <code>@State private var statsCalculator = ExerciseStatsCalculator()</code> で保持し、各行の描画時に <code>statsCalculator.stats(for: exercise, sessions: sessions)</code> を呼ぶ。</p>
+  <ul>
+    <li>初回描画時: 全種目分を順次計算してキャッシュに保存（N 種目 × M セットの計算は初回のみ）</li>
+    <li>2 回目以降（シグネチャ変化なし）: キャッシュヒットで O(1) 返却</li>
+    <li>セッション追加・削除後（シグネチャ変化）: キャッシュ全破棄 → 再計算</li>
+  </ul>
+
+  <div class="callout">
+    <strong>@Observable との相性</strong><br>
+    <code>ExerciseStatsCalculator</code> は <code>@Observable</code> だが、<code>cache</code> と <code>lastSignature</code> は <code>private</code> なため View は直接観察しない。View は <code>sessions</code> の変化（@Query による自動再描画）をトリガーに <code>stats(for:sessions:)</code> を再呼び出しする。
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>weight = 0 のセット（デフォルト値や有酸素種目）は PR 計算から除外する（pr = nil）</li>
+    <li>有酸素種目（useCardioInput = true）は weight = 0 のため pr は常に nil になる</li>
+    <li>totalSessions はユニークなセッション ID 数。同一セッションに同じ種目を複数回行った場合もカウントは 1</li>
+    <li>キャッシュのスコープはアプリのメモリ上のみ。アプリ終了でリセット</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>SwiftData @Query</td><td>WorkoutSession 一覧の取得</td><td>ExerciseListView の @Query 結果を sessions として受け取る</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>Exercise に対応する WorkoutSet が 0 件</td><td>ExerciseStats.empty を返す（pr=nil, lastUsedDate=nil, totalSets=0）</td></tr>
+    <tr><td>WorkoutSet.session が nil（孤立セット）</td><td>compactMap で除外。totalSessions・lastUsedDate の計算から自動除外される</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">ExerciseStatsCalculator は @MainActor @Observable final class</li>
+    <li class="done">ExerciseListView の @State で保持（View 生存中はキャッシュが維持される）</li>
+    <li class="done">compute() は sessions.flatMap で全セットを取得してから exercise.id でフィルタリング</li>
+    <li class="done">SessionsSignature は sessionCount + totalSets の 2 値で変化を検知</li>
+    <li class="done">invalidate() はテスト / 強制再計算用（通常の使用では不要）</li>
+  </ul>
+
+  <h2>将来拡張</h2>
+  <ul>
+    <li><strong>種目詳細画面のグラフ表示</strong>: ExerciseStatsCalculator を拡張して「週別最大重量の時系列データ」を追加し、折れ線グラフで表示</li>
+    <li><strong>種目別 PR タイムライン</strong>: PR 更新の履歴（日付・重量・回数）を算出してタイムライン表示</li>
+    <li><strong>ボリューム（重量 × 回数 × セット数）の追跡</strong>: 週次・月次ボリュームの集計</li>
+    <li><strong>シグネチャの精緻化</strong>: セット値変更時もキャッシュ無効化するため、totalWeight などのハッシュ値を追加（計算コストと相談）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-24</td><td>初版作成（v1.1.1 実装内容をまとめて記載）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-24</footer>
+</div>
+</body>
+</html>

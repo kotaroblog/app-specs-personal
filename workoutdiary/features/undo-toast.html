@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - Undo Toast システム</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / Undo Toast システム</div>
+
+  <header class="site-header">
+    <h1>Undo Toast システム</h1>
+    <p>削除操作を即座に反映しつつ 5 秒間 Undo を可能にするトースト通知システム（v1.1.1）</p>
+    <div class="section-meta">
+      <span class="tag done">v1.0</span>
+      <span class="tag">機能ID: WD-FEAT-UNDO-TOAST</span>
+    </div>
+  </header>
+
+  <h2>概要・目的</h2>
+  <p>従来の削除確認ダイアログ（Alert）は操作の流れを止め、UX の摩擦となっていた。Undo Toast システムは「先に削除してから取り消せる」パターンを採用し、スムーズな操作感を実現する。</p>
+
+  <h3>ユーザー価値</h3>
+  <ul>
+    <li>削除確認のタップ 2 回が不要になり、1 スワイプ で削除できる</li>
+    <li>誤削除した場合でも 5 秒以内に「元に戻す」で復元できる</li>
+    <li>削除結果がリストから即座に消えるため、操作が成功したことが視覚的に分かる</li>
+  </ul>
+
+  <h3>適用範囲（v1.1.1）</h3>
+  <table>
+    <tr><th>操作</th><th>対象画面</th></tr>
+    <tr><td>種目削除</td><td>ExerciseListView（左スワイプ）</td></tr>
+    <tr><td>セット削除（個別）</td><td>WorkoutSessionView のセット行</td></tr>
+    <tr><td>種目グループ全削除</td><td>WorkoutSessionView の種目ヘッダー</td></tr>
+    <tr><td>ルーティン削除</td><td>TemplateListView（🗑 アイコンタップ）</td></tr>
+  </table>
+
+  <h2>構成要素</h2>
+
+  <h3>ToastMessage（struct）</h3>
+  <pre><code>struct ToastMessage: Identifiable, Equatable {
+    let id: UUID
+    let title: String
+    let undoHandler: (() -> Void)?    // nil なら通常メッセージ Toast
+    let commitHandler: (() -> Void)?  // 5秒満了 or 上書き時に実行
+}</code></pre>
+  <ul>
+    <li><code>Equatable</code> は <code>id</code> のみで比較（クロージャは比較不可のため除外）</li>
+    <li><code>undoHandler</code> が nil の場合は「元に戻す」ボタンを非表示にした通常 Toast として利用できる</li>
+  </ul>
+
+  <h3>ToastManager（@Observable @MainActor singleton）</h3>
+  <pre><code>@MainActor
+@Observable
+final class ToastManager {
+    static let shared = ToastManager()
+    private(set) var currentToast: ToastMessage?
+    private var commitTask: Task&lt;Void, Never&gt;?
+
+    static let displayDuration: TimeInterval = 5.0
+
+    func showUndoToast(title: String, undo: @escaping () -> Void, commit: @escaping () -> Void)
+    func undo()
+    func commitCurrent()
+}</code></pre>
+
+  <table>
+    <tr><th>メソッド</th><th>処理</th></tr>
+    <tr><td><code>showUndoToast(title:undo:commit:)</code></td><td>既存トーストを <code>commitCurrent()</code> で確定してから新トーストをセット。5 秒タイマーをリセット</td></tr>
+    <tr><td><code>undo()</code></td><td>タイマーをキャンセルし <code>undoHandler</code> を実行。<code>currentToast</code> を nil にする</td></tr>
+    <tr><td><code>commitCurrent()</code></td><td>タイマーをキャンセルし <code>commitHandler</code> を実行。<code>currentToast</code> を nil にする</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>タイマーキャンセルの重要性</strong><br>
+    <code>commitTask</code> は <code>Task { [weak self] in ... }</code> で保持し、<code>currentToast?.id</code> で一致確認してから <code>commitCurrent()</code> を呼ぶ。先に undo/commit が呼ばれた場合は id 不一致でスキップされ、二重 commit を防ぐ。
+  </div>
+
+  <h3>ToastOverlay（View）</h3>
+  <p>ContentView の <code>.overlay(alignment: .bottom)</code> に配置するオーバーレイ View。</p>
+  <table>
+    <tr><th>項目</th><th>値・説明</th></tr>
+    <tr><td>背景</td><td><code>Color(.secondarySystemGroupedBackground)</code>（不透明・コンテンツが透けない）</td></tr>
+    <tr><td>枠線</td><td><code>AppTheme.accent.opacity(0.45)</code></td></tr>
+    <tr><td>影</td><td><code>shadow(color: .black.opacity(0.45), radius: 18)</code></td></tr>
+    <tr><td>「元に戻す」ボタン</td><td>AppTheme.accent 背景・黒文字・Capsule 形状</td></tr>
+    <tr><td>底辺余白</td><td><code>padding(.bottom, 130)</code>: タブバー + 広告 + ボトムアクションバーの上に表示</td></tr>
+    <tr><td>アニメーション</td><td><code>.spring(duration: 0.35)</code> で下から滑り込む</td></tr>
+  </table>
+
+  <h2>保留中削除パターン（各 View 側の実装）</h2>
+  <pre><code>// View の @State
+@State private var pendingDeletionIDs: Set&lt;UUID&gt; = []
+
+// 削除アクション
+func deleteSomething(_ item: SomeModel) {
+    pendingDeletionIDs.insert(item.id)  // ① リストから即除外
+    ToastManager.shared.showUndoToast(
+        title: "「\(item.name)」を削除しました",
+        undo: {
+            pendingDeletionIDs.remove(item.id)  // ② Undo: 復元
+        },
+        commit: {
+            modelContext.delete(item)            // ③ 確定: 実際に削除
+        }
+    )
+}
+
+// @Query フィルター or List 描画でフィルタリング
+var displayItems: [SomeModel] {
+    allItems.filter { !pendingDeletionIDs.contains($0.id) }
+}</code></pre>
+
+  <div class="callout warn">
+    <strong>注意</strong><br>
+    <code>pendingDeletionIDs</code> は View の <code>@State</code> で管理する（ToastManager に持たせない）。View が破棄された際に自動クリアされ、リーク・不整合を防ぐ。<br>
+    ただし View が破棄される前に commitTask が実行される場合は <code>modelContext</code> が有効であることを確認すること。
+  </div>
+
+  <h2>処理フロー: 削除 → Toast → Undo / Commit</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant V as View
+  participant TM as ToastManager
+  participant DB as SwiftData
+
+  U->>V: 削除操作（スワイプ / タップ）
+  V->>V: pendingDeletionIDs に ID を追加
+  V->>V: リストから除外（即時反映）
+  V->>TM: showUndoToast(title:undo:commit:)
+  TM->>TM: 既存トーストを commitCurrent()
+  TM->>TM: 新 ToastMessage をセット
+  TM->>TM: 5秒タイマー開始
+
+  alt 5秒以内に「元に戻す」をタップ
+    U->>TM: undo()
+    TM->>TM: タイマーキャンセル
+    TM->>V: undoHandler() 実行
+    V->>V: pendingDeletionIDs から ID を除外（復元）
+    TM->>TM: currentToast = nil（Toast 消去）
+  else 5秒経過 or 別削除でトーストが上書き
+    TM->>TM: commitCurrent()
+    TM->>V: commitHandler() 実行
+    V->>DB: modelContext.delete(item)
+    TM->>TM: currentToast = nil（Toast 消去）
+  end
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>Toast の表示時間は 5 秒固定（<code>ToastManager.displayDuration</code>）</li>
+    <li>複数の削除を連続して行った場合、前の Toast は即座に確定されてから新 Toast が表示される</li>
+    <li>「元に戻す」は最後の 1 件のみ取り消せる（複数 Undo キューは持たない）</li>
+    <li>Toast はアプリ全体で 1 件のみ（ToastManager.shared で管理）</li>
+    <li>Toast の「元に戻す」ボタンはアクセシビリティラベルを設定すること（VoiceOver 対応）</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>SwiftData ModelContext</td><td>commitHandler 内で modelContext.delete() を実行</td><td>@MainActor 必須</td></tr>
+    <tr><td>AppTheme.accent</td><td>Toast 枠線・「元に戻す」ボタン背景色</td><td>—</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>commitHandler 内の modelContext.delete() が失敗</td><td>SwiftData はデフォルトで try? を使用。エラーは Logger でログ出力し UI 通知はしない</td></tr>
+    <tr><td>View が破棄された後に commitTask が発火</td><td>[weak self] パターン + id 一致確認でスキップ。pendingDeletionIDs は @State のため View 破棄時にクリアされるが、commitHandler のクロージャは独立して保持されるため DB 削除は実行される</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">ToastManager は @Observable singleton（<code>static let shared</code>）</li>
+    <li class="done">ToastOverlay は ContentView の .overlay(alignment: .bottom) に配置</li>
+    <li class="done">各 View の @State pendingDeletionIDs: Set&lt;UUID&gt; でリスト除外を管理</li>
+    <li class="done">commitTask は [weak self] + id 一致確認で二重 commit を防止</li>
+    <li class="done">ExerciseListView: 左スワイプ削除で Undo Toast</li>
+    <li class="done">TemplateListView: 🗑 アイコンタップで Undo Toast（確認ダイアログ廃止）</li>
+    <li class="done">WorkoutSessionView: セット削除・種目グループ削除で Undo Toast</li>
+  </ul>
+
+  <h2>リスク・トレードオフ</h2>
+  <table>
+    <tr><th>リスク</th><th>内容</th><th>対策</th></tr>
+    <tr><td>既存 Alert との一貫性</td><td>一部の削除が Alert、一部が Toast になると操作が混在する</td><td>v1.1.1 以降は削除操作をすべて Toast に移行する方針。Alert は他の操作（ログアウト等）のみ使用</td></tr>
+    <tr><td>5 秒の短さ</td><td>5 秒は短すぎる可能性がある（特に低速ユーザー）</td><td>将来的に設定から変更できるようにすることも検討。現時点は 5 秒固定</td></tr>
+    <tr><td>pendingDeletionIDs リーク</td><td>View が破棄されず長期保持された場合、不要な ID が残り続ける</td><td>commitHandler が呼ばれれば DB 削除は完了する。次回起動時には @Query から自動排除されるため実害なし</td></tr>
+  </table>
+
+  <h2>将来拡張</h2>
+  <ul>
+    <li>種目追加の Undo（追加直後に「追加を取り消す」Toast を表示）</li>
+    <li>ワークアウトセッション全体の Undo（セッション開始直後の取り消し）</li>
+    <li>複数 Undo キュー（現状は 1 件のみ）</li>
+    <li>Toast 表示時間のユーザー設定（3 秒 / 5 秒 / 8 秒）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-24</td><td>初版作成（v1.1.1 実装内容をまとめて記載）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-24</footer>
+</div>
+</body>
+</html>

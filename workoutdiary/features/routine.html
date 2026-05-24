@@ -14,9 +14,9 @@
 
   <header class="site-header">
     <h1>ルーティン機能</h1>
-    <p>曜日固定のトレーニングテンプレートを「今日のルーティン」として自動提案する機能（v1.1.0）</p>
+    <p>曜日固定のトレーニングテンプレートを「今日のルーティン」として自動提案する機能（v1.1.0）。v1.1.1 でピラミッドセット対応（TemplateSetEntry）を追加。</p>
     <div class="section-meta">
-      <span class="tag done">v1.0</span>
+      <span class="tag done">v1.1</span>
       <span class="tag">機能ID: WD-FEAT-ROUTINE</span>
     </div>
   </header>
@@ -59,12 +59,35 @@ final class WorkoutTemplate {
         let weekday = Calendar.current.component(.weekday, from: date) - 1
         return assignedWeekdays.contains(weekday)
     }
+}
+
+/// v1.1.1 新規: セットごとの値を持つ（ピラミッドセット等）
+@Model
+final class TemplateSetEntry {
+    var id: UUID = UUID()
+    var weight: Double = 0    // ウエイト種目: kg
+    var reps: Int = 0         // ウエイト種目: 回
+    var duration: Double = 0  // 有酸素種目: 分
+    var distance: Double = 0  // 有酸素種目: km
+    var order: Int = 0
+    var entry: TemplateEntry?
 }</code></pre>
 
   <div class="callout">
     <strong>マイグレーション</strong><br>
-    <code>assignedWeekdays: [Int] = []</code> はデフォルト空配列のため、SwiftData lightweight migration で既存データへの影響なし。
+    <code>assignedWeekdays: [Int] = []</code> はデフォルト空配列のため、SwiftData lightweight migration で既存データへの影響なし。<br><br>
+    <strong>v1.1.1 追記</strong>: <code>TemplateEntry.setEntries: [TemplateSetEntry] = []</code> もデフォルト空配列で lightweight migration に対応。既存データは <code>TemplateMigrationService</code> が起動時に自動展開する（詳細は後述）。
   </div>
+
+  <h2>TemplateSetEntry とピラミッドセット（v1.1.1）</h2>
+  <p>v1.1.0 まで TemplateEntry は「全セット同じ値 × N セット（weight × reps × sets）」しか表現できなかった。v1.1.1 で <code>TemplateSetEntry</code> を導入し、セットごとに重量・回数を独立して設定できるようになった。</p>
+
+  <table>
+    <tr><th>シナリオ</th><th>例</th><th>v1.1.0 まで</th><th>v1.1.1 以降</th></tr>
+    <tr><td>均等セット</td><td>60kg × 10 rep × 3セット</td><td>weight=60, reps=10, sets=3</td><td>TemplateSetEntry を 3 件（同値）</td></tr>
+    <tr><td>ピラミッドセット</td><td>20kg×10 / 40kg×8 / 60kg×6</td><td>表現不可</td><td>TemplateSetEntry を 3 件（異なる値）</td></tr>
+    <tr><td>有酸素 1 セット</td><td>トレッドミル 30 分</td><td>duration=30, sets=1</td><td>TemplateSetEntry 1 件（duration=30）</td></tr>
+  </table>
 
   <h2>関連画面</h2>
   <ul>
@@ -118,8 +141,52 @@ sequenceDiagram
   end
   </div>
 
-  <h2>RoutineSuggestionService</h2>
-  <pre><code>/// 指定日のルーティン提案・適用を行うサービス（v1.1.0）
+  <h2>TemplateMigrationService（v1.1.1 新規）</h2>
+  <pre><code>/// レガシー TemplateEntry の weight × reps × sets を setEntries 形式に展開する（v1.1.1）
+/// 冪等: setEntries が空でない entry はスキップ
+@MainActor
+enum TemplateMigrationService {
+
+    /// 指定 TemplateEntry が未移行（setEntries が空）ならレガシー値を展開する
+    static func migrateIfNeeded(_ entry: TemplateEntry, modelContext: ModelContext)
+
+    /// 全 TemplateEntry の未移行分を一括展開
+    /// 呼び出し元: WorkoutDiaryApp.onAppear, EditTemplateView.onAppear
+    static func migrateAllIfNeeded(modelContext: ModelContext)
+}</code></pre>
+
+  <div class="callout">
+    <strong>移行後の挙動</strong><br>
+    ウエイト種目: sets 件の TemplateSetEntry を生成（全て同じ weight/reps）<br>
+    有酸素種目: 1 件の TemplateSetEntry を生成（duration/distance を保持）<br>
+    sets=0 の場合は min(sets, 1)=1 件として展開する
+  </div>
+
+  <h2>EditTemplateView（v1.1.1 全面リライト）</h2>
+  <p>v1.1.0 までは全種目のセット数・重量・回数を1行で編集していたが、v1.1.1 でピラミッドセット対応のため全面リライト。</p>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>Section per 種目</td><td>各種目を独立 Section で表示。Section ヘッダーは部位カラー左ボーダー + 種目名 + 種目削除ボタン</td></tr>
+    <tr><td>セット行</td><td>「Set N / [重量]kg × [回数]回 / ⊖削除」を表示。各セットを個別編集可能</td></tr>
+    <tr><td>セット追加ボタン</td><td>「+ セットを追加」をタップで直前セットの値を引き継いで新規 TemplateSetEntry を追加</td></tr>
+    <tr><td>種目追加ボタン</td><td>末尾の「種目を追加」ボタン → AddTemplateEntrySheet を sheet 表示</td></tr>
+    <tr><td>保存</td><td>saveChanges() で setEntries を正源として weight/reps/sets レガシーフィールドも同期</td></tr>
+  </table>
+
+  <h2>AddTemplateEntrySheet（v1.1.1 新規）</h2>
+  <p>EditTemplateView から「種目を追加」でシート表示される。既存の Exercise 一覧を表示し、種目を選択すると TemplateEntry + デフォルト TemplateSetEntry を作成して追加する。</p>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>種目一覧</td><td>部位カラー左ボーダー Section で Exercise をグループ表示</td></tr>
+    <tr><td>検索バー</td><td>種目名で絞り込み</td></tr>
+    <tr><td>デフォルト値</td><td>ウエイト種目: 3 セット分の TemplateSetEntry（weight=0, reps=0）。有酸素種目: 1 セット（duration=0）</td></tr>
+  </table>
+
+  <h2>SaveTemplateView 保存ロジック改善（v1.1.1）</h2>
+  <p>ワークアウトから「ルーティン保存」時、各 WorkoutSet を個別の TemplateSetEntry として保存するよう改善。均等セットでも変則セットでも実データをそのまま反映できる。</p>
+
+  <h2>RoutineSuggestionService（v1.1.1 改修）</h2>
+  <pre><code>/// 指定日のルーティン提案・適用を行うサービス（v1.1.0 / v1.1.1 改修）
 @MainActor
 enum RoutineSuggestionService {
 
@@ -129,7 +196,9 @@ enum RoutineSuggestionService {
     /// 指定日に該当する先頭1件のルーティンを返す（なければ nil）
     static func todaysRoutine(for date: Date, in templates: [WorkoutTemplate]) -> WorkoutTemplate?
 
-    /// ルーティンの全エントリを WorkoutSession に展開する
+    /// ルーティンの全エントリを WorkoutSession に展開する（v1.1.1 改修）
+    /// - setEntries が空でなければ優先使用（v1.1.1）
+    /// - setEntries が空（レガシー）の場合は従来通り sets ループ
     /// - existingSession があれば末尾に追加、なければ新規に WorkoutSession を作成
     /// - Returns: 挿入したセット数
     @discardableResult
@@ -199,6 +268,23 @@ enum RoutineSuggestionService {
     <tr><td>Services/WorkoutCopyService.swift</td><td>「前回をコピー」セッション丸コピーサービス（AddWorkoutView 内の種目単位コピーとは別）</td></tr>
   </table>
 
+  <h2>新規追加ファイル一覧（v1.1.1）</h2>
+  <table>
+    <tr><th>ファイル</th><th>役割</th></tr>
+    <tr><td>Services/TemplateMigrationService.swift</td><td>レガシー TemplateEntry を setEntries 形式に自動展開する移行サービス</td></tr>
+    <tr><td>Views/Workout/AddTemplateEntrySheet.swift</td><td>EditTemplateView から呼ばれる種目追加シート</td></tr>
+  </table>
+
+  <h2>変更ファイル一覧（v1.1.1）</h2>
+  <table>
+    <tr><th>ファイル</th><th>変更内容</th></tr>
+    <tr><td>Models/WorkoutTemplate.swift</td><td>TemplateSetEntry モデル新規追加。TemplateEntry に setEntries リレーション追加</td></tr>
+    <tr><td>Views/Workout/EditTemplateView.swift</td><td>全面リライト。セットごとの独立編集・セット追加・種目削除に対応</td></tr>
+    <tr><td>Views/Workout/SaveTemplateView.swift</td><td>保存時に各 WorkoutSet を個別 TemplateSetEntry として保存するよう改善</td></tr>
+    <tr><td>Services/RoutineSuggestionService.swift</td><td>applyRoutine() で setEntries 優先使用に対応</td></tr>
+    <tr><td>WorkoutDiaryApp.swift</td><td>onAppear で TemplateMigrationService.migrateAllIfNeeded() を呼び出すよう追加</td></tr>
+  </table>
+
   <h2>将来拡張</h2>
   <ul>
     <li><strong>v1.2.0 予定</strong>: ルーティン当日の朝に「今日は〇〇の日です」ローカルプッシュ通知リマインダー</li>
@@ -210,6 +296,7 @@ enum RoutineSuggestionService {
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-23</td><td>初版作成（v1.1.0 実装内容をまとめて記載）</td></tr>
+    <tr><td>1.1</td><td>2026-05-24</td><td>v1.1.1: TemplateSetEntry 新規モデル・ピラミッドセット対応を追記。TemplateMigrationService・EditTemplateView 全面リライト・AddTemplateEntrySheet・SaveTemplateView 改善・RoutineSuggestionService 改修を追記</td></tr>
   </table>
 
   <script>
@@ -219,7 +306,7 @@ enum RoutineSuggestionService {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-05-23</footer>
+  <footer class="site-footer">最終更新: 2026-05-24</footer>
 </div>
 </body>
 </html>

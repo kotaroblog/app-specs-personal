@@ -23,6 +23,7 @@ erDiagram
   WorkoutSession ||--o{ WorkoutSet : has
   WorkoutSet }o--|| Exercise : references
   WorkoutTemplate ||--o{ TemplateEntry : has
+  TemplateEntry ||--o{ TemplateSetEntry : "has (v1.1.1)"
 
   WorkoutSession {
     UUID id
@@ -62,6 +63,14 @@ erDiagram
     Double duration
     Double distance
     Bool isCardio
+  }
+  TemplateSetEntry {
+    UUID id
+    Double weight
+    Int reps
+    Double duration
+    Double distance
+    Int order
   }
   </div>
 
@@ -164,27 +173,61 @@ final class WorkoutTemplate {
     }
 }</code></pre>
 
-  <h2>TemplateEntry</h2>
+  <h2>TemplateEntry（v1.1.1: setEntries 追加）</h2>
   <pre><code>@Model
 final class TemplateEntry {
     var id: UUID = UUID()
     var exerciseName: String = ""
     var exerciseCategory: String = ""
+    /// レガシーフィールド（後方互換。setEntries が正源）
     var weight: Double = 0
     var reps: Int = 0
     var sets: Int = 1
     var order: Int = 0
-    var duration: Double = 0   // 有酸素: 分
-    var distance: Double = 0   // 有酸素: km
+    var duration: Double = 0   // 有酸素: 分（レガシー）
+    var distance: Double = 0   // 有酸素: km（レガシー）
     var isCardio: Bool = false
 
+    /// v1.1.1: セットごとの値を保持する正源リレーション
+    @Relationship(deleteRule: .cascade, inverse: \TemplateSetEntry.entry)
+    var setEntries: [TemplateSetEntry] = []
+
     var template: WorkoutTemplate?
+
+    var sortedSetEntries: [TemplateSetEntry] {
+        setEntries.sorted { $0.order < $1.order }
+    }
+}</code></pre>
+
+  <h2>TemplateSetEntry（v1.1.1 新規）</h2>
+  <pre><code>/// セットごとの重量・回数・有酸素値を保持する（v1.1.1）
+/// ピラミッドセット等の変則構成を表現できる
+@Model
+final class TemplateSetEntry {
+    var id: UUID = UUID()
+    var weight: Double = 0    // ウエイト種目: kg
+    var reps: Int = 0         // ウエイト種目: 回
+    var duration: Double = 0  // 有酸素種目: 分
+    var distance: Double = 0  // 有酸素種目: km
+    var order: Int = 0        // セットの並び順
+
+    var entry: TemplateEntry?
+
+    init(weight: Double = 0, reps: Int = 0, duration: Double = 0, distance: Double = 0, order: Int = 0) {
+        self.weight = weight
+        self.reps = reps
+        self.duration = duration
+        self.distance = distance
+        self.order = order
+    }
 }</code></pre>
 
   <h2>マイグレーション方針</h2>
   <div class="callout warn">
     SwiftDataの <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定すること。<br><br>
-    <strong>v1.1.0 マイグレーション</strong>: <code>WorkoutTemplate.assignedWeekdays: [Int] = []</code> を追加。デフォルト空配列のため、既存データに影響なし（SwiftData lightweight migration で自動対応）。
+    <strong>v1.1.0 マイグレーション</strong>: <code>WorkoutTemplate.assignedWeekdays: [Int] = []</code> を追加。デフォルト空配列のため、既存データに影響なし（SwiftData lightweight migration で自動対応）。<br><br>
+    <strong>v1.1.1 マイグレーション</strong>: <code>TemplateEntry.setEntries: [TemplateSetEntry] = []</code> を追加。デフォルト空配列のため SwiftData lightweight migration で自動対応。既存の <code>weight / reps / sets</code> レガシーフィールドは保持（後方互換）。<br>
+    起動時（WorkoutDiaryApp.onAppear）および EditTemplateView.onAppear で <code>TemplateMigrationService.migrateAllIfNeeded()</code> を呼び出し、既存 TemplateEntry を setEntries 形式に自動展開する（冪等）。
   </div>
 
   <h2>変更履歴</h2>
@@ -192,6 +235,7 @@ final class TemplateEntry {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-23</td><td>v1.1.0: WorkoutTemplate に assignedWeekdays: [Int]（デフォルト空配列）と appliesTo(date:) を追加。ExerciseCategory に color プロパティ（8部位カラー定義）を追加。ER図を実装と整合するよう全面修正</td></tr>
+    <tr><td>1.2</td><td>2026-05-24</td><td>v1.1.1: TemplateSetEntry 新規モデル追加（セットごとの重量・回数・有酸素値を保持）。TemplateEntry に setEntries リレーション追加・レガシーフィールドをコメントで明記。ER図に TemplateSetEntry を追加。マイグレーション方針に v1.1.1 内容を追記</td></tr>
   </table>
 
   <script>
@@ -201,7 +245,7 @@ final class TemplateEntry {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-05-23</footer>
+  <footer class="site-footer">最終更新: 2026-05-24</footer>
 </div>
 </body>
 </html>
