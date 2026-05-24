@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ちいさな魔法の森 - Specs</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← Personal App Specs</a></div>
+
+  <header class="site-header">
+    <h1>ちいさな魔法の森（LittleMagicForest）</h1>
+    <p>静かなキャラ収集型 2048 × ステージクリア型パズル · Bundle ID: <code>com.happyboy1002.LittleMagicForest</code></p>
+  </header>
+
+  <h2>概要</h2>
+  <ul class="kv-list">
+    <li><span class="k">ジャンル</span><span class="v">2048系スライドパズル × ステージクリア型</span></li>
+    <li><span class="k">プラットフォーム</span><span class="v">iOS 18+（iPhone 縦持ち専用）</span></li>
+    <li><span class="k">対象</span><span class="v">17歳以上</span></li>
+    <li><span class="k">カテゴリ</span><span class="v">ゲーム / パズル</span></li>
+    <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
+    <li><span class="k">言語</span><span class="v">日本語</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">無料 + 広告（AdMob）+ 広告除去 IAP ¥240（予定）</span></li>
+    <li><span class="k">ステータス</span><span class="v">開発中</span></li>
+    <li><span class="k">想定プレイ時間</span><span class="v">1日 5〜10 分の短時間プレイ</span></li>
+    <li><span class="k">競合</span><span class="v">2048 / Threes! / Merge Dragons / Monument Valley</span></li>
+    <li><span class="k">ポジショニング</span><span class="v">「静かなキャラ収集型 2048」（マージ + 進化 + 触感 + 物語性）</span></li>
+  </ul>
+
+  <h2>世界観</h2>
+  <ul class="kv-list">
+    <li><span class="k">舞台</span><span class="v">魔法の森（夜・月光・霧・星明かり）</span></li>
+    <li><span class="k">主人公</span><span class="v">精霊（fairy より淡い、半透明の存在）</span></li>
+    <li><span class="k">テーマ</span><span class="v">「小さな感情が、世界そのものへ還っていく」（感情 → 記憶 → 宇宙のナラティブ）</span></li>
+    <li><span class="k">トーン</span><span class="v">ふんわり / 神秘 / 癒し / ambient / tactile</span></li>
+    <li><span class="k">NG</span><span class="v">ソシャゲ SSR感、派手ガチャ感、ネオン、アニメガチガチ</span></li>
+  </ul>
+
+  <h2>進化チェーン（8段階）</h2>
+  <p>各キャラは水彩ファンタジー風 1024×1024 PNG（DALL-E 生成）として <code>Assets.xcassets/spirit_*.imageset/</code> に配置済。</p>
+  <table>
+    <thead>
+      <tr><th>段階</th><th>名前</th><th>絵文字</th><th>物語的意味</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>シズク</td><td>💧</td><td>水滴 — 朝露・孤独な感情の始まり</td></tr>
+      <tr><td>2</td><td>ソラ</td><td>☁️</td><td>雲 — 感情が空へ漂う</td></tr>
+      <tr><td>3</td><td>ハナ</td><td>🌸</td><td>花 — 感情が誰かを癒す</td></tr>
+      <tr><td>4</td><td>ルナ</td><td>🌙</td><td>月光 — 感情が記憶になる</td></tr>
+      <tr><td>5</td><td>ニジ</td><td>🌈</td><td>虹 — 世界と世界を繋ぐ</td></tr>
+      <tr><td>6</td><td>ホシ</td><td>⭐</td><td>星 — 個が空の一部になる</td></tr>
+      <tr><td>7</td><td>ソラノ</td><td>🌌</td><td>銀河 — 世界そのものへ溶ける</td></tr>
+      <tr><td>8</td><td>ユメ</td><td>✨</td><td>夢 — すべての感情が世界の夢へ還る（最終形態）</td></tr>
+    </tbody>
+  </table>
+
+  <h2>ゲームメカニクス</h2>
+
+  <h3>コアルール</h3>
+  <ul>
+    <li>4×4 グリッド固定</li>
+    <li>2048 標準合体（同種2体 → 次段階に進化、1手で1タイル1回まで）</li>
+    <li>シズクのみがランダム spawn（初期2個 + 毎手1個）</li>
+    <li>手数制限 + Goal 達成でクリア</li>
+    <li>無料リトライ無制限 + 完全リスタート</li>
+    <li>失敗条件: 手数切れ ∨ 盤面詰み（合体可能ペアなし）</li>
+    <li>Stage 24 クリア後: 無限モード（森を歩く）へ移行</li>
+  </ul>
+  <p><small>※ <code>collectedCounts</code> は「合体で生まれた結果のみ」をカウント。spawn は対象外。シズクは Goal にできない（合体結果として生まれないため）。</small></p>
+
+  <h3>24ステージ Goal 仕様</h3>
+  <table>
+    <thead>
+      <tr><th>Stage</th><th>Goal</th><th>Moves</th><th>備考</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>ソラ × 1</td><td>10</td><td>チュートリアル（単一合体体験）</td></tr>
+      <tr><td>2</td><td>ソラ × 3</td><td>18</td><td></td></tr>
+      <tr><td>3</td><td>ハナ × 1</td><td>16</td><td></td></tr>
+      <tr><td>4</td><td>ハナ × 2</td><td>24</td><td></td></tr>
+      <tr><td>5</td><td>ルナ × 1</td><td>22</td><td></td></tr>
+      <tr><td>6</td><td>ルナ × 2</td><td>36</td><td></td></tr>
+      <tr><td>7</td><td>ニジ × 1</td><td>35</td><td></td></tr>
+      <tr><td>8</td><td>ニジ × 2</td><td>65</td><td></td></tr>
+      <tr><td>9</td><td>ホシ × 1</td><td>55</td><td></td></tr>
+      <tr><td>10</td><td>ソラノ × 1</td><td>110</td><td></td></tr>
+      <tr><td>11</td><td>ユメ × 1</td><td>200</td><td></td></tr>
+      <tr><td>12</td><td>ユメ × 1</td><td>150</td><td>efficiency challenge</td></tr>
+      <tr><td>13</td><td>ホシ × 2</td><td>90</td><td>高位 Tier 復習</td></tr>
+      <tr><td>14</td><td>ホシ × 3</td><td>140</td><td></td></tr>
+      <tr><td>15</td><td>ソラノ × 1</td><td>95</td><td>Stage 10 より tight</td></tr>
+      <tr><td>16</td><td>ニジ × 4</td><td>100</td><td>単一 Tier 強化</td></tr>
+      <tr><td>17</td><td>ホシ × 1 + ニジ × 4</td><td>95</td><td>複合入門</td></tr>
+      <tr><td>18</td><td>ソラノ × 2</td><td>220</td><td></td></tr>
+      <tr><td>19</td><td>ホシ × 2 + ルナ × 12</td><td>135</td><td>複合中級（"保持" 戦略）</td></tr>
+      <tr><td>20</td><td>ソラノ × 1 + ニジ × 6</td><td>135</td><td>複合中級</td></tr>
+      <tr><td>21</td><td>ユメ × 1</td><td>125</td><td>efficiency challenge（最難）</td></tr>
+      <tr><td>22</td><td>ユメ × 1 + ホシ × 6</td><td>230</td><td>複合（yume 形成保持戦略）</td></tr>
+      <tr><td>23</td><td>ユメ × 2</td><td>325</td><td>耐久戦</td></tr>
+      <tr><td>24</td><td>ユメ × 2 + ソラノ × 5</td><td>400</td><td>真の最終決戦</td></tr>
+    </tbody>
+  </table>
+
+  <h2>触感・演出</h2>
+
+  <h3>タイル単体</h3>
+  <ul>
+    <li><strong>個別呼吸</strong> — 精霊ごとに duration / amplitude が異なる、位相もランダム
+      <ul>
+        <li>シズク: 中庸 / ソラ: 軽く速め / ハナ: 柔らかい / ルナ: 最遅 / ホシ: 短周期 / ソラノ: 重力感 / ユメ: 最遅最小 / ニジ: オーロラと別軸で揺らぐ</li>
+      </ul>
+    </li>
+    <li><strong>柔らかい影</strong> — CIGaussianBlur, alpha 0.18, y -4</li>
+    <li><strong>月光ハロー</strong> — 半透明グロー + 4.5〜6.5 秒の alpha 脈動</li>
+    <li><strong>共鳴ハロー</strong> — 同種隣接時に薄く脈動（無言の合体誘導）</li>
+    <li><strong>swipe 反応</strong> — touchesBegan で全タイル scale 0.99、touchesEnded で復帰</li>
+  </ul>
+
+  <h3>特殊レンダリング</h3>
+  <ul>
+    <li><strong>ニジタイル</strong> — body・輪郭・絵文字・影を全削除。3層の青紫オーロラ（gradient sprite）が drift + alpha shimmer で揺らぐ。「物体」ではなく「現象」</li>
+    <li><strong>ルナタイル</strong> — 月光ミスト（外側の極薄 gradient sprite）追加</li>
+  </ul>
+
+  <h3>合体3段階演出</h3>
+  <table>
+    <thead>
+      <tr><th>フェーズ</th><th>時間</th><th>内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Phase 1（引き寄せ）</td><td>0.08s</td><td>2タイルが target へ加速移動 + scale 1.0→0.75 + alpha 1.0→0.85</td></tr>
+      <tr><td>Phase 2（融合光）</td><td>0.06s</td><td>Haptics 同フレーム発火（rainbow 到達なら .evolve、それ以外は .merge）</td></tr>
+      <tr><td>Phase 3（誕生）</td><td>0.14s</td><td>新タイルが光が薄れる中で fade-in + scale 0.5→1.06→1.0</td></tr>
+    </tbody>
+  </table>
+
+  <h3>環境音（プロシージャル生成・外部音源ゼロ）</h3>
+  <ul>
+    <li><strong>夜風</strong> — 強ローパスフィルタ + 12 秒ループ + 0.15Hz 振幅変調</li>
+    <li><strong>葉ずれ</strong> — 白色雑音の差分（簡易ハイパス）を低レベルで重ねる</li>
+    <li><strong>微鈴</strong> — 620/740/880/1040/1180Hz からランダム選択、指数減衰、18〜32秒間隔</li>
+    <li>音量ピーク 0.08（「無音」と感じる境目）</li>
+    <li><code>.ambient + .mixWithOthers</code> で他アプリ音楽を遮らない</li>
+    <li>scenePhase 連動で background 時停止</li>
+  </ul>
+
+  <h3>Haptics</h3>
+  <ul>
+    <li><strong>swipe</strong> — Soft impact（intensity 0.55）</li>
+    <li><strong>merge</strong> — Medium + CHHapticEngine の余韻パターン</li>
+    <li><strong>evolve（虹到達）</strong> — Heavy + 長め残響パターン</li>
+  </ul>
+
+  <h3>盤面全体</h3>
+  <ul>
+    <li><strong>呼吸</strong> — scale 1.000 ↔ 1.012 / 4秒</li>
+    <li><strong>微細揺れ</strong> — x±0.4pt / y±0.6pt、X と Y は独立 7〜12 秒周期（Lissajous 軌道）</li>
+    <li><strong>大気パーティクル</strong> — 青白い粒子が画面下から上へ漂う（SKEmitterNode）</li>
+    <li><strong>遠景ミスト</strong> — 薄い青の矩形シャドウ</li>
+    <li><strong>盤面背景</strong> — 半透明角丸ボックス + 16 セル枠線</li>
+  </ul>
+
+  <h2>技術スタック</h2>
+  <table>
+    <thead>
+      <tr><th>レイヤー</th><th>採用</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>言語 / フレームワーク</td><td>Swift 6.0 / SwiftUI / SpriteKit / AVAudioEngine / CoreHaptics</td></tr>
+      <tr><td>プロジェクト管理</td><td>XcodeGen (project.yml)</td></tr>
+      <tr><td>状態管理</td><td>@Observable @MainActor + GameState（SSoT）</td></tr>
+      <tr><td>永続化</td><td>UserDefaults 軽量版（進捗 + ベストスコア）</td></tr>
+      <tr><td>テスト</td><td>Swift Testing（@Test / #expect）</td></tr>
+      <tr><td>広告 / 課金</td><td>未実装（AdMob + StoreKit 2 予定）</td></tr>
+    </tbody>
+  </table>
+
+  <h2>アーキテクチャ</h2>
+  <pre><code>LittleMagicForest/
+├── App/                    LittleMagicForestApp.swift
+├── Models/                 純粋値型のみ
+│   ├── SpiritType          enum: 8段階の精霊種別
+│   ├── Tile                id 維持タイル
+│   ├── Board               4×4 値型盤面
+│   ├── MoveDirection       4方向
+│   ├── MoveResult          .noChange / .changed(snapshot)
+│   ├── BoardSnapshot       1手分の差分（id, moves, merges）
+│   ├── Stage               id, goal, movesLimit
+│   ├── StageGoal           Requirement の AND（拡張可）
+│   └── StageCatalog        24 ステージ定義
+├── Logic/                  純粋関数のみ
+│   ├── GameLogic           apply(direction:to:), isGameOver
+│   └── SpiritEvolutionPolicy  チェーン進化（差し替え可能）
+├── State/
+│   ├── GameState           @Observable @MainActor SSoT
+│   └── AnimationTiming     アニメ時間定数の一元管理
+├── Scene/                  SpriteKit
+│   ├── PuzzleScene         盤面描画・入力・ウォッチドッグ
+│   ├── TileNode            1タイル = 1SKNode
+│   ├── MergeEffect         融合光（core + ring + 6粒子）
+│   └── SpiritType+SpriteKit  skGlowColor / emoji
+├── Services/
+│   ├── HapticsManager      CHHapticEngine + UIImpactFeedback
+│   └── AmbientSoundEngine  プロシージャル空間音
+├── Views/                  SwiftUI
+│   ├── ContentView         ルート
+│   ├── HomeView            タイトル + ステージ選択
+│   ├── PuzzleView          SpriteView + HUD + Overlay
+│   ├── HUDView             ステージ / Moves / Goal / Score
+│   └── Overlays/
+│       ├── StageClearOverlay   クリア時：次へ / もう一度
+│       └── StageFailedOverlay  失敗時：もう一度
+└── Resources/Assets.xcassets/
+    ├── AppIcon / AccentColor
+    └── spirit_*.imageset × 8  キャラクター画像</code></pre>
+
+  <h2>検証状況</h2>
+  <ul class="kv-list">
+    <li><span class="k">テスト</span><span class="v">49 / 49 passed（GameLogic 25 + GameState 24）</span></li>
+    <li><span class="k">ビルド</span><span class="v">成功（iOS Simulator iPhone 17）</span></li>
+    <li><span class="k">実機テスト</span><span class="v">未実施</span></li>
+  </ul>
+
+  <h2>コミット履歴</h2>
+  <table>
+    <thead>
+      <tr><th>ハッシュ</th><th>内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>853cf8c</code></td><td>fix: コードレビュー指摘の修正（Critical 1 + Major/Minor 4）</td></tr>
+      <tr><td><code>7ddb9e5</code></td><td>feat: HomeView + ステージ選択 + 広告解放（Chunk B）</td></tr>
+      <tr><td><code>8da1625</code></td><td>feat: ステージ数 12→24 へ拡張、複合 Goal を導入（Chunk A）</td></tr>
+      <tr><td><code>89f7988</code></td><td>feat: 魔法の森の夜背景画像を導入し、盤面パネルとコントラストを調整</td></tr>
+      <tr><td><code>ffba312</code></td><td>feat: 永続化（UserDefaults 軽量版）：進捗とベストスコアを保存</td></tr>
+      <tr><td><code>973376e</code></td><td>feat: Phase 1.5: Stage 12 クリア後の無限モード（森を歩く）を実装</td></tr>
+      <tr><td><code>bc1f456</code></td><td>fix: count セマンティクスとステージバランスを修正（Claude レビュー対応）</td></tr>
+      <tr><td><code>c7f64a0</code></td><td>feat: Phase B-1: ステージ制ゲームへ転換（12ステージ・Goal・Moves制限）</td></tr>
+      <tr><td><code>79753ad</code></td><td>feat: 8精霊のキャラクター画像を導入し TileNode をスプライト化（Phase 3）</td></tr>
+      <tr><td><code>64d017e</code></td><td>feat: 進化チェーンを8段階へ拡張（虹の後に ホシ → ソラノ → ユメ）</td></tr>
+      <tr><td><code>05de5ad</code></td><td>feat: 環境音エンジンと精霊ごとの呼吸差を追加</td></tr>
+      <tr><td><code>8c88ece</code></td><td>refactor: ルナタイルを「月」アイコンから「月光」気配へ ambient 化</td></tr>
+      <tr><td><code>0c47f9c</code></td><td>feat: ちいさな魔法の森 MVP の触感磨き完了スナップショット</td></tr>
+    </tbody>
+  </table>
+
+  <h2>残作業ロードマップ</h2>
+  <table>
+    <thead>
+      <tr><th>Phase</th><th>内容</th><th>概算工数</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>B-3</td><td>Hint + Shuffle メカニズム</td><td>2日</td></tr>
+      <tr><td>B-4</td><td>10精霊追加生成 + 統合（18体収集体制へ）</td><td>画像生成1日 + 実装1日</td></tr>
+      <tr><td>B-5</td><td>メタ進行（Lv / XP / 通貨2種）</td><td>3〜4日</td></tr>
+      <tr><td>B-6</td><td>Memory Essence + 図鑑詳細ページ</td><td>3〜4日</td></tr>
+      <tr><td>B-7</td><td>タブナビ + Inventory + Shop シェル</td><td>3〜4日</td></tr>
+      <tr><td>B-8</td><td>イベント（期間限定コンテンツ）</td><td>2〜3日</td></tr>
+      <tr><td>B-9</td><td>オンライン（Mail / Friends / Share、要 Firebase）</td><td>1〜2週</td></tr>
+    </tbody>
+  </table>
+
+  <h2>設計判断メモ</h2>
+  <ol>
+    <li><strong>calm路線 → ステージ制転換</strong> — 当初 "calm/ambient/tactile" 路線で MVP 構築。「虹後の展開がない」「永続的に楽しめない」を実プレイ中に懸念。calm 路線を触感レイヤーとして残しつつ、ステージ制 + キャラ × 8 体 × 進化で「次の存在に会いたい」を駆動軸に転換。</li>
+    <li><strong>触感の核</strong> — 「動きでキャラ性を出す」「演出より呼吸」「現象 vs 物体」が判断軸。<code>AnimationTiming</code> 単一ファイルに全時間定数を集約し、易調整。</li>
+    <li><strong>絵文字 → キャラ画像移行</strong> — TileNode に <code>loadTexture(for:)</code> フォールバックを実装。画像未読込時は絵文字へ自動回帰。</li>
+  </ol>
+
+  <h2>全体仕様書</h2>
+  <div class="card-grid">
+    <a class="card" href="flow.html">
+      <div class="title">画面遷移図</div>
+      <div class="desc">全画面の遷移マップ</div>
+      <div class="meta"><span class="tag todo">未作成</span></div>
+    </a>
+    <a class="card" href="data-model.html">
+      <div class="title">データモデル</div>
+      <div class="desc">モデル構造とER図</div>
+      <div class="meta"><span class="tag todo">未作成</span></div>
+    </a>
+    <a class="card" href="error-design.html">
+      <div class="title">エラー設計</div>
+      <div class="desc">例外パターン一覧と表示方針</div>
+      <div class="meta"><span class="tag todo">未作成</span></div>
+    </a>
+    <a class="card" href="logging.html">
+      <div class="title">ロギング方針</div>
+      <div class="desc">os.log カテゴリとログレベル</div>
+      <div class="meta"><span class="tag todo">未作成</span></div>
+    </a>
+    <a class="card" href="aso.html">
+      <div class="title">ASOキーワード戦略</div>
+      <div class="desc">App Store最適化の方針</div>
+      <div class="meta"><span class="tag todo">未作成</span></div>
+    </a>
+    <a class="card" href="glossary.html">
+      <div class="title">用語集・ドメイン辞書</div>
+      <div class="desc">ドメイン用語の正典</div>
+      <div class="meta"><span class="tag todo">未作成</span></div>
+    </a>
+  </div>
+
+  <h2>画面仕様書</h2>
+  <div class="card-grid">
+    <p style="padding: 0.5rem; color: var(--text-muted, #888);">画面仕様書は今後追加予定。</p>
+  </div>
+
+  <h2>機能仕様書</h2>
+  <div class="card-grid">
+    <p style="padding: 0.5rem; color: var(--text-muted, #888);">機能仕様書は今後追加予定。</p>
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-24</td><td>初版作成（プロジェクト概要・進化チェーン・24ステージ Goal・触感演出・アーキテクチャ・コミット履歴）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-24</footer>
+</div>
+</body>
+</html>
