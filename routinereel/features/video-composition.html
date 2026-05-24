@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>動画合成仕様 - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>動画合成仕様（VideoCompositionService）</h1>
+    <p>完成動画の構成・フィルタ・テロップ・透かし・冒頭/末尾カードの全体仕様</p>
+  </header>
+
+  <h2>実装ファイル</h2>
+  <ul class="kv-list">
+    <li><span class="k">合成本体</span><span class="v"><code>Services/VideoCompositionService.swift</code></span></li>
+    <li><span class="k">フィルタ</span><span class="v"><code>Services/VideoFilterService.swift</code> + <code>Models/VideoFilter.swift</code></span></li>
+    <li><span class="k">タイムスタンプ</span><span class="v"><code>Services/AppSettings.swift</code>（デフォルト非表示）</span></li>
+  </ul>
+
+  <h2>完成動画のレイヤー構成（時系列）</h2>
+  <p>5レイヤーで構成。順番に重ねて焼き込まれる。</p>
+  <pre><code>[0.0 ─── 0.6秒]  冒頭タイトルカード（全ユーザー・ログ風）
+                  ↓
+[0.6 ─── (合計尺-1.5)]  動画本体 + テロップ + 透かし(無料のみ)
+                  ↓
+[末尾 1.5秒]       アウトロカード（無料ユーザーのみ）</code></pre>
+
+  <h2>① 冒頭タイトルカード（v1.0で「ログ風」に刷新）</h2>
+  <ul class="kv-list">
+    <li><span class="k">尺</span><span class="v">0.6秒（0.40秒表示維持 → 0.20秒フェードアウト）</span></li>
+    <li><span class="k">背景</span><span class="v"><strong>上部28%のみグラデ</strong>（黒0.45 → 透明）。映像を遮らない</span></li>
+    <li><span class="k">ルーティン名</span><span class="v">左上配置・動画高さ4.0%フォント・ユーザー選択フォント・opacity 0.95</span></li>
+    <li><span class="k">時刻</span><span class="v">ルーティン名の上に小さく（動画高さ2.4%・opacity 0.75・タイムスタンプON時のみ）</span></li>
+    <li><span class="k">スキップ条件</span><span class="v">動画長 1.5秒未満なら表示しない</span></li>
+  </ul>
+  <p><strong>v1.0変更前</strong>: 黒全画面 opacity 0.55 + 中央配置 + ルーティン名6.0% → 評価で「広告っぽい」「テンプレ感」と指摘され、ログ風に刷新。</p>
+
+  <h2>② 動画本体</h2>
+  <ul class="kv-list">
+    <li><span class="k">構成</span><span class="v">撮影クリップを順に AVMutableComposition で結合</span></li>
+    <li><span class="k">アスペクト比</span><span class="v">9:16 縦型固定</span></li>
+    <li><span class="k">解像度</span><span class="v">ユーザー設定（720p / 1080p / 最高）<br>低スペック機（4GB RAM 未満）は 1080p+ → 720p に自動降格</span></li>
+    <li><span class="k">音声</span><span class="v">撮影時の元音声のみ（BGMは v1.0 で完全廃止）</span></li>
+    <li><span class="k">元音声ミュート</span><span class="v">PreviewView の muteOriginalAudio トグルで無音化可能</span></li>
+  </ul>
+
+  <h2>③ テロップ焼き込み</h2>
+  <p>v1.0で配置を <strong>「中央 → 左下セーフゾーン」</strong>に変更（被写体回避 + TikTok/Reels UI衝突回避）。</p>
+  <ul class="kv-list">
+    <li><span class="k">ステップ名（メイン）</span><span class="v">左下配置・動画高さ3.4%フォント・x=5%、y=22%</span></li>
+    <li><span class="k">時刻（サブ）</span><span class="v">ステップ名の上に小さく配置・動画高さ2.4%フォント（ステップ名の70%）</span></li>
+    <li><span class="k">アニメーション</span><span class="v">各クリップの時間範囲のみ opacity 1（CAKeyframeAnimation）</span></li>
+    <li><span class="k">フォント</span><span class="v">ユーザー選択（HelveticaNeue-Light等の6種）</span></li>
+    <li><span class="k">影</span><span class="v">黒シャドウで視認性確保</span></li>
+  </ul>
+  <p><strong>v1.0変更前</strong>: 右下に時刻を並列配置 → 右下のTikTok UI（いいね/コメント/シェア）と衝突 → 左下ステップ名の上に統合。</p>
+
+  <h2>④ 透かし（v1.0で1行化・左上配置）</h2>
+  <ul class="kv-list">
+    <li><span class="k">対象</span><span class="v">無料ユーザーのみ・動画全体に常時表示</span></li>
+    <li><span class="k">位置</span><span class="v">左上（右下→左上に変更）</span></li>
+    <li><span class="k">内容</span><span class="v">「RoutineReel」のみ（CTA「App Storeで検索」は削除）</span></li>
+    <li><span class="k">フォント</span><span class="v">HelveticaNeue-Medium・動画高さ2.0%・opacity 0.75</span></li>
+    <li><span class="k">影</span><span class="v">黒シャドウ radius 3</span></li>
+  </ul>
+  <p><strong>v1.0変更前</strong>: 右下・2行（ブランド+CTA）・opacity 0.85 → 「動画体験を削る」「右下UI衝突」と指摘され、左上1行に簡素化。</p>
+
+  <h2>⑤ 末尾アウトロカード（v1.0で文言・尺・背景を改善・バイラル流入の核）</h2>
+  <ul class="kv-list">
+    <li><span class="k">対象</span><span class="v">無料ユーザーのみ</span></li>
+    <li><span class="k">尺</span><span class="v"><strong>1.5秒</strong>（旧 0.8秒）</span></li>
+    <li><span class="k">スキップ条件</span><span class="v">動画長 3.0秒未満なら表示しない</span></li>
+    <li><span class="k">背景</span><span class="v">半透明黒 opacity 0.55（旧 0.70）</span></li>
+    <li><span class="k">上行</span><span class="v">「習慣を、動画で残す。」（小・opacity 0.85）— 旧「Shot with」（英語混在）から日本語の余韻文言へ</span></li>
+    <li><span class="k">中央</span><span class="v">「RoutineReel」（動画高さ7.0%・bold・特大）</span></li>
+    <li><span class="k">下行</span><span class="v">「App Store で検索」（動画高さ2.2%・opacity 0.78）</span></li>
+    <li><span class="k">アニメーション</span><span class="v">最初の0.15秒でフェードイン → 最後まで表示</span></li>
+  </ul>
+
+  <h2>フィルタ8種（v1.0で「セピア」削除→「Clean」追加）</h2>
+
+  <h3>無料（3種）</h3>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>表示名</th><th>効果</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>none</td><td>なし</td><td>無加工</td></tr>
+      <tr><td>grain</td><td>粒子</td><td>フィルム粒子を薄く重ねる（CIRandomGenerator intensity 0.20）</td></tr>
+      <tr><td><strong>clean</strong></td><td><strong>クリーン</strong></td><td><strong>v1.0新規</strong>: 彩度+5% / 明度+3% / コントラスト+2% / シャドウ持ち上げ（CIHighlightShadowAdjust shadowAmount 0.3）</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Pro（5種）</h3>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>表示名</th><th>効果</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>film8mm</td><td>8mm</td><td>暖色（CITemperatureAndTint 7500K）+ 粒子0.15 + ビネット（CIVignette radius 2.5）</td></tr>
+      <tr><td>vhs</td><td>VHS</td><td>彩度85% + コントラスト105% + 色相シフト5% + 粒子0.25</td></tr>
+      <tr><td>polaroid</td><td>ポラロイド</td><td>彩度85% + 明度+5% + 暖色（7200K）</td></tr>
+      <tr><td>noir</td><td>モノクロ</td><td>CIPhotoEffectNoir（白黒）</td></tr>
+      <tr><td>faded</td><td>色褪せ</td><td>彩度70% + コントラスト90% + シャドウ持ち上げ（90sフィルム風）</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>v1.0変更</strong>: 「セピア」を削除し「Clean」を追加。20代女性vlogger層（モーニングルーティン/スキンケア）の使用率が低いセピアを排除し、朝活/勉強vlog向けナチュラル整えフィルタへ置換。Claude.ai/GPT 両AI評価で一致した削除推奨。</p>
+
+  <h2>タイムスタンプ表示</h2>
+  <ul class="kv-list">
+    <li><span class="k">設定箇所</span><span class="v">AppSettings.timestampFormat（24時間制 / 12時間制 / 非表示）</span></li>
+    <li><span class="k">v1.0デフォルト</span><span class="v"><strong>非表示</strong>（旧 24時間制）</span></li>
+    <li><span class="k">変更理由</span><span class="v">投稿事故防止（夜更かしや週末バレを意図せず映す事故）</span></li>
+    <li><span class="k">表示有効時</span><span class="v">冒頭カードの時刻 + テロップ内の時刻 が表示される</span></li>
+  </ul>
+
+  <h2>BGM の扱い（v1.0で完全廃止）</h2>
+  <p>v1.0 で完全削除。元音声のみ。詳細は <a href="bgm-removal.html">BGM機能削除の意思決定記録</a>。</p>
+
+  <h2>動画例（5ステップ×8秒のモーニングルーティン）</h2>
+  <pre><code>[0.0 - 0.6秒]  左上「7:30」+「平日モーニングルーティン」（上部グラデのみ）
+[0.6 - 8.6秒] 起床・水を飲む（左下時刻+ステップ名 + 左上小「RoutineReel」）
+[8.6 - 16.6秒] スキンケア
+[16.6 - 24.6秒] 着替え
+[24.6 - 32.6秒] コーヒー
+[32.6 - 40.6秒] 外出
+[39.1 - 40.6秒] 「習慣を、動画で残す。RoutineReel / App Store で検索」（黒0.55・無料のみ）</code></pre>
+  <p>合計 約 40.6秒</p>
+
+  <h2>合成パイプライン</h2>
+  <ol>
+    <li>クリップURL検証（FileManager 存在チェック）</li>
+    <li>AVMutableComposition への各クリップ video/audio トラック挿入</li>
+    <li>各クリップの時間範囲を記録（テロップ表示制御用）</li>
+    <li>renderSize 決定（最初のクリップから）</li>
+    <li>AVMutableVideoComposition + AVVideoCompositionInstruction で transform 適用</li>
+    <li>parentLayer に各レイヤー追加: テロップ → 透かし → 冒頭カード → アウトロカード</li>
+    <li>元音声ミュート設定（必要時）</li>
+    <li>AVAssetExportSession で書き出し（プリセット自動選択）</li>
+    <li>進捗ポーリング（0.1秒間隔、progressHandler 経由）</li>
+    <li>メモリ警告監視（書き出し中・OOM防止）</li>
+  </ol>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0.5</td><td>2026-05-21</td><td>Cleanフィルタの「シャドウ持ち上げ」を CIExposureAdjust → CIHighlightShadowAdjust に変更（ハイライトを飛ばさない正確な実装へ）</td></tr>
+      <tr><td>v1.0.4</td><td>2026-05-21</td><td>Claude.ai/GPT評価指摘7項目を反映: 冒頭カードをログ風化・アウトロ尺/文言/背景改善・透かし1行左上化・テロップ時刻を左下統合・タイムスタンプデフォルトOFF・セピア削除/Clean追加</td></tr>
+      <tr><td>v1.0.3</td><td>2026-05-21</td><td>BGM機能完全削除（addBGM/CompositionConfig.bgmFileName/BGMTrack/BGMPlayer/.m4a × 10）</td></tr>
+      <tr><td>v1.0.2</td><td>2026-05-21</td><td>テロップ位置を中央 → 画面下部1/4セーフゾーンへ移動（顔と被らない vlog 系標準位置）</td></tr>
+      <tr><td>v1.0.1</td><td>2026-05-20</td><td>冒頭タイトルカード（0.6秒）+ 末尾アウトロカード（0.8秒）を追加</td></tr>
+      <tr><td>v1.0</td><td>初版</td><td>クリップ結合 + テロップ焼き込み + 透かし + BGMミックスの基本構成</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-21</footer>
+</div>
+</body>
+</html>

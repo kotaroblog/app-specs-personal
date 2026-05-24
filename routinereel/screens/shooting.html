@@ -32,14 +32,16 @@
     <li><strong>下部コントロール</strong>: 状態別ボタン（撮り直し/反転 + 録画 + 次へ / 完了 →）</li>
   </ol>
 
-  <h2>テロップ位置（v1.0で大幅修正）</h2>
-  <p><strong>中央 → 画面下部 1/4 セーフゾーン</strong>へ移動。被写体（顔・体・手元）と重ならないよう vlog 系投稿者の標準位置へ変更。</p>
+  <h2>テロップ位置（v1.0で大幅修正・2段階）</h2>
+  <p><strong>中央 → 画面下部 1/4 左下セーフゾーン</strong>へ移動。被写体回避 + TikTok/Reels UI（右下のいいね・コメント・シェア）との衝突回避。</p>
   <ul class="kv-list">
-    <li><span class="k">配置方法</span><span class="v">VStack { Spacer(); HStack(ステップ名 + 時刻) } + <code>.padding(.bottom, geo.size.height * 0.22)</code></span></li>
-    <li><span class="k">フォントサイズ</span><span class="v">22pt（18pt → 22pt、視認性UP）</span></li>
-    <li><span class="k">時刻表示</span><span class="v">AppSettings.timestampFormat（24h / 12h / 非表示）</span></li>
-    <li><span class="k">完成動画との整合</span><span class="v">VideoCompositionService 側も <code>renderSize.height * 0.22</code> + フォント係数 0.034 で完全一致</span></li>
+    <li><span class="k">配置方法</span><span class="v">VStack { Spacer(); VStack(時刻 + ステップ名 縦並び・左寄せ) } + <code>.padding(.bottom, geo.size.height * 0.22)</code></span></li>
+    <li><span class="k">ステップ名（メイン）</span><span class="v">22pt</span></li>
+    <li><span class="k">時刻（サブ・ステップ名の上）</span><span class="v">15pt・opacity 0.85（v1.0で右下→左下ステップ名の上に統合）</span></li>
+    <li><span class="k">時刻表示</span><span class="v">AppSettings.timestampFormat（24h / 12h / <strong>非表示（v1.0デフォルト）</strong>）</span></li>
+    <li><span class="k">完成動画との整合</span><span class="v">VideoCompositionService 側も <code>renderSize.height * 0.22</code>・左下配置・フォント係数 0.034 で完全一致</span></li>
   </ul>
+  <p><strong>v1.0変更前</strong>: 右下に時刻 + 左下にステップ名の並列配置 → 右下UI衝突懸念 → 左下に統合（時刻が上、ステップ名が下）</p>
 
   <h2>REC インジケーター（呼吸する赤）</h2>
   <ul class="kv-list">
@@ -125,6 +127,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.0.4</td><td>2026-05-21</td><td>テロップ時刻を右下→左下ステップ名の上に統合（TikTok/Reels UI衝突回避）/ タイムスタンプデフォルトをOFFに変更</td></tr>
       <tr><td>v1.0.3</td><td>2026-05-21</td><td>BGM機能削除に伴う関連UIなし（既に試聴UI未実装）</td></tr>
       <tr><td>v1.0.2</td><td>2026-05-21</td><td>ボタン名統一（skip→次へ、next step→完了 →、flip→反転）/ テロップ位置を中央→画面下部1/4セーフゾーンへ</td></tr>
       <tr><td>v1.0.1</td><td>2026-05-20</td><td>REC呼吸 / Step progress 波紋 / カウントダウン 128pt rounded（Designs 軽い寄せ）</td></tr>
