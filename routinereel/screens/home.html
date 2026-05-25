@@ -30,7 +30,7 @@
   <ul class="kv-list">
     <li><span class="k">①上部バー</span><span class="v">アプリ名「RoutineReel」+ Pro バッジ（Pro時は表示のみ・無料時はPaywall起動）+ 設定アイコン</span></li>
     <li><span class="k">②Heroセクション</span><span class="v">メインコピー「今日もルーティンを記録しよう。」+ 時間帯別感情コピー +「次に撮影」CTA</span></li>
-    <li><span class="k">③Quick Start</span><span class="v">横スクロール4プリセット（morning/night/workout/study）175×240pt カード。タップで <strong>直接 RoutineEditView 起動</strong></span></li>
+    <li><span class="k">③Quick Start</span><span class="v">横スクロール4プリセット（morning/night/workout/study）<strong>150×220pt カード</strong>（v1.0.6で画面幅2枚並びの見切れを解消）。タップで <strong>直接 RoutineEditView 起動</strong></span></li>
     <li><span class="k">④マイルーティン</span><span class="v">縦並びカード（タップで confirmationDialog 起動）+ 新規ルーティン作成ボタン</span></li>
     <li><span class="k">⑤最近の動画</span><span class="v">recentVideos が存在する場合のみ表示。横スクロールサムネ +「すべて見る」</span></li>
     <li><span class="k">⑥下部</span><span class="v">バナー広告（無料時のみ）+ 5タブバー + 中央＋ボタン</span></li>
@@ -134,13 +134,14 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.0.6</td><td>2026-05-25</td><td>Quick Start カードサイズ 175×240 → 150×220（文字見切れ解消）/ マイルーティンの⋯メニュー二重Button問題を解消（Button → contentShape + onTapGesture へ変更）</td></tr>
       <tr><td>v1.0.3</td><td>2026-05-21</td><td>削除ボタン追加 / Quick Start プリセット直接遷移 / タブ動作（ホーム以外モーダル起動）/ モック削除（7日連続・時間帯別挨拶）</td></tr>
       <tr><td>v1.0.2</td><td>2026-05-21</td><td>アクセシビリティラベル追加 / クリップタブUX改善（ルーティン無し時何もしない）</td></tr>
       <tr><td>v1.0</td><td>2026-05-20</td><td>初版作成。DesignsHomeView を FeatureFlag で本番投入</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-21</footer>
+  <footer class="site-footer">最終更新: 2026-05-25</footer>
 </div>
 </body>
 </html>

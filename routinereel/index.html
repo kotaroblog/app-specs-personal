@@ -23,8 +23,8 @@
     <li><span class="k">言語</span><span class="v">日本語</span></li>
     <li><span class="k">配信地域</span><span class="v">日本（初回）</span></li>
     <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（月¥480 / 年¥3,800）+ Google AdMob</span></li>
-    <li><span class="k">ステータス</span><span class="v">v1.0 リリース準備中</span></li>
-    <li><span class="k">リリース時期</span><span class="v">2026-05-29 目標</span></li>
+    <li><span class="k">ステータス</span><span class="v">v1.0 品質改善フェーズ</span></li>
+    <li><span class="k">リリース時期</span><span class="v">2026-06末 目標（5月末から延期: 品質優先のため）</span></li>
   </ul>
 
   <h2>画面仕様書</h2>
@@ -40,6 +40,14 @@
     <a class="card" href="screens/settings.html">
       <div class="title">設定（SettingsView）</div>
       <div class="desc">Card section化・β機能トグル・Pro導線・開発者メニュー</div>
+    </a>
+    <a class="card" href="screens/routine-edit.html">
+      <div class="title">ルーティン編集（RoutineEditView）</div>
+      <div class="desc">名前/フォント/リマインダー/ステップ/削除のフル機能・Home UI 統一</div>
+    </a>
+    <a class="card" href="screens/preset-select.html">
+      <div class="title">プリセット選択（PresetSelectView）</div>
+      <div class="desc">新規ルーティン作成の入口・日本語化済み4プリセット + カスタム</div>
     </a>
     <a class="card" href="screens/shooting.html">
       <div class="title">撮影画面（ShootingView）</div>
@@ -85,6 +93,7 @@
       <tr><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>2026-05-25</td><td><strong>リリース日 5/29 → 6/30 に延期</strong>（品質優先のため）。ユーザー報告4問題に対応: Quick Start 文字見切れ修正 / マイルーティン⋯メニュー二重Button問題解消 / RoutineEditView Home UI 統一 / PresetSelectView 日本語化 + Home UI 統一 / 設定詳細3画面（画質/秒数/タイムスタンプ）Card section化 / ClipGenerateView Home UI 統一 / RoutinePreset.displayName 日本語化。routine-edit.html / preset-select.html を新規追加</td></tr>
       <tr><td>2026-05-21 (午後)</td><td>Claude.ai/GPT 両AI評価指摘の7項目を反映: 冒頭タイトルカードをログ風化・アウトロ尺/文言/背景改善・透かし1行左上化・テロップ時刻を左下統合・タイムスタンプデフォルトOFF・セピア削除→Clean追加・Cleanのシャドウ持ち上げ厳密化。動画合成仕様書を新規追加</td></tr>
       <tr><td>2026-05-21 (午前)</td><td>v1.0 リリース直前の大幅更新。Paywall/Settings/VideoList/ClipLibrary を Home UI へ統一、BGM機能完全削除、撮影画面のテロップ位置・ボタン名改善、削除導線追加、9仕様書を一括整備</td></tr>
       <tr><td>2026-05-20</td><td>v1.0 新Home UI（DesignsHomeView）導入。FeatureFlag運用方針確立</td></tr>
@@ -92,7 +101,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-21</footer>
+  <footer class="site-footer">最終更新: 2026-05-25</footer>
 </div>
 </body>
 </html>

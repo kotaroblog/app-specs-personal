@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>プリセット選択 - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>プリセット選択（PresetSelectView）</h1>
+    <p>新規ルーティン作成時の入口。プリセットから始めるかカスタムを選ぶ。v1.0で Home UI 統一 + 日本語化。</p>
+  </header>
+
+  <h2>基本情報</h2>
+  <ul class="kv-list">
+    <li><span class="k">画面ID</span><span class="v">preset-select</span></li>
+    <li><span class="k">実装ファイル</span><span class="v"><code>Views/Home/PresetSelectView.swift</code></span></li>
+    <li><span class="k">表示方式</span><span class="v">sheet（モーダル）</span></li>
+    <li><span class="k">起動経路</span><span class="v">中央＋ボタン / 新規ルーティン作成ボタン</span></li>
+    <li><span class="k">背景色</span><span class="v">#FAF9F7 (warm white)</span></li>
+  </ul>
+
+  <h2>画面構成</h2>
+  <ol>
+    <li><strong>タイトル</strong>: 「ルーティンを選ぶ」（26pt bold）+ サブコピー「プリセットから始めるか、自分で作成できます。」</li>
+    <li><strong>プリセット4種</strong>: morning / night / workout / study（カード形式）</li>
+    <li><strong>自分で作成</strong>: ダッシュ枠 + accent orange の独立ボタン</li>
+  </ol>
+
+  <h2>プリセットカード</h2>
+  <table>
+    <thead>
+      <tr><th>絵文字</th><th>名前</th><th>ステップ</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>☀️</td><td>モーニングルーティン</td><td>wake up → skincare → outfit → coffee → go out</td></tr>
+      <tr><td>🌙</td><td>ナイトルーティン</td><td>back home → bath → skincare → reading → sleep</td></tr>
+      <tr><td>💪</td><td>ワークアウト</td><td>warm up → training → stretch → protein → shower</td></tr>
+      <tr><td>📚</td><td>勉強ルーティン</td><td>prep → study → break → study → review</td></tr>
+    </tbody>
+  </table>
+
+  <h3>カード仕様</h3>
+  <ul class="kv-list">
+    <li><span class="k">背景</span><span class="v">Color.designsCard + designsCardShadow</span></li>
+    <li><span class="k">cornerRadius</span><span class="v">DesignsRadius.lg (20pt)</span></li>
+    <li><span class="k">構成</span><span class="v">絵文字22pt + 名前16pt semibold + ステップ数 + chevron</span></li>
+    <li><span class="k">サブテキスト</span><span class="v">ステップ名を「→」連結（11pt light tertiary、2行まで）</span></li>
+    <li><span class="k">押下</span><span class="v">DesignsPressableButtonStyle scale 0.98</span></li>
+  </ul>
+
+  <h2>「自分で作成」ボタン</h2>
+  <ul class="kv-list">
+    <li><span class="k">背景</span><span class="v">accent orange opacity 0.08 + ダッシュ枠 lineWidth 1 dash [4]</span></li>
+    <li><span class="k">アイコン</span><span class="v">pencil</span></li>
+    <li><span class="k">文言</span><span class="v">「自分で作成」(15pt semibold accent orange)</span></li>
+    <li><span class="k">挙動</span><span class="v">selectedPreset = nil → showEditView = true で RoutineEditView(preset: nil) 起動</span></li>
+  </ul>
+
+  <h2>選択フロー</h2>
+  <pre><code>1. ユーザーがプリセット選択（または自分で作成）
+2. createFromPreset(preset) → selectedPreset = preset
+3. showEditView = true で .sheet 起動
+4. RoutineEditView(routine: nil, preset: selectedPreset) を表示
+5. RoutineEditView.loadData() で preset.displayName と preset.steps を初期値にセット
+6. ユーザーが編集して保存 → 新規 Routine 作成</code></pre>
+
+  <h2>RoutinePreset と統合（v1.0で日本語化）</h2>
+  <p>各プリセット情報は <code>Models/RoutinePreset.swift</code> に集約。PresetSelectView 内でローカルヘルパー（presetEmoji / presetTitleJa）を持っていたが、コードレビューで重複指摘 → 削除し RoutinePreset のプロパティを直接参照する形に整理。</p>
+  <pre><code>// 旧: PresetSelectView 内のローカル関数
+private func presetEmoji(_ preset: RoutinePreset) -> String { ... }
+private func presetTitleJa(_ preset: RoutinePreset) -> String { ... }
+
+// 新: RoutinePreset 直下のプロパティ
+preset.emoji         // "☀️"
+preset.displayName   // "モーニングルーティン"</code></pre>
+
+  <h2>v1.0 変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0.6</td><td>2026-05-25</td><td>ローカルヘルパー削除 + RoutinePreset.emoji / displayName 直接参照に整理</td></tr>
+      <tr><td>v1.0.5</td><td>2026-05-25</td><td>全面 Home UI 統一: 背景 black → warm white / タイトル英語「pick your routine.」→ 日本語「ルーティンを選ぶ」 / プリセット名日本語化 + 絵文字バッジ / 「custom」→「自分で作成」 / カード化 + designsCardShadow</td></tr>
+      <tr><td>v1.0</td><td>初版</td><td>プリセット4種選択UI</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-25</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ルーティン編集 - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>ルーティン編集（RoutineEditView）</h1>
+    <p>新規ルーティン作成・既存ルーティン編集の両用画面。v1.0で Home UI に完全統一。</p>
+  </header>
+
+  <h2>基本情報</h2>
+  <ul class="kv-list">
+    <li><span class="k">画面ID</span><span class="v">routine-edit</span></li>
+    <li><span class="k">実装ファイル</span><span class="v"><code>Views/Home/RoutineEditView.swift</code></span></li>
+    <li><span class="k">表示方式</span><span class="v">sheet（モーダル）</span></li>
+    <li><span class="k">起動経路</span><span class="v">①Quick Start カード ②マイルーティン → 編集する ③プリセット選択 → カスタム/プリセット選択 ④通知タップ → 編集メニュー</span></li>
+    <li><span class="k">背景色</span><span class="v">#FAF9F7 (warm white)</span></li>
+  </ul>
+
+  <h2>画面構成</h2>
+  <ol>
+    <li><strong>名前</strong>: ルーティン名 TextField（カード）</li>
+    <li><strong>テロップのフォント</strong>: 横スクロールフォントチップ（無料2種 + Pro4種）</li>
+    <li><strong>撮影リマインダー</strong>: Toggle + DatePicker（有効時のみ展開）</li>
+    <li><strong>ステップ</strong>: 縦並びカード（最大5個まで・ドラッグ並べ替え対応）</li>
+    <li><strong>ステップを追加</strong>: ダッシュ枠ボタン（accent orange）</li>
+    <li><strong>ルーティンを削除</strong>: 編集時のみ表示・赤opacity 0.75</li>
+  </ol>
+
+  <h2>各セクションの実装</h2>
+
+  <h3>共通: sectionLabel</h3>
+  <p>uppercase + tracking 0.4 + tertiary text のヘッダー（SettingsView と統一）</p>
+
+  <h3>名前セクション</h3>
+  <ul class="kv-list">
+    <li><span class="k">入力欄</span><span class="v">TextField「ルーティン名」(16pt regular) + designsCard + DesignsRadius.md (16pt) + designsCardShadow</span></li>
+    <li><span class="k">空チェック</span><span class="v">trimmingCharacters(.whitespaces) で空判定、保存ボタン無効化</span></li>
+  </ul>
+
+  <h3>フォントセクション</h3>
+  <ul class="kv-list">
+    <li><span class="k">無料</span><span class="v">HelveticaNeue-Light / Inter</span></li>
+    <li><span class="k">Pro</span><span class="v">Caveat / Shadows Into Light / Playfair Display / Noto Serif JP（lock アイコン）</span></li>
+    <li><span class="k">チップサイズ</span><span class="v">76×68pt cornerRadius DesignsRadius.sm</span></li>
+    <li><span class="k">選択時</span><span class="v">背景 accent orange + 白テキスト</span></li>
+    <li><span class="k">未選択</span><span class="v">背景 designsCard + チャコールテキスト</span></li>
+    <li><span class="k">Pro 限定タップ</span><span class="v">PaywallView 起動</span></li>
+  </ul>
+
+  <h3>リマインダーセクション</h3>
+  <ul class="kv-list">
+    <li><span class="k">Toggle</span><span class="v">「毎日通知する」+ bell.fill アイコン（有効時 accent orange）</span></li>
+    <li><span class="k">DatePicker</span><span class="v">Toggle 有効時のみ展開 + Divider（アイコンインデント分パディング）</span></li>
+    <li><span class="k">保存時</span><span class="v">ReminderService.shared.scheduleReminder() を Task で実行</span></li>
+  </ul>
+
+  <h3>ステップセクション</h3>
+  <ul class="kv-list">
+    <li><span class="k">ヘッダー</span><span class="v">「ステップ」+ 件数バッジ（右寄せ）</span></li>
+    <li><span class="k">行構成</span><span class="v">ドラッグハンドル + 番号(monospaced) + ステップ名 TextField + 秒数 Capsule + 削除 x</span></li>
+    <li><span class="k">ドラッグ並べ替え</span><span class="v">.draggable + .dropDestination で並び替え対応</span></li>
+    <li><span class="k">秒数タップ</span><span class="v">DurationPickerSheet 起動（presentationDetents [.height(280)]）</span></li>
+    <li><span class="k">削除アニメ</span><span class="v">withAnimation(.spring(duration: 0.25))</span></li>
+  </ul>
+
+  <h3>ステップ追加ボタン</h3>
+  <ul class="kv-list">
+    <li><span class="k">スタイル</span><span class="v">accent orange + 8% bg + ダッシュ枠 lineWidth 1 dash [4]</span></li>
+    <li><span class="k">課金壁</span><span class="v">無料5ステップまで（<code>maxFreeSteps = 5</code>）、6個目で Paywall 起動</span></li>
+    <li><span class="k">アニメ</span><span class="v">withAnimation(.spring(duration: 0.3)) で追加</span></li>
+  </ul>
+
+  <h3>削除ボタン（編集時のみ）</h3>
+  <ul class="kv-list">
+    <li><span class="k">表示条件</span><span class="v"><code>isEditing == true</code> 時のみ</span></li>
+    <li><span class="k">色</span><span class="v">.red opacity 0.75（純赤を避ける）</span></li>
+    <li><span class="k">確認 alert</span><span class="v">「ルーティンを削除しますか？」+「この操作は取り消せません。」</span></li>
+    <li><span class="k">削除処理</span><span class="v">ReminderService.cancelReminder() → modelContext.delete(routine)</span></li>
+  </ul>
+
+  <h2>DurationPickerSheet（秒数ピッカー）</h2>
+  <ul class="kv-list">
+    <li><span class="k">表示方式</span><span class="v">.sheet + presentationDetents([.height(280)]) + dragIndicator</span></li>
+    <li><span class="k">背景</span><span class="v">Color.designsBackground (v1.0で黒→warm white)</span></li>
+    <li><span class="k">グリッド</span><span class="v">LazyVGrid 4列 + spacing DesignsSpacing.sm</span></li>
+    <li><span class="k">選択肢</span><span class="v">3 / 5 / 8 / 10 / 15 / 20 / 30 秒</span></li>
+    <li><span class="k">選択時</span><span class="v">background accent orange + 白テキスト</span></li>
+  </ul>
+
+  <h2>保存ロジック</h2>
+  <p>保存ボタンタップで <code>handleSaveTapped()</code> → クリップ存在チェック → <code>save()</code></p>
+  <ol>
+    <li>name trimming + 空チェック</li>
+    <li>reminderTime から hour/minute 抽出</li>
+    <li>新規作成 or 既存編集の分岐</li>
+    <li>既存編集時: 紐づくクリップ・ステップを<strong>スナップショット化してから削除</strong>（並行更新防止）</li>
+    <li>各 EditableStep から Step エンティティ生成 + modelContext.insert</li>
+    <li>ReminderService.scheduleReminder() を Task で実行</li>
+    <li>dismiss()</li>
+  </ol>
+
+  <h3>クリップ削除警告</h3>
+  <p>既存ルーティンが紐づくクリップを持っている場合のみ alert を挟む:</p>
+  <ul class="kv-list">
+    <li><span class="k">文言</span><span class="v">「このルーティンには〇件のクリップが保存されています。ステップを更新するとクリップライブラリがすべて削除されます。続けますか？」</span></li>
+    <li><span class="k">ボタン</span><span class="v">「更新する」(destructive) / 「キャンセル」</span></li>
+  </ul>
+
+  <h2>EditableStep（編集用一時データ）</h2>
+  <pre><code>struct EditableStep: Identifiable {
+    let id = UUID()
+    var name: String
+    var durationSeconds: Int
+    var order: Int
+}</code></pre>
+  <p>保存時に Step エンティティへ変換。並べ替え/削除中に SwiftData オブジェクトを触らないため安全。</p>
+
+  <h2>v1.0 変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0.6</td><td>2026-05-25</td><td>RoutinePreset.displayName 日本語化に伴い loadData() の初期名が「morning routine」→「モーニングルーティン」へ自動切替</td></tr>
+      <tr><td>v1.0.5</td><td>2026-05-25</td><td>全面 Home UI 統一: 背景black→warm white / 全セクション Card section 化 / accent orange アクセント / DurationPickerSheet も統一 / 既存ローカル変更（clipStorage refactor + accessibility日本語化）統合</td></tr>
+      <tr><td>v1.0.1</td><td>2026-05-20</td><td>maxFreeSteps 4 → 5 に引き上げ</td></tr>
+      <tr><td>v1.0</td><td>初版</td><td>名前/フォント/リマインダー/ステップ/削除のフル機能実装</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-25</footer>
+</div>
+</body>
+</html>
