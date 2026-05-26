@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>WorkoutDiary - 新規ルーティン作成</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / 新規ルーティン作成</div>
+
+  <header class="site-header">
+    <h1>新規ルーティン作成（CreateTemplateView）</h1>
+    <p>ルーティン画面から直接、名前・曜日・種目・セット詳細を入力してルーティンを作成する画面（v1.1.2 新規）</p>
+    <div class="section-meta">
+      <span class="tag done">v1.0</span>
+      <span class="tag">画面ID: WD-CREATE-TEMPLATE-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>v1.1.1 まで新規ルーティン作成はワークアウト記録後の「保存（SaveTemplateView）」経路のみだった。v1.1.2 でルーティン一覧画面（TemplateListView）から直接ルーティンを作成できる画面として新規追加。ルーティン名・割り当て曜日・種目セットを一画面で入力し、SwiftData に一括書き込みする。キャンセル時はデータが永続化されないため、ゴミデータは残らない。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ナビゲーションタイトル</td><td>NavigationTitle</td><td>「新しいルーティン」</td></tr>
+    <tr><td>キャンセルボタン</td><td>ToolbarItem（.cancellationAction）</td><td>sheet を dismiss。State を破棄するためゴミデータは残らない</td></tr>
+    <tr><td>保存ボタン</td><td>ToolbarItem（.confirmationAction）</td><td>ルーティン名が空の場合は disabled。タップで SwiftData に一括書き込み後 dismiss</td></tr>
+    <tr><td>ルーティン名 TextField</td><td>Section "ルーティン名"</td><td>必須入力。例:「胸の日」「プッシュデー」</td></tr>
+    <tr><td>曜日ピッカー</td><td>Section "曜日"（WeekdayPicker）</td><td>日〜土を複数選択可。空のまま保存すると assignedWeekdays=[] で曜日固定なしルーティンになる</td></tr>
+    <tr><td>種目リスト（DraftEntrySectionView）</td><td>Section "種目"</td><td>追加済み種目を順に表示。各エントリは種目名 + セット行（重量×回数）で構成。削除ボタン付き</td></tr>
+    <tr><td>「+ 種目を追加」ボタン</td><td>Button（Section末尾）</td><td>タップで CreateTemplatePickerSheet を sheet 表示</td></tr>
+  </table>
+
+  <h2>DraftEntrySectionView（サブView）</h2>
+  <p>種目ごとのセット詳細入力を担当するサブ View。永続化前のローカル State（ドラフト）を操作するため、SwiftData には触れない。</p>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>Section ヘッダー</td><td>部位カラー左ボーダー + 種目名 + 削除ボタン（ゴミ箱アイコン）</td></tr>
+    <tr><td>セット行</td><td>「Set N」+ 重量（kg）TextField + 回数（rep）TextField。有酸素種目の場合は 時間（分）+ 距離（km）</td></tr>
+    <tr><td>「+ セットを追加」ボタン</td><td>直前セットの値を引き継いで新規セット行を追加</td></tr>
+  </table>
+
+  <h2>CreateTemplatePickerSheet（サブView）</h2>
+  <p>種目を選択するためのシート。既存 Exercise 一覧を部位グループで表示し、種目を選択するとドラフトに追加する。AddTemplateEntrySheet（EditTemplateView で使うシート）とは独立した実装。</p>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>種目一覧</td><td>部位カラー左ボーダー Section で Exercise をグループ表示</td></tr>
+    <tr><td>検索バー</td><td>種目名で絞り込み</td></tr>
+    <tr><td>「+」ボタン（ナビゲーションバー）</td><td>ExerciseFormView を sheet 表示して種目自体を新規登録できる。登録後に自動で選択状態に</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>初期状態</td><td>ルーティン名空・曜日未選択・種目 0 件。保存ボタン disabled</td></tr>
+    <tr><td>名前入力済</td><td>保存ボタン有効化</td></tr>
+    <tr><td>種目追加済</td><td>DraftEntrySectionView にセット行を表示</td></tr>
+    <tr><td>保存完了</td><td>sheet を dismiss。TemplateListView の @Query が自動更新</td></tr>
+    <tr><td>キャンセル</td><td>sheet を dismiss。SwiftData への書き込みなし</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「+ 種目を追加」タップ</td><td>CreateTemplatePickerSheet (sheet)</td></tr>
+    <tr><td>CreateTemplatePickerSheet 内「+」タップ</td><td>ExerciseFormView (sheet 二重積み)</td></tr>
+    <tr><td>保存ボタンタップ</td><td>SwiftData 書き込み → dismiss</td></tr>
+    <tr><td>キャンセルタップ</td><td>dismiss（データ破棄）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// 保存時に以下の順で INSERT
+@Model final class WorkoutTemplate {
+    var name: String
+    var assignedWeekdays: [Int] = []   // WeekdayPicker の選択値
+    var entries: [TemplateEntry] = []
+}
+
+@Model final class TemplateEntry {
+    var exerciseName: String
+    var exerciseCategory: String
+    var order: Int
+    var isCardio: Bool
+    var setEntries: [TemplateSetEntry] = []
+    // レガシーフィールドも同期（後方互換）
+    var weight: Double
+    var reps: Int
+    var sets: Int
+}
+
+@Model final class TemplateSetEntry {
+    var weight: Double = 0
+    var reps: Int = 0
+    var duration: Double = 0
+    var distance: Double = 0
+    var order: Int = 0
+}</code></pre>
+
+  <div class="callout">
+    <strong>設計方針: ローカル State で組み立ててから一括 INSERT</strong><br>
+    CreateTemplateView はフォーム入力中に SwiftData に書き込まない。キャンセル時のゴミデータ問題を避けるため、ドラフト用の struct（例: <code>DraftTemplateEntry</code>）を State で保持し、保存ボタン確定時に一括 INSERT する。EditTemplateView（既存データ直接編集）とは設計アプローチが異なる。
+  </div>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">ルーティン名が空の場合は保存ボタンを disabled にする（.disabled(routineName.isEmpty)）</li>
+    <li class="done">DraftEntrySectionView は @Binding で親の draftEntries 配列を受け取る。直接 modelContext には触れない</li>
+    <li class="done">CreateTemplatePickerSheet から「+」で ExerciseFormView を sheet 起動する場合、SwiftUI の sheet 二重積みは iOS 16.4+ から安定動作</li>
+    <li class="done">保存時: WorkoutTemplate → TemplateEntry → TemplateSetEntry の順に INSERT し、各リレーションを設定してから modelContext.insert</li>
+    <li class="done">レガシーフィールド（weight / reps / sets）は setEntries の先頭値・件数から同期（TemplateMigrationService の逆操作）</li>
+    <li class="done">曜日ピッカーは既存 WeekdayPicker コンポーネントを流用</li>
+  </ul>
+
+  <h2>関連ファイル</h2>
+  <ul>
+    <li>Views/Workout/CreateTemplateView.swift（v1.1.2 新規）</li>
+    <li>Views/Workout/CreateTemplatePickerSheet.swift（v1.1.2 新規）</li>
+    <li>Views/Workout/DraftEntrySectionView.swift（v1.1.2 新規）</li>
+    <li>Views/Exercise/ExerciseFormView.swift（CreateTemplatePickerSheet から再利用）</li>
+    <li>Views/Components/WeekdayPicker.swift</li>
+    <li>Models/WorkoutTemplate.swift</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="template-list.html">ルーティン選択（TemplateListView）</a> — 起動元</li>
+    <li><a href="../features/routine.html">ルーティン機能</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-27</td><td>初版作成（v1.1.2候補: ルーティン画面からの新規作成導線）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-27</footer>
+</div>
+</body>
+</html>

@@ -13,22 +13,31 @@
   <header class="site-header">
     <h1>ルーティン選択（TemplateListView）</h1>
     <p>保存済みのルーティン（ワークアウトテンプレート）を一覧・適用・編集する</p>
-    <div class="section-meta"><span class="tag done">v1.2</span><span class="tag">画面ID: WD-TEMPLATE-01</span></div>
+    <div class="section-meta"><span class="tag done">v1.3</span><span class="tag">画面ID: WD-TEMPLATE-01</span></div>
   </header>
 
   <h2>目的・役割</h2>
-  <p>頻繁に行うメニュー（例: 胸の日 / 脚の日 / プッシュデー）をルーティンとして保存・適用する画面。v1.1.0 でラベルを「テンプレート」から「ルーティン」へ変更し、曜日バッジ表示・「➕/✏️/🗑」アイコン常時表示を追加した。v1.1.1 でルーティン削除が Undo Toast 対応（softDelete）に変更された。内部モデル名 WorkoutTemplate は互換維持のため変更なし。</p>
+  <p>頻繁に行うメニュー（例: 胸の日 / 脚の日 / プッシュデー）をルーティンとして保存・適用する画面。v1.1.0 でラベルを「テンプレート」から「ルーティン」へ変更し、曜日バッジ表示・「➕/✏️/🗑」アイコン常時表示を追加した。v1.1.1 でルーティン削除が Undo Toast 対応（softDelete）に変更された。v1.1.2 でナビゲーションバー「+」ボタンと空状態 CTA「New Routine」ボタンを追加し、ルーティン画面単体で新規作成を完結できるようになった。内部モデル名 WorkoutTemplate は互換維持のため変更なし。</p>
 
-  <h2>UI 構成（v1.1.1 以降）</h2>
+  <h2>UI 構成（v1.1.2 以降）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ナビゲーションバー「+」ボタン</td><td>ToolbarItem（.navigationBarTrailing）</td><td>v1.1.2: タップで CreateTemplateView を sheet 表示。ルーティン 1 件以上あっても常時表示</td></tr>
     <tr><td>ルーティンリスト</td><td>List（insetGrouped）</td><td>ルーティン名・曜日バッジ・エントリプレビュー（種目名・重量×回数×セット数）を表示</td></tr>
     <tr><td>曜日バッジ</td><td>Capsule Text</td><td>assignedWeekdays が空でない場合、ルーティン名横に「月・水・金」形式で表示（AppTheme.accent）</td></tr>
     <tr><td>➕（ワークアウト追加）アイコン</td><td>Button（各行右端）</td><td>タップで loadTemplate() を実行し dismiss。行タップと同機能</td></tr>
     <tr><td>✏️（編集）アイコン</td><td>Button（各行右端）</td><td>EditTemplateView を sheet 表示</td></tr>
     <tr><td>🗑（削除）アイコン</td><td>Button（各行右端）</td><td>v1.1.1: 確認ダイアログを廃止し Undo Toast（保留中削除）に変更</td></tr>
-    <tr><td>エンプティ表示</td><td>ContentUnavailableView 相当</td><td>テンプレートが0件の場合「No Routines」を表示</td></tr>
+    <tr><td>空状態「New Routine」CTA</td><td>Button（中央）</td><td>v1.1.2: ルーティン 0 件時にリストの代わりに中央表示。タップで CreateTemplateView を sheet 表示</td></tr>
   </table>
+
+  <div class="callout">
+    <strong>v1.1.2 変更点（ルーティン新規作成導線追加）</strong><br>
+    これまでルーティンの新規作成は「ワークアウト記録 → 保存（SaveTemplateView）」経路しかなかった。v1.1.2 で以下 2 か所に新規作成の導線を追加し、ルーティン画面で完結できるようになった。<br>
+    - ナビゲーションバー右上「+」ボタン（常時表示）<br>
+    - 空状態の中央 CTA「New Routine」ボタン<br>
+    いずれも <a href="create-template.html">CreateTemplateView</a> を sheet 表示する。
+  </div>
 
   <div class="callout">
     <strong>v1.1.0 変更点</strong><br>
@@ -56,6 +65,8 @@
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>ナビゲーションバー「+」タップ（v1.1.2）</td><td>CreateTemplateView (sheet)</td></tr>
+    <tr><td>空状態「New Routine」CTA タップ（v1.1.2）</td><td>CreateTemplateView (sheet)</td></tr>
     <tr><td>行タップ / ➕タップ</td><td>loadTemplate() 実行 → dismiss（WorkoutSession に追加して閉じる）</td></tr>
     <tr><td>✏️タップ</td><td>EditTemplateView (sheet)</td></tr>
     <tr><td>🗑タップ</td><td>v1.1.1: Undo Toast 表示 → 5秒後に確定 or 「元に戻す」でキャンセル</td></tr>
@@ -111,11 +122,14 @@
     <li class="done">v1.1.0: 行タップ = ➕アイコンタップ（loadTemplate → dismiss）に統一</li>
     <li class="done">v1.1.1: 🗑タップ → pendingDeletionIDs に追加 → Undo Toast → 5秒後 modelContext.delete()</li>
     <li class="done">TemplateListView は WorkoutSessionView から sheet 表示（date: Date を引数で受け取る）</li>
+    <li class="done">v1.1.2: toolbar「+」ボタン + 空状態 CTA から CreateTemplateView を sheet 起動（@State showCreateSheet: Bool で管理）</li>
+    <li class="done">v1.1.2: CreateTemplateView で保存完了後に自動的にリストが更新される（@Query で自動反映）</li>
   </ul>
 
   <h2>関連ファイル</h2>
   <ul>
-    <li>Views/Workout/TemplateListView.swift</li>
+    <li>Views/Workout/TemplateListView.swift（v1.1.2: toolbar「+」ボタン・空状態 CTA 追加）</li>
+    <li>Views/Workout/CreateTemplateView.swift（v1.1.2 新規）</li>
     <li>Views/Workout/SaveTemplateView.swift</li>
     <li>Views/Workout/EditTemplateView.swift（v1.1.1 全面リライト）</li>
     <li>Views/Workout/AddTemplateEntrySheet.swift（v1.1.1 新規）</li>
@@ -127,6 +141,7 @@
   <h2>関連</h2>
   <ul>
     <li><a href="workout-session.html">トレーニング記録画面</a></li>
+    <li><a href="create-template.html">新規ルーティン作成画面（CreateTemplateView）</a></li>
     <li><a href="../features/routine.html">ルーティン機能</a></li>
     <li><a href="../features/undo-toast.html">Undo Toast システム</a></li>
     <li><a href="../data-model.html">データモデル（TemplateSetEntry 追加）</a></li>
@@ -138,9 +153,10 @@
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-23</td><td>v1.1.0: UIラベル「テンプレート」→「ルーティン」全置換、スワイプ削除廃止→「➕/✏️/🗑」アイコン常時表示、曜日バッジ追加、行タップ=適用（確認ダイアログ廃止）、assignedWeekdays・appliesTo 追記</td></tr>
     <tr><td>1.2</td><td>2026-05-24</td><td>v1.1.1: 削除を Undo Toast（softDelete）対応に変更（確認ダイアログ廃止）、TemplateSetEntry モデル追加・使用データモデルを更新、EditTemplateView 全面リライト・AddTemplateEntrySheet 新規追加・TemplateMigrationService 新規追加を関連ファイルに追記</td></tr>
+    <tr><td>1.3</td><td>2026-05-27</td><td>v1.1.2候補: ナビゲーションバー「+」ボタン追加・空状態 CTA「New Routine」追加（CreateTemplateView sheet起動）、関連ファイルに CreateTemplateView.swift 追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-24</footer>
+  <footer class="site-footer">最終更新: 2026-05-27</footer>
 </div>
 </body>
 </html>

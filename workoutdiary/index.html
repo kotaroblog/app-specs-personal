@@ -65,7 +65,8 @@
     <a class="card" href="screens/paywall.html"><div class="title">Paywall (POST-PR)</div><div class="desc">PR達成時の特別Paywall</div><div class="meta"><span class="tag">WD-PAYWALL-01</span></div></a>
     <a class="card" href="screens/onboarding.html"><div class="title">オンボーディング</div><div class="desc">11ステップウィザード</div><div class="meta"><span class="tag">WD-ONBOARDING-01</span></div></a>
     <a class="card" href="screens/add-workout.html"><div class="title">セット追加</div><div class="desc">セット入力sheet</div><div class="meta"><span class="tag">WD-ADD-01</span></div></a>
-    <a class="card" href="screens/template-list.html"><div class="title">テンプレート選択</div><div class="desc">テンプレ適用</div><div class="meta"><span class="tag">WD-TEMPLATE-01</span></div></a>
+    <a class="card" href="screens/template-list.html"><div class="title">ルーティン選択</div><div class="desc">ルーティン一覧・適用・新規作成</div><div class="meta"><span class="tag">WD-TEMPLATE-01</span></div></a>
+    <a class="card" href="screens/create-template.html"><div class="title">新規ルーティン作成</div><div class="desc">名前・曜日・種目を入力してルーティンをゼロから作成</div><div class="meta"><span class="tag">WD-CREATE-TEMPLATE-01</span></div></a>
     <a class="card" href="screens/interval-timer.html"><div class="title">インターバルタイマー</div><div class="desc">セット間休憩</div><div class="meta"><span class="tag">WD-TIMER-01</span></div></a>
     <a class="card" href="screens/workout-share.html"><div class="title">シェア</div><div class="desc">SNS共有カード生成</div><div class="meta"><span class="tag">WD-SHARE-01</span></div></a>
     <a class="card" href="screens/widgets.html"><div class="title">Widgets</div><div class="desc">ホーム画面ウィジェット3種</div><div class="meta"><span class="tag">WD-WIDGET-01〜03</span></div></a>
@@ -108,9 +109,10 @@
     <tr><td>v1.1.0</td><td>2026-05-23</td><td>ホーム画面リデザイン（FAB・ボトムアクションバー・今日バッジ・エンプティCTA階層化・クイックアクションチップ・ExerciseCard切り出し）、ルーティン機能（assignedWeekdays・RoutineSuggestionService・WeekdayPicker・曜日バッジ）、カレンダー部位ヒートマップ（ExerciseCategory.color・BottomSheet・予定ドット・凡例）、AddWorkoutView「前回をコピー」ボタン・QuickField縦書き修正、種目一覧/ルーティン選択のアイコン常時表示UI刷新。仕様書6ファイル更新 + routine.html 新規作成</td></tr>
     <tr><td>-</td><td>2026-05-23</td><td>筋肉部位ハイライト機能仕様書を追加（muscle-highlight.html, v1.0）。28種目×22部位 プロト検証完了</td></tr>
     <tr><td>v1.1.1</td><td>2026-05-24</td><td>種目一覧刷新（ExerciseListView v1.2: タップ→編集直行・スワイプ操作・部位カラー統一・メタ情報・ExerciseStatsCalculator）、Undo Toast システム導入（ToastManager / ToastOverlay / 保留中削除パターン）、ピラミッドセット対応（TemplateSetEntry 新規・TemplateMigrationService・EditTemplateView 全面リライト・AddTemplateEntrySheet）。仕様書: exercise-list v1.2・template-list v1.2・data-model v1.2・routine v1.1 更新。undo-toast.html・exercise-stats.html 新規作成</td></tr>
+    <tr><td>v1.1.2候補</td><td>2026-05-27</td><td>種目インライン新規登録（AddWorkoutView: 種目リスト末尾「+ 新しい種目を追加」→ExerciseFormView sheet・initialCategory プリセット・onSaved 自動選択）、ルーティン新規作成導線（TemplateListView: toolbar「+」ボタン・空状態CTA → CreateTemplateView）。仕様書: add-workout v1.3・template-list v1.3 更新。create-template.html 新規作成</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-24</footer>
+  <footer class="site-footer">最終更新: 2026-05-27</footer>
 </div>
 </body>
 </html>
