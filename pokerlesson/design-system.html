@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカーレッスン - デザインシステム</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  .swatch { display:inline-block; width:48px; height:48px; border-radius:6px; vertical-align:middle; margin-right:8px; border:1px solid rgba(255,255,255,0.08); }
+  .swatch-row { display:flex; align-items:center; gap:12px; margin:6px 0; }
+  .swatch-meta { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; opacity: 0.85; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">ポーカーレッスン</a> / デザインシステム</div>
+
+  <header class="site-header">
+    <h1>デザインシステム</h1>
+    <p>UIトーン・カラー・タイポ・コンポーネントの正典。Linear / GitHub / Stripe Dashboard 系の実務UIに揃える。</p>
+    <div style="margin-top:8px;">
+      <span class="tag">DESIGN-01</span>
+      <span class="tag">v1.1</span>
+    </div>
+  </header>
+
+  <h2>方向性</h2>
+  <p>
+    本アプリは「毎日使う学習ツール」として運用するため、装飾的なラウンジ表現（葉巻ラウンジ風・真鍮金・フェルトグリーン・Cinzelセリフ）は v1.1 で全廃した。
+    実務系SaaS（Notion / GitHub / Linear / Stripe Dashboard）と同等の落ち着いたダークUIに統一し、可読性・情報整理・操作効率を最優先とする。
+  </p>
+
+  <h2>カラーパレット</h2>
+  <p>すべて <code>PokerLesson/Extensions/AppTheme.swift</code> の <code>AppTheme.Palette</code> に集約。個別 View で固定値は使用しない。</p>
+
+  <h3>背景・サーフェス</h3>
+  <table>
+    <tr><th>役割</th><th>サンプル</th><th>HEX</th><th>用途</th></tr>
+    <tr>
+      <td>background</td>
+      <td><span class="swatch" style="background:#0E0F11"></span></td>
+      <td class="swatch-meta">#0E0F11</td>
+      <td>画面全体のメイン背景（near-black）</td>
+    </tr>
+    <tr>
+      <td>surface</td>
+      <td><span class="swatch" style="background:#16181C"></span></td>
+      <td class="swatch-meta">#16181C</td>
+      <td>カード・パネルの通常サーフェス</td>
+    </tr>
+    <tr>
+      <td>surfaceElevated</td>
+      <td><span class="swatch" style="background:#1B1E23"></span></td>
+      <td class="swatch-meta">#1B1E23</td>
+      <td>一段奥（ネストしたサーフェス・コントロール）</td>
+    </tr>
+  </table>
+
+  <h3>アクセント（1色のみ）</h3>
+  <table>
+    <tr><th>役割</th><th>サンプル</th><th>HEX</th><th>用途</th></tr>
+    <tr>
+      <td>accent</td>
+      <td><span class="swatch" style="background:#4C8DF6"></span></td>
+      <td class="swatch-meta">#4C8DF6</td>
+      <td>主CTA塗り・選択中・主要リンク（Linear blue）</td>
+    </tr>
+    <tr>
+      <td>accentPressed</td>
+      <td><span class="swatch" style="background:#3971D8"></span></td>
+      <td class="swatch-meta">#3971D8</td>
+      <td>押下時のやや暗いアクセント</td>
+    </tr>
+    <tr>
+      <td>accentSubtle</td>
+      <td><span class="swatch" style="background:#1F2C42"></span></td>
+      <td class="swatch-meta">#4C8DF6 @ 16%</td>
+      <td>選択chipの背景塗り・控えめなバッジ</td>
+    </tr>
+  </table>
+
+  <h3>ステータス色</h3>
+  <table>
+    <tr><th>役割</th><th>サンプル</th><th>HEX</th><th>用途</th></tr>
+    <tr>
+      <td>danger</td>
+      <td><span class="swatch" style="background:#E5484D"></span></td>
+      <td class="swatch-meta">#E5484D</td>
+      <td>エラー・不正解・Fold・破壊的アクション</td>
+    </tr>
+    <tr>
+      <td>success</td>
+      <td><span class="swatch" style="background:#2DA44E"></span></td>
+      <td class="swatch-meta">#2DA44E</td>
+      <td>正解・Call/Check・成功</td>
+    </tr>
+    <tr>
+      <td>warn</td>
+      <td><span class="swatch" style="background:#D2A24C"></span></td>
+      <td class="swatch-meta">#D2A24C</td>
+      <td>タイマー残少・警告</td>
+    </tr>
+  </table>
+
+  <h3>テキスト</h3>
+  <table>
+    <tr><th>役割</th><th>サンプル</th><th>HEX</th><th>用途</th></tr>
+    <tr><td>textPrimary</td><td><span class="swatch" style="background:#E6E8EB"></span></td><td class="swatch-meta">#E6E8EB</td><td>本文・見出し</td></tr>
+    <tr><td>textSecondary</td><td><span class="swatch" style="background:#9098A3"></span></td><td class="swatch-meta">#9098A3</td><td>サブ情報・ラベル</td></tr>
+    <tr><td>textMuted</td><td><span class="swatch" style="background:#5B626C"></span></td><td class="swatch-meta">#5B626C</td><td>補助情報・disabled</td></tr>
+  </table>
+
+  <h3>ボーダー</h3>
+  <table>
+    <tr><th>役割</th><th>HEX</th><th>用途</th></tr>
+    <tr><td>border</td><td class="swatch-meta">#24272D</td><td>通常の hairline 区切り（カード枠・divider）</td></tr>
+    <tr><td>borderStrong</td><td class="swatch-meta">#2E323A</td><td>フォーカス枠など強調</td></tr>
+  </table>
+
+  <h3>トランプ機能色（赤黒2色を維持）</h3>
+  <table>
+    <tr><th>役割</th><th>サンプル</th><th>HEX</th><th>用途</th></tr>
+    <tr><td>cardRed</td><td><span class="swatch" style="background:#E5484D"></span></td><td class="swatch-meta">#E5484D</td><td>ハート・ダイヤのスート色（情報識別のため維持）</td></tr>
+    <tr><td>cardBlack</td><td><span class="swatch" style="background:#1B1E23"></span></td><td class="swatch-meta">#1B1E23</td><td>スペード・クラブのスート色</td></tr>
+    <tr><td>cardFace</td><td><span class="swatch" style="background:#F4F5F8"></span></td><td class="swatch-meta">#F4F5F8</td><td>カード地（オフホワイト）</td></tr>
+  </table>
+
+  <h2>旧API互換エイリアス（v1.0→v1.1 移行のため残置）</h2>
+  <p>
+    旧テーマ（葉巻ラウンジ）の API 名は呼び出し側の互換維持のため <code>AppTheme.Palette</code> 上に残しているが、中身は完全にニュートラル化済み。
+    新規実装は意味のある役割名（<code>accent</code> / <code>textPrimary</code> / <code>danger</code> 等）で参照すること。
+  </p>
+  <table>
+    <tr><th>旧API（残置）</th><th>新しい中身</th></tr>
+    <tr><td><code>goldPrimary</code> / <code>goldWarm</code></td><td><code>accent</code></td></tr>
+    <tr><td><code>platinumLight</code> / <code>goldLight</code></td><td><code>textPrimary</code></td></tr>
+    <tr><td><code>brassMuted</code></td><td><code>textSecondary</code></td></tr>
+    <tr><td><code>goldDark</code></td><td><code>borderStrong</code></td></tr>
+    <tr><td><code>wineRed</code> / <code>actionRed</code></td><td><code>danger</code></td></tr>
+    <tr><td><code>mattedGreen</code> / <code>actionGreen</code></td><td><code>success</code></td></tr>
+    <tr><td><code>mattedBlue</code></td><td>独自中立色 <code>#464F5B</code>（Fold ボタン）</td></tr>
+    <tr><td><code>feltGreen</code> / <code>feltGreenDark</code></td><td><code>surfaceElevated</code> / <code>surface</code></td></tr>
+  </table>
+
+  <h2>タイポグラフィ</h2>
+  <p>SF Pro（system）のみ。<code>.serif</code> / <code>.rounded</code> / Cinzel は v1.1 で全廃。数値表示のみ <code>.monospaced</code> を許容。</p>
+  <table>
+    <tr><th>役割</th><th>サイズ目安</th><th>weight</th><th>design</th></tr>
+    <tr><td>大見出し（旧 displaySerif）</td><td>22〜28pt</td><td>.bold</td><td>.default</td></tr>
+    <tr><td>セミ見出し（旧 titleSerif）</td><td>16〜20pt</td><td>.semibold</td><td>.default</td></tr>
+    <tr><td>本文</td><td>13〜15pt</td><td>.regular / .medium</td><td>.default</td></tr>
+    <tr><td>キャプション</td><td>11〜12pt</td><td>.regular / .medium</td><td>.default</td></tr>
+    <tr><td>数値表示（XP・スタック・bb 等）</td><td>11〜22pt</td><td>.semibold / .bold</td><td>.monospaced</td></tr>
+  </table>
+  <p>大文字 tracking 強調は廃止（旧: <code>tracking(4)</code> 等の英字飾り）。</p>
+
+  <h2>角丸・余白・線</h2>
+  <table>
+    <tr><th>カテゴリ</th><th>値</th><th>用途</th></tr>
+    <tr><td>cornerRadiusSmall</td><td>6</td><td>chip・小ボタン・cell</td></tr>
+    <tr><td>cornerRadiusMedium</td><td>8</td><td>主要ボタン・カード</td></tr>
+    <tr><td>cornerRadiusLarge</td><td>10</td><td>セクションカード</td></tr>
+    <tr><td>cornerRadiusXL</td><td>12</td><td>最大角丸（特例のみ）</td></tr>
+    <tr><td>strokeNormal</td><td>1pt</td><td>カード枠・divider</td></tr>
+    <tr><td>余白</td><td>4 / 8 / 16 / 24 / 32</td><td>8pxグリッド準拠</td></tr>
+  </table>
+
+  <h3>廃止した要素</h3>
+  <ul class="checklist">
+    <li>shadow / drop shadow（全面廃止。境界は 1pt ボーダーで表現）</li>
+    <li>LinearGradient / RadialGradient / マルチストップグラデ（単色塗りへ統一）</li>
+    <li>backgroundVignette / tableFelt / heroSpotlight（CPU対戦・クイズテーブルの背景4層演出を全削除）</li>
+    <li>角丸22以上（旧 cornerRadiusXL の <code>22</code> は <code>12</code> へ縮小）</li>
+    <li>tracking ≥ 3pt の英字飾り（display Serif と組み合わせていた装飾を排除）</li>
+  </ul>
+
+  <h2>コンポーネント</h2>
+
+  <h3>カード（goldCard ViewModifier）</h3>
+  <p>呼び出し名は互換性のため <code>goldCard()</code> のまま。中身はフラットな1ptボーダーカードへ刷新済み。</p>
+  <pre><code>// 旧：真鍮枠＋shadow
+.goldCard()  // v1.0 では LinearGradient + shadow を含んでいた
+
+// 新（v1.1）の実体
+.background(RoundedRectangle(cornerRadius: 8).fill(AppTheme.Palette.surface))
+.overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(AppTheme.Palette.border, lineWidth: 1))</code></pre>
+
+  <h3>主CTA（primaryGoldButton ViewModifier）</h3>
+  <p>アクセント色（<code>#4C8DF6</code>）の単色塗り。白文字、shadowなし。</p>
+  <pre><code>Button { ... } label: { Text("レッスンを開始") }
+  .primaryGoldButton()  // 中身は accent fill + Color.white foreground のフラット</code></pre>
+
+  <h3>セカンダリボタン（secondaryGoldButton ViewModifier）</h3>
+  <p><code>surfaceElevated</code> 背景 + 1pt ボーダー + <code>textPrimary</code> 文字。</p>
+
+  <h3>選択chip（filter / picker 共通）</h3>
+  <ul>
+    <li>未選択: <code>surfaceElevated</code> 背景 + <code>border</code> 1pt + <code>textPrimary</code> 文字</li>
+    <li>選択中: <code>accentSubtle</code> 背景 + <code>accent</code> 1pt + <code>accent</code> 文字</li>
+  </ul>
+
+  <h3>アクションボタン（Quiz / CPU対戦の Raise / Call / Fold）</h3>
+  <table>
+    <tr><th>アクション</th><th>塗り</th><th>文字</th></tr>
+    <tr><td>Raise（破壊的）</td><td>danger <code>#E5484D</code></td><td>白</td></tr>
+    <tr><td>Call / Check（受諾）</td><td>success <code>#2DA44E</code></td><td>白</td></tr>
+    <tr><td>Fold（中立棄却）</td><td>mattedBlue <code>#464F5B</code></td><td>白</td></tr>
+    <tr><td>未選択（クイズ画面）</td><td>surfaceElevated</td><td>textPrimary</td></tr>
+  </table>
+
+  <h2>削除した演出</h2>
+  <ul class="checklist">
+    <li><code>EnteringTableView</code>: 1日1回の「ENTERING TABLE / TOKYO PRIVATE ROOM」着席演出オーバーレイ。ファイルごと削除</li>
+    <li><code>RankUpOverlayView</code>: ランクアップ全画面オーバーレイ（真鍮エンブレム + RANK UP セリフ大文字）。ファイルごと削除</li>
+    <li><code>HomeView</code> の <code>brandTagline</code>（"LET'S PLAY ONE HAND."）削除</li>
+    <li><code>HomeView</code> の <code>tableSeatHeader</code>（"TABLE 47 KYOTO BACK ROOM"）削除</li>
+    <li><code>QuizView</code> 結果画面の真鍮メダル円・回転・グロー演出を削除</li>
+    <li><code>CPUMatchView</code> 背景4層（木壁グラデ・天井照明・フェルト反射・四隅ヴィネット）を全削除</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="screens/home.html">ホーム画面 (HOME-01)</a></li>
+    <li><a href="screens/cpu-match-setup.html">CPU対戦セットアップ (SETUP-01)</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-27</td><td>初版作成（v1.1 実務UIリデザインに伴うデザインシステムを正典化）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-27</footer>
+</div>
+</body>
+</html>

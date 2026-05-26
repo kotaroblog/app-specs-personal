@@ -13,80 +13,110 @@
 
   <header class="site-header">
     <h1>ホーム画面</h1>
-    <p>アプリ起動後の最初の画面。学習セッション・CPU対戦・DailyReview への導線を提供する。</p>
+    <p>アプリ起動後の最初の画面。プロフィール・統計・コース絞り込み・レッスン開始・今日の1問・他機能メニューを縦リストに集約する。</p>
     <div style="margin-top:8px;">
       <span class="tag">画面ID: HOME-01</span>
-      <span class="tag">Phase 1</span>
+      <span class="tag">v1.1 リデザイン反映</span>
     </div>
   </header>
 
   <h2>目的・役割</h2>
   <p>
     ユーザーが「今日何をするか」を素早く選択できる起点画面。
-    Phase 1 では DailyReview（TODAY'S NOTE）カードを追加し、
-    本格セッション前の1分完結の習慣化導線を設ける。
-    画面構成はシンプルさを最優先とし、余計な情報・通知・ストリーク表示は置かない。
+    v1.1 で実務UIにリデザインし、ヒーロー演出（ブランドコピー・TABLE 番号・ROOM 名）を排して、
+    情報密度と継続使用に耐える静かなダッシュボードに統一した。
   </p>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（v1.1 縦リスト）</h2>
+  <p>すべて <code>ScrollView</code> 内の <code>VStack(spacing: 16)</code> に格納。<code>navigationTitle("ポーカーレッスン")</code> をインライン表示。</p>
   <table>
-    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><th>順序</th><th>要素</th><th>種類</th><th>説明</th></tr>
     <tr>
-      <td>START LESSON カード</td>
-      <td>Button / NavigationLink</td>
-      <td>本格セッション（5〜15分）への主導線。最も目立つビジュアル</td>
+      <td>1</td>
+      <td>プロフィールヘッダー</td>
+      <td>Card（goldCard）</td>
+      <td>アバター（ランクアイコン）・ニックネーム編集 button・ランクバッジ・XPバー</td>
     </tr>
     <tr>
-      <td>TODAY'S NOTE カード（DailyReview）</td>
-      <td>Button / NavigationLink</td>
-      <td>START LESSON 直下に配置。1日1問の習慣化導線。START LESSON より視覚的に控えめ（フォントサイズ・背景色・パディングを下げる）</td>
+      <td>2</td>
+      <td>統計カード</td>
+      <td>Card（3カラム）</td>
+      <td>回答数 / 正答率 / 連続日数。1pt縦divider 区切り、数値は monospaced</td>
     </tr>
     <tr>
-      <td>CPU対戦カード</td>
-      <td>Button / NavigationLink</td>
-      <td>CPU対戦セットアップへの導線</td>
+      <td>3</td>
+      <td>フィルタ</td>
+      <td>Card（chip×2列）</td>
+      <td>コース（すべて / RFI / vs Open / Squeeze）・難易度（すべて / 基礎 / 標準 / 応用）の選択chip</td>
     </tr>
     <tr>
-      <td>設定ボタン</td>
-      <td>Toolbar Button</td>
-      <td>右上。設定画面へ遷移</td>
+      <td>4</td>
+      <td>レッスン開始 CTA</td>
+      <td>Primary Button</td>
+      <td>「レッスンを開始」 + サブ「5問 / 全 N 問から出題」 + 右に <code>arrow.forward</code>。アクセント色塗り、白文字</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>今日の1問 カード</td>
+      <td>Card（goldCard）</td>
+      <td>未完了時はアクティブ、完了時は <code>checkmark</code> + 「完了しました」 + 「また明日、1問。」</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>機能メニューリスト</td>
+      <td>Card（リスト型）</td>
+      <td>CPU対戦 / レンジ表 / 進捗 / 設定。行ごとに 1pt divider、左にSF Symbols、右に chevron</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>コーチコメント</td>
+      <td>Card（条件表示）</td>
+      <td><code>tendency.hasEnoughData</code> 時のみ。lightbulb アイコン + 「コーチからのコメント」 + dealerNote 本文</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>無料枠カード</td>
+      <td>Card（無料ユーザーのみ）</td>
+      <td>残数 monospace表示 + 上限到達時のみ「プレミアムで全問解放」CTA</td>
     </tr>
   </table>
+
+  <h2>v1.1 リデザインで削除した要素</h2>
+  <ul class="checklist">
+    <li>ブランドコピー <code>brandTagline</code>（"LET'S PLAY ONE HAND." セリフ + 「一緒に、もっと強くなろう。」）</li>
+    <li>「今日の席」演出 <code>tableSeatHeader</code>（"TABLE 47 KYOTO BACK ROOM" + 0.5/1 bb 表記）</li>
+    <li>"START LESSON" セリフ大文字 CTA + tracking 装飾（→ 通常の「レッスンを開始」CTA）</li>
+    <li><code>dealerWhisper</code> モノスペース「ディーラーから一言」装飾（→ 通常見出しの「コーチからのコメント」）</li>
+    <li>"TODAY'S NOTE" モノスペース英字ラベル（→ 「今日の1問」日本語見出し）</li>
+    <li>ContentView での <code>EnteringTableView</code> 着席演出オーバーレイ呼び出し（ファイルごと削除）</li>
+  </ul>
 
   <h2>状態</h2>
   <table>
-    <tr><th>状態</th><th>TODAY'S NOTE カードの表示</th></tr>
+    <tr><th>状態</th><th>表示</th></tr>
     <tr>
-      <td>アクティブ（未完了）</td>
-      <td>「TODAY'S NOTE」ラベル + 「1問だけ」案内テキスト。タップ可能</td>
+      <td>問題データ読込中</td>
+      <td>CTA下に「問題データを読み込み中…」 textMuted で表示</td>
     </tr>
     <tr>
-      <td>完了済み（当日中）</td>
-      <td>グレーアウト + チェックマーク + 「今日のノートは終わっています。」テキスト。タップ不可（または軽いフィードバックのみ）</td>
+      <td>フィルタ結果 0 件</td>
+      <td>CTA下に「選択中のコース・難易度に該当する問題がありません」表示。CTAは disabled 50% opacity</td>
     </tr>
     <tr>
-      <td>問題データなし</td>
-      <td>TODAY'S NOTE カードを非表示にする。エラーUIは出さない</td>
-    </tr>
-  </table>
-
-  <h2>DailyReview カードの状態遷移</h2>
-  <table>
-    <tr><th>条件</th><th>カード状態</th><th>判定ロジック</th></tr>
-    <tr>
-      <td>当日未完了 かつ 問題あり</td>
-      <td>アクティブ</td>
-      <td><code>DailyReview.isCompletedToday() == false</code> かつ 問題データが存在</td>
+      <td>無料枠到達</td>
+      <td>無料枠カード内に「プレミアムで全問解放」CTAを表示。CTAタップで <code>showPaywall = true</code></td>
     </tr>
     <tr>
-      <td>当日完了済み</td>
-      <td>完了済み（グレーアウト）</td>
-      <td><code>DailyReview.isCompletedToday() == true</code>。<code>@AppStorage("daily_review_last_completed_at")</code> を <code>Calendar.isDateInToday</code> で判定</td>
+      <td>今日の1問 未完了</td>
+      <td>カード左に <code>note.text</code> アイコン（accentSubtle背景）、本文と chevron でタップ可能</td>
     </tr>
     <tr>
-      <td>翌日</td>
-      <td>アクティブ（リセット）</td>
-      <td>日付が変わると <code>isCompletedToday()</code> が false を返す</td>
+      <td>今日の1問 完了済み</td>
+      <td><code>checkmark</code>（success色）+ 「完了しました」「また明日、1問。」。タップ不可（Buttonでなく HStack）</td>
+    </tr>
+    <tr>
+      <td>コーチコメント データ不足</td>
+      <td>カード自体を表示しない（<code>tendency.hasEnoughData == false</code> でスキップ）</td>
     </tr>
   </table>
 
@@ -94,51 +124,87 @@
   <table>
     <tr><th>操作</th><th>遷移先</th><th>条件</th></tr>
     <tr>
-      <td>START LESSON カードをタップ</td>
-      <td>レッスン選択画面</td>
+      <td>「レッスンを開始」CTAをタップ</td>
+      <td>QuizView（filteredQuestions から5問ランダム抽出）</td>
+      <td>filteredQuestions が空でない・無料枠未到達</td>
+    </tr>
+    <tr>
+      <td>「レッスンを開始」CTAを無料枠到達時にタップ</td>
+      <td>PaywallView（source: .quizLimit）</td>
+      <td>累計回答 ≥ 30問</td>
+    </tr>
+    <tr>
+      <td>今日の1問カードをタップ</td>
+      <td>QuizView（isDailyReview=true, dailyReviewSource付き）</td>
+      <td>未完了時のみ</td>
+    </tr>
+    <tr>
+      <td>機能メニュー: CPU対戦</td>
+      <td>CPUMatchView（onSelectMenu: .cpuMatch）</td>
       <td>常時</td>
     </tr>
     <tr>
-      <td>TODAY'S NOTE カードをタップ</td>
-      <td>QuizView（isDailyReview=true）</td>
-      <td>アクティブ状態のみ</td>
+      <td>機能メニュー: レンジ表</td>
+      <td>HandRangeView</td>
+      <td>常時（ロックポジションは Paywall）</td>
     </tr>
     <tr>
-      <td>CPU対戦カードをタップ</td>
-      <td>CPUMatchSetupView</td>
+      <td>機能メニュー: 進捗</td>
+      <td>ProgressDashboardView</td>
+      <td>常時（累計タブは Premium）</td>
+    </tr>
+    <tr>
+      <td>機能メニュー: 設定</td>
+      <td>SettingsView</td>
       <td>常時</td>
     </tr>
     <tr>
-      <td>設定ボタンをタップ</td>
-      <td>設定画面</td>
+      <td>プロフィール内ニックネーム編集ボタン</td>
+      <td>NicknameEditorSheet（detents: .height(220)）</td>
       <td>常時</td>
     </tr>
   </table>
 
-  <h2>使用するデータモデル</h2>
-  <pre><code>// DailyReview 状態判定
-DailyReview.isCompletedToday()  // @AppStorage から読み取り
+  <h2>使用するデータモデル・サービス</h2>
+  <pre><code>// SwiftData @Query
+@Query private var allQuestions: [Question]
+@Query private var progressList: [UserProgress]
+@Query private var allRecords: [AnswerRecord]
 
-// DailyReview 問題選定（カードタップ時）
-DailyReview.select(from: questions, tendency: playerTendency)
-// → DailyReviewSelection(question: Question, source: DailyReviewSource)
+// AppStorage
+@AppStorage("quiz_course") selectedCourseRaw     // "all" | "rfi" | "vs_open" | "cold_call_vs_squeeze"
+@AppStorage("quiz_difficulty") selectedDifficulty // 0..3
+@AppStorage("player_nickname") nickname
+@AppStorage("daily_review_last_completed_at") dailyReviewLastCompletedAt
 
-// KPI ロギング（カード表示時）
-EventLogger.shared.log(.dailyReviewCardShown(source: selection.source))</code></pre>
+// 派生値
+profileLevel = ProfileLevel.from(records: allRecords)
+tendency     = PlayerTendency.compute(from: allRecords)
+
+// DailyReview
+DailyReview.isCompletedToday(lastCompletedAt: ...)
+DailyReview.select(from: allQuestions, records: allRecords)
+
+// イベントロギング
+EventLogger.shared.log(.dailyReviewCardShown, parameters: ["source": ...])
+EventLogger.shared.log(.dailyReviewStarted,    parameters: ["source": ...])
+EventLogger.shared.log(.lessonStartedAfterDaily)</code></pre>
+
+  <h2>デザイントークン参照</h2>
+  <p>全画面共通の配色・タイポ・コンポーネント仕様は <a href="../design-system.html">デザインシステム (DESIGN-01)</a> を参照。本画面では特例使用なし。</p>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li>TODAY'S NOTE カードは START LESSON カード直下に配置する（CardGrid や VStack で順序固定）</li>
-    <li>カードのビジュアル差分: TODAY'S NOTE は背景色を <code>.systemGray6</code>、パディングを 12pt（START LESSON は 20pt）など控えめに設定する</li>
-    <li><code>dailyReviewCard</code> は <code>@ViewBuilder</code> のサブビューとして切り出し、HomeView の本体を 200行以下に保つ</li>
-    <li>ホーム画面の <code>onAppear</code> で <code>DailyReview.select()</code> を呼び出し、選定結果を <code>@State</code> に保持する</li>
-    <li><code>lesson_started_after_daily</code> の判定: START LESSON タップ時に <code>@AppStorage("daily_review_last_completed_at")</code> との差分を確認し、600秒以内なら EventLogger に送信</li>
+    <li>削除した <code>today_table_number</code> / <code>today_table_date</code> @AppStorage は今後復活させない（演出を完全排除する方針）</li>
+    <li><code>HomeView</code> 本体は <code>ScrollView</code> 内の単一 <code>VStack</code>。<code>portraitLayout</code> / <code>landscapeLayout</code> の分岐は v1.0 で存在したが、リデザインで縦リスト一本化</li>
+    <li>各セクションは <code>goldCard()</code> ViewModifier（中身は 1pt ボーダー + surface 塗り）に統一</li>
+    <li>chip 共通スタイル：未選択 <code>surfaceElevated</code> + border、選択中 <code>accentSubtle</code> + accent 1pt + accent 文字</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
-    <li><a href="../flow.html">画面遷移図</a></li>
-    <li><a href="../features/daily-review.html">DailyReview 機能仕様書 (FEAT-01)</a></li>
+    <li><a href="../design-system.html">デザインシステム (DESIGN-01)</a></li>
+    <li><a href="../features/daily-review.html">今日の1問 機能仕様書 (FEAT-01)</a></li>
     <li><a href="../features/kpi-logging.html">KPIイベントロギング (FEAT-02)</a></li>
     <li><a href="cpu-match-setup.html">CPU対戦セットアップ (SETUP-01)</a></li>
   </ul>
@@ -147,9 +213,10 @@ EventLogger.shared.log(.dailyReviewCardShown(source: selection.source))</code></
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-23</td><td>初版作成（Phase 1: DailyReview カード追加を反映）</td></tr>
+    <tr><td>1.1</td><td>2026-05-27</td><td>実務UIリデザインを反映。brandTagline / tableSeatHeader / "START LESSON" セリフCTA / "TODAY'S NOTE" モノスペース等を削除。縦リスト型ダッシュボードに再構築。EnteringTableView 演出オーバーレイ呼び出しを撤去</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-23</footer>
+  <footer class="site-footer">最終更新: 2026-05-27</footer>
 </div>
 </body>
 </html>

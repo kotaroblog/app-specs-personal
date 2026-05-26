@@ -16,59 +16,69 @@
     <p>CPU対戦のテーブルサイズ・スタック等を設定してマッチを開始する画面。</p>
     <div style="margin-top:8px;">
       <span class="tag">画面ID: SETUP-01</span>
-      <span class="tag">Phase 1</span>
+      <span class="tag">v1.1 リデザイン反映</span>
     </div>
   </header>
 
   <h2>目的・役割</h2>
   <p>
-    CPU対戦を開始する前に、テーブルサイズ（最大プレイヤー数）などのパラメータをユーザーが選択する。
-    Phase 1 で 6max をデフォルト化し、学習密度の高い現代主流のテーブル設定を推奨する。
+    CPU対戦を開始する前に、難易度・テーブルサイズ・初期スタック・テンポ・学習サポート（GTOヒント）をユーザーが選択する。
+    Phase 1 で 6max をデフォルト化、v1.1 でヘッダーの装飾（"CPU MATCH" セリフ大文字 + スート飾り + 真鍮ライン）を全廃し、
+    各項目を <code>goldCard()</code> セクションカードに統一した。
   </p>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（v1.1）</h2>
+  <p>すべて <code>ScrollView</code> 内の <code>VStack(spacing: 16)</code>。各セクションは <code>goldCard()</code>（1ptボーダー + surface 塗り）。
+  <code>navigationTitle("対戦設定")</code> をインライン表示。</p>
   <table>
-    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><th>セクション</th><th>要素</th><th>説明</th></tr>
     <tr>
-      <td>テーブルサイズ選択</td>
-      <td>チップ選択UI（複数選択肢）</td>
-      <td>2max / 6max / 9max から選択。6max に「推奨」バッジを表示</td>
+      <td>CPU難易度</td>
+      <td>縦並びの選択行（3行）</td>
+      <td>easy / normal / hard。各行に色付きインジケータ + 難易度名 + 説明 + 学習目標。選択行はアクセント色ボーダー + checkmark</td>
     </tr>
     <tr>
-      <td>6max チップの「推奨」バッジ</td>
-      <td>Badge / Overlay</td>
-      <td>Phase 1 で追加。サブタイトル「学習向け・現代主流」を表示</td>
+      <td>テーブルサイズ</td>
+      <td>2chip（横並び）</td>
+      <td>6max / 9max。6max には「推奨」バッジ（accent サブカラー）+ サブタイトル「学習向け・現代主流」</td>
     </tr>
     <tr>
-      <td>スタック設定</td>
-      <td>Slider / Stepper</td>
-      <td>初期スタック枚数（BB単位）</td>
+      <td>初期スタック</td>
+      <td>4chip（横並び）</td>
+      <td>25bb / 50bb / 100bb / 200bb。monospaced 数値</td>
+    </tr>
+    <tr>
+      <td>テンポ</td>
+      <td>3chip（横並び）</td>
+      <td>遅め / 標準 / 速め。各chipに displayName + shortDescription を縦に表示</td>
+    </tr>
+    <tr>
+      <td>学習サポート</td>
+      <td>Toggle行</td>
+      <td>GTO推奨ヒントON/OFF。<code>eye.fill</code> / <code>eye.slash</code> アイコン + 説明 + SwiftUI Toggle（accent tint）</td>
     </tr>
     <tr>
       <td>対戦開始ボタン</td>
-      <td>Button（プライマリ）</td>
-      <td>設定確定 → CPU対戦画面へ遷移</td>
-    </tr>
-    <tr>
-      <td>戻るボタン</td>
-      <td>NavigationLink Back</td>
-      <td>ホーム画面に戻る</td>
+      <td>Primary Button（CTA）</td>
+      <td>「対戦開始」 + 右に <code>arrow.forward</code>。アクセント色塗り、白文字</td>
     </tr>
   </table>
 
-  <h2>6max デフォルト化（Phase 1 変更内容）</h2>
+  <h2>v1.1 リデザインで削除・刷新した要素</h2>
+  <ul class="checklist">
+    <li>ヘッダー装飾：上部の <code>miniDivider</code> + ♠♥♦♣ スートアイコン + セリフ大文字 "CPU MATCH"（tracking 2.5）+ サブテキスト「9人MTTシミュレーション」を全削除</li>
+    <li>CTA：「DEAL THE CARDS」セリフ大文字 + サブテキスト「対戦開始」 → 通常CTA「対戦開始」</li>
+    <li>選択中chipの <code>AppTheme.Gradients.goldShine</code> グラデ塗り → <code>accentSubtle</code> 単色 + accent ボーダー</li>
+    <li>難易度ラベル <code>levelLabel</code> のモノスペース tracking 装飾を縮小</li>
+    <li>2max オプションは元々非対応（実装上は 6max / 9max の2択）。仕様書側の記述ずれを v1.1 で訂正</li>
+  </ul>
+
+  <h2>6max デフォルト化（Phase 1）</h2>
   <table>
-    <tr><th>項目</th><th>変更前</th><th>変更後</th></tr>
-    <tr>
-      <td>テーブルサイズ初期値</td>
-      <td>9</td>
-      <td>6</td>
-    </tr>
-    <tr>
-      <td>6max チップの表示</td>
-      <td>通常チップのみ</td>
-      <td>「推奨」バッジ付き + サブタイトル「学習向け・現代主流」</td>
-    </tr>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>テーブルサイズ初期値</td><td>6（<code>setupTableSize = 6</code>）</td></tr>
+    <tr><td>6max チップの表示</td><td>「推奨」バッジ + サブタイトル「学習向け・現代主流」</td></tr>
+    <tr><td>9max チップの表示</td><td>サブタイトル「MTT・トーナメント向け」</td></tr>
   </table>
   <p>
     <strong>変更の意図</strong>:
@@ -129,6 +139,7 @@ EventLogger.shared.log(.cpuMatchStarted(tableSize: setupTableSize))</code></pre>
 
   <h2>関連</h2>
   <ul>
+    <li><a href="../design-system.html">デザインシステム (DESIGN-01)</a></li>
     <li><a href="../flow.html">画面遷移図</a></li>
     <li><a href="home.html">ホーム画面 (HOME-01)</a></li>
     <li><a href="../features/kpi-logging.html">KPIイベントロギング (FEAT-02)</a></li>
@@ -138,9 +149,10 @@ EventLogger.shared.log(.cpuMatchStarted(tableSize: setupTableSize))</code></pre>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-23</td><td>初版作成（Phase 1: 6max デフォルト化・推奨バッジを反映）</td></tr>
+    <tr><td>1.1</td><td>2026-05-27</td><td>実務UIリデザインを反映。"CPU MATCH" セリフ大文字ヘッダー + スート飾り + "DEAL THE CARDS" CTAを削除。各セクションを goldCard で統一。選択中chipのグラデ塗りをaccentSubtle単色に。<code>level.themeColor</code> 経由で難易度色を一元化</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-23</footer>
+  <footer class="site-footer">最終更新: 2026-05-27</footer>
 </div>
 </body>
 </html>

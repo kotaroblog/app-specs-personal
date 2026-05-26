@@ -14,7 +14,7 @@
 
   <header class="site-header">
     <h1>DailyReview（今日の1問）</h1>
-    <p>1日1問・1分で完結する習慣化導線。START LESSON の手前に置く「静かなゲートウェイ」。</p>
+    <p>1日1問・1分で完結する習慣化導線。「レッスンを開始」CTA の手前に置く「静かなゲートウェイ」。</p>
     <div class="section-meta">
       <span class="tag">機能ID: FEAT-01</span>
       <span class="tag">Phase 1</span>
@@ -23,7 +23,7 @@
 
   <h2>概要</h2>
   <p>
-    DailyReview は、5〜15分かかる本格セッション（START LESSON）の入口として、
+    DailyReview は、5〜15分かかる本格セッション（「レッスンを開始」CTA）の入口として、
     「1分で完結する1問だけ」をホーム画面に常設する機能。
     Duolingo 的なストリーク・XPボーナスによる強制感を意図的に排除し、
     PokerLesson らしい「静かな余韻」のトーンを維持したまま日次接触を促す。
@@ -36,7 +36,7 @@
 
   <h2>関連画面</h2>
   <ul>
-    <li><a href="../screens/home.html">ホーム画面 (HOME-01)</a> — TODAY'S NOTE カードを配置</li>
+    <li><a href="../screens/home.html">ホーム画面 (HOME-01)</a> — 今日の1問 カードを配置</li>
     <li><a href="../screens/cpu-match-setup.html">CPU対戦セットアップ (SETUP-01)</a></li>
   </ul>
 
@@ -73,7 +73,7 @@ sequenceDiagram
   HomeView->>DailyReview: isCompletedToday()
   DailyReview-->>HomeView: false → カード表示(アクティブ)
 
-  U->>HomeView: TODAY'S NOTE カードをタップ
+  U->>HomeView: 今日の1問 カードをタップ
   HomeView->>DailyReview: select()
   DailyReview-->>HomeView: DailyReviewSelection(question, source)
   HomeView->>QuizVM: isDailyReview = true, dailyReviewSource = source
@@ -93,12 +93,12 @@ sequenceDiagram
     <tr><th>状態</th><th>表示</th><th>操作</th></tr>
     <tr>
       <td>アクティブ</td>
-      <td>「TODAY'S NOTE」ラベル + 「1問だけ」案内テキスト。START LESSON より控えめなビジュアル（サイズ・コントラスト共に下げる）</td>
+      <td>「今日の1問」ラベル + 「1問だけ」案内テキスト。「レッスンを開始」CTA より控えめなビジュアル（サイズ・コントラスト共に下げる）</td>
       <td>タップで DailyReview クイズへ遷移</td>
     </tr>
     <tr>
       <td>完了済み</td>
-      <td>グレーアウト + チェックマーク + 「今日のノートは終わっています。」テキスト</td>
+      <td>グレーアウト + チェックマーク + 「完了しました。また明日、1問。」テキスト</td>
       <td>タップ不可（または軽いフィードバックのみ）</td>
     </tr>
   </table>
@@ -150,7 +150,7 @@ enum DailyReview {
   <ul>
     <li>DailyReview の1問はフリー枠（30問）の消費にカウントしない</li>
     <li>1日1問のみ（完了後は当日中カードを非アクティブ化）。翌日0時にリセット（Calendar.isDateInToday で判定）</li>
-    <li>完了画面から START LESSON への誘導リンクは設置しない（10分以内の自然な遷移のみKPI計測）</li>
+    <li>完了画面から 「レッスンを開始」CTA への誘導リンクは設置しない（10分以内の自然な遷移のみKPI計測）</li>
     <li>問題選定の優先順位はサーバー側で変更できるようにしない（Phase 1 はクライアントサイドのみ）</li>
   </ul>
 
@@ -164,7 +164,7 @@ enum DailyReview {
   <h2>エラー処理</h2>
   <table>
     <tr><th>発生条件</th><th>対応</th></tr>
-    <tr><td>問題データが0件</td><td>カードを非表示。エラーUIは出さない（START LESSON を前面に出す）</td></tr>
+    <tr><td>問題データが0件</td><td>カードを非表示。エラーUIは出さない（「レッスンを開始」CTA を前面に出す）</td></tr>
     <tr><td>@AppStorage 読み込み失敗</td><td>完了済みとして扱わない（アクティブ表示を維持）。再度完了できても問題なし</td></tr>
     <tr><td>PlayerTendency が未計算</td><td>source を <code>random</code> にフォールバック</td></tr>
   </table>
@@ -172,10 +172,10 @@ enum DailyReview {
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li><code>Models/DailyReview.swift</code>（新規）: <code>DailyReviewSelection</code> 構造体、<code>DailyReviewSource</code> enum、<code>DailyReview</code> enum を定義</li>
-    <li><code>Views/HomeView.swift</code>: <code>dailyReviewCard</code> / <code>dailyReviewCardActive</code> / <code>dailyReviewCardCompleted</code> サブビューを追加。START LESSON カード直下に配置</li>
+    <li><code>Views/HomeView.swift</code>: <code>dailyReviewCard</code> / <code>dailyReviewCardActive</code> / <code>dailyReviewCardCompleted</code> サブビューを追加。「レッスンを開始」CTA カード直下に配置</li>
     <li><code>Views/QuizView.swift</code>: <code>QuizResultView</code> に <code>isDailyReview</code> 分岐を追加。trueの場合は完了画面へ</li>
     <li><code>ViewModels/QuizViewModel.swift</code>: <code>isDailyReview: Bool</code> / <code>dailyReviewSource: DailyReviewSource?</code> プロパティを追加</li>
-    <li>TODAY'S NOTE カードは START LESSON より視覚的に控えめにする（フォントサイズ・背景色・パディングで差をつける）</li>
+    <li>今日の1問 カードは 「レッスンを開始」CTA より視覚的に控えめにする（フォントサイズ・背景色・パディングで差をつける）</li>
     <li>比較1行は直近7日間の正答率を基準に3パターンから選択。比較データが存在しない場合は比較行を非表示</li>
   </ul>
 
@@ -212,6 +212,7 @@ enum DailyReview {
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-23</td><td>初版作成（Phase 1 実装内容を反映）</td></tr>
+    <tr><td>1.1</td><td>2026-05-27</td><td>実務UIリデザインを反映。"TODAY'S NOTE" モノスペース英字ラベルを「今日の1問」日本語見出しへ、完了画面表現を「完了しました／また明日、1問。」へ統一。CTA文言も「START LESSON」から「レッスンを開始」へ更新</td></tr>
   </table>
 
   <script>
@@ -221,7 +222,7 @@ enum DailyReview {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-05-23</footer>
+  <footer class="site-footer">最終更新: 2026-05-27</footer>
 </div>
 </body>
 </html>
