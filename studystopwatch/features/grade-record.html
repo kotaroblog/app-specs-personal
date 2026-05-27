@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 成績記録機能仕様</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 成績記録機能（機能仕様）</div>
+
+  <header class="site-header">
+    <h1>成績記録機能</h1>
+    <p>テスト結果（点数・偏差値等）を記録・可視化し、学習時間と成績の両軸で受験勉強を管理する機能</p>
+    <div class="section-meta">
+      <span class="tag">v1.1.0</span>
+      <span class="tag">機能ID: SS-FEAT-GRADE-01</span>
+      <span class="tag">無料（v1.2.0で件数制限予定）</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    StudyStopwatch は学習時間の計測を主軸とするが、受験生にとって最終的なKPIは
+    「テストで何点取れたか」である。成績記録機能を追加することで、
+    「勉強した時間」と「その結果としての点数」を一つのアプリで管理できるようにする。
+  </p>
+  <p>
+    <strong>ユーザー価値</strong>: 学習ログと成績ログの一元管理。「毎日2時間勉強したのに点数が上がらない」
+    という課題の可視化→勉強方法の改善につながる。<br>
+    <strong>ビジネス価値</strong>: アプリの利用シーン拡大（テスト前後の記録）によるリテンション向上。
+    v1.2.0 の Premium 機能への導線（件数制限解除）。
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/grades-tab.html">成績タブ メイン（SS-GRADES-01）</a></li>
+    <li><a href="../screens/grades-tab.html">テスト記録入力フォーム（SS-GRADES-02）</a></li>
+    <li><a href="../screens/grades-tab.html">テスト記録詳細（SS-GRADES-03）</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+
+  <h3>テスト記録 新規作成フロー</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant V as GradesTabView
+  participant VM as GradesViewModel
+  participant Val as Validator
+  participant DB as SwiftData
+
+  U->>V: 「＋」ボタンをタップ
+  V->>V: GradeFormView を push（新規作成モード）
+  U->>V: フォーム入力（日付・種別・教科・点数・満点・任意項目）
+  U->>V: 「保存」ボタンをタップ
+  V->>VM: saveRecord(formData)
+  VM->>Val: validate(formData)
+  alt バリデーション失敗
+    Val-->>VM: エラーメッセージ
+    VM-->>V: バリデーションエラー表示
+    V-->>U: エラー文言をインライン表示（保存しない）
+  else バリデーション通過
+    Val-->>VM: OK
+    VM->>DB: TestRecord を insert
+    DB-->>VM: 保存完了
+    VM-->>V: dismiss（フォームを閉じる）
+    V-->>U: メイン画面に戻る。リストに新しい記録が追加される
+  end
+  </div>
+
+  <h3>テスト記録 編集フロー</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant V as GradeDetailView
+  participant VM as GradesViewModel
+  participant DB as SwiftData
+
+  U->>V: 「編集」ボタンをタップ
+  V->>V: GradeFormView を push（編集モード・既存データを初期値にセット）
+  U->>V: 内容を変更して「保存」
+  V->>VM: updateRecord(id, formData)
+  VM->>DB: 該当 TestRecord を更新
+  DB-->>VM: 保存完了
+  VM-->>V: dismiss
+  V-->>U: 詳細画面に戻る。内容が更新される
+  </div>
+
+  <h3>テスト記録 削除フロー</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant V as GradeDetailView
+  participant VM as GradesViewModel
+  participant DB as SwiftData
+
+  U->>V: 「記録を削除」ボタンをタップ
+  V->>U: 確認アラートを表示
+  U->>V: 「削除」を選択
+  V->>VM: deleteRecord(id)
+  VM->>DB: 該当 TestRecord を delete
+  DB-->>VM: 削除完了
+  VM-->>V: dismiss（詳細画面を閉じる）
+  V-->>U: メイン画面に戻る。リストから削除される
+  </div>
+
+  <h3>グラフ描画フロー</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant V as GradesTabView
+  participant VM as GradesViewModel
+  participant DB as SwiftData
+
+  V->>VM: onAppear / フィルタ変更
+  VM->>DB: @Query でフィルタ条件に合う TestRecord を取得（日付昇順）
+  DB-->>VM: [TestRecord]
+  VM->>VM: 教科ごとにグルーピング。scoreRate(%) を算出
+  VM-->>V: chartData: [SubjectChartData] を更新
+  V->>V: Swift Charts で LineMark を描画
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>同一日・同一教科・同一テスト種別のデータを複数件記録可能（上書きではなく追記）</li>
+    <li>偏差値入力欄はテスト種別が「模試」の場合のみ表示する。他の種別では入力できない</li>
+    <li>点数は整数でも小数でも入力可（Double で保存）。例: 85 / 85.5 両方OK</li>
+    <li>教科との紐付けはリレーション（Subject?）で管理する。科目削除時は記録自体は残し、subjectをnilにする（nullify）</li>
+    <li><strong>v1.1.0時点の課金ルール</strong>: 件数制限なし。全件保存・表示可能</li>
+    <li><strong>v1.2.0以降の課金ルール（Out of Scope）</strong>: 無料=直近10件のみ表示。11件目以降はボカし表示＋Premium誘導バナー。記録自体は保存される</li>
+    <li>グラフのY軸は得点率（%）に統一する。点数・満点が科目によって異なるため、得点率で比較可能にする</li>
+    <li>グラフに表示するデータはフィルタ条件（教科・テスト種別）に連動する</li>
+  </ul>
+
+  <h2>データモデル</h2>
+  <pre><code>@Model final class TestRecord {
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var testTypeRaw: String = TestType.regular.rawValue
+    var subject: Subject? = nil
+    var score: Double = 0.0
+    var maxScore: Double = 100.0
+    var deviation: Double? = nil
+    var rank: Int? = nil
+    var memo: String? = nil
+    var createdAt: Date = Date()
+
+    var scoreRate: Double { maxScore > 0 ? score / maxScore * 100 : 0 }
+    var testType: TestType { TestType(rawValue: testTypeRaw) ?? .other }
+}
+
+enum TestType: String, Codable, CaseIterable {
+    case regular = "regular"  // 定期テスト
+    case mock    = "mock"     // 模試
+    case quiz    = "quiz"     // 小テスト
+    case other   = "other"    // その他
+
+    var displayName: String {
+        switch self {
+        case .regular: return "定期テスト"
+        case .mock:    return "模試"
+        case .quiz:    return "小テスト"
+        case .other:   return "その他"
+        }
+    }
+}</code></pre>
+
+  <div class="callout warn">
+    <strong>マイグレーション注意</strong>: TestRecord は v1.1.0 での新規追加モデル。
+    既存 Subject モデルに <code>testRecords: [TestRecord]</code> のリレーションを追加するため、
+    Subject モデルのマイグレーション対応が必要。デフォルト値 <code>= []</code> を設定すること。
+  </div>
+
+  <h2>バリデーション仕様</h2>
+  <table>
+    <tr><th>項目</th><th>ルール</th><th>エラー文言</th></tr>
+    <tr><td>日付</td><td>必須。未来日は許可（先付けで入力可）</td><td>-</td></tr>
+    <tr><td>テスト種別</td><td>必須。TestType のいずれか</td><td>-</td></tr>
+    <tr><td>教科</td><td>必須。Subject が選択されている</td><td>「教科を選択してください」</td></tr>
+    <tr><td>点数</td><td>必須。0以上・満点以下の数値</td><td>「点数は0以上・満点以下の数値を入力してください」</td></tr>
+    <tr><td>満点</td><td>必須。1以上の数値</td><td>「満点は1以上の数値を入力してください」</td></tr>
+    <tr><td>偏差値</td><td>任意。入力する場合は1.0以上100.0以下</td><td>「偏差値は1〜100の数値を入力してください」</td></tr>
+    <tr><td>順位</td><td>任意。入力する場合は1以上の整数</td><td>「順位は1以上の整数を入力してください」</td></tr>
+    <tr><td>メモ</td><td>任意。500文字以内</td><td>「メモは500文字以内で入力してください」</td></tr>
+  </table>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>SwiftData（TestRecord）</td><td>テスト記録の永続化・クエリ</td><td>v1.1.0 新規モデル</td></tr>
+    <tr><td>SwiftData（Subject）</td><td>科目リレーション（nullify）</td><td>既存モデルに testRecords プロパティを追加</td></tr>
+    <tr><td>Swift Charts</td><td>教科別得点率の折れ線グラフ描画</td><td>iOS 16+ 標準フレームワーク</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>SwiftData 保存失敗</td><td>Logger でエラーをログ出力。ユーザーには「保存に失敗しました。もう一度お試しください。」のアラートを表示</td></tr>
+    <tr><td>SwiftData 削除失敗</td><td>Logger でエラーをログ出力。ユーザーには「削除に失敗しました。」のアラートを表示</td></tr>
+    <tr><td>グラフ描画時データ0件</td><td>空状態Viewを表示。エラーではなく正常ケースとして扱う</td></tr>
+    <tr><td>科目0件でフォームを開いた場合</td><td>教科選択欄に「科目を先に追加してください」の注記を表示。保存ボタンを非活性にする</td></tr>
+    <tr><td>点数・満点のパース失敗（非数値入力）</td><td>バリデーションでインライン表示。保存は実行しない</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>GradesViewModel</code> は <code>@Observable @MainActor final class</code> で実装</li>
+    <li>SwiftData クエリ: <code>@Query(sort: \TestRecord.date, order: .reverse) var records: [TestRecord]</code></li>
+    <li>グラフ用データ変換: <code>Dictionary(grouping: filteredRecords, by: \.subject?.name ?? "不明")</code> でグルーピング</li>
+    <li>フォームの点数・満点入力は <code>@State private var scoreText: String = ""</code> で文字列管理し、<code>Double(scoreText)</code> でパース</li>
+    <li>テスト種別変更時に偏差値フィールドを <code>.transition(.opacity)</code> で表示/非表示アニメーション</li>
+    <li>TabView のタブ追加: <code>enum AppTab { case timer, history, grades, settings }</code></li>
+    <li>v1.2.0 課金ロジックのための件数チェックは v1.1.0 では実装しない（コードに TODO コメントを残す）</li>
+    <li>Subject 削除時の <code>deleteRule: .nullify</code> により TestRecord.subject が nil になるため、グラフ描画時に nil subject のデータは「科目不明」として扱う</li>
+  </ul>
+
+  <h2>Out of Scope（v1.3.0 以降）</h2>
+  <ul>
+    <li>学習時間×成績の相関分析（StudySession と TestRecord の日付照合）</li>
+    <li>志望校判定（A〜E判定）</li>
+    <li>CSVエクスポート（TestRecord 全件をCSV出力）</li>
+    <li>目標スコア逆算・ギャップ表示（目標点数に対して現状何点足りないか）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-28</td><td>初版作成 (v1.1.0)</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-28</footer>
+</div>
+</body>
+</html>

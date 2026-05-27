@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - フォーカス科目モード</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / フォーカス科目モード</div>
+
+  <header class="site-header">
+    <h1>フォーカス科目モード</h1>
+    <p>ホーム画面で「今日の1科目」をピン留めし、選ぶ疲れをなくして1科目に集中させる画面</p>
+    <div style="margin-top:8px;">
+      <span class="tag">v1.1.0</span>
+      <span class="tag">画面ID: SS-FOCUS-01</span>
+      <span class="tag">無料</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    「今日どの科目を勉強するか毎回選ぶのが面倒・迷う」という受験生の課題を解決する。
+    ホーム画面で1科目をピン留めすることで、他の科目を折りたたみ、ピン留めした科目のタイマーを
+    大画面で即時起動できる。複数科目を管理しながら、1日の「メイン科目」に集中できる体験を提供する。
+    The One Thing / 1 Big Thing と同コンセプトだが、StudyStopwatch の既存タイマー機能と
+    シームレスに統合されている点で差別化する。
+  </p>
+
+  <h2>UI 構成</h2>
+
+  <h3>ピン留めなし（通常状態）</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>フォーカスモード説明バナー</td><td>InfoBanner</td><td>初回のみ表示。「1科目をピン留めして集中しよう」のガイド文言。✕ボタンで非表示</td></tr>
+    <tr><td>科目リスト</td><td>List / LazyVStack</td><td>既存の科目カード一覧。各カードにピン留めボタン（📌アイコン）が追加される</td></tr>
+    <tr><td>ピン留めボタン</td><td>Button（各科目カード右端）</td><td>タップで当該科目をフォーカス科目に設定</td></tr>
+  </table>
+
+  <h3>ピン留めあり（フォーカス状態）</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>フォーカス科目ヒーローカード</td><td>VStack（大カード）</td><td>科目名・アイコン・カラーを大きく表示。本日の累計学習時間を表示</td></tr>
+    <tr><td>計測ボタン</td><td>Button（大型・主要CTA）</td><td>タイマー未起動時は「計測開始」、起動中は「計測中（停止）」。既存タイマー機能を呼び出す</td></tr>
+    <tr><td>今日の目標進捗バー</td><td>ProgressView</td><td>日次目標（分）に対する当日学習時間の割合。目標未設定時は非表示</td></tr>
+    <tr><td>ピン留め解除ボタン</td><td>Button（テキストスタイル）</td><td>「ピン留めを解除」。タップで通常状態に戻る</td></tr>
+    <tr><td>科目変更ボタン</td><td>Button（テキストスタイル）</td><td>「科目を変更」。タップで科目選択シートを表示</td></tr>
+    <tr><td>折りたたまれた他科目</td><td>DisclosureGroup / 折りたたみセクション</td><td>「他の科目を表示 (n)」として折りたたみ表示。タップで展開し全科目を表示（ピン留めボタン付き）</td></tr>
+  </table>
+
+  <h3>科目選択シート（フォーカス科目変更時）</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>シートタイトル</td><td>NavigationTitle</td><td>「フォーカス科目を選択」</td></tr>
+    <tr><td>科目リスト</td><td>List</td><td>全科目を一覧表示。現在のフォーカス科目にはチェックマーク</td></tr>
+    <tr><td>キャンセルボタン</td><td>Button</td><td>シートを閉じる</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>フォーカスモードOFF（設定で無効化）</td><td>通常のホーム画面。ピン留めボタンは非表示。フォーカスモード機能自体が無効</td></tr>
+    <tr><td>フォーカスモードON・ピン留めなし</td><td>全科目カードにピン留めボタンを表示。初回はガイドバナーを表示</td></tr>
+    <tr><td>フォーカスモードON・ピン留めあり・タイマー未起動</td><td>ヒーローカード＋「計測開始」ボタン＋折りたたまれた他科目</td></tr>
+    <tr><td>フォーカスモードON・ピン留めあり・タイマー起動中（ピン留め科目）</td><td>ヒーローカードにタイマー経過時間をリアルタイム表示。ボタンは「停止」表示</td></tr>
+    <tr><td>フォーカスモードON・ピン留めあり・タイマー起動中（別科目）</td><td>ヒーローカードに「別の科目で計測中」の注記を表示。「切り替えて計測」ボタンを表示</td></tr>
+    <tr><td>科目0件</td><td>「科目を追加してください」の空状態View。フォーカスモードは非表示</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先 / 動作</th></tr>
+    <tr><td>ピン留めボタンをタップ</td><td>フォーカス科目を設定。同画面内でヒーローカード表示に切り替わる（アニメーション付き）</td></tr>
+    <tr><td>「計測開始」ボタンをタップ</td><td>ピン留め科目のタイマーを起動（既存タイマー機能と同一処理）。ボタン表示が「計測中（停止）」に変わる</td></tr>
+    <tr><td>「停止」ボタンをタップ</td><td>タイマーを停止しセッション保存（既存フロー）</td></tr>
+    <tr><td>「ピン留めを解除」をタップ</td><td>フォーカス科目をクリア。通常のホーム表示に戻る（アニメーション付き）</td></tr>
+    <tr><td>「科目を変更」をタップ</td><td>科目選択シート（.sheet）を表示</td></tr>
+    <tr><td>「他の科目を表示」をタップ</td><td>折りたたみを展開し全科目を表示</td></tr>
+    <tr><td>折りたたみ内の科目カードをタップ</td><td>通常のタイマー画面遷移（既存フロー）</td></tr>
+    <tr><td>設定 → フォーカスモードOFF</td><td>ピン留め状態は保持したまま機能を無効化。再ONで即時復元</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// Subject（既存）— ピン留め対象
+@Model final class Subject {
+    var id: UUID = UUID()
+    var name: String = ""
+    var colorHex: String = "#007AFF"
+    var iconName: String = "book"
+    // ...
+}
+
+// UserSettings（既存）— フォーカス科目IDと機能ON/OFFを保持
+@Model final class UserSettings {
+    // v1.1.0 追加
+    var focusSubjectID: UUID? = nil          // ピン留めされた科目のID
+    var focusSubjectModeEnabled: Bool = true  // フォーカスモードのON/OFF
+}</code></pre>
+
+  <div class="callout warn">
+    UserSettings への新規プロパティ追加に伴い、SwiftData マイグレーション対応が必要。
+    <code>focusSubjectID</code>・<code>focusSubjectModeEnabled</code> にはデフォルト値を設定済み。
+  </div>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>ピン留め科目IDは <code>UserSettings.focusSubjectID</code> に UUID? として保持。nil = ピン留めなし</li>
+    <li>ヒーローカードから計測開始は <code>HomeViewModel.startTimer(subject:)</code> の既存メソッドを呼び出す（新規ロジック不要）</li>
+    <li>ピン留め科目が削除された場合は自動的に <code>focusSubjectID = nil</code> にリセット（Subject 削除フックで処理）</li>
+    <li>折りたたみは <code>@State private var isOtherSubjectsExpanded: Bool = false</code> でローカル管理</li>
+    <li>ガイドバナー非表示フラグは <code>UserDefaults</code>（AppGroup不要）に保存</li>
+    <li>フォーカス状態のアニメーションは <code>.animation(.spring(), value: focusSubjectID)</code> で実装</li>
+    <li>設定画面の「フォーカスモード」トグルは <code>UserSettings.focusSubjectModeEnabled</code> にバインド</li>
+    <li>「切り替えて計測」タップ時は既存タイマー停止→ピン留め科目で再起動の2ステップを自動処理</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="../screens/home.html">ホーム（タイマー）— SS-HOME-01</a></li>
+    <li><a href="../screens/settings.html">設定 — SS-SET-01</a></li>
+    <li><a href="../features/focus-subject-mode.html">機能仕様：フォーカス科目モード</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-28</td><td>初版作成 (v1.1.0)</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-28</footer>
+</div>
+</body>
+</html>

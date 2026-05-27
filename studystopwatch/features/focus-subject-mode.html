@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - フォーカス科目モード機能仕様</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / フォーカス科目モード（機能仕様）</div>
+
+  <header class="site-header">
+    <h1>フォーカス科目モード</h1>
+    <p>ホーム画面に「今日の1科目」をピン留めし、選ぶ疲れをなくしてタイマー起動までを1タップで完結させる機能</p>
+    <div class="section-meta">
+      <span class="tag">v1.1.0</span>
+      <span class="tag">機能ID: SS-FEAT-FOCUS-01</span>
+      <span class="tag">無料</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    複数の科目を登録している受験生は「今日どれを勉強するか」を毎回選ぶことに認知コストを使ってしまう。
+    フォーカス科目モードは1科目をピン留めしておくことで、アプリを開いた瞬間に「今日やること」が
+    大画面で表示され、即タイマー起動できる体験を提供する。
+  </p>
+  <p>
+    <strong>ユーザー価値</strong>: 起動→計測開始の動線を「科目選択なし」で完結させ、習慣化の障壁を下げる。<br>
+    <strong>ビジネス価値</strong>: デイリーアクティブ率の向上。「毎日開くアプリ」として定着させる。<br>
+    <strong>無料提供の理由</strong>: 課金の動機付けよりも DAU 向上・習慣化のほうがLTV への貢献が大きいと判断。
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/focus-subject-mode.html">フォーカス科目モード（SS-FOCUS-01）</a></li>
+    <li><a href="../screens/home.html">ホーム（タイマー）— SS-HOME-01</a></li>
+    <li><a href="../screens/settings.html">設定 — SS-SET-01</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+
+  <h3>ピン留め設定フロー</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant V as HomeView
+  participant VM as HomeViewModel
+  participant DB as SwiftData
+
+  U->>V: ピン留めボタンをタップ（科目Aを選択）
+  V->>VM: setFocusSubject(subjectID: A.id)
+  VM->>DB: UserSettings.focusSubjectID = A.id を保存
+  DB-->>VM: 保存完了
+  VM-->>V: focusSubjectID が更新され状態変化
+  V-->>U: ヒーローカード表示に切り替わる（アニメーション）
+  </div>
+
+  <h3>フォーカス科目からタイマー起動フロー</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant V as HomeView（フォーカス状態）
+  participant VM as HomeViewModel
+  participant TA as TimerActor
+  participant LA as LiveActivity
+
+  U->>V: 「計測開始」ボタンをタップ
+  V->>VM: startTimer(subject: focusSubject)
+  VM->>TA: タイマー開始（既存 startTimer フロー）
+  TA-->>VM: タイマー開始完了
+  VM->>LA: Live Activity 開始（既存フロー）
+  LA-->>VM: Activity ID 取得
+  VM-->>V: isTimerRunning = true
+  V-->>U: ボタンが「停止」表示に切り替わる。経過時間のリアルタイム更新開始
+  </div>
+
+  <h3>ピン留め科目削除時の自動リセットフロー</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant V as SubjectEditView
+  participant VM as SubjectEditViewModel
+  participant DB as SwiftData
+
+  U->>V: 科目Aを削除
+  V->>VM: deleteSubject(A)
+  VM->>DB: Subject A を削除
+  VM->>DB: UserSettings.focusSubjectID == A.id ならば nil にリセット
+  DB-->>VM: 保存完了
+  VM-->>V: 科目一覧更新
+  V-->>U: ホーム画面は自動的にピン留めなし状態に切り替わる
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>ピン留めできる科目は常に1科目のみ。別の科目をピン留めすると自動的に前のピン留めが解除される</li>
+    <li>フォーカスモードは設定画面から OFF にできる。OFF 時はピン留め状態を保持（ON に戻したとき復元）</li>
+    <li>ピン留め科目が削除された場合、フォーカスモードは自動的にピン留めなし状態になる（フォーカスモード自体は維持）</li>
+    <li>タイマーが別の科目で起動中にフォーカス科目の「計測開始」をタップした場合、既存タイマーを停止してから再起動する（ユーザーに確認アラートは不要。1タップで切り替え）</li>
+    <li>折りたたまれた他科目からのタイマー起動も可能（フォーカスモードはあくまでホームの「デフォルト表示」であり、他科目の利用を制限しない）</li>
+    <li>科目数が1のみの場合はピン留めボタンを非表示にする（1科目なら常にそれが「フォーカス科目」と同義であるため）</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>SwiftData（UserSettings）</td><td>focusSubjectID・focusSubjectModeEnabled の永続化</td><td>新規プロパティ2件追加。デフォルト値設定済み</td></tr>
+    <tr><td>既存タイマー機能（TimerActor）</td><td>フォーカス科目でのタイマー起動・停止</td><td>新規ロジック不要。既存 startTimer / stopTimer を呼び出すのみ</td></tr>
+    <tr><td>既存 Live Activity（ActivityKit）</td><td>フォーカス科目でタイマー起動時のロック画面表示</td><td>既存フローをそのまま利用</td></tr>
+    <tr><td>UserDefaults（AppGroup不要）</td><td>ガイドバナー非表示フラグ</td><td>キー: <code>focusModeGuideBannerDismissed</code></td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>UserSettings の保存失敗</td><td>Logger でエラーをログ出力。ピン留め状態はメモリ上で保持し、次回起動時に再試行</td></tr>
+    <tr><td>focusSubjectID に対応する Subject が存在しない（削除済み等）</td><td>自動的に focusSubjectID = nil にリセット。ユーザーへの通知なし（自然な動作として扱う）</td></tr>
+    <tr><td>タイマー切り替え中のエラー</td><td>既存タイマー機能のエラーハンドリングに委譲</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>HomeViewModel</code> に <code>@Published var focusSubjectID: UUID?</code> を追加。UserSettings からロード</li>
+    <li>ピン留めボタンのアクション: <code>vm.setFocusSubject(id: subject.id)</code>（トグル動作：すでにピン留め中なら解除）</li>
+    <li><code>UserSettings</code> への <code>focusSubjectID</code>・<code>focusSubjectModeEnabled</code> 追加は SwiftData マイグレーション対応が必要。デフォルト値を設定すること</li>
+    <li><code>HomeView</code> は <code>focusSubjectID != nil && focusSubjectModeEnabled</code> の条件分岐でフォーカスView / 通常Viewを切り替える</li>
+    <li>アニメーション: <code>.animation(.spring(response: 0.4, dampingFraction: 0.8), value: focusSubjectID)</code></li>
+    <li>ガイドバナーは <code>@AppStorage("focusModeGuideBannerDismissed") var bannerDismissed = false</code> で管理</li>
+    <li>科目数チェック: <code>subjects.count &lt;= 1</code> の時はピン留めUI非表示</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-28</td><td>初版作成 (v1.1.0)</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-05-28</footer>
+</div>
+</body>
+</html>

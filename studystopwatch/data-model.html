@@ -21,6 +21,7 @@
   <div class="mermaid">
 erDiagram
   Subject ||--o{ StudySession : has
+  Subject ||--o{ TestRecord : "recorded for"
   StudySession ||--o| StudyTask : "linked via linkedSessionID"
   UserSettings {
     Int dailyGoalMinutes
@@ -29,6 +30,8 @@ erDiagram
     String goalType
     String schoolName
     Date examDate
+    UUID focusSubjectID
+    Bool focusSubjectModeEnabled
   }
   Subject {
     UUID id
@@ -55,6 +58,17 @@ erDiagram
     UUID linkedSessionID
     Date completedAt
     Int sortOrder
+    Date createdAt
+  }
+  TestRecord {
+    UUID id
+    Date date
+    String testTypeRaw
+    Double score
+    Double maxScore
+    Double deviation
+    Int rank
+    String memo
     Date createdAt
   }
   </div>
@@ -117,6 +131,60 @@ enum TaskPeriod: String {
     case month = "month"
 }</code></pre>
 
+  <h2>TestRecord（v1.1.0 新規）</h2>
+  <pre><code>@Model final class TestRecord {
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var testTypeRaw: String = TestType.regular.rawValue  // TestType.rawValue を保存
+    var subject: Subject? = nil                           // nullify リレーション
+    var score: Double = 0.0
+    var maxScore: Double = 100.0
+    var deviation: Double? = nil   // 模試のみ使用
+    var rank: Int? = nil           // 任意
+    var memo: String? = nil        // 任意
+    var createdAt: Date = Date()
+
+    // Computed properties
+    var scoreRate: Double { maxScore > 0 ? score / maxScore * 100 : 0 }
+    var testType: TestType { TestType(rawValue: testTypeRaw) ?? .other }
+}
+
+enum TestType: String, Codable, CaseIterable {
+    case regular = "regular"  // 定期テスト
+    case mock    = "mock"     // 模試
+    case quiz    = "quiz"     // 小テスト
+    case other   = "other"    // その他
+
+    var displayName: String {
+        switch self {
+        case .regular: return "定期テスト"
+        case .mock:    return "模試"
+        case .quiz:    return "小テスト"
+        case .other:   return "その他"
+        }
+    }
+}</code></pre>
+
+  <h2>UserSettings（v1.1.0 追加プロパティ）</h2>
+  <pre><code>// v1.1.0 で以下2プロパティを追加（既存 UserSettings @Model に追記）
+@Model final class UserSettings {
+    // ... 既存プロパティ ...
+
+    // v1.1.0 追加
+    var focusSubjectID: UUID? = nil          // フォーカス科目のID（nil = ピン留めなし）
+    var focusSubjectModeEnabled: Bool = true  // フォーカスモードのON/OFF
+}</code></pre>
+
+  <h2>Subject（v1.1.0 追加リレーション）</h2>
+  <pre><code>// Subject @Model に TestRecord のリレーションを追加
+@Model final class Subject {
+    // ... 既存プロパティ ...
+
+    // v1.1.0 追加
+    @Relationship(deleteRule: .nullify, inverse: \TestRecord.subject)
+    var testRecords: [TestRecord] = []
+}</code></pre>
+
   <h2>StudyActivityAttributes（Live Activity）</h2>
   <pre><code>struct StudyActivityAttributes: ActivityAttributes {
     var subjectName: String
@@ -151,6 +219,7 @@ enum TaskPeriod: String {
   <ul>
     <li><code>GoalType</code>: regularExam / highSchoolEntrance / universityEntrance</li>
     <li><code>TaskPeriod</code>: day / week / month（StudyTask の期間種別）</li>
+    <li><code>TestType</code>: regular / mock / quiz / other（TestRecord のテスト種別）<strong>v1.1.0 新規</strong></li>
     <li><code>ShareCardType</code>: daily / summary / heatmap / graph</li>
     <li><code>ShareCardTheme</code>: 複数テーマ（無料/プレミアム）</li>
     <li><code>ShareSummaryPeriod</code>: week / month</li>
@@ -169,6 +238,7 @@ enum TaskPeriod: String {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-18</td><td>StudyTask モデル・TaskPeriod enum を追加。ER 図を更新</td></tr>
+    <tr><td>1.2</td><td>2026-05-28</td><td>v1.1.0対応: TestRecord モデル・TestType enum を追加。UserSettings に focusSubjectID・focusSubjectModeEnabled を追加。Subject に testRecords リレーションを追加。ER 図を更新</td></tr>
   </table>
 
   <script>
@@ -178,7 +248,7 @@ enum TaskPeriod: String {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-05-18</footer>
+  <footer class="site-footer">最終更新: 2026-05-28</footer>
 </div>
 </body>
 </html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 成績タブ</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 成績タブ</div>
+
+  <header class="site-header">
+    <h1>成績タブ</h1>
+    <p>テスト結果を記録・可視化する新規タブ。既存3タブ構成に第4タブとして追加（v1.1.0）</p>
+    <div style="margin-top:8px;">
+      <span class="tag">v1.1.0</span>
+      <span class="tag">画面ID: SS-GRADES-01</span>
+      <span class="tag">無料（v1.2.0で件数制限予定）</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    学習時間の記録だけでなくテストの点数・偏差値も一元管理することで、
+    「勉強した結果が成績に反映されているか」を可視化する。
+    受験生にとって最大のKPIである「点数の推移」をグラフで見せることで、
+    StudyStopwatch を学習管理の中核アプリとして定着させる。
+  </p>
+  <p>
+    <strong>タブ構成変更</strong>: v1.0.x まで「タイマー / 履歴 / 設定」の3タブ構成を、
+    v1.1.0 から「タイマー / 履歴 / 成績 / 設定」の4タブ構成に変更する。
+  </p>
+
+  <h2>画面構成（成績タブ内の画面ツリー）</h2>
+  <ul>
+    <li><strong>SS-GRADES-01</strong>: 成績タブ メイン画面（グラフ＋履歴一覧）</li>
+    <li><strong>SS-GRADES-02</strong>: テスト記録入力フォーム（新規作成・編集共用）</li>
+    <li><strong>SS-GRADES-03</strong>: テスト記録詳細画面（編集・削除）</li>
+  </ul>
+
+  <hr>
+
+  <h2>SS-GRADES-01：成績タブ メイン画面</h2>
+
+  <h3>UI 構成</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>教科フィルタピル</td><td>ScrollView（横スクロール）+ ToggleButton</td><td>「すべて」＋登録済み科目名のフィルタ。複数選択可。選択外は薄く表示</td></tr>
+    <tr><td>テスト種別フィルタ</td><td>Picker（セグメントコントロール）</td><td>すべて / 定期テスト / 模試 / 小テスト / その他</td></tr>
+    <tr><td>教科別推移グラフ</td><td>Charts.LineChart</td><td>X軸=日付、Y軸=得点率（%）。フィルタで絞られた科目・種別のデータのみ表示。凡例付き</td></tr>
+    <tr><td>グラフ空状態</td><td>EmptyStateView</td><td>データ0件時は「テスト結果を記録しましょう」＋追加ボタン</td></tr>
+    <tr><td>テスト履歴一覧</td><td>List</td><td>新着順ソート。各行に日付・テスト種別・教科・得点率（%）・スコア（x/y点）を表示</td></tr>
+    <tr><td>追加ボタン（＋）</td><td>NavigationBar trailing Button</td><td>タップで入力フォーム画面（SS-GRADES-02）へ遷移</td></tr>
+    <tr><td>集計サマリーカード</td><td>HStack（カード型）</td><td>フィルタ中の「平均得点率」「最高得点率」「記録件数」を3列表示</td></tr>
+  </table>
+
+  <hr>
+
+  <h2>SS-GRADES-02：テスト記録入力フォーム</h2>
+
+  <h3>UI 構成</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>日付</td><td>DatePicker（コンパクト）</td><td>必須。デフォルト今日</td></tr>
+    <tr><td>テスト種別</td><td>Picker（インライン）</td><td>必須。定期テスト / 模試 / 小テスト / その他</td></tr>
+    <tr><td>教科</td><td>Picker（シート選択）</td><td>必須。Subject 一覧から選択。科目未登録の場合は「科目を先に追加してください」の注記</td></tr>
+    <tr><td>点数</td><td>TextField（数値キーボード）</td><td>必須。Double。例: 85.5</td></tr>
+    <tr><td>満点</td><td>TextField（数値キーボード）</td><td>必須。Double。例: 100</td></tr>
+    <tr><td>得点率プレビュー</td><td>Text（自動計算）</td><td>点数÷満点×100 をリアルタイム表示。例: 85.5%</td></tr>
+    <tr><td>偏差値</td><td>TextField（数値キーボード）</td><td>任意。テスト種別=模試の時のみ表示。Double</td></tr>
+    <tr><td>順位（学年内）</td><td>TextField（数値キーボード）</td><td>任意。常時表示。Int</td></tr>
+    <tr><td>メモ</td><td>TextEditor</td><td>任意。自由記述。最大500文字</td></tr>
+    <tr><td>保存ボタン</td><td>NavigationBar trailing Button「保存」</td><td>バリデーション通過後に保存してメイン画面へ戻る</td></tr>
+    <tr><td>キャンセルボタン</td><td>NavigationBar leading Button「キャンセル」</td><td>入力破棄して戻る</td></tr>
+  </table>
+
+  <h3>バリデーションルール</h3>
+  <table>
+    <tr><th>項目</th><th>ルール</th><th>エラー文言</th></tr>
+    <tr><td>点数</td><td>0以上・満点以下・空欄不可</td><td>「点数は0以上・満点以下の数値を入力してください」</td></tr>
+    <tr><td>満点</td><td>1以上・空欄不可</td><td>「満点は1以上の数値を入力してください」</td></tr>
+    <tr><td>教科</td><td>未選択不可</td><td>「教科を選択してください」</td></tr>
+    <tr><td>偏差値</td><td>入力する場合は1以上100以下</td><td>「偏差値は1〜100の数値を入力してください」</td></tr>
+    <tr><td>順位</td><td>入力する場合は1以上</td><td>「順位は1以上の整数を入力してください」</td></tr>
+  </table>
+
+  <hr>
+
+  <h2>SS-GRADES-03：テスト記録詳細画面</h2>
+
+  <h3>UI 構成</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>得点率大表示</td><td>Text（大フォント・科目カラー）</td><td>xx.x% を大きく表示</td></tr>
+    <tr><td>基本情報</td><td>Form（読み取り専用）</td><td>日付・テスト種別・教科・点数/満点・偏差値（模試のみ）・順位・メモ</td></tr>
+    <tr><td>編集ボタン</td><td>NavigationBar trailing Button「編集」</td><td>SS-GRADES-02（編集モード）へ遷移</td></tr>
+    <tr><td>削除ボタン</td><td>Button（破壊的・画面下部）</td><td>「記録を削除」。タップで確認アラートを表示</td></tr>
+  </table>
+
+  <h3>削除確認アラート</h3>
+  <ul>
+    <li>タイトル: 「記録を削除しますか？」</li>
+    <li>メッセージ: 「この操作は取り消せません。」</li>
+    <li>ボタン: 「削除」（破壊的）/ 「キャンセル」</li>
+  </ul>
+
+  <h2>状態（メイン画面）</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>初期表示（データ0件）</td><td>グラフ空状態View。「＋」ボタンで入力フォームへ誘導</td></tr>
+    <tr><td>データあり・フィルタ未設定</td><td>全件の推移グラフ＋全件リスト</td></tr>
+    <tr><td>データあり・フィルタ適用中</td><td>フィルタ条件に合致するデータのみグラフ＋リスト表示</td></tr>
+    <tr><td>フィルタ適用後0件</td><td>「該当するテスト記録がありません」の空状態View</td></tr>
+    <tr><td>保存中（非同期）</td><td>保存ボタンに ProgressIndicator を表示し、多重タップを防止</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「＋」ボタンをタップ</td><td>SS-GRADES-02（新規作成モード、.navigationDestination）</td></tr>
+    <tr><td>履歴リストの行をタップ</td><td>SS-GRADES-03（詳細画面）</td></tr>
+    <tr><td>詳細画面「編集」ボタンをタップ</td><td>SS-GRADES-02（編集モード）</td></tr>
+    <tr><td>詳細画面「削除」確認ボタンをタップ</td><td>削除後 SS-GRADES-01 へ戻る</td></tr>
+    <tr><td>入力フォーム「保存」ボタンをタップ</td><td>保存後 SS-GRADES-01 へ戻る</td></tr>
+    <tr><td>入力フォーム「キャンセル」ボタンをタップ</td><td>SS-GRADES-01 へ戻る（入力内容は破棄）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// TestRecord（v1.1.0 新規）
+@Model final class TestRecord {
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var testTypeRaw: String = TestType.regular.rawValue  // TestType.rawValue を保存
+    var subject: Subject?                                 // Subject との任意リレーション
+    var score: Double = 0.0
+    var maxScore: Double = 100.0
+    var deviation: Double? = nil   // 模試のみ使用
+    var rank: Int? = nil           // 任意
+    var memo: String? = nil        // 任意
+    var createdAt: Date = Date()
+
+    // Computed property
+    var scoreRate: Double { maxScore > 0 ? score / maxScore * 100 : 0 }
+    var testType: TestType { TestType(rawValue: testTypeRaw) ?? .other }
+}
+
+enum TestType: String, Codable, CaseIterable {
+    case regular = "regular"  // 定期テスト
+    case mock    = "mock"     // 模試
+    case quiz    = "quiz"     // 小テスト
+    case other   = "other"    // その他
+
+    var displayName: String {
+        switch self {
+        case .regular: return "定期テスト"
+        case .mock:    return "模試"
+        case .quiz:    return "小テスト"
+        case .other:   return "その他"
+        }
+    }
+}
+
+// Subject（既存）— TestRecord.subject のリレーション先
+@Model final class Subject {
+    // ...
+    @Relationship(deleteRule: .nullify, inverse: \TestRecord.subject)
+    var testRecords: [TestRecord] = []
+}</code></pre>
+
+  <div class="callout info">
+    <strong>課金線引き（v1.1.0）</strong>: 全件保存可（課金壁なし）。
+    v1.2.0 で「無料=直近10件、Premium=無制限」の制限を有効化予定。
+    v1.1.0 時点では件数チェックロジックを実装しないこと。
+  </div>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>グラフは Swift Charts（<code>import Charts</code>）を使用。iOS 16+ 標準</li>
+    <li>折れ線グラフ: <code>LineMark</code>。複数教科のデータを <code>.foregroundStyle(by: .value("科目", subjectName))</code> で色分け</li>
+    <li>教科フィルタの複数選択状態は <code>@State private var selectedSubjectIDs: Set&lt;UUID&gt;</code> で管理</li>
+    <li>テスト種別フィルタは <code>@State private var selectedTestType: TestType?</code>（nil=すべて）</li>
+    <li><code>TestRecord</code> の SwiftData クエリは <code>@Query(sort: \TestRecord.date, order: .reverse)</code> を使用</li>
+    <li>入力フォームの点数・満点は <code>String</code> バインドで受け取り、保存時に <code>Double?</code> にパース</li>
+    <li>タブアイコンは <code>chart.bar.xaxis</code>（SF Symbols）</li>
+    <li>TabView の変更は <code>ContentView</code> の <code>TabView</code> に <code>.grades</code> ケースを追加</li>
+    <li>Subject 削除時に紐づく TestRecord は <code>deleteRule: .nullify</code> で subject を nil にする（記録自体は保持）</li>
+  </ul>
+
+  <h2>Out of Scope（v1.3.0 以降）</h2>
+  <ul>
+    <li>学習時間×成績の相関分析</li>
+    <li>志望校判定（A〜E判定）</li>
+    <li>CSVエクスポート</li>
+    <li>目標スコア逆算・ギャップ表示</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="../features/grade-record.html">機能仕様：成績記録機能</a></li>
+    <li><a href="../screens/settings.html">設定 — SS-SET-01</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-28</td><td>初版作成 (v1.1.0)</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-05-28</footer>
+</div>
+</body>
+</html>
