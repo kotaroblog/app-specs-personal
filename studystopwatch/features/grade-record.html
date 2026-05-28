@@ -37,9 +37,9 @@
 
   <h2>関連画面</h2>
   <ul>
-    <li><a href="../screens/grades-tab.html">成績タブ メイン（SS-GRADES-01）</a></li>
-    <li><a href="../screens/grades-tab.html">テスト記録入力フォーム（SS-GRADES-02）</a></li>
-    <li><a href="../screens/grades-tab.html">テスト記録詳細（SS-GRADES-03）</a></li>
+    <li><a href="../screens/grades-tab.html">成績セグメント メインビュー（SS-GRADES-01）</a></li>
+    <li><a href="../screens/grades-tab.html">テスト記録入力フォーム・sheet（SS-GRADES-02）</a></li>
+    <li><a href="../screens/grades-tab.html">テスト記録詳細・sheet（SS-GRADES-03）</a></li>
   </ul>
 
   <h2>処理フロー</h2>
@@ -48,13 +48,13 @@
   <div class="mermaid">
 sequenceDiagram
   participant U as User
-  participant V as GradesTabView
+  participant V as GradeReportView
   participant VM as GradesViewModel
   participant Val as Validator
   participant DB as SwiftData
 
-  U->>V: 「＋」ボタンをタップ
-  V->>V: GradeFormView を push（新規作成モード）
+  U->>V: 「+ 新しい成績を記録」または「＋」ボタンをタップ
+  V->>V: TestRecordEditView を sheet 表示（新規作成モード）
   U->>V: フォーム入力（日付・種別・教科・点数・満点・任意項目）
   U->>V: 「保存」ボタンをタップ
   V->>VM: saveRecord(formData)
@@ -67,8 +67,8 @@ sequenceDiagram
     Val-->>VM: OK
     VM->>DB: TestRecord を insert
     DB-->>VM: 保存完了
-    VM-->>V: dismiss（フォームを閉じる）
-    V-->>U: メイン画面に戻る。リストに新しい記録が追加される
+    VM-->>V: dismiss（sheet を閉じる）
+    V-->>U: 成績セグメントに戻る。リストに新しい記録が追加される
   end
   </div>
 
@@ -81,13 +81,13 @@ sequenceDiagram
   participant DB as SwiftData
 
   U->>V: 「編集」ボタンをタップ
-  V->>V: GradeFormView を push（編集モード・既存データを初期値にセット）
+  V->>V: TestRecordEditView を sheet 表示（編集モード・既存データを初期値にセット）
   U->>V: 内容を変更して「保存」
   V->>VM: updateRecord(id, formData)
   VM->>DB: 該当 TestRecord を更新
   DB-->>VM: 保存完了
-  VM-->>V: dismiss
-  V-->>U: 詳細画面に戻る。内容が更新される
+  VM-->>V: dismiss（sheet を閉じる）
+  V-->>U: 詳細画面（TestRecordDetailView）に戻る。内容が更新される
   </div>
 
   <h3>テスト記録 削除フロー</h3>
@@ -104,18 +104,18 @@ sequenceDiagram
   V->>VM: deleteRecord(id)
   VM->>DB: 該当 TestRecord を delete
   DB-->>VM: 削除完了
-  VM-->>V: dismiss（詳細画面を閉じる）
-  V-->>U: メイン画面に戻る。リストから削除される
+  VM-->>V: dismiss（詳細画面の sheet を閉じる）
+  V-->>U: 成績セグメントに戻る。リストから削除される
   </div>
 
   <h3>グラフ描画フロー</h3>
   <div class="mermaid">
 sequenceDiagram
-  participant V as GradesTabView
-  participant VM as GradesViewModel
+  participant V as GradeReportView
+  participant VM as ReportViewModel
   participant DB as SwiftData
 
-  V->>VM: onAppear / フィルタ変更
+  V->>VM: onAppear / フィルタ変更 / セグメント切り替え
   VM->>DB: @Query でフィルタ条件に合う TestRecord を取得（日付昇順）
   DB-->>VM: [TestRecord]
   VM->>VM: 教科ごとにグルーピング。scoreRate(%) を算出
@@ -129,6 +129,7 @@ sequenceDiagram
     <li>偏差値入力欄はテスト種別が「模試」の場合のみ表示する。他の種別では入力できない</li>
     <li>点数は整数でも小数でも入力可（Double で保存）。例: 85 / 85.5 両方OK</li>
     <li>教科との紐付けはリレーション（Subject?）で管理する。科目削除時は記録自体は残し、subjectをnilにする（nullify）</li>
+    <li><strong>画面構成変更</strong>: 成績機能は新規タブではなく、レポートタブ内に上部 <code>SegmentedPicker</code>（学習時間 / 成績）を追加して統合する（5タブ構成は維持）</li>
     <li><strong>v1.1.0時点の課金ルール</strong>: 件数制限なし。全件保存・表示可能</li>
     <li><strong>v1.2.0以降の課金ルール（Out of Scope）</strong>: 無料=直近10件のみ表示。11件目以降はボカし表示＋Premium誘導バナー。記録自体は保存される</li>
     <li>グラフのY軸は得点率（%）に統一する。点数・満点が科目によって異なるため、得点率で比較可能にする</li>
@@ -207,12 +208,13 @@ enum TestType: String, Codable, CaseIterable {
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li><code>GradesViewModel</code> は <code>@Observable @MainActor final class</code> で実装</li>
+    <li>成績機能は <code>GradeReportView</code> として実装し、既存 <code>ReportView</code> 内に <code>SegmentedPicker</code> で切り替えて埋め込む</li>
     <li>SwiftData クエリ: <code>@Query(sort: \TestRecord.date, order: .reverse) var records: [TestRecord]</code></li>
     <li>グラフ用データ変換: <code>Dictionary(grouping: filteredRecords, by: \.subject?.name ?? "不明")</code> でグルーピング</li>
     <li>フォームの点数・満点入力は <code>@State private var scoreText: String = ""</code> で文字列管理し、<code>Double(scoreText)</code> でパース</li>
     <li>テスト種別変更時に偏差値フィールドを <code>.transition(.opacity)</code> で表示/非表示アニメーション</li>
-    <li>TabView のタブ追加: <code>enum AppTab { case timer, history, grades, settings }</code></li>
+    <li>SS-GRADES-02 / SS-GRADES-03 はいずれも <code>.sheet</code> で表示する。<code>.navigationDestination</code> は使わない</li>
+    <li>TabView のタブ追加・<code>AppTab</code> enum の変更は不要（5タブ構成を維持）</li>
     <li>v1.2.0 課金ロジックのための件数チェックは v1.1.0 では実装しない（コードに TODO コメントを残す）</li>
     <li>Subject 削除時の <code>deleteRule: .nullify</code> により TestRecord.subject が nil になるため、グラフ描画時に nil subject のデータは「科目不明」として扱う</li>
   </ul>
@@ -229,6 +231,7 @@ enum TestType: String, Codable, CaseIterable {
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-28</td><td>初版作成 (v1.1.0)</td></tr>
+    <tr><td>1.1</td><td>2026-05-29</td><td>タブ新設からレポートタブ内セグメント統合へ方針変更（5タブ構成維持）。処理フロー図・実装メモを実態に合わせて修正</td></tr>
   </table>
 
   <script>
@@ -238,7 +241,7 @@ enum TestType: String, Codable, CaseIterable {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-05-28</footer>
+  <footer class="site-footer">最終更新: 2026-05-29</footer>
 </div>
 </body>
 </html>

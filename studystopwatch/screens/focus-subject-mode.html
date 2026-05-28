@@ -48,15 +48,17 @@
     <tr><td>今日の目標進捗バー</td><td>ProgressView</td><td>日次目標（分）に対する当日学習時間の割合。目標未設定時は非表示</td></tr>
     <tr><td>ピン留め解除ボタン</td><td>Button（テキストスタイル）</td><td>「ピン留めを解除」。タップで通常状態に戻る</td></tr>
     <tr><td>科目変更ボタン</td><td>Button（テキストスタイル）</td><td>「科目を変更」。タップで科目選択シートを表示</td></tr>
-    <tr><td>折りたたまれた他科目</td><td>DisclosureGroup / 折りたたみセクション</td><td>「他の科目を表示 (n)」として折りたたみ表示。タップで展開し全科目を表示（ピン留めボタン付き）</td></tr>
+    <tr><td>折りたたまれた他科目</td><td><code>DisclosureGroup</code></td><td>「他の科目を表示 (n)」として折りたたみ表示。タップで展開し全科目を表示（ピン留めボタン付き）</td></tr>
+    <tr><td>科目変更ボタン（ヒーローカード内）</td><td>Button（テキストスタイル）「変更」</td><td>タップで <code>FocusSubjectPickerSheet</code>（.sheet）を表示してフォーカス科目を変更する</td></tr>
   </table>
 
-  <h3>科目選択シート（フォーカス科目変更時）</h3>
+  <h3>科目選択シート（FocusSubjectPickerSheet）</h3>
+  <p>「変更」ボタンタップで <code>.sheet</code> 表示する。<code>FocusSubjectPickerSheet</code> として実装。</p>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
     <tr><td>シートタイトル</td><td>NavigationTitle</td><td>「フォーカス科目を選択」</td></tr>
     <tr><td>科目リスト</td><td>List</td><td>全科目を一覧表示。現在のフォーカス科目にはチェックマーク</td></tr>
-    <tr><td>キャンセルボタン</td><td>Button</td><td>シートを閉じる</td></tr>
+    <tr><td>キャンセルボタン</td><td>Button</td><td>シートを閉じる（選択変更なし）</td></tr>
   </table>
 
   <h2>状態</h2>
@@ -77,7 +79,7 @@
     <tr><td>「計測開始」ボタンをタップ</td><td>ピン留め科目のタイマーを起動（既存タイマー機能と同一処理）。ボタン表示が「計測中（停止）」に変わる</td></tr>
     <tr><td>「停止」ボタンをタップ</td><td>タイマーを停止しセッション保存（既存フロー）</td></tr>
     <tr><td>「ピン留めを解除」をタップ</td><td>フォーカス科目をクリア。通常のホーム表示に戻る（アニメーション付き）</td></tr>
-    <tr><td>「科目を変更」をタップ</td><td>科目選択シート（.sheet）を表示</td></tr>
+    <tr><td>「変更」ボタンをタップ</td><td><code>FocusSubjectPickerSheet</code>（.sheet）を表示してフォーカス科目を変更</td></tr>
     <tr><td>「他の科目を表示」をタップ</td><td>折りたたみを展開し全科目を表示</td></tr>
     <tr><td>折りたたみ内の科目カードをタップ</td><td>通常のタイマー画面遷移（既存フロー）</td></tr>
     <tr><td>設定 → フォーカスモードOFF</td><td>ピン留め状態は保持したまま機能を無効化。再ONで即時復元</td></tr>
@@ -110,7 +112,8 @@
     <li>ピン留め科目IDは <code>UserSettings.focusSubjectID</code> に UUID? として保持。nil = ピン留めなし</li>
     <li>ヒーローカードから計測開始は <code>HomeViewModel.startTimer(subject:)</code> の既存メソッドを呼び出す（新規ロジック不要）</li>
     <li>ピン留め科目が削除された場合は自動的に <code>focusSubjectID = nil</code> にリセット（Subject 削除フックで処理）</li>
-    <li>折りたたみは <code>@State private var isOtherSubjectsExpanded: Bool = false</code> でローカル管理</li>
+    <li>折りたたみは <code>DisclosureGroup</code> を使用。展開状態は <code>@State private var isOtherSubjectsExpanded: Bool = false</code> でローカル管理</li>
+    <li>フォーカス科目の変更は「変更」ボタンから <code>FocusSubjectPickerSheet</code>（.sheet）を開く方式で実装。<code>@State private var isPickerPresented: Bool = false</code> で制御</li>
     <li>ガイドバナー非表示フラグは <code>UserDefaults</code>（AppGroup不要）に保存</li>
     <li>フォーカス状態のアニメーションは <code>.animation(.spring(), value: focusSubjectID)</code> で実装</li>
     <li>設定画面の「フォーカスモード」トグルは <code>UserSettings.focusSubjectModeEnabled</code> にバインド</li>
@@ -130,9 +133,10 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-28</td><td>初版作成 (v1.1.0)</td></tr>
+    <tr><td>1.1</td><td>2026-05-29</td><td>実装詳細の補足：DisclosureGroupで他科目を折りたたみ表示、「変更」ボタンからFocusSubjectPickerSheet（.sheet）で科目変更する方式を明記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-28</footer>
+  <footer class="site-footer">最終更新: 2026-05-29</footer>
 </div>
 </body>
 </html>

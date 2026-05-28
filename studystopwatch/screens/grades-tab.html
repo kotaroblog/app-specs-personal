@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>StudyStopwatch - 成績タブ</title>
+<title>StudyStopwatch - レポートタブ・成績セグメント</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 成績タブ</div>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / レポートタブ・成績セグメント</div>
 
   <header class="site-header">
-    <h1>成績タブ</h1>
-    <p>テスト結果を記録・可視化する新規タブ。既存3タブ構成に第4タブとして追加（v1.1.0）</p>
+    <h1>レポートタブ・成績セグメント</h1>
+    <p>レポートタブ内に上部セグメントコントロール（学習時間 / 成績）を追加し、成績セグメントでテスト結果を記録・可視化する（v1.1.0）。タブ構成は5タブのまま維持（ホーム / 今日 / カレンダー / レポート / 設定）</p>
     <div style="margin-top:8px;">
       <span class="tag">v1.1.0</span>
       <span class="tag">画面ID: SS-GRADES-01</span>
@@ -29,36 +29,45 @@
     StudyStopwatch を学習管理の中核アプリとして定着させる。
   </p>
   <p>
-    <strong>タブ構成変更</strong>: v1.0.x まで「タイマー / 履歴 / 設定」の3タブ構成を、
-    v1.1.0 から「タイマー / 履歴 / 成績 / 設定」の4タブ構成に変更する。
+    <strong>タブ統合方針</strong>: タブ数をこれ以上増やすUX劣化を避けるため、成績機能は新規タブとして追加せず、
+    既存のレポートタブ内に <code>Picker(.segmented)</code>（学習時間 / 成績）を配置して切り替える方式を採用する。
+    タブ構成は「ホーム / 今日 / カレンダー / レポート / 設定」の5タブのまま維持する。
+  </p>
+  <p>
+    <strong>セグメント切り替え UI</strong>: レポートタブ上部の <code>SegmentedPicker</code> で
+    <code>ReportSection</code> enum（<code>.time</code> / <code>.grade</code>）を切り替える。
+    学習時間セグメント選択時のみ共有ボタン（toolbar trailing）を表示する。
+    ナビゲーションタイトルは常に「レポート」のまま（成績セグメント表示中も変わらない）。
   </p>
 
-  <h2>画面構成（成績タブ内の画面ツリー）</h2>
+  <h2>画面構成（成績セグメント内の画面ツリー）</h2>
   <ul>
-    <li><strong>SS-GRADES-01</strong>: 成績タブ メイン画面（グラフ＋履歴一覧）</li>
-    <li><strong>SS-GRADES-02</strong>: テスト記録入力フォーム（新規作成・編集共用）</li>
-    <li><strong>SS-GRADES-03</strong>: テスト記録詳細画面（編集・削除）</li>
+    <li><strong>SS-GRADES-01</strong>: 成績セグメント メインビュー（<code>GradeReportView</code>、グラフ＋履歴一覧）</li>
+    <li><strong>SS-GRADES-02</strong>: テスト記録入力フォーム（<code>TestRecordEditView</code>、新規作成・編集共用・sheet表示）</li>
+    <li><strong>SS-GRADES-03</strong>: テスト記録詳細画面（<code>TestRecordDetailView</code>、sheet表示。「編集」ボタンから SS-GRADES-02 へ遷移）</li>
   </ul>
 
   <hr>
 
-  <h2>SS-GRADES-01：成績タブ メイン画面</h2>
+  <h2>SS-GRADES-01：成績セグメント メインビュー（GradeReportView）</h2>
 
   <h3>UI 構成</h3>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>プライマリーボタン「+ 新しい成績を記録」</td><td>Button（プライマリー）</td><td>ビュー上部に配置。タップで入力フォーム（SS-GRADES-02）を sheet で表示</td></tr>
     <tr><td>教科フィルタピル</td><td>ScrollView（横スクロール）+ ToggleButton</td><td>「すべて」＋登録済み科目名のフィルタ。複数選択可。選択外は薄く表示</td></tr>
     <tr><td>テスト種別フィルタ</td><td>Picker（セグメントコントロール）</td><td>すべて / 定期テスト / 模試 / 小テスト / その他</td></tr>
     <tr><td>教科別推移グラフ</td><td>Charts.LineChart</td><td>X軸=日付、Y軸=得点率（%）。フィルタで絞られた科目・種別のデータのみ表示。凡例付き</td></tr>
     <tr><td>グラフ空状態</td><td>EmptyStateView</td><td>データ0件時は「テスト結果を記録しましょう」＋追加ボタン</td></tr>
     <tr><td>テスト履歴一覧</td><td>List</td><td>新着順ソート。各行に日付・テスト種別・教科・得点率（%）・スコア（x/y点）を表示</td></tr>
-    <tr><td>追加ボタン（＋）</td><td>NavigationBar trailing Button</td><td>タップで入力フォーム画面（SS-GRADES-02）へ遷移</td></tr>
+    <tr><td>追加ボタン（＋）</td><td>NavigationBar trailing Button</td><td>タップで入力フォーム（SS-GRADES-02）を sheet で表示。プライマリーボタンと同じ動作</td></tr>
     <tr><td>集計サマリーカード</td><td>HStack（カード型）</td><td>フィルタ中の「平均得点率」「最高得点率」「記録件数」を3列表示</td></tr>
   </table>
 
   <hr>
 
-  <h2>SS-GRADES-02：テスト記録入力フォーム</h2>
+  <h2>SS-GRADES-02：テスト記録入力フォーム（TestRecordEditView）</h2>
+  <p>sheet 表示（<code>.sheet</code>）。新規作成・編集の両モードを同一 View で処理する。SS-GRADES-01 の「+ 新しい成績を記録」ボタンまたは SS-GRADES-03 の「編集」ボタンから開かれる。</p>
 
   <h3>UI 構成</h3>
   <table>
@@ -88,7 +97,8 @@
 
   <hr>
 
-  <h2>SS-GRADES-03：テスト記録詳細画面</h2>
+  <h2>SS-GRADES-03：テスト記録詳細画面（TestRecordDetailView）</h2>
+  <p>sheet 表示（<code>.sheet</code>）。履歴リスト行タップで開かれる。「編集」ボタンから SS-GRADES-02（編集モード）へ遷移する。</p>
 
   <h3>UI 構成</h3>
   <table>
@@ -118,13 +128,14 @@
 
   <h2>遷移</h2>
   <table>
-    <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>「＋」ボタンをタップ</td><td>SS-GRADES-02（新規作成モード、.navigationDestination）</td></tr>
-    <tr><td>履歴リストの行をタップ</td><td>SS-GRADES-03（詳細画面）</td></tr>
-    <tr><td>詳細画面「編集」ボタンをタップ</td><td>SS-GRADES-02（編集モード）</td></tr>
-    <tr><td>詳細画面「削除」確認ボタンをタップ</td><td>削除後 SS-GRADES-01 へ戻る</td></tr>
-    <tr><td>入力フォーム「保存」ボタンをタップ</td><td>保存後 SS-GRADES-01 へ戻る</td></tr>
-    <tr><td>入力フォーム「キャンセル」ボタンをタップ</td><td>SS-GRADES-01 へ戻る（入力内容は破棄）</td></tr>
+    <tr><th>操作</th><th>遷移先 / 動作</th></tr>
+    <tr><td>「+ 新しい成績を記録」ボタン または「＋」ボタンをタップ</td><td>SS-GRADES-02 を sheet で表示（新規作成モード）</td></tr>
+    <tr><td>履歴リストの行をタップ</td><td>SS-GRADES-03 を sheet で表示（詳細）</td></tr>
+    <tr><td>詳細画面「編集」ボタンをタップ</td><td>SS-GRADES-02 を sheet で表示（編集モード・既存データを初期値にセット）</td></tr>
+    <tr><td>詳細画面「削除」確認ボタンをタップ</td><td>削除後 sheet を閉じて SS-GRADES-01 へ戻る</td></tr>
+    <tr><td>入力フォーム「保存」ボタンをタップ</td><td>保存後 sheet を閉じて SS-GRADES-01 へ戻る</td></tr>
+    <tr><td>入力フォーム「キャンセル」ボタンをタップ</td><td>sheet を閉じて SS-GRADES-01 へ戻る（入力内容は破棄）</td></tr>
+    <tr><td>レポートタブ上部セグメントを「学習時間」に切り替え</td><td>SS-GRADES-01 が非表示になり既存の学習時間レポートを表示（タブ内の切り替え）</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
@@ -178,13 +189,15 @@ enum TestType: String, Codable, CaseIterable {
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li>グラフは Swift Charts（<code>import Charts</code>）を使用。iOS 16+ 標準</li>
-    <li>折れ線グラフ: <code>LineMark</code>。複数教科のデータを <code>.foregroundStyle(by: .value("科目", subjectName))</code> で色分け</li>
+    <li>折れ線グラフ: <code>LineMark</code>。複数教科のデータを <code>.foregroundStyle(by: .value("科目", subjectName))</code> で色分け。Y軸は得点率（%）</li>
     <li>教科フィルタの複数選択状態は <code>@State private var selectedSubjectIDs: Set&lt;UUID&gt;</code> で管理</li>
     <li>テスト種別フィルタは <code>@State private var selectedTestType: TestType?</code>（nil=すべて）</li>
     <li><code>TestRecord</code> の SwiftData クエリは <code>@Query(sort: \TestRecord.date, order: .reverse)</code> を使用</li>
     <li>入力フォームの点数・満点は <code>String</code> バインドで受け取り、保存時に <code>Double?</code> にパース</li>
-    <li>タブアイコンは <code>chart.bar.xaxis</code>（SF Symbols）</li>
-    <li>TabView の変更は <code>ContentView</code> の <code>TabView</code> に <code>.grades</code> ケースを追加</li>
+    <li>SS-GRADES-02 / SS-GRADES-03 はいずれも <code>.sheet</code> で表示する（<code>.navigationDestination</code> は使わない）</li>
+    <li>ReportView 上部に <code>Picker("", selection: $section) { ... }.pickerStyle(.segmented)</code> を配置し、<code>ReportSection</code> enum（<code>.time</code> / <code>.grade</code>）で切り替える</li>
+    <li>学習時間セグメント時のみ toolbar trailing に共有ボタンを表示（<code>.grade</code> セグメント時は非表示）</li>
+    <li>TabView の変更は不要（タブ構成は5タブのまま。<code>.grades</code> ケースは追加しない）</li>
     <li>Subject 削除時に紐づく TestRecord は <code>deleteRule: .nullify</code> で subject を nil にする（記録自体は保持）</li>
   </ul>
 
@@ -208,9 +221,10 @@ enum TestType: String, Codable, CaseIterable {
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-28</td><td>初版作成 (v1.1.0)</td></tr>
+    <tr><td>1.1</td><td>2026-05-29</td><td>タブ新設からレポートタブ内セグメント統合へ方針変更。タブ構成5タブ維持・SegmentedPicker追加・sheet遷移に変更</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-28</footer>
+  <footer class="site-footer">最終更新: 2026-05-29</footer>
 </div>
 </body>
 </html>
