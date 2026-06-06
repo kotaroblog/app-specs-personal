@@ -14,9 +14,9 @@
 
   <header class="site-header">
     <h1>ルーティン機能</h1>
-    <p>曜日固定のトレーニングテンプレートを「今日のルーティン」として自動提案する機能（v1.1.0）。v1.1.1 でピラミッドセット対応（TemplateSetEntry）を追加。</p>
+    <p>曜日固定のトレーニングテンプレートを「今日のルーティン」として自動提案する機能（v1.1.0）。v1.1.1 でピラミッドセット対応（TemplateSetEntry）を追加。v1.1.2 でルーティン画面から直接新規作成できる CreateTemplateView を追加。</p>
     <div class="section-meta">
-      <span class="tag done">v1.1</span>
+      <span class="tag done">v1.2</span>
       <span class="tag">機能ID: WD-FEAT-ROUTINE</span>
     </div>
   </header>
@@ -285,6 +285,23 @@ enum RoutineSuggestionService {
     <tr><td>WorkoutDiaryApp.swift</td><td>onAppear で TemplateMigrationService.migrateAllIfNeeded() を呼び出すよう追加</td></tr>
   </table>
 
+  <h2>新規追加ファイル一覧（v1.1.2）</h2>
+  <table>
+    <tr><th>ファイル</th><th>役割</th></tr>
+    <tr><td>Views/Workout/CreateTemplateView.swift</td><td>ルーティン新規作成画面。ドラフト State で組み立てて一括 INSERT（詳細: <a href="../screens/create-template.html">画面仕様書</a>）</td></tr>
+    <tr><td>Views/Workout/CreateTemplatePickerSheet.swift</td><td>CreateTemplateView から呼ばれる種目選択シート。ExerciseFormView との二重 sheet 起動に対応</td></tr>
+    <tr><td>Views/Workout/DraftEntrySectionView.swift</td><td>CreateTemplateView 内の種目ごとセット入力サブ View。@Binding で親の draftEntries を操作</td></tr>
+  </table>
+
+  <h2>変更ファイル一覧（v1.1.2）</h2>
+  <table>
+    <tr><th>ファイル</th><th>変更内容</th></tr>
+    <tr><td>Views/Workout/TemplateListView.swift</td><td>toolbar「+」ボタン追加・空状態 CTA「New Routine」追加（@State showCreateSheet: Bool で管理）</td></tr>
+    <tr><td>Views/Workout/AddWorkoutView.swift</td><td>種目リスト末尾「+ 新しい種目を追加」行を追加。ExerciseFormView を sheet 起動し initialCategory でカテゴリをプリセット。onSaved コールバックで 0.3 秒後にセット入力シートを自動表示</td></tr>
+    <tr><td>Views/Exercise/ExerciseFormView.swift</td><td>initialCategory: ExerciseCategory? プロパティ追加（呼び出し元から部位カテゴリを渡せるよう）。onSaved: (Exercise) -&gt; Void クロージャ追加（保存後に新規 Exercise をコールバック）。既存呼び出しと後方互換</td></tr>
+    <tr><td>Services/ReleaseNotesService.swift</td><td>v1.1.2 のリリースノート3項目追加（ルーティン新規作成 / 記録中の種目追加 / セットごとの重量設定）</td></tr>
+  </table>
+
   <h2>将来拡張</h2>
   <ul>
     <li><strong>v1.2.0 予定</strong>: ルーティン当日の朝に「今日は〇〇の日です」ローカルプッシュ通知リマインダー</li>
@@ -297,6 +314,7 @@ enum RoutineSuggestionService {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-23</td><td>初版作成（v1.1.0 実装内容をまとめて記載）</td></tr>
     <tr><td>1.1</td><td>2026-05-24</td><td>v1.1.1: TemplateSetEntry 新規モデル・ピラミッドセット対応を追記。TemplateMigrationService・EditTemplateView 全面リライト・AddTemplateEntrySheet・SaveTemplateView 改善・RoutineSuggestionService 改修を追記</td></tr>
+    <tr><td>1.2</td><td>2026-06-06</td><td>v1.1.2 正式リリース（build 5）: CreateTemplateView（新規作成画面）・CreateTemplatePickerSheet・DraftEntrySectionView 追加を追記。TemplateListView toolbar「+」ボタン追加・AddWorkoutView 種目インライン新規登録・ExerciseFormView の initialCategory/onSaved 追加・ReleaseNotesService 更新を追記</td></tr>
   </table>
 
   <script>
@@ -306,7 +324,7 @@ enum RoutineSuggestionService {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-05-24</footer>
+  <footer class="site-footer">最終更新: 2026-06-06</footer>
 </div>
 </body>
 </html>
