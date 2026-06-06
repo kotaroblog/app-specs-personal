@@ -1,59 +1,153 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>StudyStopwatch - シェア機能</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / シェア機能</div>
-  <header class="site-header"><h1>シェア機能（4種カード）</h1><p>SNS共有 + Instagram Stories対応</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: SS-FEAT-SHARE</span></div></header>
+
+  <header class="site-header">
+    <h1>シェア機能（4種カード）</h1>
+    <p>学習結果を4種類のカードとして画像化し、SNS共有・写真保存ができる機能</p>
+    <div class="section-meta">
+      <span class="tag done">v1.2.0</span>
+      <span class="tag">機能ID: SS-FEAT-SHARE</span>
+    </div>
+  </header>
 
   <h2>概要</h2>
-  <p>学習結果を4種類のカード（Daily/Summary/Heatmap/Graph）として画像化し、SNSに共有する機能。
-  Instagram Stories へは専用URLスキーム（pasteboard経由）で直接シェア可能。</p>
+  <p>
+    学習結果を4種類のカード（Daily / Summary / Heatmap / Graph）として画像化し、SNS に共有する機能。
+    v1.2.0 で Instagram Story 専用レイアウトを廃止（Facebook API 制約による）し、
+    <code>InstagramShareService</code> を削除。代わりに「写真に保存」ボタンを追加し、
+    ユーザーが写真ライブラリに保存してから任意の SNS に貼り付けられるようにした。
+  </p>
+
+  <h2>v1.2.0 の変更概要</h2>
+  <div class="callout warn">
+    <ul>
+      <li>Instagram Story 専用レイアウト廃止（Facebook API の制約により不安定のため削除）</li>
+      <li><code>InstagramShareService</code>（pasteboard 経由の URLスキーム起動）を削除</li>
+      <li><code>PhotoLibrarySaver</code>（写真ライブラリへの保存）に置き換え</li>
+      <li><code>LSApplicationQueriesSchemes</code> の <code>instagram-stories</code> エントリを削除</li>
+    </ul>
+  </div>
 
   <h2>4種カードと用途</h2>
   <table>
     <tr><th>カード</th><th>用途</th></tr>
     <tr><td>Daily</td><td>本日の学習時間まとめ</td></tr>
-    <tr><td>Summary</td><td>週間/月間サマリ</td></tr>
+    <tr><td>Summary</td><td>週間 / 月間サマリ</td></tr>
     <tr><td>Heatmap</td><td>カレンダーヒートマップ</td></tr>
-    <tr><td>Graph</td><td>学習推移グラフ（line/bar）</td></tr>
+    <tr><td>Graph</td><td>学習推移グラフ（line / bar）</td></tr>
   </table>
 
   <h2>テーマ</h2>
   <table>
-    <tr><th>テーマ</th><th>無料/プレミアム</th></tr>
+    <tr><th>テーマ</th><th>無料 / プレミアム</th></tr>
     <tr><td>Duotone / Flat</td><td>無料</td></tr>
-    <tr><td>プレミアムテーマ3種</td><td>プレミアム</td></tr>
+    <tr><td>プレミアムテーマ3種</td><td>PREMIUM <span style="background:#FF8C00;color:#fff;padding:1px 5px;border-radius:3px;font-size:0.8em;">PREMIUM</span> バッジ付きで表示（ロック状態の発見性向上）</td></tr>
   </table>
 
-  <h2>InstagramShareService API</h2>
-  <pre><code>final class InstagramShareService {
-    func shareToStories(image: UIImage)
-    // → pasteboard 経由で instagram-stories://share URLスキーム起動
+  <h2>写真に保存（PhotoLibrarySaver）</h2>
+  <pre><code>final class PhotoLibrarySaver {
+    // PHPhotoLibrary.requestAuthorization(for: .addOnly) で権限確認
+    func save(image: UIImage) async throws
+    // → PHPhotoLibrary.shared().performChanges で写真ライブラリに追加
 }</code></pre>
 
+  <table>
+    <tr><th>状態</th><th>UI 挙動</th></tr>
+    <tr><td>権限未確認</td><td>保存前に権限ダイアログを表示</td></tr>
+    <tr><td>権限拒否済み</td><td>「設定アプリから写真アクセスを許可してください」アラートを表示（設定アプリへの直リンク付き）</td></tr>
+    <tr><td>保存中</td><td>「写真に保存」ボタンを非活性化し、ProgressView をインライン表示</td></tr>
+    <tr><td>保存成功</td><td>「保存しました！」トーストを2秒表示</td></tr>
+    <tr><td>保存失敗</td><td>「保存に失敗しました。もう一度お試しください。」アラートを表示</td></tr>
+  </table>
+
   <h2>処理フロー</h2>
-  <ol>
-    <li>ShareViewModel が選択カード+テーマで View を構築</li>
-    <li>ImageRenderer で UIImage 生成</li>
-    <li>UIActivityViewController（標準シェア）or Instagram Stories（専用）</li>
-  </ol>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant V as ShareView
+  participant VM as ShareViewModel
+  participant IR as ImageRenderer
+  participant PLS as PhotoLibrarySaver
+  participant UA as UIActivityViewController
+
+  U->>V: カード種別・テーマを選択
+  V->>VM: previewCard(type, theme)
+  VM->>IR: ImageRenderer で UIImage を生成
+  IR-->>VM: UIImage
+  VM-->>V: プレビュー更新
+
+  alt 「写真に保存」ボタンをタップ
+    U->>V: 「写真に保存」ボタンをタップ
+    V->>PLS: save(image)
+    PLS->>PLS: PHPhotoLibrary 権限確認
+    alt 権限 OK
+      PLS->>PLS: 写真ライブラリに保存
+      PLS-->>V: 成功
+      V-->>U: 「保存しました！」トースト表示
+    else 権限拒否
+      PLS-->>V: エラー（権限なし）
+      V-->>U: 設定アプリへの誘導アラート
+    end
+  else 「共有」ボタンをタップ
+    U->>V: 「共有」ボタンをタップ
+    V->>UA: UIActivityViewController を表示（UIImage を渡す）
+    U->>UA: SNS / メール等を選択して共有
+  end
+  </div>
 
   <h2>外部連携</h2>
   <table>
-    <tr><th>連携先</th><th>用途</th></tr>
-    <tr><td>UIActivityViewController</td><td>標準シェアシート</td></tr>
-    <tr><td>UIPasteboard</td><td>Instagram Stories 経由</td></tr>
-    <tr><td>LSApplicationQueriesSchemes</td><td>instagram-stories 許可</td></tr>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>UIActivityViewController</td><td>標準シェアシート（各種 SNS・メール等）</td><td>v1.0から継続</td></tr>
+    <tr><td>PHPhotoLibrary</td><td>写真ライブラリへの画像保存</td><td>v1.2.0 新規（PhotoLibrarySaver）</td></tr>
+    <tr><td>ImageRenderer</td><td>SwiftUI View → UIImage 変換</td><td>v1.0から継続</td></tr>
   </table>
 
-  <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>写真ライブラリ権限が拒否されている</td><td>「設定アプリから写真アクセスを許可してください」アラート。「設定を開く」ボタンで UIApplication.shared.open(settingsURL)</td></tr>
+    <tr><td>写真保存中にエラー発生</td><td>Logger でエラーログ出力。「保存に失敗しました。もう一度お試しください。」アラートを表示</td></tr>
+    <tr><td>ImageRenderer で画像生成失敗</td><td>Logger でエラーログ出力。保存・共有ボタンを非活性にしてユーザーに通知しない（再試行で回復見込み）</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
-</div></body></html>
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">InstagramShareService を削除。UIPasteboard への書き込みコードも合わせて削除</li>
+    <li class="done">Info.plist の LSApplicationQueriesSchemes から instagram-stories エントリを削除</li>
+    <li class="done">PhotoLibrarySaver は PHPhotoLibrary.requestAuthorization(for: .addOnly) を使用（.readWrite は不要）</li>
+    <li class="done">「写真に保存」ボタン: isLoading 中は ProgressView をインライン表示し、ボタンは disabled</li>
+    <li class="done">Premium テーマに「PREMIUM」オレンジバッジを明示追加（ロック状態の発見性向上）</li>
+    <li class="done">テーマ選択 UI: 無料テーマは通常表示。プレミアムテーマは右上に PREMIUM バッジ付きで表示し、未課金ならタップで Paywall を表示</li>
+    <li class="done">print() デバッグ禁止。os.log（Logger）を使用</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-07</td><td>v1.2.0対応: Instagram Story専用レイアウト廃止・InstagramShareService削除・PhotoLibrarySaver追加（写真に保存）。Premium テーマに PREMIUM バッジ追加。処理フロー図を更新</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-06-07</footer>
+</div>
+</body>
+</html>

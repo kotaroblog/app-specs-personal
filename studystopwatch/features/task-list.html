@@ -14,55 +14,164 @@
 
   <header class="site-header">
     <h1>やることリスト機能</h1>
-    <p>今日 / 今週 / 今月単位で学習タスクを管理し、セッション記録と連携して完了できる機能</p>
+    <p>期限日（dueDate）ベースで学習タスクを管理し、カレンダーと連携して計画・実績を一体管理する機能</p>
     <div class="section-meta">
-      <span class="tag done">v1.0</span>
+      <span class="tag done">v1.2.0</span>
       <span class="tag">機能ID: SS-FEAT-TASK-01</span>
     </div>
   </header>
 
   <h2>概要</h2>
   <p>
-    ユーザーが「今日やること」「今週やること」「今月やること」を事前に登録し、
-    学習セッション終了と同時にタスクを完了できる機能。
-    タスクは <code>StudyTask</code> モデルで管理され、期間種別（day / week / month）ごとに独立したリストとして表示される。
-    ホーム画面の CompactGoalCard にはタスク進捗（N/M 件）が表示され、学習計画の意識化を促す。
+    ユーザーが学習タスクに「期限日（dueDate）」を設定し、カレンダー画面の日ビューで期限日ごとに管理できる機能。
+    v1.2.0 で旧「期間バケツ（day / week / month）モデル」から <strong>C案: 期限日モデル</strong> に移行。
+    受験生の実態（「○日までに○ページ終わらせる」）に合わせた設計。
+    タスクは <code>StudyTask</code> モデルで管理され、カレンダー日ビューでは選択日を期限とするタスクを一覧表示する。
+    学習計画自動配分（StudyPlanSheet）により、長期課題を日単位タスクへ自動分割できる。
   </p>
+
+  <h2>設計変更の背景（v1.1 → v1.2）</h2>
+  <div class="callout">
+    <ul>
+      <li><strong>旧設計</strong>: タスクを「今日用・今週用・今月用」の期間バケツで分類（periodRawValue = day/week/month）</li>
+      <li><strong>新設計</strong>: タスクに <code>dueDate: Date?</code> を設定。カレンダーの選択日とマッチするタスクを表示</li>
+      <li><strong>移行理由</strong>: 受験生は「火曜日までに数学ワーク50ページ」のように期限を意識して計画を立てる。期間バケツでは複数日にまたがる計画が表現できなかった</li>
+    </ul>
+  </div>
 
   <h2>関連画面</h2>
   <ul>
-    <li><a href="../screens/goal-edit.html">目標・やることリスト画面（GoalEditSheet）</a> — タスクの作成・編集・削除・完了操作の主要 UI</li>
-    <li><a href="../screens/calendar.html">カレンダー画面（DayCalendarView）</a> — 選択日のタスクをインライン表示・操作</li>
+    <li><a href="../screens/calendar.html">カレンダー画面（CalendarScreen）</a> — タスクの作成・編集・削除・完了操作の主要 UI（日ビュー・週ビュー・月ビュー）</li>
+    <li><a href="../screens/goal-edit.html">目標・やることリスト画面（GoalEditSheet）</a> — 目標設定と完了率表示</li>
     <li><a href="../screens/home.html">ホーム画面</a> — CompactGoalCard でタスク件数（N/M）を表示</li>
+  </ul>
+
+  <h2>データモデル（StudyTask）</h2>
+  <pre><code>@Model final class StudyTask {
+    var id: UUID = UUID()
+    var title: String = ""
+    var isCompleted: Bool = false
+    var dueDate: Date? = nil              // 期限日（v1.2〜。nil の場合は旧タスクまたは期限なし）
+    var linkedSessionID: UUID? = nil      // 「記録して完了」で紐づいた StudySession.id
+    var completedAt: Date? = nil          // 完了タイムスタンプ
+    var sortOrder: Int = 0
+    var createdAt: Date = Date()
+
+    // 後方互換フィールド（v1.2 以降は非推奨・移行後は参照しない）
+    var periodRawValue: String = "day"    // 旧: "day" / "week" / "month"
+    var periodStart: Date = Date()        // 旧: 期間開始
+    var periodEnd: Date = Date()          // 旧: 期間終了
+}</code></pre>
+
+  <table>
+    <tr><th>フィールド</th><th>型</th><th>説明</th></tr>
+    <tr><td>id</td><td>UUID</td><td>識別子</td></tr>
+    <tr><td>title</td><td>String</td><td>タスク本文</td></tr>
+    <tr><td>isCompleted</td><td>Bool</td><td>完了フラグ</td></tr>
+    <tr><td>dueDate</td><td>Date?</td><td>期限日（nil=期限なし）</td></tr>
+    <tr><td>linkedSessionID</td><td>UUID?</td><td>記録して完了で紐づいたセッションID</td></tr>
+    <tr><td>completedAt</td><td>Date?</td><td>完了タイムスタンプ</td></tr>
+    <tr><td>sortOrder</td><td>Int</td><td>表示順</td></tr>
+    <tr><td>createdAt</td><td>Date</td><td>作成日時</td></tr>
+    <tr><td>periodRawValue</td><td>String</td><td>後方互換フィールド（v1.2以降は非推奨）</td></tr>
+    <tr><td>periodStart</td><td>Date</td><td>後方互換フィールド（v1.2以降は非推奨）</td></tr>
+    <tr><td>periodEnd</td><td>Date</td><td>後方互換フィールド（v1.2以降は非推奨）</td></tr>
+  </table>
+
+  <h2>画面・操作仕様</h2>
+
+  <h3>カレンダー 日ビュー（メイン管理場所）</h3>
+  <table>
+    <tr><th>操作</th><th>説明</th></tr>
+    <tr><td>タスク表示</td><td><code>dueDate == 選択日</code> のタスクを一覧表示</td></tr>
+    <tr><td>クイック追加</td><td>テキスト入力 → 「追加」ボタン（選択日が期限に自動設定）</td></tr>
+    <tr><td>期限付き追加</td><td>「📅 期限付き」ボタン → TaskCreationSheet（タイトル + DatePickerグラフィカル）</td></tr>
+    <tr><td>編集</td><td>タイトルタップ → TaskCreationSheet（編集モード: タイトル・期限日を変更可）</td></tr>
+    <tr><td>削除</td><td>ゴミ箱ボタン → 確認ダイアログ</td></tr>
+    <tr><td>完了/未完了切替</td><td>円ボタン（打ち消し線・触覚フィードバック）</td></tr>
+    <tr><td>期限日サブラベル</td><td>今日以外の期限を行内に小さく表示。期限切れ=赤・2日以内=オレンジ</td></tr>
+  </table>
+
+  <h3>カレンダー 月ビュー</h3>
+  <p>各日の左上に未完了タスク数バッジ（緑円）を表示。</p>
+
+  <h3>カレンダー 週ビュー</h3>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>「今週のやること」セクション</td><td>今週締切の未完了タスクを残り日数ラベル付きで一覧</td></tr>
+    <tr><td>残り日数カラー</td><td>今日=赤 / 明日〜2日=オレンジ / 3日以上=緑</td></tr>
+  </table>
+
+  <h3>目標カード（GoalEditSheet）</h3>
+  <p>
+    読み取り専用表示: <code>dueDate</code> が目標期間内のタスクの完了率・件数を表示。
+    タスクの追加・編集はカレンダーから行う旨を案内する。
+  </p>
+
+  <h2>Phase 3: 学習計画自動配分（StudyPlanSheet）</h2>
+  <p>カレンダー画面右上の「📅」ボタンからアクセス。長期課題を日単位タスクへ自動分割する。</p>
+
+  <table>
+    <tr><th>入力項目</th><th>説明</th></tr>
+    <tr><td>タイトル</td><td>例: 数学ワーク</td></tr>
+    <tr><td>合計 + 単位</td><td>例: 100 ページ（ページ / 問 / 回 / 章 / 時間 / 自由入力）</td></tr>
+    <tr><td>済み（任意）</td><td>進捗差し引き（例: すでに20ページ済なら20を入力）</td></tr>
+    <tr><td>開始日</td><td>デフォルト: 今日</td></tr>
+    <tr><td>試験日</td><td>UserSettings から自動取得。変更可</td></tr>
+    <tr><td>土日を除く</td><td>トグル（ON で土日をスキップして配分）</td></tr>
+  </table>
+
+  <ul>
+    <li>プレビュー: 「1日あたり Xページ × Y日間」をリアルタイム表示</li>
+    <li>保存: 毎日1タスク（dueDate 付き）を一括生成</li>
+    <li>タイトル形式: 「数学ワーク: 5ページ（3日目/20日）」</li>
   </ul>
 
   <h2>処理フロー</h2>
 
-  <h3>タスク追加フロー</h3>
+  <h3>クイック追加フロー</h3>
   <div class="mermaid">
 sequenceDiagram
   participant U as ユーザー
-  participant V as GoalEditSheet
-  participant VM as ViewModel
+  participant V as DayCalendarView
+  participant VM as CalendarViewModel
   participant DB as SwiftData
 
-  U->>V: タイトルを TextField に入力
-  U->>V: 「追加」ボタンをタップ
-  V->>VM: addTask(title, period)
-  VM->>VM: periodStart / periodEnd を算出
+  U->>V: テキスト入力 → 「追加」ボタンをタップ
+  V->>VM: addTask(title, dueDate: selectedDate)
   VM->>DB: modelContext.insert(StudyTask)
   DB-->>VM: 保存完了
   VM-->>V: @Query 経由でリスト更新
-  V-->>U: 追加したタスクが一覧に表示
+  V-->>U: 追加したタスクが当日の一覧に表示
+  </div>
+
+  <h3>期限付き追加フロー（TaskCreationSheet）</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant V as DayCalendarView
+  participant S as TaskCreationSheet
+  participant VM as CalendarViewModel
+  participant DB as SwiftData
+
+  U->>V: 「📅 期限付き」ボタンをタップ
+  V->>S: .sheet で TaskCreationSheet を表示
+  U->>S: タイトル入力 + DatePickerで期限日を選択
+  U->>S: 「追加」ボタンをタップ
+  S->>VM: addTask(title, dueDate: pickedDate)
+  VM->>DB: modelContext.insert(StudyTask)
+  DB-->>VM: 保存完了
+  VM-->>V: @Query 経由でリスト更新
+  V-->>U: sheet が閉じ、タスクが追加される
   </div>
 
   <h3>「記録して完了」フロー</h3>
   <div class="mermaid">
 sequenceDiagram
   participant U as ユーザー
-  participant V as GoalEditSheet
+  participant V as DayCalendarView
   participant MES as ManualStudyEntrySheet
-  participant VM as ViewModel
+  participant VM as CalendarViewModel
   participant DB as SwiftData
 
   U->>V: 「📝 記録して完了」ボタンをタップ
@@ -76,38 +185,56 @@ sequenceDiagram
   V-->>U: チェックマーク付きで完了表示
   </div>
 
-  <h3>シンプル完了フロー</h3>
+  <h3>学習計画自動配分フロー（StudyPlanSheet）</h3>
   <div class="mermaid">
 sequenceDiagram
   participant U as ユーザー
-  participant V as GoalEditSheet
-  participant VM as ViewModel
+  participant S as StudyPlanSheet
+  participant VM as PlanViewModel
   participant DB as SwiftData
 
-  U->>V: チェックボックスをタップ
-  V->>VM: toggleComplete(task)
-  VM->>DB: task.isCompleted = true, task.completedAt = now
+  U->>S: 「📅」ボタンからシートを開く
+  U->>S: タイトル・合計・単位・開始日・試験日・土日除くを入力
+  S->>VM: previewPlan(inputs)
+  VM-->>S: 「1日あたり X単位 × Y日間」をリアルタイム表示
+  U->>S: 「保存」ボタンをタップ
+  S->>VM: savePlan()
+  VM->>DB: StudyTask を日数分 insert（各タスクに dueDate・title 形式「数学ワーク: 5ページ（N日目/Y日）」）
   DB-->>VM: 保存完了
-  VM-->>V: リスト更新（チェックマーク付き）
-  V-->>U: 完了表示
+  VM-->>S: dismiss（シートを閉じる）
+  S-->>U: カレンダーに日単位タスクが反映される
+  </div>
+
+  <h2>データ移行（v1.1 → v1.2）</h2>
+  <div class="callout warn">
+    <strong>StudyTaskMigrationService</strong>: 初回起動時に旧タスクの <code>periodStart → dueDate</code> を自動変換（一度だけ実行）。
+    <ul>
+      <li>移行条件: <code>dueDate == nil</code> かつ <code>periodStart != Date()</code> のタスク</li>
+      <li>変換: <code>task.dueDate = Calendar.current.startOfDay(for: task.periodStart)</code></li>
+      <li>移行完了後は <code>UserDefaults</code> にフラグを保存して再実行を防ぐ</li>
+      <li>旧フィールド（periodRawValue / periodStart / periodEnd）は削除せず後方互換フィールドとして残す</li>
+    </ul>
   </div>
 
   <h2>ビジネスルール</h2>
   <ul>
-    <li>タスクは期間（day / week / month）ごとに独立。同じタイトルでも期間が異なれば別レコード</li>
-    <li>periodStart / periodEnd は登録時の選択期間から算出し、固定値で保存する（後から期間が変わっても影響なし）</li>
+    <li>期限日が同じタスクは <code>dueDate == selectedDate</code> のクエリで取得する。時刻は無視し日付のみで比較</li>
+    <li>dueDate = nil のタスクはどの日にも表示しない（「未整理タスク」として将来のセクションで対応予定）</li>
     <li>「記録して完了」でキャンセルした場合、タスクは未完了のまま維持する</li>
     <li>完了済みタスクの再オープン（チェック解除）は可能。isCompleted = false、completedAt = nil、linkedSessionID = nil にリセットする</li>
     <li>タスクの sortOrder はユーザーが並び替えた順序を保持（デフォルトは createdAt 昇順）</li>
-    <li>1期間あたりのタスク上限は設けない</li>
-    <li>週 / 月ビューでは完了率（完了数 / 全体数 × 100）を整数で表示する（小数点以下切り捨て）</li>
+    <li>1日あたりのタスク上限は設けない</li>
+    <li>StudyPlanSheet: 試験日 - 開始日が0日以下の場合、保存ボタンを非活性にする</li>
+    <li>StudyPlanSheet: 土日除くトグルが ON の場合、配分日数を平日のみでカウントし、土日はタスクを生成しない</li>
+    <li>期限切れ（dueDate &lt; today）かつ未完了のタスクは、当日の日ビューにも「期限切れ」バッジ付きで表示する（期日を過ぎたタスクが消えないよう配慮）</li>
   </ul>
 
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
-    <tr><td>SwiftData（StudyTask）</td><td>タスクの永続化・@Query での取得</td><td>AppGroup 共有なし（Widget 非対応）</td></tr>
+    <tr><td>SwiftData（StudyTask）</td><td>タスクの永続化・@Query での取得</td><td>dueDate フィールドで日付フィルタ</td></tr>
     <tr><td>SwiftData（StudySession）</td><td>「記録して完了」時に生成されるセッション</td><td>linkedSessionID で紐づけ</td></tr>
+    <tr><td>UserSettings.examDate</td><td>StudyPlanSheet の試験日デフォルト値</td><td>nil の場合は未設定表示</td></tr>
     <tr><td>ManualStudyEntrySheet</td><td>手動セッション記録 UI</td><td>onSaved / initialNote を追加拡張済み</td></tr>
   </table>
 
@@ -117,15 +244,19 @@ sequenceDiagram
     <tr><td>タスク追加時のタイトルが空文字</td><td>追加ボタンを disabled にして保存させない</td></tr>
     <tr><td>SwiftData 保存失敗</td><td>Logger でエラーログを出力。UI 上は変更なし（楽観的更新しない）</td></tr>
     <tr><td>「記録して完了」でセッション保存後にタスク更新が失敗</td><td>Logger でエラーログを出力。セッションは保存済みのため再試行は不要（タスクを手動で完了させることで回復可能）</td></tr>
+    <tr><td>StudyPlanSheet で試験日が開始日より前</td><td>保存ボタンを非活性。「試験日は開始日以降を設定してください」とインライン表示</td></tr>
+    <tr><td>データ移行（v1.1 → v1.2）で変換失敗</td><td>Logger でエラーログ。失敗した個別タスクをスキップして続行。次回起動時に再試行しない（フラグ保存済み）</td></tr>
   </table>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li class="done">StudyTask は @Model final class。全プロパティにデフォルト値あり（マイグレーション対応）</li>
-    <li class="done">@Query のフィルタは periodRawValue と periodStart/periodEnd の範囲条件を組み合わせる</li>
+    <li class="done">@Query のフィルタは <code>dueDate</code> の日付範囲条件（startOfDay 〜 endOfDay）を使用</li>
+    <li class="done">旧フィールド periodRawValue / periodStart / periodEnd は削除せず残す（後方互換）</li>
     <li class="done">ManualStudyEntrySheet への拡張: initialNote: String? パラメータ、onSaved: ((UUID) -> Void)? コールバックを追加</li>
-    <li class="done">CompactGoalCard（ホーム画面）は today の StudyTask を別 @Query で取得し「N/M件」を表示</li>
-    <li class="done">TaskPeriod enum: day / week / month の rawValue は String</li>
+    <li class="done">CompactGoalCard（ホーム画面）は今日の StudyTask を別 @Query で取得し「N/M件」を表示</li>
+    <li class="done">StudyTaskMigrationService: AppDelegate/onAppear で一度だけ呼び出す。UserDefaults["taskMigrationV12Completed"] フラグ管理</li>
+    <li class="done">期限切れバッジ: dueDate &lt; today の未完了タスクに「期限切れ」ラベルを赤色で付与</li>
     <li class="done">print() デバッグ禁止。os.log（Logger）を使用</li>
   </ul>
 
@@ -133,6 +264,7 @@ sequenceDiagram
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-18</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-07</td><td>v1.2.0対応: 期間バケツモデルから期限日（dueDate）モデルへ全面移行。学習計画自動配分（StudyPlanSheet）追加。週ビュー「今週のやること」セクション追加。月ビュータスクバッジ追加。データ移行仕様（StudyTaskMigrationService）追加</td></tr>
   </table>
 
   <script>
@@ -142,7 +274,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-05-18</footer>
+  <footer class="site-footer">最終更新: 2026-06-07</footer>
 </div>
 </body>
 </html>

@@ -50,15 +50,16 @@ erDiagram
   }
   StudyTask {
     UUID id
-    String periodRawValue
     String title
     Bool isCompleted
-    Date periodStart
-    Date periodEnd
+    Date dueDate
     UUID linkedSessionID
     Date completedAt
     Int sortOrder
     Date createdAt
+    String periodRawValue
+    Date periodStart
+    Date periodEnd
   }
   TestRecord {
     UUID id
@@ -114,17 +115,21 @@ erDiagram
   <h2>StudyTask</h2>
   <pre><code>@Model final class StudyTask {
     var id: UUID = UUID()
-    var periodRawValue: String = "day"   // TaskPeriod.rawValue: "day" / "week" / "month"
     var title: String = ""
     var isCompleted: Bool = false
-    var periodStart: Date = Date()       // 期間開始（例: 今日0時）
-    var periodEnd: Date = Date()         // 期間終了（例: 今日23:59:59）
-    var linkedSessionID: UUID?           // 「記録して完了」時に紐づく StudySession.id
-    var completedAt: Date?               // 完了日時
+    var dueDate: Date? = nil             // 期限日（v1.2〜。nil の場合は旧タスクまたは期限なし）
+    var linkedSessionID: UUID? = nil     // 「記録して完了」時に紐づく StudySession.id
+    var completedAt: Date? = nil         // 完了日時
     var sortOrder: Int = 0
     var createdAt: Date = Date()
+
+    // 後方互換フィールド（v1.2 以降は非推奨）
+    var periodRawValue: String = "day"   // 旧: TaskPeriod.rawValue: "day" / "week" / "month"
+    var periodStart: Date = Date()       // 旧: 期間開始（例: 今日0時）
+    var periodEnd: Date = Date()         // 旧: 期間終了（例: 今日23:59:59）
 }
 
+// TaskPeriod は後方互換のため残す（v1.2 以降は非推奨）
 enum TaskPeriod: String {
     case day   = "day"
     case week  = "week"
@@ -218,7 +223,7 @@ enum TestType: String, Codable, CaseIterable {
   <h2>Enum 一覧</h2>
   <ul>
     <li><code>GoalType</code>: regularExam / highSchoolEntrance / universityEntrance</li>
-    <li><code>TaskPeriod</code>: day / week / month（StudyTask の期間種別）</li>
+    <li><code>TaskPeriod</code>: day / week / month（StudyTask の旧期間種別。v1.2 以降は非推奨）</li>
     <li><code>TestType</code>: regular / mock / quiz / other（TestRecord のテスト種別）<strong>v1.1.0 新規</strong></li>
     <li><code>ShareCardType</code>: daily / summary / heatmap / graph</li>
     <li><code>ShareCardTheme</code>: 複数テーマ（無料/プレミアム）</li>
@@ -239,6 +244,7 @@ enum TestType: String, Codable, CaseIterable {
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-18</td><td>StudyTask モデル・TaskPeriod enum を追加。ER 図を更新</td></tr>
     <tr><td>1.2</td><td>2026-05-28</td><td>v1.1.0対応: TestRecord モデル・TestType enum を追加。UserSettings に focusSubjectID・focusSubjectModeEnabled を追加。Subject に testRecords リレーションを追加。ER 図を更新</td></tr>
+    <tr><td>1.3</td><td>2026-06-07</td><td>v1.2.0対応: StudyTask に dueDate（Date?）フィールドを追加。periodRawValue / periodStart / periodEnd を後方互換フィールド（非推奨）として明記。ER 図・Enum 一覧を更新</td></tr>
   </table>
 
   <script>
@@ -248,7 +254,7 @@ enum TestType: String, Codable, CaseIterable {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-05-28</footer>
+  <footer class="site-footer">最終更新: 2026-06-07</footer>
 </div>
 </body>
 </html>
