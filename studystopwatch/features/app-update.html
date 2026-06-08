@@ -45,8 +45,43 @@ struct UpdateInfo {
     <li>パース失敗 → サイレント（Logger.error）</li>
   </ul>
 
-  <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <h2>App Store レビュー依頼仕様</h2>
+  <p>
+    <code>@Environment(\.requestReview)</code>（StoreKit 2）を使用してレビュー依頼ダイアログを表示する。<br>
+    iOS の OS 側制限により、1 年間に最大 3 回しかダイアログは表示されない。
+  </p>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <h3>発火条件（AND 条件）— 目標設定ユーザー向け</h3>
+  <table>
+    <tr><th>#</th><th>条件</th><th>備考</th></tr>
+    <tr><td>1</td><td>今日の学習目標を初めて達成した瞬間</td><td>目標設定済みユーザーのみ対象</td></tr>
+    <tr><td>2</td><td>セッション完了回数が 10 回以上</td><td>累計カウント</td></tr>
+    <tr><td>3</td><td>前回のレビュー依頼から 30 日以上経過</td><td>UserDefaults に lastReviewRequestDate を保存して管理</td></tr>
+  </table>
+
+  <h3>フォールバック条件 — 目標未設定ユーザー向け</h3>
+  <p>目標が設定されていないユーザーはマイルストーン達成時に発火する。条件 2（10回以上）と条件 3（30日経過）を同時に満たす場合のみ発火。</p>
+  <table>
+    <tr><th>マイルストーン（セッション完了回数）</th><th>備考</th></tr>
+    <tr><td>20 回</td><td>—</td></tr>
+    <tr><td>50 回</td><td>—</td></tr>
+    <tr><td>100 回</td><td>—</td></tr>
+  </table>
+
+  <h3>実装メモ</h3>
+  <ul>
+    <li>SwiftUI <code>@Environment(\.requestReview) private var requestReview</code> を使用</li>
+    <li>OS 側の表示回数制限（年間最大 3 回）により、ダイアログが必ず表示されるとは限らない</li>
+    <li><code>UserDefaults["lastReviewRequestDate"]</code> に最終依頼日時を保存し、30 日ガードを実装する</li>
+    <li>発火判定は <code>SessionCompleteViewModel</code> または <code>GoalTrackerService</code> 内で行う</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-08</td><td>v1.2.1対応: App Store レビュー依頼仕様を追加（発火条件・フォールバック・StoreKit 2 実装メモ）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-08</footer>
 </div></body></html>
