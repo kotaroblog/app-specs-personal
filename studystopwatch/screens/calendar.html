@@ -16,7 +16,7 @@
     <h1>カレンダー画面（CalendarScreen）</h1>
     <p>日 / 週 / 月の3ビュー切替で学習実績と期限タスクを一体管理するカレンダー</p>
     <div class="section-meta">
-      <span class="tag done">v1.2.0</span>
+      <span class="tag done">v1.3.0</span>
       <span class="tag">画面ID: SS-CAL-02</span>
     </div>
   </header>
@@ -62,15 +62,20 @@
   </table>
 
   <h2>WeekCalendarView（週ビュー）</h2>
+  <div class="callout">
+    <strong>v1.3 変更:</strong> 旧「今週のやること（フラットリスト＋日後ラベル）」を廃止し、3段階構成に刷新。
+  </div>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
     <tr><td>週サマリカード</td><td>週合計時間 / 週次目標 / 達成率リングを上部に表示</td></tr>
     <tr><td>週ナビゲーター</td><td>左右シェブロンで前後1週間移動</td></tr>
-    <tr><td>「今週のやること」セクション</td><td>今週締切（dueDate が今週月曜〜日曜）の未完了タスクを一覧表示。残り日数ラベル付き（今日=赤 / 明日〜2日=オレンジ / 3日以上=緑）</td></tr>
-    <tr><td>週次タイムライン</td><td>月曜始まり7列 × 06時〜23時（hour height = 40pt）の縦グリッド。StudySession を科目色のブロックで描画</td></tr>
+    <tr><td>① 今日のやること（実行リスト）</td><td>今日が期限のタスクをチェックボックス付きで一覧表示。チェックで完了切替（即時永続化）</td></tr>
+    <tr><td>取りこぼしセクション</td><td>期限切れ（dueDate &lt; 今日）かつ未完了タスクをオレンジ色の別グループで表示。「取りこぼし N件」ヘッダー付き（責めない演出）</td></tr>
+    <tr><td>② 今週の進捗（科目別サマリーバー）</td><td>今日〜日曜の科目別タスクを SubjectProgressRow で集計表示。科目名・カラー・進捗バー・「X/Y件 完了」・「あとN件」を1行で表示。科目未設定は「その他」グループ。日後ラベル（-1日後/2日後等）は全廃</td></tr>
+    <tr><td>③ 週次タイムライン（既存）</td><td>月曜始まり7列 × 06時〜23時（hour height = 40pt）の縦グリッド。StudySession を科目色のブロックで描画</td></tr>
     <tr><td>今日列ハイライト</td><td>今日の列に accent 5% の背景色を適用</td></tr>
     <tr><td>現在時刻ライン（NOW）</td><td>今週のみ表示。赤い横線で現在時刻を示す</td></tr>
-    <tr><td>科目別積み上げ</td><td>今週の科目別累積時間を横長バー + 2列グリッドで一覧表示</td></tr>
+    <tr><td>科目別積み上げ（既存）</td><td>今週の科目別累積時間を横長バー + 2列グリッドで一覧表示</td></tr>
   </table>
 
   <h2>MonthCalendarView（月ビュー）</h2>
@@ -92,7 +97,9 @@
     <tr><td>選択日に記録なし（日ビュー）</td><td>TODAY'S STUDY カードに「0時間 0分」、科目別実績なしメッセージ</td></tr>
     <tr><td>選択日にタスクなし（日ビュー）</td><td>「やることを追加しましょう」プレースホルダー</td></tr>
     <tr><td>今週に記録なし（週ビュー）</td><td>タイムライン空白。週サマリは0表示</td></tr>
-    <tr><td>今週にタスクなし（週ビュー）</td><td>「今週のやること」セクションを非表示</td></tr>
+    <tr><td>今日のタスクなし（週ビュー①）</td><td>「今日のやること」セクションを非表示</td></tr>
+    <tr><td>取りこぼしなし（週ビュー①）</td><td>取りこぼしセクションを非表示</td></tr>
+    <tr><td>今週のタスクなし（週ビュー②）</td><td>「今週の進捗」セクションを非表示</td></tr>
     <tr><td>試験日未設定</td><td>CountdownCard を「試験日を設定」CTA に切り替え</td></tr>
     <tr><td>試験日当日・過去</td><td>CountdownCard を「お疲れ様！」＋「次の試験日を設定」ボタンに切り替え</td></tr>
   </table>
@@ -159,7 +166,9 @@
     <li class="done">MonthCalendarView の inline 展開は AnyLayout / if selectedDate != nil で制御</li>
     <li class="done">テーマカラーは AppTheme.accent（#58CC02）。カードは cardShadow() 修飾子で統一</li>
     <li class="done">日ビューの StudyTask @Query: dueDate が selectedDate と同日のタスクを取得（startOfDay/endOfDay で範囲フィルタ）</li>
-    <li class="done">週ビューの「今週のやること」: dueDate が今週月曜〜日曜の未完了タスクを取得</li>
+    <li class="done">週ビュー①「今日のやること」: dueDate == 今日 の未完了タスクを取得してチェックボックスリストで表示</li>
+    <li class="done">週ビュー①「取りこぼし」: dueDate &lt; startOfDay(today) かつ isCompleted == false のタスクをオレンジグループで表示</li>
+    <li class="done">週ビュー②「今週の進捗」: dueDate が今日〜今週日曜のタスクを subject でグルーピングし SubjectProgressRow で表示。日後ラベルは全廃</li>
     <li class="done">月ビューのタスクバッジ: 月内全タスクを取得し、日付ごとに Dictionary でグルーピングして未完了件数を算出</li>
     <li class="done">StudyPlanSheet は .sheet(isPresented: $showPlanSheet) で表示</li>
     <li class="done">CountdownCard の残り日数: Calendar.current.dateComponents([.day], from: today, to: examDate).day で算出</li>
@@ -179,6 +188,7 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-18</td><td>初版作成（旧 SS-CAL-01 CalendarHeatmapView を置き換えるリニューアル版）</td></tr>
     <tr><td>1.1</td><td>2026-06-07</td><td>v1.2.0対応: StudyTask を期限日ベースに移行。日ビューに「📅 期限付き」追加ボタン・期限日サブラベル追加。週ビューに「今週のやること」セクション追加。月ビューにタスクバッジ（未完了件数）追加。右上ツールバーに StudyPlanSheet 導線追加。CountdownCard の試験日当日・過去の状態を追加</td></tr>
+    <tr><td>1.2</td><td>2026-06-09</td><td>v1.3.0対応: 週ビューを3段階構成に刷新（①今日の実行リスト・取りこぼしセクション（オレンジ）、②今週の進捗（SubjectProgressRow 科目別サマリー）、③タイムライン）。日後ラベル全廃。状態テーブルに週ビュー新状態を追加</td></tr>
   </table>
 
   <script>
@@ -188,7 +198,7 @@
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-07</footer>
+  <footer class="site-footer">最終更新: 2026-06-09</footer>
 </div>
 </body>
 </html>

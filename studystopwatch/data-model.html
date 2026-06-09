@@ -22,6 +22,7 @@
 erDiagram
   Subject ||--o{ StudySession : has
   Subject ||--o{ TestRecord : "recorded for"
+  Subject ||--o{ StudyTask : "assigned to"
   StudySession ||--o| StudyTask : "linked via linkedSessionID"
   UserSettings {
     Int dailyGoalMinutes
@@ -53,6 +54,7 @@ erDiagram
     String title
     Bool isCompleted
     Date dueDate
+    Subject subject
     UUID linkedSessionID
     Date completedAt
     Int sortOrder
@@ -118,6 +120,7 @@ erDiagram
     var title: String = ""
     var isCompleted: Bool = false
     var dueDate: Date? = nil             // 期限日（v1.2〜。nil の場合は旧タスクまたは期限なし）
+    var subject: Subject? = nil          // 紐づく科目（v1.3〜。学習計画生成時は必須。nil = 科目未設定）
     var linkedSessionID: UUID? = nil     // 「記録して完了」時に紐づく StudySession.id
     var completedAt: Date? = nil         // 完了日時
     var sortOrder: Int = 0
@@ -245,6 +248,7 @@ enum TestType: String, Codable, CaseIterable {
     <tr><td>1.1</td><td>2026-05-18</td><td>StudyTask モデル・TaskPeriod enum を追加。ER 図を更新</td></tr>
     <tr><td>1.2</td><td>2026-05-28</td><td>v1.1.0対応: TestRecord モデル・TestType enum を追加。UserSettings に focusSubjectID・focusSubjectModeEnabled を追加。Subject に testRecords リレーションを追加。ER 図を更新</td></tr>
     <tr><td>1.3</td><td>2026-06-07</td><td>v1.2.0対応: StudyTask に dueDate（Date?）フィールドを追加。periodRawValue / periodStart / periodEnd を後方互換フィールド（非推奨）として明記。ER 図・Enum 一覧を更新</td></tr>
+    <tr><td>1.4</td><td>2026-06-09</td><td>v1.3.0対応: StudyTask に subject（Subject?）フィールドを追加。ER 図に Subject → StudyTask リレーションを追加</td></tr>
   </table>
 
   <script>
@@ -254,7 +258,7 @@ enum TestType: String, Codable, CaseIterable {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-07</footer>
+  <footer class="site-footer">最終更新: 2026-06-09</footer>
 </div>
 </body>
 </html>

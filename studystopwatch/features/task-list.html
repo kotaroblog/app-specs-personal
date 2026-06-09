@@ -16,7 +16,7 @@
     <h1>やることリスト機能</h1>
     <p>期限日（dueDate）ベースで学習タスクを管理し、カレンダーと連携して計画・実績を一体管理する機能</p>
     <div class="section-meta">
-      <span class="tag done">v1.2.0</span>
+      <span class="tag done">v1.3.0</span>
       <span class="tag">機能ID: SS-FEAT-TASK-01</span>
     </div>
   </header>
@@ -52,6 +52,7 @@
     var title: String = ""
     var isCompleted: Bool = false
     var dueDate: Date? = nil              // 期限日（v1.2〜。nil の場合は旧タスクまたは期限なし）
+    var subject: Subject? = nil           // 紐づく科目（v1.3〜。学習計画生成時は必須）
     var linkedSessionID: UUID? = nil      // 「記録して完了」で紐づいた StudySession.id
     var completedAt: Date? = nil          // 完了タイムスタンプ
     var sortOrder: Int = 0
@@ -69,6 +70,7 @@
     <tr><td>title</td><td>String</td><td>タスク本文</td></tr>
     <tr><td>isCompleted</td><td>Bool</td><td>完了フラグ</td></tr>
     <tr><td>dueDate</td><td>Date?</td><td>期限日（nil=期限なし）</td></tr>
+    <tr><td>subject</td><td>Subject?</td><td>紐づく科目（v1.3〜。学習計画生成時は必須。nil=科目未設定）</td></tr>
     <tr><td>linkedSessionID</td><td>UUID?</td><td>記録して完了で紐づいたセッションID</td></tr>
     <tr><td>completedAt</td><td>Date?</td><td>完了タイムスタンプ</td></tr>
     <tr><td>sortOrder</td><td>Int</td><td>表示順</td></tr>
@@ -95,18 +97,38 @@
   <h3>カレンダー 月ビュー</h3>
   <p>各日の左上に未完了タスク数バッジ（緑円）を表示。</p>
 
-  <h3>カレンダー 週ビュー</h3>
+  <h3>カレンダー 週ビュー（v1.3〜: 3段階構成）</h3>
+  <div class="callout">
+    <strong>v1.3 変更:</strong> 旧「今週のやること（フラットリスト＋日後ラベル）」を廃止し、以下の3段階構成に刷新。
+  </div>
+
+  <h4>① 今日のやること（実行リスト）</h4>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>「今週のやること」セクション</td><td>今週締切の未完了タスクを残り日数ラベル付きで一覧</td></tr>
-    <tr><td>残り日数カラー</td><td>今日=赤 / 明日〜2日=オレンジ / 3日以上=緑</td></tr>
+    <tr><td>タスク一覧</td><td>今日が期限のタスクをチェックボックス付きで表示。チェックで完了切替（即時永続化）</td></tr>
+    <tr><td>取りこぼしセクション</td><td>期限切れ（dueDate &lt; 今日）かつ未完了のタスクをオレンジ色の別グループで隔離表示。「取りこぼし N件」ヘッダー付き（赤ではなくオレンジで責めない演出）</td></tr>
   </table>
 
+  <h4>② 今週の進捗（科目別サマリーバー）</h4>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>SubjectProgressRow</td><td>今日〜日曜までの科目別タスクを SubjectProgressRow で集計表示。科目名・アイコン・カラー・進捗バー・「X/Y件 完了」・「あとN件」を1行で表示</td></tr>
+    <tr><td>日後ラベル</td><td>v1.3 で全廃（-1日後/2日後等のラベルは削除）</td></tr>
+    <tr><td>「その他」グループ</td><td>科目未設定タスクはまとめて「その他」として集計</td></tr>
+  </table>
+
+  <h4>③ タイムライン・科目別実績（既存）</h4>
+  <p>週次タイムライン・科目別積み上げバーは変更なし。</p>
+
   <h3>目標カード（GoalEditSheet）</h3>
-  <p>
-    読み取り専用表示: <code>dueDate</code> が目標期間内のタスクの完了率・件数を表示。
-    タスクの追加・編集はカレンダーから行う旨を案内する。
-  </p>
+  <p>v1.3 でやることリストの表示形式を変更。</p>
+  <table>
+    <tr><th>項目</th><th>旧（〜v1.2）</th><th>新（v1.3〜）</th></tr>
+    <tr><td>タスク表示形式</td><td>タスクを縦一列に全件表示</td><td>科目別進捗バー（SubjectProgressRow）で表示</td></tr>
+    <tr><td>SubjectProgressRow</td><td>—</td><td>科目名・カラー・進捗バー・「X/Y件 完了」・「あとN件」を表示</td></tr>
+    <tr><td>科目未設定タスク</td><td>—</td><td>「その他」グループでまとめて表示</td></tr>
+  </table>
+  <p>タスクの追加・編集はカレンダーから行う旨を案内する点は変更なし。</p>
 
   <h2>Phase 3: 学習計画自動配分（StudyPlanSheet）</h2>
   <p>カレンダー画面右上の「📅」ボタンからアクセス。長期課題を日単位タスクへ自動分割する。</p>
@@ -114,6 +136,7 @@
   <table>
     <tr><th>入力項目</th><th>説明</th></tr>
     <tr><td>タイトル</td><td>例: 数学ワーク</td></tr>
+    <tr><td>科目（必須）</td><td>v1.3〜: 科目選択を必須化。学習計画から生成されるタスクには必ず科目が紐づく。未選択時は保存ボタンを非活性にする</td></tr>
     <tr><td>合計 + 単位</td><td>例: 100 ページ（ページ / 問 / 回 / 章 / 時間 / 自由入力）</td></tr>
     <tr><td>済み（任意）</td><td>進捗差し引き（例: すでに20ページ済なら20を入力）</td></tr>
     <tr><td>開始日</td><td>デフォルト: 今日</td></tr>
@@ -123,9 +146,22 @@
 
   <ul>
     <li>プレビュー: 「1日あたり Xページ × Y日間」をリアルタイム表示</li>
-    <li>保存: 毎日1タスク（dueDate 付き）を一括生成</li>
+    <li>保存: 毎日1タスク（dueDate・subject 付き）を一括生成</li>
     <li>タイトル形式: 「数学ワーク: 5ページ（3日目/20日）」</li>
   </ul>
+
+  <h2>共通コンポーネント: SubjectProgressRow</h2>
+  <p>GoalEditSheet および週ビューの「今週の進捗」セクションで再利用するコンポーネント。</p>
+  <table>
+    <tr><th>表示要素</th><th>説明</th></tr>
+    <tr><td>科目アイコン</td><td>Subject.iconName を SF Symbols で表示</td></tr>
+    <tr><td>科目名</td><td>Subject.name</td></tr>
+    <tr><td>進捗バー</td><td>completed / total の割合を Subject.colorHex で塗りつぶし</td></tr>
+    <tr><td>完了件数</td><td>「X/Y件 完了」テキスト</td></tr>
+    <tr><td>残り件数</td><td>「あとN件」テキスト（N = total - completed）</td></tr>
+  </table>
+  <p>引数: <code>subject: Subject</code>、<code>completed: Int</code>、<code>total: Int</code></p>
+  <p>「その他」グループ（科目未設定タスク）表示時は、subject の代わりにデフォルトアイコン + 「その他」ラベルを使用する。</p>
 
   <h2>処理フロー</h2>
 
@@ -226,7 +262,10 @@ sequenceDiagram
     <li>1日あたりのタスク上限は設けない</li>
     <li>StudyPlanSheet: 試験日 - 開始日が0日以下の場合、保存ボタンを非活性にする</li>
     <li>StudyPlanSheet: 土日除くトグルが ON の場合、配分日数を平日のみでカウントし、土日はタスクを生成しない</li>
+    <li>StudyPlanSheet: 科目未選択時は保存ボタンを非活性にする（v1.3〜: 科目は必須）</li>
     <li>期限切れ（dueDate &lt; today）かつ未完了のタスクは、当日の日ビューにも「期限切れ」バッジ付きで表示する（期日を過ぎたタスクが消えないよう配慮）</li>
+    <li>週ビューの取りこぼしセクション: 期限切れかつ未完了のタスクをオレンジ色で別グループ表示する（責めない演出。赤は使用しない）</li>
+    <li>SubjectProgressRow の「その他」グループ: subject == nil のタスクを集計して表示する</li>
   </ul>
 
   <h2>外部連携</h2>
@@ -258,6 +297,11 @@ sequenceDiagram
     <li class="done">StudyTaskMigrationService: AppDelegate/onAppear で一度だけ呼び出す。UserDefaults["taskMigrationV12Completed"] フラグ管理</li>
     <li class="done">期限切れバッジ: dueDate &lt; today の未完了タスクに「期限切れ」ラベルを赤色で付与</li>
     <li class="done">print() デバッグ禁止。os.log（Logger）を使用</li>
+    <li>StudyTask に subject フィールドを追加（v1.3〜）。SwiftData マイグレーション対応: デフォルト値 nil を設定する</li>
+    <li>SubjectProgressRow: GoalEditSheet・週ビューから再利用する共通コンポーネント。引数は subject: Subject、completed: Int、total: Int</li>
+    <li>週ビュー取りこぼしセクション: dueDate &lt; startOfDay(today) かつ isCompleted == false のタスクをオレンジ（Color.orange）グループで表示</li>
+    <li>GoalEditSheet のタスク一覧: @Query で目標期間内タスクを取得後、subject でグルーピングして SubjectProgressRow に渡す</li>
+    <li>StudyPlanSheet の科目選択: Picker で Subject 一覧から選択。selectedSubject が nil の場合は保存ボタンを disabled にする</li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -266,6 +310,7 @@ sequenceDiagram
     <tr><td>1.0</td><td>2026-05-18</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-07</td><td>v1.2.0対応: 期間バケツモデルから期限日（dueDate）モデルへ全面移行。学習計画自動配分（StudyPlanSheet）追加。週ビュー「今週のやること」セクション追加。月ビュータスクバッジ追加。データ移行仕様（StudyTaskMigrationService）追加</td></tr>
     <tr><td>1.2</td><td>2026-06-08</td><td>v1.2.1対応: StudyPlanSheet 土日除外ロジックの DST 対策（startOfDay を追加）。MonthCalendarView タスクバッジ集計を表示月範囲のみに最適化（パフォーマンス改善）。DueDateFormatter 期限日カラーロジックを共通ユーティリティに抽出</td></tr>
+    <tr><td>1.3</td><td>2026-06-09</td><td>v1.3.0対応: StudyTask に subject フィールド追加。StudyPlanSheet の科目選択を必須化。GoalEditSheet のタスク表示を科目別進捗バー（SubjectProgressRow）に変更。週ビューを3段階構成（今日の実行リスト・取りこぼしセクション・今週の進捗）に刷新。SubjectProgressRow 共通コンポーネント仕様を追加</td></tr>
   </table>
 
   <script>
@@ -275,7 +320,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-08</footer>
+  <footer class="site-footer">最終更新: 2026-06-09</footer>
 </div>
 </body>
 </html>
