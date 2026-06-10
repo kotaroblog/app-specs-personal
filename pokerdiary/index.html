@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- Specs</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← Personal App Specs</a></div>
+
+  <header class="site-header">
+    <h1>ポーカー手帳（PokerDiary）</h1>
+    <p>日本のアミュ専用・収支×振り返りノート · Bundle ID: <code>com.happyboy1002.PokerDiary</code></p>
+  </header>
+
+  <h2>概要</h2>
+  <ul class="kv-list">
+    <li><span class="k">カテゴリ</span><span class="v">ファイナンス（4+）</span></li>
+    <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
+    <li><span class="k">言語</span><span class="v">日本語</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">フリーミアム + サブスク（¥480/月・¥3,600/年）+ AdMob</span></li>
+    <li><span class="k">ステータス</span><span class="v">企画確定（2026-06-11）</span></li>
+    <li><span class="k">リリース予定</span><span class="v">2027-Q1</span></li>
+    <li><span class="k">App Store表示名</span><span class="v">ポーカー手帳｜収支・ハンド記録</span></li>
+    <li><span class="k">サブタイトル</span><span class="v">負け筋がわかる振り返りノート</span></li>
+  </ul>
+
+  <h2>コンセプト</h2>
+  <p style="color: var(--color-text-soft); font-size: 0.95rem; line-height: 1.7;">
+    「アミュ帰りの10秒で、今夜の収支と"気になった1手"を残す。続けるほど、負け筋が言葉になる。」<br><br>
+    日本のアミューズメントポーカールーム通い（週1〜2回）を前提とした収支記録 × 振り返りアプリ。
+    収支記録を錨（リテンション最強行動）に据え、ハンド記録・弱点タグ言語化・週次レビューで「なぜ負けたか」を言語化する。
+    ポーカーレッスン（130問クイズ・CPU対戦）とポーカーハンドログ（記録・シェア）の2企画を統合。
+    パチンコ収支表MAXBETや雀ログで成立済みの「○○収支記録」フォーマットをポーカー×振り返りで再現する。
+  </p>
+
+  <h2>設計方針</h2>
+  <ul style="color: var(--color-text-soft); font-size: 0.9rem; line-height: 1.9; padding-left: 1.2rem;">
+    <li><strong>収支入力は永久無料</strong> — 習慣の錨を課金で塞がない</li>
+    <li><strong>CPU対戦はv1.0から除外</strong> — 決定論シナリオモードの新設が必要（50〜80h）、4+維持のため</li>
+    <li><strong>プレイ中はアプリの空白地帯</strong> — 卓上スマホNG制約に正面から従い「帰宅後アプリ」に純化</li>
+    <li><strong>旧レッスンのCPUエンジン（1,995行）は眠らせてv1.1以降へ</strong></li>
+  </ul>
+
+  <h2>MVP機能（v1.0 · 約330h）</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="title">収支・セッション記録</div>
+      <div class="desc">10秒入力・店名サジェスト。日付自動・バイイン・キャッシュアウト</div>
+      <div class="meta"><span class="tag todo">未着手</span></div>
+    </div>
+    <div class="card">
+      <div class="title">収支ダッシュボード</div>
+      <div class="desc">累計損益・月別・店別の3グラフ。Swift Charts</div>
+      <div class="meta"><span class="tag todo">未着手</span></div>
+    </div>
+    <div class="card">
+      <div class="title">ハンド簡易記録</div>
+      <div class="desc">30秒・グリッド52セルピッカー・弱点タグ3タップ＋任意1行</div>
+      <div class="meta"><span class="tag todo">未着手</span></div>
+    </div>
+    <div class="card">
+      <div class="title">弱点タグ＋週次レビュー</div>
+      <div class="desc">タグ集計型（PlayerTendencyを作り直し）。日曜通知でメモ再掲</div>
+      <div class="meta"><span class="tag todo">未着手</span></div>
+    </div>
+    <div class="card">
+      <div class="title">レンジ逆引きビューア</div>
+      <div class="desc">旧レッスンのHandRangeMatrixViewほぼ流用。無料開放</div>
+      <div class="meta"><span class="tag todo">未着手</span></div>
+    </div>
+    <div class="card">
+      <div class="title">MTT照合バナー＋130問答え合わせ</div>
+      <div class="desc">HeroPreflopResult流用。旧レッスンquestions JSON活用</div>
+      <div class="meta"><span class="tag todo">未着手</span></div>
+    </div>
+    <div class="card">
+      <div class="title">シェアカード</div>
+      <div class="desc">1080×1080・WM付き。GTM用途（開発者自身のX発信）</div>
+      <div class="meta"><span class="tag todo">未着手</span></div>
+    </div>
+    <div class="card">
+      <div class="title">基盤・リリース実務</div>
+      <div class="desc">Paywall・StoreKit・fastlane・app-policies・KPIロガー</div>
+      <div class="meta"><span class="tag todo">未着手</span></div>
+    </div>
+  </div>
+
+  <h2>全体仕様書</h2>
+  <div class="card-grid">
+    <a class="card" href="flow.html">
+      <div class="title">画面遷移図</div>
+      <div class="desc">全画面の遷移マップ</div>
+      <div class="meta"><span class="tag todo">draft</span></div>
+    </a>
+    <a class="card" href="data-model.html">
+      <div class="title">データモデル</div>
+      <div class="desc">SwiftDataモデル構造とER図</div>
+      <div class="meta"><span class="tag todo">draft</span></div>
+    </a>
+    <a class="card" href="aso.html">
+      <div class="title">ASOキーワード戦略</div>
+      <div class="desc">App Store最適化の方針</div>
+      <div class="meta"><span class="tag todo">draft</span></div>
+    </a>
+    <a class="card" href="logging.html">
+      <div class="title">ロギング方針</div>
+      <div class="desc">os.log カテゴリとログレベル</div>
+      <div class="meta"><span class="tag todo">draft</span></div>
+    </a>
+  </div>
+
+  <h2>変更履歴</h2>
+  <table style="width:100%; font-size:0.85rem; border-collapse:collapse;">
+    <thead>
+      <tr style="border-bottom:1px solid var(--color-border);">
+        <th style="text-align:left; padding:6px 8px;">バージョン</th>
+        <th style="text-align:left; padding:6px 8px;">日付</th>
+        <th style="text-align:left; padding:6px 8px;">変更内容</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="padding:6px 8px;">v1.0</td>
+        <td style="padding:6px 8px;">2026-06-11</td>
+        <td style="padding:6px 8px;">ポーカーレッスン×ハンドログ統合企画として初版作成（Fable 5設計）</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-11</footer>
+</div>
+</body>
+</html>
