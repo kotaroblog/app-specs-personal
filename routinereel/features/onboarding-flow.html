@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>オンボーディングフロー - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> &gt; <a href="../">RoutineReel</a> &gt; オンボーディングフロー</div>
+
+  <header class="site-header">
+    <h1>オンボーディングフロー</h1>
+    <p>初回起動 → 通知許可 → ATT 遅延発火のリテンション設計</p>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    通知許可ダイアログを大半のユーザーに表示してリテンション基盤を構築する。
+    iOS の ATT（App Tracking Transparency）ダイアログとの被りを避けるため、ATT は
+    オンボーディング完了後に遅延発火させる。通知許可ダイアログを先に表示し、続けて
+    ATT を表示することで、両ダイアログの許可率を高める設計とした。
+  </p>
+
+  <h2>ページ構成</h2>
+  <table>
+    <thead>
+      <tr><th>Page</th><th>名前</th><th>内容</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>0</td>
+        <td>welcome</td>
+        <td>アプリ名・キャッチコピー・"get started"</td>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>features</td>
+        <td>連続撮影 / クリップ蓄積 / 自動編集 の3機能紹介</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>preset</td>
+        <td>プリセット選択（朝5分 / 夜の整い / 筋トレ10分 / 集中45分 / skip）</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>reminder</td>
+        <td>朝7:00 / 夜21:00 / あとで の3択。プリセット選択時のみ表示、skip 経路はバイパス</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>selectReminder の挙動</h2>
+  <ul class="kv-list">
+    <li><span class="k">pendingRoutine nil 時</span><span class="v">通知許可ダイアログを温存して早期 return（ゴースト Routine 防止）</span></li>
+    <li><span class="k">granted = true</span><span class="v">Routine に時刻設定 + <code>scheduleReminder</code> を呼出</span></li>
+    <li><span class="k">granted = false</span><span class="v"><code>reminderEnabled</code> は true のまま保持。後で iOS 設定で許可された場合、RootView.onAppear の <code>refreshAllReminders</code> で自動的にスケジュールされる</span></li>
+  </ul>
+
+  <h2>TabView の swipe 無効化</h2>
+  <p>
+    オンボーディング画面の TabView に <code>DragGesture()</code> を被せて swipe を無効化している。
+    これにより、ユーザーが Page 2（preset）を skip 操作以外で飛ばして Page 3（reminder）に到達することを防ぎ、
+    <code>pendingRoutine</code> が nil のまま reminder ページに到達する経路を塞いでいる。
+  </p>
+
+  <h2>ATT 遅延発火（RootView 移管）</h2>
+  <p>
+    ATT ダイアログは OnboardingView ではなく RootView で発火する。これにより通知許可ダイアログとの被りを解消し、
+    両方の許可率を引き上げる。
+  </p>
+  <ul class="kv-list">
+    <li><span class="k">判定基準</span><span class="v"><code>ATTrackingManager.trackingAuthorizationStatus</code> ベースで毎回判定（永続化フラグは使わない）</span></li>
+    <li><span class="k">重複防止</span><span class="v"><code>@State hasLoadedAdsInSession</code> でセッション内重複ロードを防止。アプリ kill 後の再起動では再判定される</span></li>
+    <li><span class="k">発火トリガ</span><span class="v"><code>hasCompletedOnboarding</code> の <code>onChange</code> と <code>onAppear</code> の両方で発火（オンボ完了直後・既存ユーザーの起動時の両ケース対応）</span></li>
+  </ul>
+
+  <h2>リカバリ経路</h2>
+  <p>
+    初回ダイアログで通知を拒否したユーザーが、後から iOS 設定で許可した場合のリカバリ経路を用意している。
+  </p>
+  <ul>
+    <li>RootView.onAppear で <code>refreshAllReminders(routines:)</code> を呼出</li>
+    <li>通知拒否後にユーザーが iOS 設定で許可 → 次回起動時に、塩漬けになっていた <code>reminderEnabled = true</code> の Routine が自動的にスケジュールされる</li>
+    <li>これにより「拒否したユーザーが後から許可した」という典型的なケースをコード変更なしで救える</li>
+  </ul>
+
+  <h2>セキュリティ・プライバシー</h2>
+  <ul>
+    <li>通知許可・ATT 許可状態は iOS 側で管理。アプリ側で保持するのは Routine の <code>reminderEnabled</code> / <code>reminderTime</code> のみ</li>
+    <li>外部送信は行わない（ローカル通知のみ）</li>
+    <li>ATT 拒否時は AdMob を non-personalized モードで初期化（広告は表示される）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0</td><td>2026-06-10</td><td>初版作成。Page 3.5 reminder の追加・TabView swipe 無効化・ATT 遅延発火を文書化。</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-10</footer>
+</div>
+</body>
+</html>

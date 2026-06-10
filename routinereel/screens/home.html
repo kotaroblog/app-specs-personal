@@ -29,10 +29,10 @@
   <h2>画面構成</h2>
   <ul class="kv-list">
     <li><span class="k">①上部バー</span><span class="v">アプリ名「RoutineReel」+ Pro バッジ（Pro時は表示のみ・無料時はPaywall起動）+ 設定アイコン</span></li>
-    <li><span class="k">②Heroセクション</span><span class="v">メインコピー「今日もルーティンを記録しよう。」+ 時間帯別感情コピー +「次に撮影」CTA</span></li>
-    <li><span class="k">③Quick Start</span><span class="v">横スクロール4プリセット（morning/night/workout/study）<strong>150×220pt カード</strong>（v1.0.6で画面幅2枚並びの見切れを解消）。タップで <strong>直接 RoutineEditView 起動</strong></span></li>
-    <li><span class="k">④マイルーティン</span><span class="v">縦並びカード（タップで confirmationDialog 起動）+ 新規ルーティン作成ボタン</span></li>
-    <li><span class="k">⑤最近の動画</span><span class="v">recentVideos が存在する場合のみ表示。横スクロールサムネ +「すべて見る」</span></li>
+    <li><span class="k">②Heroセクション</span><span class="v">メインコピー（streak 状況で 3 パターン分岐）+ サブコピー + streak / 累計バッジ +「次に撮影」CTA。詳細は <a href="#hero-streak">Hero streak メーター</a> 参照</span></li>
+    <li><span class="k">③Quick Start</span><span class="v">横スクロール4プリセット（<strong>朝5分ルーティン / 夜の整いルーティン / 筋トレ10分ルーティン / 集中45分ルーティン</strong>）<strong>150×220pt カード</strong>（v1.0.6で画面幅2枚並びの見切れを解消）。タップで <strong>直接 RoutineEditView 起動</strong>。v1.0 で <a href="#preset-rename">プリセット名を検索意図ワードへ刷新</a>（raw value は不変）</span></li>
+    <li><span class="k">④マイルーティン</span><span class="v">縦並びカード（タップで confirmationDialog 起動）+ 新規ルーティン作成ボタン。<strong>shotToday が true のときのみ chevron 手前に「今日 ✓」緑バッジ</strong>を表示</span></li>
+    <li><span class="k">⑤最近の動画</span><span class="v">recentVideos が存在する場合のみ表示。<strong>実サムネ画像（VideoStorageService.thumbnailURL）+ 中央 play.circle.fill オーバーレイ</strong>。タップで <a href="#recent-thumb">RecentVideoPlayerSheet</a> を fullScreenCover 起動。見出し横に <a href="#storage-meter">保存メーター</a></span></li>
     <li><span class="k">⑥下部</span><span class="v">バナー広告（無料時のみ）+ 5タブバー + 中央＋ボタン</span></li>
   </ul>
 
@@ -107,6 +107,76 @@
     <li><span class="k">処理後</span><span class="v"><code>pendingRoutineId = nil</code> でクリア</span></li>
   </ul>
 
+  <h2 id="hero-streak">Hero streak メーター（v1.0 / 2026-06-10）</h2>
+  <p>routines.flatMap(\$0.clips) を横断し、「今日 or 昨日に撮影記録あれば streak 継続、なければ 0 リセット」のルールで連続日数を算出してヒーロー上部に表示する。</p>
+  <h3>Routine モデル拡張</h3>
+  <ul class="kv-list">
+    <li><span class="k"><code>lastShotAt</code></span><span class="v">computed property。routine.clips.map(\.recordedAt).max()</span></li>
+    <li><span class="k"><code>shotToday</code></span><span class="v">computed property。Calendar.current.isDateInToday(lastShotAt)</span></li>
+    <li><span class="k"><code>currentStreak</code></span><span class="v">computed property。単一 Routine の連続日数</span></li>
+    <li><span class="k"><code>computeStreak(from:) static</code></span><span class="v">複数 Routine 横断 helper。DesignsHomeView の <code>overallStreak</code> / <code>totalVideoCount</code> / <code>overallHasShotToday</code> から呼び出す</span></li>
+  </ul>
+  <h3>表示パターン（3分岐）</h3>
+  <table>
+    <thead>
+      <tr><th>条件</th><th>バッジ</th><th>メインコピー</th><th>サブコピー</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>記録ゼロ（overallStreak == 0 かつ totalVideoCount == 0）</td><td>なし</td><td>今日もルーティンを記録しよう</td><td>5分だけでも。</td></tr>
+      <tr><td>streak ≥ 1 かつ overallHasShotToday == true</td><td>🔥 N日連続 / 📹 累計 N 本</td><td>連続 N 日、続いてます</td><td>今日もお疲れさま。</td></tr>
+      <tr><td>streak ≥ 1 かつ overallHasShotToday == false</td><td>🔥 N日連続 / 📹 累計 N 本</td><td>連続 N 日、続いてます</td><td>今日も1本、撮りましょう。</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="recent-thumb">最近の動画 サムネ実画像化（v1.0 / 2026-06-10）</h2>
+  <ul class="kv-list">
+    <li><span class="k">サムネ生成</span><span class="v"><code>VideoStorageService.thumbnailURL</code> から UIImage を読み込み 9:16 で表示</span></li>
+    <li><span class="k">オーバーレイ</span><span class="v">中央に <code>play.circle.fill</code> 白アイコン+影。暗い被写体でも視認可能</span></li>
+    <li><span class="k">タップ</span><span class="v"><code>fullScreenCover</code> で <code>RecentVideoPlayerSheet</code> 起動（黒地・9:16 fit・右上 X・AVPlayer 内部生成して即再生）</span></li>
+    <li><span class="k">フォールバック</span><span class="v">サムネファイル不在時は <code>play.fill</code> プレースホルダ</span></li>
+    <li><span class="k">構造リファクタ</span><span class="v">旧「ListView 遷移用 外側 Button」を撤去。<code>DesignsRecentVideoThumbnail</code> 自身が Button を持つため二重ネストを解消</span></li>
+    <li><span class="k">新規ファイル</span><span class="v"><code>Views/Common/RecentVideoPlayerSheet.swift</code></span></li>
+  </ul>
+
+  <h2 id="storage-meter">保存メーター + Paywall 連携（v1.0 / 2026-06-10）</h2>
+  <p>「最近の動画」見出し横に <code>storageMeterBadge</code> を表示し、無料ユーザーに保存上限を可視化する。</p>
+  <table>
+    <thead>
+      <tr><th>状態</th><th>表示</th><th>挙動</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Free（残あり）</td><td>「X/3」</td><td>タップで PaywallView 起動</td></tr>
+      <tr><td>Free（上限到達）</td><td>「3/3」ピンク強調</td><td>タップで PaywallView 起動</td></tr>
+      <tr><td>Pro</td><td>「∞ 保存」</td><td>非インタラクティブ</td></tr>
+    </tbody>
+  </table>
+  <ul class="kv-list">
+    <li><span class="k">上限値</span><span class="v"><code>VideoStorageService.freeStorageLimit = 3</code></span></li>
+    <li><span class="k">連動箇所</span><span class="v">SettingsView の <code>proUpgradeCard</code> 副題にも「アプリ内保存 X/3 ・記録をもっと自由に」を統合表示</span></li>
+    <li><span class="k">Paywall 表記</span><span class="v"><code>PaywallView.planButton</code> の年額バッジを「おすすめ」→ <code>SubscriptionManager.yearlySavingPercentage</code> で算出した「X% お得」へ動的化（算出不能時は「おすすめ」フォールバック）</span></li>
+  </ul>
+
+  <h2 id="preset-rename">Quick Start プリセット名刷新 + URL スキーム（v1.0 / 2026-06-10）</h2>
+  <h3>プリセット表示名（displayName）</h3>
+  <table>
+    <thead>
+      <tr><th>raw value（永続化キー・URL パス）</th><th>旧表記</th><th>新表記（検索意図ワード）</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>morning</code></td><td>モーニングルーティン</td><td>朝5分ルーティン</td></tr>
+      <tr><td><code>night</code></td><td>ナイトルーティン</td><td>夜の整いルーティン</td></tr>
+      <tr><td><code>workout</code></td><td>ワークアウト</td><td>筋トレ10分ルーティン</td></tr>
+      <tr><td><code>study</code></td><td>勉強ルーティン</td><td>集中45分ルーティン</td></tr>
+    </tbody>
+  </table>
+  <p>ステップ名も日本語化（wake up→起きる, skincare→スキンケア, go out→出発, warm up→ウォームアップ ほか）。raw value は永続化キー・URL scheme パスとして<strong>不変</strong>。</p>
+  <h3>URL スキーム消費フロー</h3>
+  <ul class="kv-list">
+    <li><span class="k">スキーム</span><span class="v"><code>routinereel://preset/&lt;rawValue&gt;</code>（project.yml + Info.plist の CFBundleURLTypes に登録）</span></li>
+    <li><span class="k">受け口</span><span class="v"><code>RoutineReelApp.body.onOpenURL</code> でパースして <code>AppSettings.pendingPresetRawValue</code> に格納</span></li>
+    <li><span class="k">消費</span><span class="v">DesignsHomeView の <code>.onAppear</code> および <code>.onChange(of: settings.pendingPresetRawValue)</code> で <code>consumePendingPresetIfAny</code> 実行。同名 Routine が既に存在すれば再利用、無ければ新規作成し <code>activeSession</code> を起動（fresh start / 既存セッション 両対応）</span></li>
+  </ul>
+
   <h2>マイクロアニメーション</h2>
   <ul class="kv-list">
     <li><span class="k">Hero フェードイン</span><span class="v">opacity 0→1 + offset 6→0 を easeOut 0.45秒、感情コピーは 0.15秒遅延、CTA は 0.25秒遅延の spring</span></li>
@@ -121,7 +191,6 @@
 
   <h2>v1.1 で予定される改善</h2>
   <ul>
-    <li><strong>連続日数の実データ算出</strong> — v1.0 で削除したストリーク表示の復活（実データベース）</li>
     <li><strong>DesignsHomeView の200行ルール準拠</strong> — 現在605行。サブView分割で対応予定</li>
     <li><strong>マイルーティン「すべて見る」展開画面</strong> — 現在は3件まで表示で省略</li>
     <li><strong>DesignsRecordPreviewView の本番接続</strong> — 撮影画面の完全リデザイン</li>
@@ -134,6 +203,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.0</td><td>2026-06-10</td><td>6施策反映（#1-#7）: Hero streak メーター（🔥連続/📹累計バッジ・3パターン分岐）/ マイルーティンに「今日 ✓」バッジ / 最近の動画サムネ実画像化 + RecentVideoPlayerSheet 起動 + 外側Button二重ネスト解消 / 「最近の動画」見出し横に保存メーター（X/3・上限ピンク強調・Paywall起動）/ Quick Start プリセット名を検索意図ワードへ刷新（朝5分/夜の整い/筋トレ10分/集中45分、raw value 不変）+ URL スキーム <code>routinereel://preset/&lt;rawValue&gt;</code> 受け口追加 / Paywall 年額バッジを「X% お得」動的化</td></tr>
       <tr><td>v1.0.6</td><td>2026-05-25</td><td>Quick Start カードサイズ 175×240 → 150×220（文字見切れ解消）/ マイルーティンの⋯メニュー二重Button問題を解消（Button → contentShape + onTapGesture へ変更）</td></tr>
       <tr><td>v1.0.3</td><td>2026-05-21</td><td>削除ボタン追加 / Quick Start プリセット直接遷移 / タブ動作（ホーム以外モーダル起動）/ モック削除（7日連続・時間帯別挨拶）</td></tr>
       <tr><td>v1.0.2</td><td>2026-05-21</td><td>アクセシビリティラベル追加 / クリップタブUX改善（ルーティン無し時何もしない）</td></tr>
@@ -141,7 +211,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-25</footer>
+  <footer class="site-footer">最終更新: 2026-06-10</footer>
 </div>
 </body>
 </html>

@@ -30,7 +30,7 @@
     <li><span class="k">①閉じるボタン</span><span class="v">右上 30pt 円・opacity 0.6・存在感弱め</span></li>
     <li><span class="k">②Hero</span><span class="v">メインコピー「毎日の記録を、もっと心地よく。」+ サブコピー「透かしなし・無制限保存・広告非表示」</span></li>
     <li><span class="k">③特典リスト</span><span class="v">4項目・SF Symbols（infinity / sparkles / wand.and.stars / square.and.arrow.up）+ soft warm gradient 円背景</span></li>
-    <li><span class="k">④プラン選択</span><span class="v">年額（おすすめ・pink→orange グラデバッジ）+ 月額。Card セレクトUI</span></li>
+    <li><span class="k">④プラン選択</span><span class="v">年額（「X% お得」動的バッジ・pink→orange グラデ）+ 月額。Card セレクトUI</span></li>
     <li><span class="k">⑤購入CTA</span><span class="v">「7日間無料で試す」/「月額プランで始める」 + 補足「いつでもキャンセル可能」</span></li>
     <li><span class="k">⑥フッター</span><span class="v">「あとで」「購入を復元」（小さく控えめ）</span></li>
   </ul>
@@ -54,7 +54,24 @@
     <li><span class="k">月額</span><span class="v">¥480（<code>com.happyboy1002.RoutineReel.monthly</code>）</span></li>
     <li><span class="k">年額</span><span class="v">¥3,800・7日間無料トライアル付（<code>com.happyboy1002.RoutineReel.yearly</code>）</span></li>
     <li><span class="k">月換算（年額）</span><span class="v">¥317（34%オフ訴求）</span></li>
-    <li><span class="k">デフォルト選択</span><span class="v">年額（おすすめバッジ付き）</span></li>
+    <li><span class="k">デフォルト選択</span><span class="v">年額（「X% お得」バッジ付き）</span></li>
+  </ul>
+
+  <h2>年額バッジ動的化（X% お得）</h2>
+  <p>従来「おすすめ」固定だった年額カードのバッジを、月額×12 と年額の差分から算出した割引率（整数%）で動的表示する。</p>
+  <ul class="kv-list">
+    <li><span class="k">算出元</span><span class="v"><code>SubscriptionManager.yearlySavingPercentage</code></span></li>
+    <li><span class="k">計算式</span><span class="v">(月額.price × 12 − 年額.price) ÷ (月額.price × 12) × 100 を整数化</span></li>
+    <li><span class="k">計算例</span><span class="v">月額¥480×12=¥5,760 vs 年額¥3,800 → (5,760−3,800)/5,760×100 = <strong>34%</strong></span></li>
+    <li><span class="k">表示文言</span><span class="v">「X% お得」（例: 「34% お得」）</span></li>
+    <li><span class="k">フォールバック</span><span class="v">月額 / 年額の Product 取得不能時（products 未取得時の保険）は「おすすめ」に戻す</span></li>
+    <li><span class="k">バッジ装飾</span><span class="v">既存の pink→orange グラデーション・shape は維持</span></li>
+  </ul>
+
+  <h3>planSubtitle（既存仕様維持）</h3>
+  <ul class="kv-list">
+    <li><span class="k">年額</span><span class="v">「7日間無料、以降 X/月」（X = <code>SubscriptionManager.yearlyMonthlyPrice</code>）</span></li>
+    <li><span class="k">月額</span><span class="v">「月額プラン」</span></li>
   </ul>
 
   <h2>CTA仕様（Home CTA と統一）</h2>
@@ -70,7 +87,7 @@
   <h2>アクセシビリティ</h2>
   <ul>
     <li>閉じるボタン: <code>accessibilityLabel("閉じる")</code></li>
-    <li>プラン選択: <code>"年額プラン ¥3,800、おすすめ"</code> 形式の読み上げ + <code>.isSelected</code> trait</li>
+    <li>プラン選択: <code>"年額プラン ¥3,800、34% お得"</code> 形式の読み上げ（割引率はバッジ文言と一致）+ <code>.isSelected</code> trait</li>
     <li>購入CTA: <code>accessibilityLabel(purchaseButtonLabel) + accessibilityHint("いつでもキャンセル可能")</code></li>
     <li>あとで / 購入を復元: それぞれ専用ラベル</li>
   </ul>
@@ -91,12 +108,13 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.0.3</td><td>2026-06-10</td><td>年額カードのバッジを「おすすめ」固定 → 「X% お得」動的表示に変更（<code>SubscriptionManager.yearlySavingPercentage</code>）。Product 取得不能時は「おすすめ」フォールバック。planSubtitle 仕様は維持。</td></tr>
       <tr><td>v1.0.2</td><td>2026-05-21</td><td>BGM特典削除に伴いサブコピー・特典行を更新（全BGM→全フィルタ・全フォント）+ アクセシビリティラベル追加</td></tr>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成（Home UI統一・完全リデザイン）</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-21</footer>
+  <footer class="site-footer">最終更新: 2026-06-10</footer>
 </div>
 </body>
 </html>

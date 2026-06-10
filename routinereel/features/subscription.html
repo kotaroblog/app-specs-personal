@@ -124,6 +124,32 @@
     <li><span class="k">Products.storekit</span><span class="v">Resources/StoreKit/Products.storekit でテスト時のローカル商品定義</span></li>
     <li><span class="k">isPremium判定</span><span class="v">subscription.transactions に有効な購読が含まれるか + DEBUG時は debugProEnabled</span></li>
     <li><span class="k">復元</span><span class="v">PaywallView の「購入を復元」ボタンから restorePurchases() 起動</span></li>
+    <li><span class="k">yearlySavingPercentage</span><span class="v">月額×12 vs 年額の割引率を整数で返す computed property。例: 月¥480×12=¥5,760 vs 年¥3,800 → (5760-3800)/5760×100 = 34。PaywallView の年額バッジ「X% お得」に動的反映、計算不能時は「おすすめ」フォールバック</span></li>
+  </ul>
+
+  <h2>Pro 訴求改善（2026-06-10 反映）</h2>
+
+  <h3>ホーム + 設定の保存メーター可視化</h3>
+  <ul class="kv-list">
+    <li><span class="k">DesignsHomeView</span><span class="v">「最近の動画」見出し横に storageMeterBadge を配置。Free:「X/3」/ Pro:「∞ 保存」。Free の上限到達時はピンク強調＋タップで PaywallView 起動</span></li>
+    <li><span class="k">SettingsView</span><span class="v">proUpgradeCard の副題を「アプリ内保存 X/3 ・記録をもっと自由に」へ統合し、Pro 価値を常時可視化</span></li>
+  </ul>
+
+  <h3>Paywall 年額バッジ「X% お得」動的化</h3>
+  <ul class="kv-list">
+    <li><span class="k">PaywallView.planButton</span><span class="v">年額の「おすすめ」固定文言を <code>yearlySavingPercentage</code> を用いた「X% お得」へ差し替え。価格未取得などで計算不能な場合は「おすすめ」にフォールバック</span></li>
+  </ul>
+
+  <h3>シェアトリガーのレビュー依頼（#2 連動）</h3>
+  <ul class="kv-list">
+    <li><span class="k">ReviewRequestService.onSharedToSNS</span><span class="v">シェアの「実行成功」（外部アプリ open() success / ShareSheet completed=true）時のみ発火。タップだけでは呼ばない</span></li>
+    <li><span class="k">30日ガード</span><span class="v">他のレビュー依頼トリガーと共有。iOS 側の年3回制限が二重安全弁として機能</span></li>
+  </ul>
+
+  <h3>翌日復帰通知（#2 連動）</h3>
+  <ul class="kv-list">
+    <li><span class="k">ReminderService.scheduleSharePromptNotification</span><span class="v">シェア成功の翌日 10:00 にローカル通知。<code>share-prompt</code> prefix で識別し pending + delivered 双方の重複をクリーンアップ</span></li>
+    <li><span class="k">許可ステータス</span><span class="v"><code>.authorized</code> または <code>.provisional</code> を許可。未許可時はサイレントスキップ</span></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -133,10 +159,11 @@
     </thead>
     <tbody>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成。BGM削除後の特典4項目、v1.1値上げ計画、競合比較を確立</td></tr>
+      <tr><td>v1.1</td><td>2026-06-10</td><td>#7 反映: <code>yearlySavingPercentage</code> 新設で Paywall 年額バッジを「X% お得」動的化（フォールバック「おすすめ」）。ホーム「最近の動画」見出し横と SettingsView Pro セクションに保存メーター（X/3・∞ 保存）を統合。#2 連動で <code>ReviewRequestService.onSharedToSNS</code>（シェア実行成功時のみ、30日ガード共用）と <code>ReminderService.scheduleSharePromptNotification</code>（翌日10:00、share-prompt prefix で重複防止、.authorized/.provisional 許可）を追加</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-21</footer>
+  <footer class="site-footer">最終更新: 2026-06-10</footer>
 </div>
 </body>
 </html>

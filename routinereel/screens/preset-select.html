@@ -32,18 +32,34 @@
     <li><strong>自分で作成</strong>: ダッシュ枠 + accent orange の独立ボタン</li>
   </ol>
 
-  <h2>プリセットカード</h2>
+  <h2>プリセットカード（v1.0.7 検索意図ワード化 + ステップ日本語化）</h2>
   <table>
     <thead>
-      <tr><th>絵文字</th><th>名前</th><th>ステップ</th></tr>
+      <tr><th>絵文字</th><th>raw value</th><th>displayName</th><th>ステップ</th></tr>
     </thead>
     <tbody>
-      <tr><td>☀️</td><td>モーニングルーティン</td><td>wake up → skincare → outfit → coffee → go out</td></tr>
-      <tr><td>🌙</td><td>ナイトルーティン</td><td>back home → bath → skincare → reading → sleep</td></tr>
-      <tr><td>💪</td><td>ワークアウト</td><td>warm up → training → stretch → protein → shower</td></tr>
-      <tr><td>📚</td><td>勉強ルーティン</td><td>prep → study → break → study → review</td></tr>
+      <tr><td>☀️</td><td><code>morning</code></td><td>朝5分ルーティン</td><td>起きる → スキンケア → 着替え → コーヒー → 出発</td></tr>
+      <tr><td>🌙</td><td><code>night</code></td><td>夜の整いルーティン</td><td>帰宅 → 入浴 → スキンケア → 読書 → 就寝</td></tr>
+      <tr><td>💪</td><td><code>workout</code></td><td>筋トレ10分ルーティン</td><td>ウォームアップ → トレーニング → ストレッチ → プロテイン → シャワー</td></tr>
+      <tr><td>📚</td><td><code>study</code></td><td>集中45分ルーティン</td><td>準備 → 学習 → 休憩 → 学習 → 復習</td></tr>
     </tbody>
   </table>
+
+  <h3>raw value 不変ポリシー</h3>
+  <ul class="kv-list">
+    <li><span class="k">raw value</span><span class="v"><code>morning</code> / <code>night</code> / <code>workout</code> / <code>study</code> は永続化キー兼 URL スキームパスとして不変</span></li>
+    <li><span class="k">表示文言</span><span class="v">displayName / ステップ名はユーザー向け文言として日本語化（raw value とは分離）</span></li>
+    <li><span class="k">URL スキーム</span><span class="v"><code>routinereel://preset/&lt;rawValue&gt;</code> で外部から起動可能（例: <code>routinereel://preset/morning</code>）</span></li>
+  </ul>
+
+  <h3>ASO 観点（検索意図ワード化）</h3>
+  <p>v1.0.7 で displayName を検索意図ワードに刷新。ターゲットの検索行動「朝活したい」「夜にリラックスしたい」「短時間で筋トレしたい」「集中して勉強したい」をプリセット名で直接吸収する設計。</p>
+  <ul class="kv-list">
+    <li><span class="k">朝5分ルーティン</span><span class="v">「朝活」「朝ルーティン」「5分」検索を吸収</span></li>
+    <li><span class="k">夜の整いルーティン</span><span class="v">「夜ルーティン」「整う」「ナイトケア」検索を吸収</span></li>
+    <li><span class="k">筋トレ10分ルーティン</span><span class="v">「筋トレ」「10分」「ホームトレ」検索を吸収</span></li>
+    <li><span class="k">集中45分ルーティン</span><span class="v">「集中」「勉強」「45分」「ポモドーロ」検索を吸収</span></li>
+  </ul>
 
   <h3>カード仕様</h3>
   <ul class="kv-list">
@@ -78,7 +94,7 @@ private func presetTitleJa(_ preset: RoutinePreset) -> String { ... }
 
 // 新: RoutinePreset 直下のプロパティ
 preset.emoji         // "☀️"
-preset.displayName   // "モーニングルーティン"</code></pre>
+preset.displayName   // "朝5分ルーティン"  (v1.0.7 で検索意図ワードに刷新)</code></pre>
 
   <h2>v1.0 変更履歴</h2>
   <table>
@@ -86,13 +102,14 @@ preset.displayName   // "モーニングルーティン"</code></pre>
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.0.7</td><td>2026-06-10</td><td>displayName を検索意図ワード化（朝5分／夜の整い／筋トレ10分／集中45分）+ ステップ名を英語→日本語化（起きる／スキンケア／着替え／コーヒー／出発 ほか）。raw value (morning/night/workout/study) は永続化キー兼 URL スキームパスとして不変。<code>routinereel://preset/&lt;rawValue&gt;</code> 経由の外部起動に対応。</td></tr>
       <tr><td>v1.0.6</td><td>2026-05-25</td><td>ローカルヘルパー削除 + RoutinePreset.emoji / displayName 直接参照に整理</td></tr>
       <tr><td>v1.0.5</td><td>2026-05-25</td><td>全面 Home UI 統一: 背景 black → warm white / タイトル英語「pick your routine.」→ 日本語「ルーティンを選ぶ」 / プリセット名日本語化 + 絵文字バッジ / 「custom」→「自分で作成」 / カード化 + designsCardShadow</td></tr>
       <tr><td>v1.0</td><td>初版</td><td>プリセット4種選択UI</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-25</footer>
+  <footer class="site-footer">最終更新: 2026-06-10</footer>
 </div>
 </body>
 </html>

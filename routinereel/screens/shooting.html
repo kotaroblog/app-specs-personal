@@ -35,13 +35,55 @@
   <h2>テロップ位置（v1.0で大幅修正・2段階）</h2>
   <p><strong>中央 → 画面下部 1/4 左下セーフゾーン</strong>へ移動。被写体回避 + TikTok/Reels UI（右下のいいね・コメント・シェア）との衝突回避。</p>
   <ul class="kv-list">
-    <li><span class="k">配置方法</span><span class="v">VStack { Spacer(); VStack(時刻 + ステップ名 縦並び・左寄せ) } + <code>.padding(.bottom, geo.size.height * 0.22)</code></span></li>
+    <li><span class="k">配置方法</span><span class="v">VStack { Spacer(); VStack(時刻 + ステップ名 縦並び・左寄せ) } + <code>.padding(.bottom, SceneLabelLayout.bottomPadding(cardHeight:))</code></span></li>
     <li><span class="k">ステップ名（メイン）</span><span class="v">22pt</span></li>
     <li><span class="k">時刻（サブ・ステップ名の上）</span><span class="v">15pt・opacity 0.85（v1.0で右下→左下ステップ名の上に統合）</span></li>
     <li><span class="k">時刻表示</span><span class="v">AppSettings.timestampFormat（24h / 12h / <strong>非表示（v1.0デフォルト）</strong>）</span></li>
-    <li><span class="k">完成動画との整合</span><span class="v">VideoCompositionService 側も <code>renderSize.height * 0.22</code>・左下配置・フォント係数 0.034 で完全一致</span></li>
+    <li><span class="k">完成動画との整合</span><span class="v">VideoCompositionService 側も <code>renderHeight * 22%</code>・左下配置・フォント係数 0.034 で WYSIWYG 完全一致</span></li>
   </ul>
   <p><strong>v1.0変更前</strong>: 右下に時刻 + 左下にステップ名の並列配置 → 右下UI衝突懸念 → 左下に統合（時刻が上、ステップ名が下）</p>
+
+  <h2>SceneLabelLayout 単一ソース化（2026-06-10）</h2>
+  <p>撮影プレビュー（ShootingView / SingleStepShootingView）と完成動画（VideoCompositionService）の本編テロップを、配置比率・サイズ比率・行折り返し挙動・descent slack 補正まで含めて<strong>単一の <code>SceneLabelLayout</code> enum</strong> に集約。プレビューと書き出しの WYSIWYG を達成。</p>
+  <ul class="kv-list">
+    <li><span class="k">実装ファイル</span><span class="v"><code>Views/Common/SceneLabelLayout.swift</code></span></li>
+    <li><span class="k">配置比率</span><span class="v">leadingRatio = 0.05 / bottomRatio = 0.22 / maxWidthRatio = 0.55 / lineSpacingRatio = 0.008</span></li>
+    <li><span class="k">サイズ比率</span><span class="v">stepNameFontSizeRatio = 0.034 / timeFontSizeRatio = 0.024</span></li>
+    <li><span class="k">メトリクス補正</span><span class="v">lineHeightFactor = 1.17 / textHeightFactor = 1.4 / descentSlackFactor ≒ 0.23</span></li>
+    <li><span class="k">行数上限</span><span class="v">maxLines = 2（プレビュー / 動画書き出し共通）</span></li>
+    <li><span class="k">SwiftUI 用ヘルパ</span><span class="v"><code>leadingPadding</code> / <code>bottomPadding</code> / <code>maxWidth</code> / <code>lineSpacing</code></span></li>
+    <li><span class="k">CALayer 用ヘルパ</span><span class="v"><code>layerOriginX</code> / <code>layerOriginY(fontSize:)</code> / <code>layerTextWidth</code> / <code>layerLineSpacing</code></span></li>
+  </ul>
+
+  <h3>撮影プレビュー位置を 22% に統一</h3>
+  <ul class="kv-list">
+    <li><span class="k">旧</span><span class="v"><code>cardHeight * 7%</code>（プレビューと動画でズレ）</span></li>
+    <li><span class="k">新</span><span class="v"><code>SceneLabelLayout.bottomPadding(cardHeight:) = cardHeight * 22%</code></span></li>
+    <li><span class="k">効果</span><span class="v">完成動画の本編テロップ位置（<code>renderHeight * 22%</code>）と一致 → WYSIWYG 達成</span></li>
+  </ul>
+
+  <h3>長文ステップ名の折り返し挙動を統一</h3>
+  <ul class="kv-list">
+    <li><span class="k">SwiftUI Text</span><span class="v"><code>.lineLimit(SceneLabelLayout.maxLines)</code> + <code>.truncationMode(.tail)</code></span></li>
+    <li><span class="k">CATextLayer</span><span class="v"><code>isWrapped = true</code> + <code>truncationMode = .end</code> + <code>frame.height = singleLineHeight × actualLineCount</code></span></li>
+    <li><span class="k">行数測定</span><span class="v"><code>actualStepNameLineCount(text:renderSize:fontName:)</code> で <code>NSAttributedString.boundingRect</code> により実行数測定（最大 maxLines にクランプ）</span></li>
+  </ul>
+
+  <h3>descent slack 補正</h3>
+  <ul class="kv-list">
+    <li><span class="k">課題</span><span class="v">CATextLayer は top-anchored 描画でグリフ下端が frame 下端より約 <code>fontSize * 0.23</code> 浮く</span></li>
+    <li><span class="k">対応</span><span class="v"><code>layerOriginY(fontSize:)</code> は <code>base - fontSize * descentSlackFactor</code> で下方向に補正</span></li>
+    <li><span class="k">効果</span><span class="v">SwiftUI Text の intrinsic 高さと概ね揃い、プレビュー / 動画の見え方がほぼ一致</span></li>
+  </ul>
+
+  <h3>SingleStepShootingView の追従</h3>
+  <ul class="kv-list">
+    <li><span class="k">底面グラデーション追加</span><span class="v">ShootingView と同じグラデーションを敷設（22% 化でテロップが暗部に乗る副作用の対応）</span></li>
+    <li><span class="k">#Preview マクロ</span><span class="v">規約準拠で追加</span></li>
+  </ul>
+
+  <h3>残課題（既知）</h3>
+  <p>撮影フローには <strong>ShootingView</strong>（シーケンス撮影）と <strong>SingleStepShootingView</strong>（単発撮影）の 2 系統が残存している。レイアウト面は <code>SceneLabelLayout</code> 集約で揃ったが、撮影ロジック本体の統合は <strong>P0-1 / P0-2 として別タスクで実施予定</strong>。</p>
 
   <h2>REC インジケーター（呼吸する赤）</h2>
   <ul class="kv-list">
@@ -127,6 +169,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.0.5</td><td>2026-06-10</td><td>SceneLabelLayout 単一ソース化（配置・サイズ比率・descent slack 補正を集約）/ 撮影プレビュー位置を 7%→22% に統一して完成動画と WYSIWYG 達成 / 長文ステップ名の折り返しを SwiftUI Text / CATextLayer 両方で maxLines=2 に統一 / SingleStepShootingView に底面グラデーションと #Preview を追加（commit 35c6118・a7f8ee2）</td></tr>
       <tr><td>v1.0.4</td><td>2026-05-21</td><td>テロップ時刻を右下→左下ステップ名の上に統合（TikTok/Reels UI衝突回避）/ タイムスタンプデフォルトをOFFに変更</td></tr>
       <tr><td>v1.0.3</td><td>2026-05-21</td><td>BGM機能削除に伴う関連UIなし（既に試聴UI未実装）</td></tr>
       <tr><td>v1.0.2</td><td>2026-05-21</td><td>ボタン名統一（skip→次へ、next step→完了 →、flip→反転）/ テロップ位置を中央→画面下部1/4セーフゾーンへ</td></tr>
@@ -135,7 +178,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-21</footer>
+  <footer class="site-footer">最終更新: 2026-06-10</footer>
 </div>
 </body>
 </html>

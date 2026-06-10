@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>SNS シェアフロー - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">← Felix App Specs</a> / <a href="../">RoutineReel</a> / SNS シェアフロー</div>
+
+  <header class="site-header">
+    <h1>SNS シェアフロー</h1>
+    <p>ExportComplete から TikTok/Reels 1tap 直起動 + 翌日復帰通知</p>
+  </header>
+
+  <h2>1. 概要</h2>
+  <p>
+    「動画作成 → 投稿」までの心理的摩擦を最小化するため、ExportCompleteView から TikTok / Instagram Reels を
+    <strong>1tap で直起動</strong>する。シェア成功の瞬間を満足ピークと捉え、同タイミングで
+    <strong>レビュー依頼</strong>と<strong>翌日復帰通知</strong>を仕込むことで、継続率とアプリ評価の双方を底上げする。
+  </p>
+  <ul class="kv-list">
+    <li><span class="k">対象画面</span><span class="v"><code>Views/Export/ExportCompleteView.swift</code></span></li>
+    <li><span class="k">関連サービス</span><span class="v"><code>ReminderService</code> / <code>ReviewRequestService</code> / <code>InterstitialAdManager</code></span></li>
+    <li><span class="k">関連 commit</span><span class="v">8e00351 / 9322fd7</span></li>
+  </ul>
+
+  <h2>2. ボタン構成</h2>
+  <p>視線の落ちる順に「主役 → 副役 → 脇役 → 完了」の 4 ボタンを縦に配置。主役以外はトーンを落とし、主役の TikTok を最も目立たせる。</p>
+  <table>
+    <thead>
+      <tr><th>役割</th><th>内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>主役</td><td>「TikTok で投稿」（ピンクオレンジグラデ）</td></tr>
+      <tr><td>副役</td><td>「Instagram Reels で投稿」（border）</td></tr>
+      <tr><td>脇役</td><td>「その他のアプリでシェア」（テキストリンク）</td></tr>
+      <tr><td>完了</td><td>「完了」（最下部、<code>InterstitialAdManager</code> 経由でホーム復帰）</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. URL スキーム順序</h2>
+  <p>各 SNS で公式アプリ未インストール時にも自然にフォールバックする多段構成。</p>
+  <table>
+    <thead>
+      <tr><th>遷移先</th><th>1段目</th><th>2段目</th><th>3段目（fallback）</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>TikTok</td><td><code>tiktok://</code></td><td><code>snssdk1233://</code></td><td>ShareSheet</td></tr>
+      <tr><td>Instagram Reels</td><td><code>instagram://library</code></td><td><code>instagram://</code></td><td>ShareSheet</td></tr>
+    </tbody>
+  </table>
+  <p>
+    iOS 14 以降、<code>canOpenURL</code> 検知には <code>Info.plist</code> の
+    <code>LSApplicationQueriesSchemes</code> 登録が必要。以下 4 種を必ず登録する。
+  </p>
+  <ul>
+    <li><code>tiktok</code></li>
+    <li><code>snssdk1233</code></li>
+    <li><code>instagram</code></li>
+    <li><code>instagram-stories</code></li>
+  </ul>
+
+  <h2>4. ハッシュタグ先回りコピー</h2>
+  <p>
+    投稿アプリ側でユーザーに手入力させない設計。ExportCompleteView 到達時点でハッシュタグを
+    自動でクリップボードに格納し、見出しテキストで「コピー済み」事実を明示する。
+  </p>
+  <ul class="kv-list">
+    <li><span class="k">発火タイミング</span><span class="v"><code>onAppear</code> で <code>copyHashtagsToPasteboard()</code></span></li>
+    <li><span class="k">見出し文言</span><span class="v">「投稿時に使うハッシュタグ（コピー済み・投稿画面で長押し→ペースト）」</span></li>
+    <li><span class="k">冪等性</span><span class="v">各シェアボタンタップ時にも再コピー（クリップボードが上書きされていても確実に直前状態にする）</span></li>
+  </ul>
+
+  <h2>5. notifyShareTriggered の発火条件</h2>
+  <p>
+    シェア成立 = 投稿アプリへ確実に遷移できた、あるいは ShareSheet で完了したケースのみカウントする。
+    キャンセル時に発火させると過大評価になるため、以下条件を厳格に分ける。
+  </p>
+  <table>
+    <thead>
+      <tr><th>導線</th><th>発火条件</th><th>label</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>TikTok</td><td><code>UIApplication.open()</code> success コールバック内</td><td>「TikTok」</td></tr>
+      <tr><td>Instagram Reels</td><td><code>UIApplication.open()</code> success コールバック内</td><td>「Reels」</td></tr>
+      <tr><td>ShareSheet</td><td><code>completionWithItemsHandler</code> の <code>completed=true</code></td><td>「ShareSheet」</td></tr>
+      <tr><td>キャンセル</td><td>発火しない</td><td>―</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6. ShareSheet ラッパー</h2>
+  <p>
+    既存の <code>ShareSheet</code> SwiftUI ラッパーに <code>onCompletion</code> クロージャを追加。
+    <code>UIActivityViewController.completionWithItemsHandler</code> を bridge し、
+    上位 View で完了 / キャンセルを区別できるようにする。
+  </p>
+  <pre><code>struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    var onCompletion: ((Bool) -> Void)? = nil
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let vc = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        vc.completionWithItemsHandler = { _, completed, _, _ in
+            onCompletion?(completed)
+        }
+        return vc
+    }
+}</code></pre>
+
+  <h2>7. レビュー依頼</h2>
+  <p>
+    シェア完了は感情ピークとして最適。<code>ReviewRequestService.onSharedToSNS()</code> を発火条件と同タイミングで呼び出す。
+  </p>
+  <ul>
+    <li>30 日ガードを他導線（撮影回数ベース等）と<strong>共用</strong>し、同一ユーザーへの過剰露出を防止</li>
+    <li>iOS の <code>SKStoreReviewController.requestReview</code> はシステムが年間 3 回までしか出さない点を前提に組む</li>
+  </ul>
+
+  <h2>8. 翌日復帰通知</h2>
+  <p>
+    投稿直後の満足感を翌日に持ち越し、「もう 1 本撮る」習慣化を促す。
+  </p>
+  <ul class="kv-list">
+    <li><span class="k">メソッド</span><span class="v"><code>ReminderService.scheduleSharePromptNotification()</code></span></li>
+    <li><span class="k">発火時刻</span><span class="v">翌日 10:00</span></li>
+    <li><span class="k">識別子 prefix</span><span class="v"><code>share-prompt</code></span></li>
+    <li><span class="k">重複防止</span><span class="v">pending + delivered 両方を事前クリーンアップしてから登録</span></li>
+    <li><span class="k">許可ステータス</span><span class="v"><code>.authorized</code> または <code>.provisional</code> を許可とみなす</span></li>
+  </ul>
+  <pre><code>// 重複防止の擬似コード
+let center = UNUserNotificationCenter.current()
+center.removePendingNotificationRequests(withIdentifiers: [sharePromptId])
+center.removeDeliveredNotifications(withIdentifiers: [sharePromptId])
+// その後 add(request) で登録</code></pre>
+
+  <h2>9. URL スキーム経由のディープリンク（#6 連動）</h2>
+  <p>
+    外部メディア（TikTok bio / Qiita / note）から特定プリセットへ直送する集客導線。
+    SNS シェアフローと対をなすインバウンド経路として運用する。
+  </p>
+  <ul class="kv-list">
+    <li><span class="k">URL 形式</span><span class="v"><code>routinereel://preset/&lt;rawValue&gt;</code></span></li>
+    <li><span class="k">rawValue 例</span><span class="v"><code>morning</code> / <code>night</code> / <code>workout</code> / <code>study</code></span></li>
+    <li><span class="k">処理経路</span><span class="v"><code>RoutineReelApp.onOpenURL</code> → <code>AppSettings.pendingPresetRawValue</code> → <code>DesignsHomeView.consumePendingPresetIfAny</code></span></li>
+    <li><span class="k">既存ルーティン同名再利用</span><span class="v">同名 Routine があれば再利用、なければ新規作成して即 activeSession へ</span></li>
+    <li><span class="k">起動状態の両対応</span><span class="v">fresh start（<code>onAppear</code>）・既存セッション（<code>onChange</code>）の両方をフック</span></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0</td><td>2026-06-10</td><td>初版作成。ExportCompleteView の 4 ボタン構成・URL スキーム多段フォールバック・翌日復帰通知・ディープリンク受け口を定義。</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-10</footer>
+</div>
+</body>
+</html>

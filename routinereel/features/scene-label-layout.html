@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>SceneLabel レイアウト（WYSIWYG 統一） - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> &gt; <a href="../">RoutineReel</a> &gt; SceneLabel レイアウト</div>
+
+  <header class="site-header">
+    <h1>SceneLabel レイアウト（WYSIWYG 統一）</h1>
+    <p>撮影プレビュー（SwiftUI）と完成動画（CALayer）のテロップ配置を単一ソース化</p>
+  </header>
+
+  <h2>1. 設計意図</h2>
+  <p>
+    撮影中にユーザーが見ているテロップ位置と、書き出し後の MP4 のテロップ位置を完全一致（WYSIWYG）させることが目的。
+    プレビューは SwiftUI（左上原点・point 単位）、書き出しは AVFoundation / CALayer（左下原点・pixel 単位）と座標系が異なるため、
+    両系統に共通の比率定数と、各系統用のヘルパで差分を吸収する。
+  </p>
+  <ul class="kv-list">
+    <li><span class="k">単一ソース</span><span class="v"><code>App/SceneLabelLayout.swift</code>（enum）</span></li>
+    <li><span class="k">使用元（SwiftUI）</span><span class="v">ShootingView / SingleStepShootingView 内の SceneLabel</span></li>
+    <li><span class="k">使用元（CALayer）</span><span class="v">VideoCompositionService の makeStepNameLayer / makeTimeLayer</span></li>
+    <li><span class="k">本編テロップ縦位置</span><span class="v">下端から 22%（プレビュー・本編で統一）</span></li>
+  </ul>
+
+  <h2>2. SceneLabelLayout enum 定数</h2>
+  <table>
+    <thead>
+      <tr><th>名前</th><th>値</th><th>意図</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>leadingRatio</code></td><td>0.05</td><td>左端からの安全マージン</td></tr>
+      <tr><td><code>bottomRatio</code></td><td>0.22</td><td>TikTok 右下UI / 下部CTAを避ける上げ目位置</td></tr>
+      <tr><td><code>maxWidthRatio</code></td><td>0.55</td><td>1〜2 行で収まる折り返し幅</td></tr>
+      <tr><td><code>lineSpacingRatio</code></td><td>0.008</td><td>時刻 ⇔ ステップ名の行間</td></tr>
+      <tr><td><code>stepNameFontSizeRatio</code></td><td>0.034</td><td>ステップ名サイズ</td></tr>
+      <tr><td><code>timeFontSizeRatio</code></td><td>0.024</td><td>時刻サイズ（ステップ名の 70%）</td></tr>
+      <tr><td><code>lineHeightFactor</code></td><td>1.17</td><td>SwiftUI Text intrinsic 高さの fontSize 倍率</td></tr>
+      <tr><td><code>textHeightFactor</code></td><td>1.4</td><td>CATextLayer frame.height の fontSize 倍率</td></tr>
+      <tr><td><code>descentSlackFactor</code></td><td>≒ 0.23</td><td><code>textHeightFactor - lineHeightFactor</code>。CATextLayer の下端浮きを補正</td></tr>
+      <tr><td><code>maxLines</code></td><td>2</td><td>折り返し上限</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. SwiftUI 用ヘルパ</h2>
+  <p>カードサイズ（プレビューの矩形）を基準に、SwiftUI モディファイアにそのまま渡せる値を返す。</p>
+  <ul class="kv-list">
+    <li><span class="k">leadingPadding(cardWidth:)</span><span class="v"><code>.padding(.leading)</code> に渡す値</span></li>
+    <li><span class="k">bottomPadding(cardHeight:)</span><span class="v"><code>.padding(.bottom)</code> に渡す値</span></li>
+    <li><span class="k">maxWidth(cardWidth:)</span><span class="v"><code>SceneLabel(maxWidth:)</code> に渡す折り返し幅</span></li>
+    <li><span class="k">lineSpacing(cardHeight:)</span><span class="v"><code>VStack(spacing:)</code> に渡す行間</span></li>
+  </ul>
+  <pre><code>// ShootingView / SingleStepShootingView 共通
+SceneLabel(
+    stepName: step.name,
+    time: timeText,
+    stepNameFontSize: cardHeight * SceneLabelLayout.stepNameFontSizeRatio,
+    timeFontSize: cardHeight * SceneLabelLayout.timeFontSizeRatio,
+    maxWidth: SceneLabelLayout.maxWidth(cardWidth: cardWidth),
+    spacing: SceneLabelLayout.lineSpacing(cardHeight: cardHeight)
+)
+.padding(.leading, SceneLabelLayout.leadingPadding(cardWidth: cardWidth))
+.padding(.bottom, SceneLabelLayout.bottomPadding(cardHeight: cardHeight))</code></pre>
+
+  <h2>4. CALayer 用ヘルパ</h2>
+  <p>レンダリングサイズ（ピクセル）を基準に、<code>CALayer.frame</code> の origin/size に直接代入できる値を返す。</p>
+  <ul class="kv-list">
+    <li><span class="k">layerOriginX(renderWidth:)</span><span class="v">テロップ <code>frame.origin.x</code></span></li>
+    <li><span class="k">layerOriginY(renderHeight:, fontSize:)</span><span class="v">テロップ <code>frame.origin.y</code>（descent slack 補正込み）</span></li>
+    <li><span class="k">layerTextWidth(renderWidth:)</span><span class="v">テロップ <code>frame.size.width</code></span></li>
+    <li><span class="k">layerLineSpacing(renderHeight:)</span><span class="v">時刻 y を積み上げる際の spacing</span></li>
+  </ul>
+
+  <h2>5. descent slack 補正の仕組み</h2>
+  <p>
+    CATextLayer は top-anchored で描画されるため、グリフの下端が <code>frame</code> の下端より約 <code>fontSize * 0.23</code> 浮く（descent 領域の余白）。
+    SwiftUI Text の intrinsic 高さは概ね <code>fontSize * 1.17</code>（lineHeightFactor）なので、
+    CALayer の <code>frame.height</code> を <code>fontSize * 1.4</code>（textHeightFactor）に取りつつ、origin.y を下方向に補正することで両系統の glyph 下端を揃える。
+  </p>
+  <ul>
+    <li><code>descentSlackFactor = textHeightFactor - lineHeightFactor ≒ 0.23</code></li>
+    <li><code>layerOriginY(renderHeight:, fontSize:) = baseY - fontSize * descentSlackFactor</code></li>
+    <li>SwiftUI Text intrinsic（≒ <code>fontSize * 1.17</code>）と CATextLayer の glyph 下端が概ね揃う</li>
+  </ul>
+
+  <h2>6. 長文折り返し統一</h2>
+  <p>SwiftUI と CATextLayer で同一の折り返し挙動（最大 2 行・末尾省略）を再現する。</p>
+  <ul class="kv-list">
+    <li><span class="k">SwiftUI</span><span class="v"><code>Text.lineLimit(SceneLabelLayout.maxLines).truncationMode(.tail)</code></span></li>
+    <li><span class="k">CALayer</span><span class="v"><code>isWrapped = true</code> / <code>truncationMode = .end</code> / <code>frame.height = singleLineHeight × actualLineCount</code></span></li>
+    <li><span class="k">行数測定</span><span class="v"><code>actualStepNameLineCount(text:renderSize:fontName:)</code> で <code>NSAttributedString.boundingRect</code> により実行数を測定</span></li>
+  </ul>
+
+  <h2>7. makeTimeLayer の追随</h2>
+  <p>時刻レイヤはステップ名レイヤの実行数（1〜2 行）に追随して y 位置を決める。</p>
+  <ul>
+    <li><code>stepNameLineCount</code>（<code>1...maxLines</code> にクランプ）を受け取り、<code>stepNameHeight × clampedLineCount</code> 分だけ上に積む</li>
+    <li>時刻の y =
+      <code>SceneLabelLayout.layerOriginY(renderHeight:, fontSize: stepNameFontSize)</code>
+      <code>+ stepNameHeight</code>
+      <code>+ SceneLabelLayout.layerLineSpacing(renderHeight:)</code>
+    </li>
+    <li>これにより 1 行時・2 行時のどちらでも、時刻の上端がステップ名の下端に密着する</li>
+  </ul>
+
+  <h2>8. 残課題（次タスク）</h2>
+  <ul>
+    <li><strong>P0-1 / P0-2</strong>: <code>ShootingView</code> と <code>SingleStepShootingView</code> の 2 系統を SceneLabel 経由で完全統合し、テロップ描画コードの重複を解消する</li>
+    <li>時刻レイヤの <code>textWidth = 0.3</code> ハードコードを <code>SceneLabelLayout</code> 側の比率定数に集約する</li>
+  </ul>
+
+  <h2>セキュリティ・プライバシー</h2>
+  <ul>
+    <li>レイアウト計算は端末内で完結。外部送信なし</li>
+    <li>テロップ文字列はユーザー入力（ステップ名）と端末時刻のみで、機密性なし</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table>
+    <thead>
+      <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v1.0</td><td>2026-06-10</td><td>初版作成。SceneLabelLayout enum 単一ソース化と長文折り返し統一の方針を文書化。</td></tr>
+    </tbody>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-10</footer>
+</div>
+</body>
+</html>

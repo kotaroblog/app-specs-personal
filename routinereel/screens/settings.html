@@ -63,8 +63,21 @@
   <ul>
     <li><strong>"Upgrade Now!"禁止</strong>: アグレッシブな課金誘導は使わない</li>
     <li><strong>Pro 時</strong>: 静的カード「RoutineReel Pro / ご利用ありがとうございます」</li>
-    <li><strong>無料時</strong>: Button カード「RoutineReel Pro / 記録をもっと自由に」+ chevron right</li>
+    <li><strong>無料時</strong>: Button カード「RoutineReel Pro / アプリ内保存 X/3 ・記録をもっと自由に」+ chevron right</li>
     <li>アイコンは crown.fill + soft warm gradient 円背景</li>
+  </ul>
+
+  <h3>保存メーター統合（v1.0.3 / 2026-06-10）</h3>
+  <p>Free ユーザー向け Pro アップグレードカード（proUpgradeCard）に、アプリ内保存件数の現在値を副題内に統合表示する。Paywall への自然な動機付けとして機能。</p>
+  <ul class="kv-list">
+    <li><span class="k">データソース</span><span class="v"><code>@Query private var allVideos: [Video]</code> を SettingsView に追加</span></li>
+    <li><span class="k">分子</span><span class="v">allVideos.count（アプリ内保存件数）</span></li>
+    <li><span class="k">分母</span><span class="v"><code>VideoStorageService.freeStorageLimit</code> = 3</span></li>
+    <li><span class="k">副題テキスト</span><span class="v">「アプリ内保存 X/3 ・記録をもっと自由に」</span></li>
+    <li><span class="k">上限到達時の強調</span><span class="v">X が 3 に達した場合は text 色をピンクに切替（注意喚起）</span></li>
+    <li><span class="k">accessibilityLabel</span><span class="v">「RoutineReel Pro にアップグレード。アプリ内保存 X 件中 3 件上限」</span></li>
+    <li><span class="k">Pro ユーザー</span><span class="v">非表示（既存「ご利用ありがとうございます」カードのまま）</span></li>
+    <li><span class="k">関連</span><span class="v">DesignsHomeView の「最近の動画」見出し横 storageMeterBadge と整合（Free: X/3、Pro: ∞）</span></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -73,12 +86,13 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.0.3</td><td>2026-06-10</td><td>Pro アップグレードカード（Free 時）の副題に「アプリ内保存 X/3」メーターを統合。上限到達時はピンク強調・accessibilityLabel に上限件数を追記。@Query allVideos を SettingsView に追加</td></tr>
       <tr><td>v1.0.2</td><td>2026-05-21</td><td>Pro アップグレードカードにアクセシビリティラベル追加</td></tr>
       <tr><td>v1.0</td><td>2026-05-21</td><td>List/Form 化 → Card section 化（完全リデザイン）。β機能セクション追加</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-21</footer>
+  <footer class="site-footer">最終更新: 2026-06-10</footer>
 </div>
 </body>
 </html>
