@@ -160,10 +160,11 @@
     <tbody>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成。BGM削除後の特典4項目、v1.1値上げ計画、競合比較を確立</td></tr>
       <tr><td>v1.1</td><td>2026-06-10</td><td>#7 反映: <code>yearlySavingPercentage</code> 新設で Paywall 年額バッジを「X% お得」動的化（フォールバック「おすすめ」）。ホーム「最近の動画」見出し横と SettingsView Pro セクションに保存メーター（X/3・∞ 保存）を統合。#2 連動で <code>ReviewRequestService.onSharedToSNS</code>（シェア実行成功時のみ、30日ガード共用）と <code>ReminderService.scheduleSharePromptNotification</code>（翌日10:00、share-prompt prefix で重複防止、.authorized/.provisional 許可）を追加</td></tr>
+      <tr><td>v1.2</td><td>2026-06-12</td><td><strong>本番バグ修正</strong>: <code>yearlySavingPercentage</code> が常に 0 を返していた問題を <a href="testing.html">ユニットテスト</a>経由で検出・修正。<code>Decimal</code> の <code>/</code> 演算子が scale=0 で整数除算的に動く仕様への対応として、<code>NSDecimalNumber.doubleValue</code> 経由の比率計算に変更。Paywall「34% お得」バッジが正常表示されるようになった（commit b7ebfd6）。あわせて <code>SubscriptionManager.shared</code> 直参照 6 箇所を <code>@State</code> 経由に統一し <code>@Observable</code> 追跡を正規化（commit 04bb873）。購入成功時 <a href="analytics.html"><code>paywall_converted</code></a> イベント送信を追加（commit 8d0d70b）</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-10</footer>
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
 </div>
 </body>
 </html>

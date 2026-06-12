@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>RoutineReel - Analytics 計測基盤（Firebase）</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">RoutineReel</a> / Analytics 計測基盤</div>
+
+  <header class="site-header">
+    <h1>Analytics 計測基盤（Firebase）</h1>
+    <p>v1.0 リリース前に導入した KPI 計測の全貌（CHROMATIC / 脳活ピース で指摘済みの「計測基盤ゼロ」問題への対応）</p>
+  </header>
+
+  <h2>導入の背景</h2>
+  <ul class="kv-list">
+    <li><span class="k">目的</span><span class="v">streak / Paywall / SNS シェア / 翌日通知 等のリテンション・収益施策の効果を測定可能にする</span></li>
+    <li><span class="k">背景</span><span class="v">CHROMATIC / 脳活ピースの GPT 批評（2026-05-20）で「KPI 計測基盤ゼロ」を指摘されており、RoutineReel リリース前に解消する必要があった</span></li>
+    <li><span class="k">採用ツール</span><span class="v">Firebase Analytics（同一 Google アカウントで他アプリも管理、Crashlytics へ拡張可能）</span></li>
+    <li><span class="k">Firebase プロジェクト</span><span class="v">routinereel-prod</span></li>
+    <li><span class="k">送信なし</span><span class="v">スクショ撮影モード（AppEnvironment.isUISnapshot）、GoogleService-Info.plist 未配置時、FirebaseApp.configure() 未実行時</span></li>
+  </ul>
+
+  <h2>アーキテクチャ</h2>
+  <p>Firebase SDK への依存を <code>Services/AnalyticsService.swift</code> 1 ファイルに集約する。将来 TelemetryDeck 等への差し替えに備えた抽象化。</p>
+
+  <h3>初期化フロー（RoutineReelApp.init）</h3>
+  <ol>
+    <li>スクショ撮影モード判定（<code>AppEnvironment.isUISnapshot</code>）</li>
+    <li><code>GoogleService-Info.plist</code> 存在確認</li>
+    <li>両方クリアした時のみ <code>FirebaseApp.configure()</code> 実行</li>
+    <li>※ plist が無い場合でもクラッシュさせない（開発初期 / TestFlight 配布前の安全策）</li>
+  </ol>
+
+  <h3>イベント送信の 2 段ガード</h3>
+  <p><code>AnalyticsService.log(_:params:)</code> 内で以下を順番に確認:</p>
+  <ol>
+    <li><code>AppEnvironment.isUISnapshot</code> が true → 即 return（撮影中の本番データ汚染防止）</li>
+    <li><code>FirebaseApp.app() != nil</code> でない → 即 return（configure 未実行時のクラッシュ防止）</li>
+    <li>両方通過したら <code>Analytics.logEvent</code> + ローカル <code>Logger</code> にも記録</li>
+  </ol>
+
+  <h2>必須 8 イベント定義</h2>
+  <table>
+    <tr><th>イベント名</th><th>発火タイミング</th><th>パラメータ</th><th>用途</th></tr>
+    <tr><td><code>onboarding_completed</code></td><td>OnboardingView の skip / あとで / リマインダー選択時</td><td>—</td><td>新規ユーザー流入 funnel の起点</td></tr>
+    <tr><td><code>notification_authorized</code></td><td>OnboardingView Page 3.5 の selectReminder で iOS 通知ダイアログ確定時</td><td>granted: Bool</td><td>通知許可率モニタリング（リテンション施策の前提）</td></tr>
+    <tr><td><code>first_recording</code></td><td>ShootingViewModel.persistClip 成功時で初回のみ</td><td>—</td><td>オンボ完了→初回撮影 funnel の歩留まり</td></tr>
+    <tr><td><code>video_saved</code></td><td>PreviewViewModel.saveToApp / saveToPhotoLibrary 成功時</td><td>routine_id: String (UUID)</td><td>Pro 転換主要トリガー、ルーティン別 LTV</td></tr>
+    <tr><td><code>share_button_tapped</code></td><td>ExportCompleteView.notifyShareTriggered（open success / ShareSheet completed=true 時のみ）</td><td>destination: tiktok / reels / share_sheet</td><td>バイラル流入上流指標</td></tr>
+    <tr><td><code>paywall_shown</code></td><td>PaywallView.onAppear</td><td>trigger: manual（将来 routine_limit / storage_limit / pro_filter / pro_font 拡張）</td><td>Paywall 到達経路別の到達率</td></tr>
+    <tr><td><code>paywall_converted</code></td><td>SubscriptionManager.purchase 成功時</td><td>plan: monthly / yearly</td><td>転換率と年額比率（v1.1 値上げ判定の根拠）</td></tr>
+    <tr><td><code>streak_updated</code></td><td>ShootingViewModel.persistClip 成功時（撮影都度）</td><td>days: Int</td><td>継続率の可視化、習慣化施策の効果測定</td></tr>
+  </table>
+
+  <h2>初回判定の永続化</h2>
+  <p><code>AppSettings.hasRecordedFirst</code> を UserDefaults で永続化し、<code>first_recording</code> イベントが 1 ユーザー 1 回だけ送信されることを保証する。</p>
+
+  <h2>Firebase Analytics 命名規約への準拠</h2>
+  <ul>
+    <li>イベント名: 40 文字以内（snake_case）、予約プレフィックス（<code>firebase_</code> / <code>google_</code> / <code>ga_</code>）回避</li>
+    <li>パラメータ名: 40 文字以内（snake_case）</li>
+    <li>パラメータ値（文字列）: 100 文字以内（UUID 36 文字、enum 値は 20 文字以内で余裕）</li>
+  </ul>
+
+  <h2>セキュリティ</h2>
+  <ul>
+    <li><code>GoogleService-Info.plist</code> は <code>.gitignore</code> に登録、git 管理外</li>
+    <li>送信パラメータに個人情報・機密データを含めない（routine_id は UUID で氏名等を含まない）</li>
+    <li>Bundle ID は本番版（<code>com.happyboy1002.RoutineReel</code>）と一致</li>
+  </ul>
+
+  <h2>残課題（リリース後対応）</h2>
+  <ul>
+    <li><strong>PaywallView の trigger 引数化</strong>: 現状 <code>.manual</code> 固定。各起動箇所（routine 上限 / storage 上限 / Pro フィルタ・フォントタップ）で trigger を渡すように PaywallView.init を変更</li>
+    <li><strong>Firebase Console（routinereel-prod）でイベント受信確認</strong>: 実機 or Xcode 起動シミュレータで DebugView に 8 イベント表示確認</li>
+    <li><strong>Crashlytics 統合</strong>: 同 plist 流用可、<code>FirebaseCrashlytics</code> product を SwiftPM 追加するだけ</li>
+    <li><strong>D7 / D30 リテンション、Pro 転換率の初期ベースライン取得</strong>: リリース後 1 ヶ月で v1.1 値上げ判定に使う</li>
+  </ul>
+
+  <h2>関連ファイル</h2>
+  <ul>
+    <li><code>RoutineReel/Services/AnalyticsService.swift</code> — 抽象化レイヤ</li>
+    <li><code>RoutineReel/App/RoutineReelApp.swift</code> — FirebaseApp.configure()</li>
+    <li><code>RoutineReel/Services/AppSettings.swift</code> — hasRecordedFirst フラグ</li>
+    <li><code>RoutineReel/GoogleService-Info.plist</code> — .gitignore 対象、ローカル配置のみ</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-12</td><td>初版作成。Firebase Analytics 11.x を SwiftPM 経由で統合、AnalyticsService 抽象化、必須 8 イベント埋め込み（commit 8d0d70b）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
+</div>
+</body>
+</html>

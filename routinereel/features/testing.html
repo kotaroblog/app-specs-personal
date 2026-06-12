@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>RoutineReel - テスト基盤</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">RoutineReel</a> / テスト基盤</div>
+
+  <header class="site-header">
+    <h1>テスト基盤</h1>
+    <p>ユニットテスト導入と、テスト経由で発見した本番バグの記録</p>
+  </header>
+
+  <h2>導入の背景</h2>
+  <p>v1.0 リリース直前まで <code>RoutineReelTests/</code> ディレクトリ自体が存在せず、UITest はスクショ撮影専用の 1 メソッドのみという状態だった。<code>Routine.computeStreak</code> / <code>SubscriptionManager.yearlySavingPercentage</code> / Pro 解約 resolved パターンなどの計算ロジックがリグレッション保護無しで動いており、v1.1 以降のリファクタが律速する懸念があった。</p>
+
+  <h2>ターゲット構成</h2>
+  <ul class="kv-list">
+    <li><span class="k">ターゲット名</span><span class="v">RoutineReelTests（type: bundle.unit-test）</span></li>
+    <li><span class="k">scheme 統合</span><span class="v">schemes.RoutineReel.test.targets に追加。<code>xcodebuild test</code> で UITest と並んで実行される</span></li>
+    <li><span class="k">依存</span><span class="v">RoutineReel 本体のみ（外部依存なし、純粋関数中心のテスト）</span></li>
+  </ul>
+
+  <h2>テストファイル一覧</h2>
+  <table>
+    <tr><th>ファイル</th><th>件数</th><th>対象</th></tr>
+    <tr><td><code>RoutineStreakTests.swift</code></td><td>8</td><td>Routine.computeStreak(from:) の境界条件</td></tr>
+    <tr><td><code>SubscriptionPricingTests.swift</code></td><td>5</td><td>yearlySavingPercentage の計算式と境界</td></tr>
+    <tr><td><code>ProResolvedTests.swift</code></td><td>8</td><td>VideoFilter.resolved / FontStyle.resolved（Pro 解約後の堅牢化）</td></tr>
+  </table>
+
+  <h3>RoutineStreakTests のカバー範囲</h3>
+  <ul>
+    <li>空配列で 0</li>
+    <li>今日のみで 1</li>
+    <li>昨日のみで 1（猶予期間中）</li>
+    <li>2日前のみで 0（中断）</li>
+    <li>連続日数の正確な算出</li>
+    <li>間が空いた場合は最新の連続部分のみカウント</li>
+    <li>同日複数撮影は 1 日扱い</li>
+    <li>順不同入力でも正常算出</li>
+  </ul>
+
+  <h3>SubscriptionPricingTests のカバー範囲</h3>
+  <ul>
+    <li>月 480 / 年 3800 → 34%</li>
+    <li>月 600 / 年 4800 → 33%（v1.1 値上げ案）</li>
+    <li>月額 0 円なら nil でフォールバック「おすすめ」表示</li>
+    <li>年額過大時はマイナス値（仕様外だがロジック側は許容）</li>
+    <li>切り捨て丸めの境界</li>
+  </ul>
+
+  <h3>ProResolvedTests のカバー範囲</h3>
+  <ul>
+    <li>Pro 時は保存値をそのまま返す（VideoFilter / FontStyle）</li>
+    <li>無料時に Pro 限定値が保存されていたら <code>.none</code> / freeStyles 先頭に解決</li>
+    <li>未知 rawValue / nil でクラッシュしない</li>
+  </ul>
+
+  <h2>テスト経由で発見した本番バグ</h2>
+  <p><code>SubscriptionManager.yearlySavingPercentage</code> が **常に 0 を返していた** ことをユニットテストで検出。</p>
+
+  <h3>原因</h3>
+  <p>Swift の <code>Decimal</code> 型の <code>/</code> 演算子は内部で <code>NSDecimalDivide(.plain)</code> を <code>scale=0</code> で呼ぶため、<code>Decimal(1960) / Decimal(5760)</code> が <code>0</code>（整数除算的）になっていた。</p>
+
+  <h3>影響</h3>
+  <p>Paywall の年額カード「X% お得」バッジが「0% お得」と表示されていた可能性大（実機 / Firebase Analytics の paywall_shown 経由で要検証）。</p>
+
+  <h3>修正</h3>
+  <p>計算を <code>Double</code> 経由に変更:</p>
+  <pre><code>let savingDouble = NSDecimalNumber(decimal: saving).doubleValue
+let totalDouble = NSDecimalNumber(decimal: monthlyTotal).doubleValue
+return Int((savingDouble / totalDouble) * 100)</code></pre>
+  <p>同じ式をテストヘルパーにも反映し、5 ケースで挙動を固定化。</p>
+
+  <h2>運用ルール</h2>
+  <ul>
+    <li>ロジックに変更があれば原則テスト追加（ViewModel・Service・Model の computed property）</li>
+    <li>テストファイルが存在するロジックを修正したら、必ずテスト同時更新（CI 化はリリース後）</li>
+    <li>UI 寄りのテストは UITest（スクショ撮影のみ）に集約し、純粋関数はユニットテストで担保する分業</li>
+  </ul>
+
+  <h2>残課題</h2>
+  <ul>
+    <li>VideoCompositionService の動画合成ロジック（SceneLabelLayout 座標計算）にテスト未配置</li>
+    <li>CI（GitHub Actions）での自動実行は未設定。リリース後に Xcode Cloud / GitHub Actions の導入検討</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-12</td><td>初版作成。RoutineReelTests ターゲット導入と 21 件のユニットテスト追加。yearlySavingPercentage の本番バグ修正（commit b7ebfd6）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
+</div>
+</body>
+</html>

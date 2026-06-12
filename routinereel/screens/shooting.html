@@ -174,6 +174,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.1</td><td>2026-06-12</td><td><a href="../features/analytics.html">Analytics</a> イベント組込み: <code>first_recording</code>（初回 1 回のみ、<code>AppSettings.hasRecordedFirst</code> で永続化判定）と <code>streak_updated(days:)</code>（撮影都度、最新 streak 値を送信）を <code>ShootingViewModel.persistClip</code> 成功時に発火（commit 8d0d70b・1d6e91e で日付二重加算を解消）</td></tr>
       <tr><td>v1.0.5</td><td>2026-06-10</td><td>SceneLabelLayout 単一ソース化（配置・サイズ比率・descent slack 補正を集約）/ 撮影プレビュー位置を 7%→22% に統一して完成動画と WYSIWYG 達成 / 長文ステップ名の折り返しを SwiftUI Text / CATextLayer 両方で maxLines=2 に統一 / SingleStepShootingView に底面グラデーションと #Preview を追加（commit 35c6118・a7f8ee2）</td></tr>
       <tr><td>v1.0.4</td><td>2026-05-21</td><td>テロップ時刻を右下→左下ステップ名の上に統合（TikTok/Reels UI衝突回避）/ タイムスタンプデフォルトをOFFに変更</td></tr>
       <tr><td>v1.0.3</td><td>2026-05-21</td><td>BGM機能削除に伴う関連UIなし（既に試聴UI未実装）</td></tr>
@@ -183,7 +184,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-10</footer>
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
 </div>
 </body>
 </html>

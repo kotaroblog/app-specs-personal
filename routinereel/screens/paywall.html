@@ -113,13 +113,14 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.0.4</td><td>2026-06-12</td><td><strong>本番バグ修正</strong>: <code>yearlySavingPercentage</code> が常に 0 を返していたため「34% お得」が実は「0% お得」と表示されていた問題を、<a href="../features/testing.html">ユニットテスト</a>経由で検出・修正（commit b7ebfd6、<code>NSDecimalNumber.doubleValue</code> 経由の比率計算に変更）。<a href="../features/analytics.html">Analytics</a> イベント <code>paywall_shown(trigger:)</code> を onAppear で発火（v1.0 では trigger=.manual 固定。routine_limit / storage_limit / pro_filter / pro_font 別の trigger 引数化は次タスク）。購入成功時 <code>paywall_converted(plan:)</code> を SubscriptionManager.purchase 内で発火（commit 8d0d70b）</td></tr>
       <tr><td>v1.0.3</td><td>2026-06-10</td><td>年額カードのバッジを「おすすめ」固定 → 「X% お得」動的表示に変更（<code>SubscriptionManager.yearlySavingPercentage</code>）。Product 取得不能時は「おすすめ」フォールバック。planSubtitle 仕様は維持。</td></tr>
       <tr><td>v1.0.2</td><td>2026-05-21</td><td>BGM特典削除に伴いサブコピー・特典行を更新（全BGM→全フィルタ・全フォント）+ アクセシビリティラベル追加</td></tr>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成（Home UI統一・完全リデザイン）</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-10</footer>
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
 </div>
 </body>
 </html>

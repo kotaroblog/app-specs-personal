@@ -101,6 +101,14 @@
       <div class="title">SceneLabel レイアウト</div>
       <div class="desc">撮影プレビューと完成動画のテロップ配置 WYSIWYG 統一</div>
     </a>
+    <a class="card" href="features/analytics.html">
+      <div class="title">Analytics 計測基盤（Firebase）</div>
+      <div class="desc">Firebase Analytics + 必須8イベント。streak/Paywall/シェアの効果測定。2段ガード（UISnapshot+plist存在チェック）で安全運用</div>
+    </a>
+    <a class="card" href="features/testing.html">
+      <div class="title">テスト基盤</div>
+      <div class="desc">RoutineReelTests 21件（Streak / SavingPercentage / Pro Resolved）。テスト経由で yearlySavingPercentage の本番バグを発見・修正</div>
+    </a>
   </div>
 
   <h2>更新履歴</h2>
@@ -109,6 +117,7 @@
       <tr><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>2026-06-12</td><td><strong>リリース直前の品質改善＋計測基盤導入</strong>: (A) <code>developmentLanguage: ja</code> 設定でリリース後修復不能な言語登録ミス防止 / (B) DesignsHomeView の <code>SubscriptionManager.shared</code> 直参照 6 箇所を <code>@State</code> 経由に統一し <code>@Observable</code> 追跡正規化 / (C) DesignsHomeView を 900→673 行へ縮減（Hero / RecentVideos セクション独立 struct 化） / (E) <code>RoutineReelTests</code> 新規 21 件 + <code>yearlySavingPercentage</code> の本番バグ（Decimal の <code>/</code> で常に 0 を返していた）を検出・修正 / (Firebase) Analytics 11.x 統合 + 必須 8 イベント埋め込み（onboarding_completed / notification_authorized / first_recording / video_saved / share_button_tapped / paywall_shown / paywall_converted / streak_updated）。新規 features 2 本（analytics / testing）。スクショ自動化を fastlane snapshot で構築（commit 6dc02a6 など）</td></tr>
       <tr><td>2026-06-10</td><td><strong>v1.0 6施策一括反映</strong> (#1〜#7): オンボーディング Page 3.5 通知許可ページ + ATT 遅延発火 / TikTok・Reels 1tap 直起動 + 翌日復帰通知 / streak ヒーロー + マイルーティン「今日」バッジ / 動画末尾 QR + #RoutineReel 焼き込み / 「最近の動画」サムネ実画像化 + 全画面再生 / プリセット検索意図ワード化 + URL スキーム / 上限メーター + Paywall「X% お得」バッジ動的化。新規 features 3 本（onboarding-flow / sns-share-flow / scene-label-layout）。aso.html 初版（先行コミット 8c466ac）</td></tr>
       <tr><td>2026-06-10</td><td><strong>ASO 戦略書（aso.html）を初版作成</strong>。プリセット名検索意図ワード化（朝5分ルーティン / 夜の整いルーティン / 筋トレ10分ルーティン / 集中45分ルーティン）と URL スキーム（routinereel://preset/&lt;rawValue&gt;）実装に合わせて、ターゲットキーワード20選・サブタイトル3案・競合5社分析・スクリーンショット5枚構成・リリース後の運用 TODO を整備</td></tr>
       <tr><td>2026-05-25</td><td><strong>リリース日 5/29 → 6/30 に延期</strong>（品質優先のため）。ユーザー報告4問題に対応: Quick Start 文字見切れ修正 / マイルーティン⋯メニュー二重Button問題解消 / RoutineEditView Home UI 統一 / PresetSelectView 日本語化 + Home UI 統一 / 設定詳細3画面（画質/秒数/タイムスタンプ）Card section化 / ClipGenerateView Home UI 統一 / RoutinePreset.displayName 日本語化。routine-edit.html / preset-select.html を新規追加</td></tr>
@@ -119,7 +128,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-10</footer>
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
 </div>
 </body>
 </html>
