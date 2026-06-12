@@ -186,6 +186,44 @@ enum TestType: String, Codable, CaseIterable {
     v1.1.0 時点では件数チェックロジックを実装しないこと。
   </div>
 
+  <hr>
+
+  <h2>成績N件制限とロックバナー（v1.2.0）</h2>
+
+  <h3>制限仕様</h3>
+  <table>
+    <tr><th>プラン</th><th>閲覧可能件数</th><th>保存</th></tr>
+    <tr><td>無料</td><td>直近10件のみ（<code>FeatureGate.testRecordFreeLimit = 10</code>）</td><td>無制限（保存自体は制限なし）</td></tr>
+    <tr><td>Premium</td><td>全件</td><td>無制限</td></tr>
+  </table>
+
+  <div class="callout">
+    保存は無制限。表示のみを制限することで「記録したのに消えた」という誤解を防ぐ。
+    11件目以降はロックバナーで隠れているが、Premium 購入後に即座に表示される。
+  </div>
+
+  <h3>ロックバナー UI（SS-GRADES-LOCK-01）</h3>
+  <p>
+    <code>GradeReportView</code> の履歴一覧 List において、
+    <code>FeatureGate.canAccessAllTestRecords == false</code> かつ総件数が <code>testRecordFreeLimit</code>（10件）を超える場合、
+    リスト末尾（10件目の直下）にロックバナーを差し込む。
+  </p>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>内容</th></tr>
+    <tr><td>ロックアイコン</td><td>Image（SF Symbols <code>lock.fill</code>）</td><td>アクセントカラー</td></tr>
+    <tr><td>本文テキスト</td><td>Text</td><td>「あと N 件の記録が隠れています」（N = 総件数 - 10）</td></tr>
+    <tr><td>サブテキスト</td><td>Text（小・グレー）</td><td>「Premium にアップグレードすると全件閲覧できます」</td></tr>
+    <tr><td>CTA ボタン</td><td>Button（プライマリー）</td><td>「Premium にアップグレード」→ PremiumView へ sheet 表示</td></tr>
+  </table>
+
+  <h3>計測</h3>
+  <table>
+    <tr><th>イベント</th><th>発火タイミング</th><th>パラメータ</th></tr>
+    <tr><td><code>grade_lock_shown</code></td><td>ロックバナーが表示されたとき（<code>.onAppear</code>）</td><td><code>hidden_count</code>（隠れている件数）</td></tr>
+    <tr><td><code>grade_lock_tapped</code></td><td>ロックバナーの CTA ボタンをタップしたとき</td><td>なし</td></tr>
+    <tr><td><code>paywall_view(source: .gradeLock)</code></td><td>PremiumView が表示されたとき（gradeLock 経由）</td><td><code>source="gradeLock"</code></td></tr>
+  </table>
+
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li>グラフは Swift Charts（<code>import Charts</code>）を使用。iOS 16+ 標準</li>
@@ -222,9 +260,10 @@ enum TestType: String, Codable, CaseIterable {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-28</td><td>初版作成 (v1.1.0)</td></tr>
     <tr><td>1.1</td><td>2026-05-29</td><td>タブ新設からレポートタブ内セグメント統合へ方針変更。タブ構成5タブ維持・SegmentedPicker追加・sheet遷移に変更</td></tr>
+    <tr><td>1.2</td><td>2026-06-12</td><td>v1.2.0：成績N件制限とロックバナー（SS-GRADES-LOCK-01）の仕様を追加（無料=直近10件・Premium=全件・Firebase計測3イベント）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-29</footer>
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
 </div>
 </body>
 </html>

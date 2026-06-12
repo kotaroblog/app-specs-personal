@@ -16,9 +16,9 @@
     <h1>成績記録機能</h1>
     <p>テスト結果（点数・偏差値等）を記録・可視化し、学習時間と成績の両軸で受験勉強を管理する機能</p>
     <div class="section-meta">
-      <span class="tag">v1.1.0</span>
+      <span class="tag">v1.2.0</span>
       <span class="tag">機能ID: SS-FEAT-GRADE-01</span>
-      <span class="tag">無料（v1.2.0で件数制限予定）</span>
+      <span class="tag">無料: 直近10件 / Premium: 全件</span>
     </div>
   </header>
 
@@ -131,7 +131,7 @@ sequenceDiagram
     <li>教科との紐付けはリレーション（Subject?）で管理する。科目削除時は記録自体は残し、subjectをnilにする（nullify）</li>
     <li><strong>画面構成変更</strong>: 成績機能は新規タブではなく、レポートタブ内に上部 <code>SegmentedPicker</code>（学習時間 / 成績）を追加して統合する（5タブ構成は維持）</li>
     <li><strong>v1.1.0時点の課金ルール</strong>: 件数制限なし。全件保存・表示可能</li>
-    <li><strong>v1.2.0以降の課金ルール（Out of Scope）</strong>: 無料=直近10件のみ表示。11件目以降はボカし表示＋Premium誘導バナー。記録自体は保存される</li>
+    <li><strong>v1.2.0 課金ルール（実装済み）</strong>: 無料=直近10件のみ表示（<code>FeatureGate.testRecordFreeLimit = 10</code>）。超過分はロックバナー（GradeHistoryCard内）＋PremiumView（source: .gradeLock）誘導。記録自体は保存される（表示時に <code>prefix</code> で隠す方式）。<code>FeatureGate.canAccessAllTestRecords</code> が true なら全件表示</li>
     <li>グラフのY軸は得点率（%）に統一する。点数・満点が科目によって異なるため、得点率で比較可能にする</li>
     <li>グラフに表示するデータはフィルタ条件（教科・テスト種別）に連動する</li>
     <li><strong>グラフのデフォルトフィルタ</strong>: 「定期テスト」に設定（旧: すべて混在）</li>
@@ -244,7 +244,9 @@ enum TestType: String, Codable, CaseIterable {
     <li>テスト種別変更時に偏差値フィールドを <code>.transition(.opacity)</code> で表示/非表示アニメーション</li>
     <li>SS-GRADES-02 / SS-GRADES-03 はいずれも <code>.sheet</code> で表示する。<code>.navigationDestination</code> は使わない</li>
     <li>TabView のタブ追加・<code>AppTab</code> enum の変更は不要（5タブ構成を維持）</li>
-    <li>v1.2.0 課金ロジックのための件数チェックは v1.1.0 では実装しない（コードに TODO コメントを残す）</li>
+    <li>v1.2.0 件数制限: <code>GradeReportView.visibleRecords</code> = <code>FeatureGate.shared.canAccessAllTestRecords ? records : Array(records.prefix(FeatureGate.shared.testRecordFreeLimit))</code></li>
+    <li>ロックバナーの表示は <code>GradeHistoryCard</code> に委譲。<code>hiddenCount = records.count - visibleRecords.count</code> を渡す</li>
+    <li>GradeReportView を3ファイルに分割（本体 / GradeTrendChartCard / GradeHistoryCard）</li>
     <li>Subject 削除時の <code>deleteRule: .nullify</code> により TestRecord.subject が nil になるため、グラフ描画時に nil subject のデータは「科目不明」として扱う</li>
     <li>グラフのデフォルトフィルタ状態: <code>@State var selectedTestType: TestType = .regular</code></li>
     <li>得点率カラー: <code>scoreRate >= 80 ? .green : scoreRate >= 60 ? .orange : .red</code></li>
@@ -267,6 +269,7 @@ enum TestType: String, Codable, CaseIterable {
     <tr><td>1.0</td><td>2026-05-28</td><td>初版作成 (v1.1.0)</td></tr>
     <tr><td>1.1</td><td>2026-05-29</td><td>タブ新設からレポートタブ内セグメント統合へ方針変更（5タブ構成維持）。処理フロー図・実装メモを実態に合わせて修正</td></tr>
     <tr><td>1.2</td><td>2026-06-07</td><td>v1.2.0対応: まとめて成績登録（BatchTestEntrySheet）追加。詳細画面「種別」ラベル常時表示バグ修正。得点率カラー化。グラフ・履歴一覧のデフォルトフィルタを「定期テスト」に変更。グラフに種別フィルタメニュー追加</td></tr>
+    <tr><td>1.3</td><td>2026-06-12</td><td>v1.2.0対応: 成績N件制限を実装（無料=直近10件、Premium=無制限）。FeatureGate経由の判定・ロックバナー実装・GradeReportView 3ファイル分割を反映。ビジネスルール・実装メモを更新</td></tr>
   </table>
 
   <script>
@@ -276,7 +279,7 @@ enum TestType: String, Codable, CaseIterable {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-07</footer>
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
 </div>
 </body>
 </html>

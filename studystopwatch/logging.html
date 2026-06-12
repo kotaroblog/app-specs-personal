@@ -33,7 +33,9 @@
     <tr><td><code>LiveActivityService</code></td><td>Activity start/update/end</td></tr>
     <tr><td><code>WidgetSyncService</code></td><td>Widget データ同期</td></tr>
     <tr><td><code>SubscriptionManager</code></td><td>StoreKit 課金</td></tr>
-    <tr><td><code>NotificationService</code></td><td>ローカル通知</td></tr>
+    <tr><td><code>NotificationService</code></td><td>ローカル通知（日次リマインダー・復帰リマインダー）</td></tr>
+    <tr><td><code>WeeklyReport</code></td><td>週次コーチレポート生成・保存</td></tr>
+    <tr><td><code>Analytics</code></td><td>Firebase Analytics イベント送信（LoggerAnalyticsSink）</td></tr>
     <tr><td><code>InstagramShareService</code></td><td>シェア機能</td></tr>
     <tr><td><code>AppUpdateService</code></td><td>App Store API</td></tr>
     <tr><td><code>InterstitialAdManager</code></td><td>全画面広告</td></tr>
@@ -53,10 +55,45 @@
     識別子（科目ID、セッションID）は <code>privacy: .public</code>。
   </div>
 
-  <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <h2>Firebase Analytics 計測イベント一覧（v1.2.0）</h2>
+  <p>
+    <code>AnalyticsManager.shared.log(_:)</code> 経由で送信する。イベント名は Firebase Analytics の制約（40文字以内・英数とアンダースコアのみ）に準拠。
+    ユーザー入力値（科目名・点数・志望校名）はパラメータに含めない。
+  </p>
+  <table>
+    <tr><th>イベント名</th><th>AnalyticsEvent ケース</th><th>発火タイミング</th><th>主要パラメータ</th></tr>
+    <tr><td><code>app_open</code></td><td><code>.appOpen</code></td><td>アプリ起動時</td><td>なし</td></tr>
+    <tr><td><code>onboarding_page_view</code></td><td><code>.onboardingPageView</code></td><td>オンボーディング各ページ表示</td><td><code>page_name</code>, <code>page_index</code></td></tr>
+    <tr><td><code>onboarding_complete</code></td><td><code>.onboardingComplete</code></td><td>オンボーディング完了</td><td><code>goal_type</code></td></tr>
+    <tr><td><code>paywall_view</code></td><td><code>.paywallView(source:)</code></td><td>ペイウォール表示</td><td><code>source</code>（onboarding / settings / reportStats / gradeLock / weeklyReport / shareTheme）</td></tr>
+    <tr><td><code>purchase_start</code></td><td><code>.purchaseStart</code></td><td>購入フロー開始（StoreKit ボタンタップ）</td><td><code>product_id</code></td></tr>
+    <tr><td><code>purchase_success</code></td><td><code>.purchaseSuccess</code></td><td>購入完了（トランザクション検証成功）</td><td><code>product_id</code></td></tr>
+    <tr><td><code>session_recorded</code></td><td><code>.sessionRecorded</code></td><td>学習セッション保存時</td><td><code>duration_minutes</code>, <code>is_manual</code></td></tr>
+    <tr><td><code>test_record_added</code></td><td><code>.testRecordAdded</code></td><td>テスト結果を新規保存したとき（v1.1.0〜）</td><td><code>test_type</code></td></tr>
+    <tr><td><code>grade_lock_shown</code></td><td><code>.gradeLockShown(hiddenCount:)</code></td><td>成績N件制限のロックバナーを表示したとき（v1.2.0〜）</td><td><code>hidden_count</code></td></tr>
+    <tr><td><code>grade_lock_tapped</code></td><td><code>.gradeLockTapped</code></td><td>成績ロックバナーをタップしてペイウォールへ遷移したとき（v1.2.0〜）</td><td>なし</td></tr>
+    <tr><td><code>weekly_report_viewed</code></td><td><code>.weeklyReportViewed</code></td><td>Premium ユーザーが週次ふりかえりカードを表示したとき（v1.2.0〜）</td><td>なし</td></tr>
+    <tr><td><code>weekly_report_lock_tapped</code></td><td><code>.weeklyReportLockTapped</code></td><td>無料ユーザーが週次レポートロックバナーをタップしたとき（v1.2.0〜）</td><td>なし</td></tr>
+    <tr><td><code>return_reminder_scheduled</code></td><td><code>.returnReminderScheduled</code></td><td>復帰リマインダー（3日無記録）をスケジュールしたとき（v1.2.0〜）</td><td>なし</td></tr>
+    <tr><td><code>return_reminder_opened</code></td><td><code>.returnReminderOpened</code></td><td>復帰リマインダー通知をタップしてアプリを起動したとき（v1.2.0〜）</td><td>なし</td></tr>
+    <tr><td><code>ad_interstitial_shown</code></td><td><code>.adInterstitialShown</code></td><td>インタースティシャル広告を表示したとき</td><td>なし</td></tr>
+    <tr><td><code>focus_subject_mode_changed</code></td><td><code>.focusSubjectModeChanged</code></td><td>フォーカス科目モードの ON/OFF を切り替えたとき（v1.1.0〜）</td><td><code>enabled</code></td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <div class="callout">
+    <strong>PaywallSource 一覧</strong>:
+    <code>onboarding</code> / <code>settings</code> / <code>reportStats</code>（レポート詳細統計）/
+    <code>gradeLock</code>（成績N件制限）/ <code>weeklyReport</code>（週次レポート）/ <code>shareTheme</code>（シェアカードテーマ）
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-12</td><td>v1.2.0計測イベント一覧を追加（grade_lock_shown/tapped・weekly_report_viewed/lock_tapped・return_reminder_scheduled/opened）、カテゴリに WeeklyReport・Analytics を追記</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
 </div>
 </body>
 </html>

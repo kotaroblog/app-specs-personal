@@ -1,42 +1,143 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>StudyStopwatch - 通知機能</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 通知機能</div>
-  <header class="site-header"><h1>通知機能</h1><p>日次リマインダー（ローカル通知）</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: SS-FEAT-NOTIF</span></div></header>
+  <header class="site-header">
+    <h1>通知機能</h1>
+    <p>ローカル通知（日次リマインダー / 復帰リマインダー / 週次ふりかえり）</p>
+    <div class="section-meta">
+      <span class="tag">v1.2.0</span>
+      <span class="tag">機能ID: SS-FEAT-NOTIF</span>
+    </div>
+  </header>
 
   <h2>概要</h2>
-  <p>毎日定時に「今日の勉強は始めましたか？少しずつ頑張りましょう！」のリマインダーを送る機能。
-  ローカル通知のみで、サーバー不要。</p>
+  <p>すべてローカル通知（UNUserNotificationCenter）で実装する。サーバー不要。v1.2.0 時点で3種類の通知識別子を管理している。</p>
 
-  <h2>NotificationService API</h2>
-  <pre><code>final class NotificationService {
+  <h2>通知識別子一覧</h2>
+  <table>
+    <tr><th>識別子</th><th>種別</th><th>タイミング</th><th>有料/無料</th><th>ON/OFF</th></tr>
+    <tr>
+      <td><code>"dailyReminder"</code></td>
+      <td>日次リマインダー</td>
+      <td>毎日・ユーザー設定時刻（繰り返し）</td>
+      <td>無料</td>
+      <td>設定画面トグル</td>
+    </tr>
+    <tr>
+      <td><code>"returnReminder"</code></td>
+      <td>復帰リマインダー</td>
+      <td>最後の記録から3日後の朝9時（1回のみ。次の記録保存で上書き）</td>
+      <td>無料</td>
+      <td>設定画面トグル（デフォルト ON）</td>
+    </tr>
+    <tr>
+      <td><code>"weeklyReportReminder"</code></td>
+      <td>週次ふりかえり</td>
+      <td>毎週月曜朝9時（繰り返し）</td>
+      <td>Premium</td>
+      <td>常時有効（通知権限が許可されている場合）</td>
+    </tr>
+  </table>
+
+  <h2>NotificationService API（v1.2.0）</h2>
+  <pre><code>@MainActor final class NotificationService: NSObject {
     static let shared: NotificationService
+    static let returnReminderID = "returnReminder"
+    static let returnReminderEnabledKey = "returnReminderEnabled"  // @AppStorage キー
 
-    func requestAuthorization() async throws
-    func setEnabled(_ enabled: Bool, hour: Int, minute: Int)
-    func scheduleDailyReminder(hour: Int, minute: Int)
+    func activateDelegate()           // アプリ起動時に1度呼ぶ（通知タップ計測）
+    func requestPermission() async -> Bool
+    func scheduleReminder(hour: Int, minute: Int)   // dailyReminder を予約
+    func cancelReminder()                            // dailyReminder を取り消す
+    func rescheduleReturnReminder(lastStudyDate: Date)  // 復帰リマインダーを上書き予約
+    func cancelReturnReminder()                      // 復帰リマインダーを取り消す
 }</code></pre>
 
-  <h2>通知ID</h2>
-  <p><code>"dailyReminder"</code></p>
-
-  <h2>処理フロー</h2>
+  <h2>日次リマインダー（dailyReminder）</h2>
   <ol>
     <li>初回 ON 時に <code>requestAuthorization([.alert, .sound, .badge])</code></li>
-    <li>許可されたら <code>UNCalendarNotificationTrigger</code> を作成</li>
-    <li>毎日その時刻に通知配信</li>
-    <li>OFF 時に <code>removePendingNotificationRequests(withIdentifiers:)</code></li>
+    <li>許可されたら <code>UNCalendarNotificationTrigger(dateMatching: components, repeats: true)</code> を作成</li>
+    <li>毎日ユーザー設定時刻に通知配信</li>
+    <li>OFF 時に <code>removePendingNotificationRequests(withIdentifiers: ["dailyReminder"])</code></li>
   </ol>
+  <p><strong>通知本文</strong>: 「今日の勉強は始めましたか？少しずつ頑張りましょう！」</p>
+
+  <h2>復帰リマインダー（returnReminder）v1.2.0 新規</h2>
+  <div class="callout info">学習記録（手動/タイマー）を保存するたびに予約を上書きする。継続して勉強している限り通知は届かない。</div>
+
+  <h3>処理フロー</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant VM as TimerViewModel / ManualEntrySheet
+  participant NS as NotificationService
+  participant UNCenter as UNUserNotificationCenter
+
+  VM->>NS: rescheduleReturnReminder(lastStudyDate: Date())
+  NS->>UNCenter: removePendingNotificationRequests(["returnReminder"])
+  NS->>NS: isReturnReminderEnabled? (UserDefaults)
+  alt OFF
+    NS-->>VM: (skip)
+  else ON かつ通知権限 authorized
+    NS->>NS: 3日後の朝9時の fireDate を計算
+    NS->>UNCenter: add(request, identifier: "returnReminder", repeats: false)
+    NS->>NS: AnalyticsManager.log(.returnReminderScheduled)
+  end
+  </div>
+
+  <h3>ビジネスルール</h3>
+  <ul>
+    <li>最後の記録から3日後の朝9時に1回だけ発火</li>
+    <li>通知タップ計測（<code>returnReminderOpened</code>）は <code>UNUserNotificationCenterDelegate.didReceive</code> で実装</li>
+    <li>設定画面の <code>@AppStorage(returnReminderEnabledKey)</code> トグルでON/OFF。デフォルト ON</li>
+    <li><code>fireDate</code> が過去日になる場合（3日後が既に過去）は予約しない</li>
+  </ul>
+
+  <p><strong>通知タイトル</strong>: 「勉強、ちょっとだけ再開しない？」<br>
+  <strong>通知本文</strong>: 「3日空いても大丈夫。5分の記録からまたスタートしよう」</p>
+
+  <h2>週次ふりかえり（weeklyReportReminder）v1.2.0 新規</h2>
+  <p>WeeklyReportService が管理する。詳細は <a href="weekly-report.html">週次ふりかえりレポート機能仕様</a> を参照。</p>
+  <ul>
+    <li>アプリ起動時に <code>WeeklyReportService.generateIfNeeded(context:)</code> 内で予約を張り直す（冪等）</li>
+    <li>毎週月曜朝9時・繰り返しトリガー（<code>UNCalendarNotificationTrigger(dateMatching: components, repeats: true)</code>）</li>
+    <li>通知権限が unauthorized の場合はスキップ（権限なし時はサイレントに失敗）</li>
+  </ul>
+  <p><strong>通知タイトル</strong>: 「先週のふりかえりが届きました」<br>
+  <strong>通知本文</strong>: 「先週の勉強をまとめました。今週のペースづくりに役立てよう」</p>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th></tr>
+    <tr><td>UNUserNotificationCenter</td><td>権限リクエスト・通知予約・取り消し</td></tr>
+    <tr><td>UserDefaults (@AppStorage)</td><td>returnReminderEnabled の永続化</td></tr>
+    <tr><td>AnalyticsManager</td><td>returnReminderScheduled / returnReminderOpened 計測</td></tr>
+  </table>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-12</td><td>v1.2.0対応: 復帰リマインダー（returnReminder）と週次ふりかえり（weeklyReportReminder）を追加。通知識別子一覧表・処理フロー図・NotificationService API を全面更新</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
-</div></body></html>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
+</div>
+</body>
+</html>

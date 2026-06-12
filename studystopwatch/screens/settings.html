@@ -17,10 +17,23 @@
     <tr><td>科目管理</td><td>追加/編集/削除/並べ替え（SubjectEditView 起動）</td></tr>
     <tr><td>外観</td><td>system / light / dark</td></tr>
     <tr><td>目標</td><td>dailyGoalMinutes 設定</td></tr>
-    <tr><td>通知</td><td>有効/無効 + 時刻設定</td></tr>
+    <tr><td>通知</td><td>有効/無効 + 時刻設定（日次リマインダー）</td></tr>
+    <tr><td>通知 — 復帰リマインダー（v1.2.0）</td><td>Toggle「3日間記録がないときに通知する」（デフォルト ON）。<br>OFF にすると <code>NotificationService.shared.cancelReturnReminder()</code> を呼ぶ。<br>設定値は <code>UserDefaults["returnReminderEnabled"]</code> に保存</td></tr>
     <tr><td>プレミアム</td><td>「Pro版にアップグレード」 / 「購入を復元」</td></tr>
     <tr><td>法務</td><td>プライバシーポリシー / 利用規約</td></tr>
     <tr><td>アプリ情報</td><td>バージョン / 開発者</td></tr>
+  </table>
+
+  <h3>復帰リマインダー設定の詳細（v1.2.0）</h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>Toggle ラベル</td><td>「3日間記録がないときに通知する」</td></tr>
+    <tr><td>サブテキスト</td><td>「最後の学習から3日空くと1度だけお知らせします」</td></tr>
+    <tr><td>デフォルト</td><td>ON（<code>UserDefaults.standard.object(forKey:) as? Bool ?? true</code>）</td></tr>
+    <tr><td>ON → OFF</td><td><code>NotificationService.shared.cancelReturnReminder()</code> を呼んで予約を取り消す</td></tr>
+    <tr><td>OFF → ON</td><td><code>NotificationService.shared.rescheduleReturnReminder(lastStudyDate:)</code> を呼んで再スケジュール。<code>lastStudyDate</code> は最新 <code>StudySession.date</code> を渡す</td></tr>
+    <tr><td>通知権限</td><td>通知が未許可の場合はトグル操作後に権限リクエストを促す（<code>NotificationService.requestPermission()</code>）</td></tr>
+    <tr><td>識別子</td><td><code>NotificationService.returnReminderID = "returnReminder"</code></td></tr>
   </table>
 
   <h2>遷移</h2>
@@ -35,7 +48,11 @@
   <ul><li><a href="subject-edit.html">科目編集画面</a></li><li><a href="premium.html">プレミアム画面</a></li></ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-12</td><td>v1.2.0：通知セクションに復帰リマインダートグル（3日無記録→朝9時通知）の仕様を追加</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
 </div></body></html>

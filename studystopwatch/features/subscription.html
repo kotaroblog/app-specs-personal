@@ -1,15 +1,23 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
-<title>StudyStopwatch - サブスク機能</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - サブスク課金機能</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / サブスク機能</div>
-  <header class="site-header"><h1>サブスクリプション課金</h1><p>StoreKit 2 月額/年額プラン</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: SS-FEAT-SUB</span></div></header>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / サブスク課金機能</div>
+  <header class="site-header">
+    <h1>サブスクリプション課金</h1>
+    <p>StoreKit 2 月額/年額プラン + FeatureGate による機能制限一元管理</p>
+    <div class="section-meta">
+      <span class="tag">v1.2.0</span>
+      <span class="tag">機能ID: SS-FEAT-SUB</span>
+    </div>
+  </header>
 
   <h2>提供商品</h2>
   <table>
@@ -19,9 +27,10 @@
   </table>
 
   <h2>SubscriptionManager API</h2>
-  <pre><code>final class SubscriptionManager: ObservableObject {
-    @Published var products: [Product]
-    @Published var isPremium: Bool
+  <pre><code>@Observable @MainActor final class SubscriptionManager {
+    static let shared: SubscriptionManager
+    var products: [Product]
+    var isPremium: Bool
 
     func loadProducts() async
     func purchase(_ product: Product) async throws
@@ -29,20 +38,51 @@
     func startTransactionListener()
 }</code></pre>
 
-  <h2>プレミアム特典</h2>
-  <ul>
-    <li>広告非表示（Banner / Interstitial）</li>
-    <li>シェアカードの限定テーマ3種解放</li>
-    <li>レポート画面の詳細統計（前週比 / 1日平均 / ベスト曜日）</li>
-  </ul>
+  <h2>FeatureGate（v1.2.0 新規）</h2>
+  <div class="callout info">
+    <strong>Premium 判定の単一ソース</strong>: View から <code>SubscriptionManager.isPremium</code> を直接参照せず、
+    必ず <code>FeatureGate.shared</code> を経由する。将来の Remote Config 連携・A/B テストもここで完結させる。
+  </div>
+  <pre><code>@Observable @MainActor final class FeatureGate {
+    static let shared: FeatureGate
 
-  <h2>処理フロー</h2>
+    var testRecordFreeLimit = 10  // 無料ユーザーの成績記録閲覧上限件数
+
+    var canAccessAllTestRecords: Bool    // Premium のみ全件表示
+    var canAccessPremiumShareTheme: Bool // Premium のみプレミアムシェアテーマ
+    var canAccessPremiumStats: Bool      // Premium のみ詳細統計（前週比/1日平均/ベスト曜日）
+    var canAccessWeeklyCoachReport: Bool // Premium のみ週次ふりかえりレポート
+    var shouldShowAds: Bool             // 無料プランのみ広告表示
+}</code></pre>
+
+  <h2>Premium 機能境界（v1.2.0 時点）</h2>
+  <table>
+    <tr><th>機能</th><th>無料</th><th>Premium</th><th>FeatureGate フラグ</th></tr>
+    <tr><td>広告（Banner / Interstitial）</td><td>表示</td><td>非表示</td><td><code>shouldShowAds</code></td></tr>
+    <tr><td>シェアカードのプレミアムテーマ</td><td>非表示</td><td>3種解放</td><td><code>canAccessPremiumShareTheme</code></td></tr>
+    <tr><td>レポート詳細統計（前週比/1日平均/ベスト曜日）</td><td>非表示・ロックUX</td><td>表示</td><td><code>canAccessPremiumStats</code></td></tr>
+    <tr><td>成績記録の閲覧件数</td><td>直近10件（保存は全件）</td><td>無制限</td><td><code>canAccessAllTestRecords</code> / <code>testRecordFreeLimit</code></td></tr>
+    <tr><td>週次ふりかえりレポート</td><td>blur表示＋ロック誘導</td><td>全内容表示</td><td><code>canAccessWeeklyCoachReport</code></td></tr>
+  </table>
+
+  <h2>ペイウォール発火元（PaywallSource）</h2>
+  <table>
+    <tr><th>source値</th><th>発火元画面・機能</th></tr>
+    <tr><td><code>onboarding</code></td><td>オンボーディング最終ページ</td></tr>
+    <tr><td><code>settings</code></td><td>設定画面「Pro版にアップグレード」ボタン</td></tr>
+    <tr><td><code>reportStats</code></td><td>レポートの詳細統計ロックタップ</td></tr>
+    <tr><td><code>gradeLock</code></td><td>成績N件制限ロックバナータップ</td></tr>
+    <tr><td><code>weeklyReport</code></td><td>週次ふりかえりカードのロックタップ</td></tr>
+    <tr><td><code>shareTheme</code></td><td>シェアカードのプレミアムテーマタップ</td></tr>
+  </table>
+
+  <h2>処理フロー（購入）</h2>
   <ol>
     <li><code>Product.products(for:)</code> で商品取得</li>
     <li>購入時 <code>product.purchase()</code></li>
     <li>結果を <code>checkVerified()</code> で検証</li>
-    <li>成功 → <code>transaction.finish()</code></li>
-    <li>Transaction.updates 監視で自動更新も処理</li>
+    <li>成功 → <code>transaction.finish()</code> → <code>isPremium = true</code></li>
+    <li>Transaction.updates 監視で自動更新・解約も処理</li>
   </ol>
 
   <h2>外部連携</h2>
@@ -52,8 +92,22 @@
     <tr><td>App Store Connect</td><td>商品設定・価格</td></tr>
   </table>
 
-  <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>FeatureGate.shared.canAccessAllTestRecords</code> が false の場合、<code>records.prefix(testRecordFreeLimit)</code> を使って表示を絞る（保存済みデータは削除しない）</li>
+    <li>成績ロックバナー表示時に <code>gradeLockShown(hiddenCount:)</code> を計測。バナータップ時に <code>gradeLockTapped</code> を計測</li>
+    <li>週次カードロックタップ時に <code>weeklyReportLockTapped</code> を計測</li>
+    <li>PremiumView の <code>source</code> パラメータを必ず渡す（paywall_view の source 計測に必要）</li>
+  </ul>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
-</div></body></html>
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-12</td><td>v1.2.0対応: FeatureGate（機能制限一元化）を追加。Premium機能境界一覧・PaywallSource一覧を追加。成績N件制限・週次ふりかえりをPremium境界に追記</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
+</div>
+</body>
+</html>

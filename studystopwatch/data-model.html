@@ -24,6 +24,18 @@ erDiagram
   Subject ||--o{ TestRecord : "recorded for"
   Subject ||--o{ StudyTask : "assigned to"
   StudySession ||--o| StudyTask : "linked via linkedSessionID"
+  WeeklyCoachReport {
+    UUID id
+    Date weekStart
+    Double totalSeconds
+    Double previousWeekSeconds
+    String topSubjectName
+    Double topSubjectPercent
+    Int studyDayCount
+    Int examDaysRemaining
+    Int dailyGoalMinutes
+    Date generatedAt
+  }
   UserSettings {
     Int dailyGoalMinutes
     Bool reminderEnabled
@@ -193,6 +205,54 @@ enum TestType: String, Codable, CaseIterable {
     var testRecords: [TestRecord] = []
 }</code></pre>
 
+  <h2>WeeklyCoachReport（v1.2.0 新規）</h2>
+  <pre><code>/// 週次学習レポート（Premium機能「先週のふりかえり」）。
+/// アプリ起動時に前週分を集計して1レコード保存する（記録ゼロ週は生成しない）。
+/// コーチ文言は保存せず View 側で導出する。
+@Model final class WeeklyCoachReport {
+    var id: UUID = UUID()
+
+    /// 対象週の月曜の学習日開始インスタント（重複生成チェックのキー）
+    var weekStart: Date = Date()
+
+    /// 週の合計学習時間（秒）
+    var totalSeconds: Double = 0
+
+    /// 前々週の合計学習時間（秒）。前週比の算出用
+    var previousWeekSeconds: Double = 0
+
+    /// 最も学習時間が多かった科目名（記録なしなら空文字）
+    var topSubjectName: String = ""
+
+    /// 最多科目が全体に占める割合（0〜100）
+    var topSubjectPercent: Double = 0
+
+    /// 週のうち勉強した日数（0〜7）
+    var studyDayCount: Int = 0
+
+    /// 生成時点での試験日までの残日数（試験日未設定なら nil）
+    var examDaysRemaining: Int?
+
+    /// 生成時点での1日の目標分数（未設定なら nil。達成率の算出用）
+    var dailyGoalMinutes: Int?
+
+    var generatedAt: Date = Date()
+
+    // Computed properties
+    /// 前週比の増減率（%）。前々週が0なら nil（比較不能）
+    var changePercent: Double? {
+        guard previousWeekSeconds > 0 else { return nil }
+        return ((totalSeconds - previousWeekSeconds) / previousWeekSeconds) * 100
+    }
+
+    /// 1日目標に対する達成率（0〜100超もあり得る）。目標未設定なら nil
+    var goalAchievementPercent: Double? {
+        guard let goal = dailyGoalMinutes, goal > 0 else { return nil }
+        let weeklyGoalSeconds = Double(goal) * 7 * 60
+        return totalSeconds / weeklyGoalSeconds * 100
+    }
+}</code></pre>
+
   <h2>StudyActivityAttributes（Live Activity）</h2>
   <pre><code>struct StudyActivityAttributes: ActivityAttributes {
     var subjectName: String
@@ -226,6 +286,7 @@ enum TestType: String, Codable, CaseIterable {
   <h2>Enum 一覧</h2>
   <ul>
     <li><code>GoalType</code>: regularExam / highSchoolEntrance / universityEntrance</li>
+    <li><code>PaywallSource</code>: onboarding / settings / reportStats / gradeLock / weeklyReport / shareTheme <strong>v1.2.0 新規</strong></li>
     <li><code>TaskPeriod</code>: day / week / month（StudyTask の旧期間種別。v1.2 以降は非推奨）</li>
     <li><code>TestType</code>: regular / mock / quiz / other（TestRecord のテスト種別）<strong>v1.1.0 新規</strong></li>
     <li><code>ShareCardType</code>: daily / summary / heatmap / graph</li>
@@ -249,6 +310,7 @@ enum TestType: String, Codable, CaseIterable {
     <tr><td>1.2</td><td>2026-05-28</td><td>v1.1.0対応: TestRecord モデル・TestType enum を追加。UserSettings に focusSubjectID・focusSubjectModeEnabled を追加。Subject に testRecords リレーションを追加。ER 図を更新</td></tr>
     <tr><td>1.3</td><td>2026-06-07</td><td>v1.2.0対応: StudyTask に dueDate（Date?）フィールドを追加。periodRawValue / periodStart / periodEnd を後方互換フィールド（非推奨）として明記。ER 図・Enum 一覧を更新</td></tr>
     <tr><td>1.4</td><td>2026-06-09</td><td>v1.3.0対応: StudyTask に subject（Subject?）フィールドを追加。ER 図に Subject → StudyTask リレーションを追加</td></tr>
+    <tr><td>1.5</td><td>2026-06-12</td><td>v1.2.0対応: WeeklyCoachReport @Model を新規追加。ER 図に WeeklyCoachReport エンティティを追加。PaywallSource enum を追加。modelContainer に WeeklyCoachReport.self 登録</td></tr>
   </table>
 
   <script>
@@ -258,7 +320,7 @@ enum TestType: String, Codable, CaseIterable {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
 </div>
 </body>
 </html>

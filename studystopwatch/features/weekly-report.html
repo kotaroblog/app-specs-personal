@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 週次ふりかえりレポート機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 週次ふりかえりレポート機能</div>
+
+  <header class="site-header">
+    <h1>週次ふりかえりレポート機能</h1>
+    <p>前週（月〜日）の学習実績をスナップショットとして保存し、Premium ユーザーにコーチコメント付きで提示する</p>
+    <div class="section-meta">
+      <span class="tag">機能ID: SS-FEAT-WEEKLY-01</span>
+      <span class="tag">v1.2.0</span>
+      <span class="tag">Premium 限定</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    毎週月曜のアプリ起動時に前週（月〜日）の学習セッションを集計し、
+    <code>WeeklyCoachReport</code> モデルとして SwiftData に保存する。
+    Premium ユーザーはレポートタブの「先週のふりかえり」カードでコーチコメント・比較グラフを閲覧できる。
+    無料ユーザーには「Premium ロック」バナーを表示してアップグレードへ誘導する。
+  </p>
+  <p>
+    コーチ文言はモデルに保存せず View 側で導出するため、文言改善が過去レポートにも遡及して効く。
+    集計ロジックは BGTask を使わずアプリ起動時トリガーとする（電池・権限のコストを最小化）。
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/report.html">レポート画面（SS-REPORT-01）</a> — 「先週のふりかえり」カードを表示</li>
+    <li><a href="../screens/premium.html">プレミアム画面（SS-PREMIUM-01）</a> — ロックバナーのタップ遷移先</li>
+    <li><a href="../screens/settings.html">設定画面（SS-SET-01）</a> — 週次ふりかえり通知のON/OFF は通知設定セクションで管理</li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant App as App起動
+  participant WRS as WeeklyReportService
+  participant SW as SwiftData
+  participant FG as FeatureGate
+  participant V as ReportView
+  participant UN as UNUserNotificationCenter
+
+  App->>WRS: generateIfNeeded(context:)
+  WRS->>SW: fetch WeeklyCoachReport (weekStart == 先週月曜)
+  alt 生成済み
+    WRS->>UN: scheduleWeeklyReminder（冪等）
+    WRS-->>App: return（何もしない）
+  else 未生成
+    WRS->>SW: fetch StudySession（先週・前々週）
+    WRS->>WRS: 集計（totalSeconds / topSubject / studyDayCount 等）
+    alt totalSeconds == 0
+      WRS->>UN: scheduleWeeklyReminder
+      WRS-->>App: return（空週はレポートを作らない）
+    else totalSeconds > 0
+      WRS->>SW: insert WeeklyCoachReport → save
+      WRS->>UN: scheduleWeeklyReminder
+    end
+  end
+
+  V->>FG: canAccessWeeklyCoachReport
+  alt Premium
+    FG-->>V: true
+    V->>SW: latestReport(context:)
+    SW-->>V: WeeklyCoachReport
+    V->>V: コーチコメントを View で導出・表示
+  else 無料
+    FG-->>V: false
+    V->>V: ロックバナーを表示（週次レポートは Premium 機能です）
+  end
+  </div>
+
+  <h2>データモデル（WeeklyCoachReport）</h2>
+  <pre><code>@Model
+final class WeeklyCoachReport {
+    var id: UUID = UUID()
+
+    /// 対象週の月曜学習日開始インスタント（重複チェックのキー）
+    var weekStart: Date = Date()
+
+    /// 週の合計学習時間（秒）
+    var totalSeconds: Double = 0
+
+    /// 前々週の合計学習時間（秒） — 前週比の算出用
+    var previousWeekSeconds: Double = 0
+
+    /// 最も学習時間が多かった科目名（記録なしなら空文字）
+    var topSubjectName: String = ""
+
+    /// 最多科目が全体に占める割合（0〜100）
+    var topSubjectPercent: Double = 0
+
+    /// 週のうち勉強した日数（0〜7）
+    var studyDayCount: Int = 0
+
+    /// 生成時点での試験日までの残日数（未設定なら nil）
+    var examDaysRemaining: Int?
+
+    /// 生成時点での1日の目標分数（未設定なら nil — 達成率算出用）
+    var dailyGoalMinutes: Int?
+
+    var generatedAt: Date = Date()
+
+    // Computed properties（保存せず View で算出）
+    var changePercent: Double? { … }       // 前週比増減率
+    var goalAchievementPercent: Double? { … } // 1日目標達成率
+}</code></pre>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li><strong>生成タイミング</strong>: アプリ起動時に <code>WeeklyReportService.generateIfNeeded(context:)</code> を呼ぶ。前週（月〜日）分が未生成なら生成する</li>
+    <li><strong>空週はスキップ</strong>: 前週の <code>totalSeconds == 0</code> の場合はレポートを保存しない（見せても嬉しくないため）</li>
+    <li><strong>週の境界</strong>: <code>StudyDay.calendar</code> の <code>weekOfYear</code> を使用。<code>resetHour</code> を加算して学習日基準の境界に揃える</li>
+    <li><strong>文言は保存しない</strong>: コーチコメント文言は View で導出（<code>totalSeconds</code>・<code>studyDayCount</code>・<code>changePercent</code> 等から条件分岐）。文言変更が過去レポートに遡及して効く</li>
+    <li><strong>Premium 限定</strong>: <code>FeatureGate.canAccessWeeklyCoachReport</code> が <code>false</code> のユーザーにはロックバナーを表示</li>
+    <li><strong>週次通知</strong>: 毎週月曜朝9時に「先週のふりかえりが届きました」プッシュ通知（通知許可済みの場合のみ）。識別子: <code>"weeklyReportReminder"</code>。設定の復帰リマインダーON/OFFとは独立して管理</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>SwiftData (<code>ModelContext</code>)</td><td><code>WeeklyCoachReport</code> の永続化。<code>StudySession</code> の集計クエリ</td><td>アプリ起動時 MainActor で実行</td></tr>
+    <tr><td>UNUserNotificationCenter</td><td>毎週月曜朝9時の週次リマインダー</td><td>通知許可済みの場合のみスケジュール。冪等（毎回張り直し）</td></tr>
+    <tr><td>FeatureGate</td><td><code>canAccessWeeklyCoachReport</code> で課金壁判定</td><td>SubscriptionManager を直接参照しない</td></tr>
+    <tr><td>Firebase Analytics</td><td><code>weekly_report_viewed</code>・<code>weekly_report_lock_tapped</code></td><td>AnalyticsManager.shared.log(_:) 経由</td></tr>
+  </table>
+
+  <h2>Firebase 計測イベント</h2>
+  <table>
+    <tr><th>イベント名（snake_case）</th><th>AnalyticsEvent ケース</th><th>発火タイミング</th><th>パラメータ</th></tr>
+    <tr><td><code>weekly_report_viewed</code></td><td><code>.weeklyReportViewed</code></td><td>Premium ユーザーがふりかえりカードを表示したとき</td><td>なし</td></tr>
+    <tr><td><code>weekly_report_lock_tapped</code></td><td><code>.weeklyReportLockTapped</code></td><td>無料ユーザーがロックバナーをタップしたとき</td><td>なし</td></tr>
+    <tr><td><code>paywall_view</code></td><td><code>.paywallView(source: .weeklyReport)</code></td><td>週次レポートロック経由でペイウォールが表示されたとき</td><td><code>source="weeklyReport"</code></td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>SwiftData <code>save</code> 失敗</td><td><code>logger.error</code> で記録。次回起動時に再生成を試みる（weekStart の重複チェックで冪等）</td></tr>
+    <tr><td><code>dateInterval(of: .weekOfYear)</code> が <code>nil</code></td><td><code>guard</code> で早期 return。週次通知のみスケジュールして終了</td></tr>
+    <tr><td>通知権限が未許可／拒否</td><td>通知スケジュールをスキップ（エラーなし。ユーザーが設定で許可したあとの次回起動から有効化）</td></tr>
+    <tr><td>前週が完全に空（<code>totalSeconds == 0</code>）</td><td>レポートを保存せず、週次通知のみスケジュール</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>WeeklyReportService</code> は <code>@MainActor enum</code>（静的メソッド群。インスタンス不要）</li>
+    <li>集計クエリは全件 fetch 後に Swift 側でフィルタ（インデックスが少ない現状でも十分な件数）。件数増加時は <code>#Predicate</code> で DB 側フィルタに切り替えを検討</li>
+    <li>学習日の境界は <code>StudyDay.resetHour</code>（デフォルト4時）を加算して揃える。<code>dateInterval(of: .weekOfYear)</code> は startOfDay（0時）を返すため、<code>StudyDay.applyResetHour(to:resetHour:)</code> で補正する</li>
+    <li>コーチコメントの View 側導出ロジック例:<br>
+      <code>studyDayCount == 0</code> → 「先週は記録がありませんでした。今週こそ！」<br>
+      <code>changePercent > 10</code> → 「先週より +xx% 増加！好調です」<br>
+      <code>goalAchievementPercent >= 100</code> → 「週間目標達成！すばらしい」</li>
+    <li>Premium ロックバナーのタップ時は <code>AnalyticsManager.shared.log(.weeklyReportLockTapped)</code> を呼び、続けて PremiumView へ sheet 遷移する</li>
+    <li>週次通知識別子 <code>"weeklyReportReminder"</code> は <code>WeeklyReportService.reminderID</code> static let として定義済み</li>
+    <li>週次通知は復帰リマインダー（<code>"returnReminder"</code>）と識別子が異なるため、互いに干渉しない</li>
+    <li>テスト: <code>weekStart</code> に過去月曜を渡してモデルを手動 insert し、<code>latestReport(context:)</code> で取得できることを確認する</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-12</td><td>初版作成 (v1.2.0)</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
+</div>
+</body>
+</html>

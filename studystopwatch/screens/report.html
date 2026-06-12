@@ -1,44 +1,102 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>StudyStopwatch - レポート</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / レポート</div>
-  <header class="site-header"><h1>レポート画面（ReportView）</h1><p>週間・月間・通期の統計レポート</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-REPORT-01</span></div></header>
+  <header class="site-header">
+    <h1>レポート画面（ReportView）</h1>
+    <p>週間・月間・通期の統計レポート + 成績セグメント</p>
+    <div class="section-meta">
+      <span class="tag">v1.2.0</span>
+      <span class="tag">画面ID: SS-REPORT-01</span>
+    </div>
+  </header>
 
   <h2>目的・役割</h2>
-  <p>期間別の学習統計を表示。期間切替・科目別集計・前週比トレンドを可視化。プレミアムは詳細統計に拡張。</p>
+  <p>
+    期間別の学習統計を表示する。上部 SegmentedPicker（学習時間 / 成績）で2セクションを切り替える。
+    学習時間セグメントには v1.2.0 で「先週のふりかえり」カード（WeeklyCoachReportCard）を追加。
+    成績セグメントは <a href="grades-tab.html">grades-tab.html</a> を参照。
+  </p>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（学習時間セグメント）</h2>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>セグメントPicker</td><td>「学習時間」/ 「成績」（上部に常時表示）</td></tr>
     <tr><td>期間Picker</td><td>週 / 月 / 通期</td></tr>
     <tr><td>合計学習時間</td><td>選択期間のトータル</td></tr>
+    <tr><td>先週のふりかえりカード</td><td>WeeklyCoachReportCard。Premium = サマリー+コーチメッセージ、無料 = blur+ロック誘導（v1.2.0 新規）</td></tr>
+    <tr><td>詳細統計（Premium）</td><td>前週比 / 1日平均 / ベスト曜日。FeatureGate.canAccessPremiumStats が false なら非表示+ロックUX</td></tr>
+    <tr><td>日別折れ線グラフ</td><td>日別の推移（SwiftUI Charts）</td></tr>
     <tr><td>科目別バー</td><td>科目ごとの時間内訳</td></tr>
-    <tr><td>折れ線グラフ</td><td>日別の推移（SwiftUI Charts）</td></tr>
-    <tr><td>前週比</td><td>「前週より N% UP」（プレミアム）</td></tr>
-    <tr><td>1日平均</td><td>プレミアム限定</td></tr>
-    <tr><td>ベスト曜日</td><td>プレミアム限定</td></tr>
-    <tr><td>シェアボタン</td><td>StudyShareSheet</td></tr>
+    <tr><td>シェアボタン</td><td>toolbar trailing。学習時間セグメント時のみ表示（成績セグメントでは非表示）</td></tr>
+  </table>
+
+  <h2>先週のふりかえりカード（WeeklyCoachReportCard）</h2>
+  <table>
+    <tr><th>要素</th><th>無料プラン</th><th>Premiumプラン</th></tr>
+    <tr><td>カード全体</td><td>blur(radius: 6) でぼかし</td><td>通常表示</td></tr>
+    <tr><td>表示内容</td><td>ロック画面（lock.fill アイコン + 「先週のふりかえりを解放」）</td><td>週合計時間 + 前週比 + 勉強日数 + 最多科目 + 試験日残日数 + コーチメッセージ</td></tr>
+    <tr><td>コーチメッセージ</td><td>—</td><td>達成度に応じた3段階（75%以上 / 50〜75% / 50%未満）。目標未設定時は勉強日数で判定</td></tr>
+    <tr><td>タップ</td><td>weeklyReportLockTapped 計測 → PremiumView(source: .weeklyReport)</td><td>weeklyReportViewed 計測</td></tr>
   </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>条件</th><th>表示</th></tr>
-    <tr><td>無料</td><td>基本統計のみ</td></tr>
-    <tr><td>プレミアム</td><td>詳細統計含む</td></tr>
+    <tr><td>無料</td><td>基本統計 + ふりかえりカード（blur+ロック） + 詳細統計ロック</td></tr>
+    <tr><td>Premium</td><td>基本統計 + ふりかえりカード（全表示） + 詳細統計表示</td></tr>
+    <tr><td>前週レポートが未生成（記録ゼロ週）</td><td>ふりかえりカード非表示（WeeklyCoachReport が nil の場合は表示しない）</td></tr>
   </table>
 
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>シェアボタンをタップ</td><td>StudyShareSheet（sheet）</td></tr>
+    <tr><td>詳細統計ロックをタップ</td><td>PremiumView(source: .reportStats)（sheet）</td></tr>
+    <tr><td>ふりかえりカードロックをタップ</td><td>PremiumView(source: .weeklyReport)（sheet）</td></tr>
+    <tr><td>セグメントを「成績」に切り替え</td><td>GradeReportView を表示（同一 NavigationView 内）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <ul>
+    <li><code>StudySession</code>（@Query で期間フィルタ）</li>
+    <li><code>Subject</code>（科目別集計）</li>
+    <li><code>WeeklyCoachReport</code>（@Query sort: weekStart desc、最新1件を表示）</li>
+    <li><code>UserSettings</code>（目標分数・試験日）</li>
+  </ul>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>@Query(sort: \WeeklyCoachReport.weekStart, order: .reverse) private var weeklyReports: [WeeklyCoachReport]</code> で取得し、<code>weeklyReports.first</code> を WeeklyCoachReportCard に渡す</li>
+    <li>WeeklyCoachReportCard は <code>FeatureGate.shared.canAccessWeeklyCoachReport</code> で分岐</li>
+    <li>ReportSection enum: <code>.time</code> / <code>.grade</code>。学習時間セグメント時のみ toolbar に共有ボタンを表示</li>
+    <li>期間別フィルタ（週/月/通期）は StudySession の startTime でフィルタし SwiftUI Charts で描画</li>
+  </ul>
+
   <h2>関連</h2>
-  <ul><li><a href="../features/share.html">シェア機能</a></li><li><a href="premium.html">プレミアム画面</a></li></ul>
+  <ul>
+    <li><a href="../features/weekly-report.html">週次ふりかえりレポート機能仕様</a></li>
+    <li><a href="../features/share.html">シェア機能</a></li>
+    <li><a href="premium.html">プレミアム画面</a></li>
+    <li><a href="grades-tab.html">成績セグメント（SS-GRADES-01〜03）</a></li>
+  </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-12</td><td>v1.2.0対応: 「先週のふりかえり」カード（WeeklyCoachReportCard）をUI構成・状態・遷移・実装メモに反映。成績セグメントへの切り替え記述を追加</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
-</div></body></html>
+  <footer class="site-footer">最終更新: 2026-06-12</footer>
+</div>
+</body>
+</html>
