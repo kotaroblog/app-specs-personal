@@ -24,14 +24,18 @@
   </ul>
 
   <h2>完成動画のレイヤー構成（時系列）</h2>
-  <p>5レイヤーで構成。順番に重ねて焼き込まれる。</p>
-  <pre><code>[0.0 ─── 0.6秒]  冒頭タイトルカード（全ユーザー・ログ風）
+  <p>v1.1（2026-06-13）で冒頭タイトルカードを削除し、再生開始直後から本編映像が始まる構成へ。</p>
+  <pre><code>[0.0 ─── (合計尺-1.5)]  動画本体 + テロップ + 透かし(無料のみ)
                   ↓
-[0.6 ─── (合計尺-1.5)]  動画本体 + テロップ + 透かし(無料のみ)
-                  ↓
-[末尾 1.5秒]       アウトロカード（無料ユーザーのみ）</code></pre>
+[末尾 1.5秒]       アウトロカード（無料ユーザーのみ・QR + #RoutineReel）</code></pre>
 
-  <h2>① 冒頭タイトルカード（v1.0で「ログ風」に刷新）</h2>
+  <h2>① 冒頭タイトルカード（<strong>v1.1 で削除</strong>・関数本体は残置）</h2>
+  <p style="background:#fff7e6;border-left:4px solid #ff9559;padding:10px 14px;margin:8px 0 16px;">
+    <strong>2026-06-13 削除</strong>。動画再生開始 0.6 秒間、上部に「時刻 + ルーティン名」が大きく被さって本編映像を遮るユーザー報告に対応。
+    <code>VideoCompositionService.addLayers</code> から <code>makeIntroCardLayer</code> 呼び出しを削除済み。
+    関数本体は再有効化容易のため残置。以下は削除前の仕様（参考）。
+  </p>
+  <ul class="kv-list">
   <ul class="kv-list">
     <li><span class="k">尺</span><span class="v">0.6秒（0.40秒表示維持 → 0.20秒フェードアウト）</span></li>
     <li><span class="k">背景</span><span class="v"><strong>上部28%のみグラデ</strong>（黒0.45 → 透明）。映像を遮らない</span></li>
@@ -223,6 +227,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.1</td><td>2026-06-13</td><td><strong>冒頭タイトルカード（時刻 + ルーティン名）の焼き込みを削除</strong>（commit 5d82d0f）。動画再生開始 0.6 秒間、画面上部に「時刻 + ルーティン名」が大きく被さって本編映像を遮るというユーザー報告への対応。<code>VideoCompositionService.addLayers</code> から <code>makeIntroCardLayer(...)</code> 呼び出しを削除し、ログメッセージから「イントロ:」も削除。<code>makeIntroCardLayer</code> 関数本体は再有効化容易のためコメント付きで残置。維持される要素: 末尾アウトロカード（QR + #RoutineReel + ブランド名 + CTA）／本編 SceneLabel（時刻 + ステップ名・SceneLabelLayout で WYSIWYG 一致）／透かし。冒頭テキストを期待していたユーザーには「TikTok 冒頭視聴維持率対策」の意図が失われる影響あり、復活が必要なら 1 行戻すだけで対応可</td></tr>
       <tr><td>v1.0.6</td><td>2026-06-10</td><td>アウトロカードに QR コード（動画幅25%・白背景・角丸・<code>CIQRCodeGenerator</code> + nearest 拡大）と <code>#RoutineReel</code> を焼き込み追加（cta を「QR を読み取るか App Store で検索」へ変更・Pro 加入者は除外）／<code>SceneLabelLayout</code> enum で配置比率・サイズ比率・<code>lineHeightFactor</code>/<code>textHeightFactor</code>/<code>descentSlackFactor</code> を単一ソース化（SwiftUI 用 / CALayer 用ヘルパに分離・撮影プレビューと完成動画の WYSIWYG 達成）／descent slack 補正で CATextLayer の top-anchored グリフ下端浮きを是正／長文ステップ名の折り返しを <code>maxLines = 2</code> に統一（<code>NSAttributedString.boundingRect</code> で <code>actualStepNameLineCount</code> 測定・<code>isWrapped</code> + <code>truncationMode = .end</code>・時刻 y は <code>stepNameHeight</code> 追随）／<code>AppConstants.swift</code> 新設（<code>promotionalShortURL</code> / <code>promotionalHashtag</code>）</td></tr>
       <tr><td>v1.0.5</td><td>2026-05-21</td><td>Cleanフィルタの「シャドウ持ち上げ」を CIExposureAdjust → CIHighlightShadowAdjust に変更（ハイライトを飛ばさない正確な実装へ）</td></tr>
       <tr><td>v1.0.4</td><td>2026-05-21</td><td>Claude.ai/GPT評価指摘7項目を反映: 冒頭カードをログ風化・アウトロ尺/文言/背景改善・透かし1行左上化・テロップ時刻を左下統合・タイムスタンプデフォルトOFF・セピア削除/Clean追加</td></tr>
@@ -233,7 +238,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-10</footer>
+  <footer class="site-footer">最終更新: 2026-06-14</footer>
 </div>
 </body>
 </html>
