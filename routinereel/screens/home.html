@@ -208,6 +208,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.2</td><td>2026-06-14</td><td>Opus 4.8 UX レビュー対応: 既存ユーザー時に <code>quickStartChipsSection</code> を非表示（マイルーティンと重複していた）。新規ユーザー（<code>routines.isEmpty</code>）時の Quick Start は維持。既存ユーザーが他プリセットを試したい場合は中央＋ボタン → <code>PresetSelectView</code> で対応可能（commit 692882f）。あわせてアクティブセッション起動の重複コミット <code>3b93040</code> で「次に撮影」/マイルーティン/Quick Start/通知/URL スキームの 9 箇所を <code>SessionPayload(startMode: .shootingSequential)</code> に統一し、撮影到達タップ数を 3→2 に短縮</td></tr>
       <tr><td>v1.1</td><td>2026-06-12</td><td>DesignsHomeView 900→673 行に縮減: <code>DesignsHomeHeroSection</code>（streak メーター + hero コピー、115 行）と <code>DesignsHomeRecentVideosSection</code>（保存メーター + サムネスクロール + DesignsRecentVideoThumbnail、160 行）を独立 struct に切り出し、親はバインディング / コールバック注入で連携（commit b833be4）。<code>SubscriptionManager.shared</code> 直参照 6 箇所を <code>@State subscription</code> 経由に統一し <code>@Observable</code> 追跡を正規化（commit 04bb873）。<a href="../features/analytics.html">Analytics</a> イベント <code>streak_updated</code>（撮影都度）/ <code>video_saved</code>（保存成功時）を組込み</td></tr>
       <tr><td>v1.0</td><td>2026-06-10</td><td>6施策反映（#1-#7）: Hero streak メーター（🔥連続/📹累計バッジ・3パターン分岐）/ マイルーティンに「今日 ✓」バッジ / 最近の動画サムネ実画像化 + RecentVideoPlayerSheet 起動 + 外側Button二重ネスト解消 / 「最近の動画」見出し横に保存メーター（X/3・上限ピンク強調・Paywall起動）/ Quick Start プリセット名を検索意図ワードへ刷新（朝5分/夜の整い/筋トレ10分/集中45分、raw value 不変）+ URL スキーム <code>routinereel://preset/&lt;rawValue&gt;</code> 受け口追加 / Paywall 年額バッジを「X% お得」動的化</td></tr>
       <tr><td>v1.0.6</td><td>2026-05-25</td><td>Quick Start カードサイズ 175×240 → 150×220（文字見切れ解消）/ マイルーティンの⋯メニュー二重Button問題を解消（Button → contentShape + onTapGesture へ変更）</td></tr>
@@ -217,7 +218,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-12</footer>
+  <footer class="site-footer">最終更新: 2026-06-14</footer>
 </div>
 </body>
 </html>
