@@ -8,35 +8,91 @@
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / プレミアム</div>
-  <header class="site-header"><h1>プレミアム画面（PremiumView）</h1><p>サブスク購入</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-PREMIUM-01</span></div></header>
+  <header class="site-header"><h1>プレミアム画面（PremiumView）</h1><p>サブスク購入（設定画面から遷移）</p>
+  <div class="section-meta"><span class="tag done">v1.2</span><span class="tag">画面ID: SS-PREMIUM-01</span></div></header>
+
+  <h2>目的・役割</h2>
+  <p>設定画面の「Pro版にアップグレード」ボタンから遷移するペイウォール。年額・月額の2プランを提示し、サブスクリプション購入・復元を行う。</p>
 
   <h2>提供商品</h2>
   <table>
-    <tr><th>プラン</th><th>Product ID</th></tr>
-    <tr><td>月額</td><td><code>com.happyboy1002.StudyStopwatch.premium.monthly</code></td></tr>
-    <tr><td>年額</td><td><code>com.happyboy1002.StudyStopwatch.premium.yearly</code></td></tr>
+    <tr><th>プラン</th><th>Product ID</th><th>備考</th></tr>
+    <tr><td>年額（上位表示）</td><td><code>com.happyboy1002.StudyStopwatch.premium.yearly</code></td><td>「お得」バッジ付き</td></tr>
+    <tr><td>月額</td><td><code>com.happyboy1002.StudyStopwatch.premium.monthly</code></td><td></td></tr>
   </table>
 
-  <h2>プレミアム特典</h2>
-  <ul>
-    <li>広告非表示（Banner / Interstitial）</li>
-    <li>シェアカード限定テーマ3種解放</li>
-    <li>詳細統計（前週比 / 1日平均 / ベスト曜日）</li>
-  </ul>
+  <h2>プレミアム特典（v1.2.1 確定・PremiumBenefit 単一ソース）</h2>
+  <div class="callout info">
+    <strong>表示順方針</strong>: 記録の深掘り（成績・週次）を先頭に、広告除去を末尾に配置するマネタイズ方針に準拠。
+    この順序と文言は <code>PremiumBenefit</code> 構造体として一元管理し、PremiumView（設定）とオンボーディング最終ページのペイウォールで共有する。
+  </div>
+  <table>
+    <tr><th>順序</th><th>特典</th><th>FeatureGate フラグ</th></tr>
+    <tr><td>1</td><td>成績を無制限に振り返り（無料は直近10件）</td><td><code>canAccessAllTestRecords</code></td></tr>
+    <tr><td>2</td><td>週次レポート</td><td><code>canAccessWeeklyCoachReport</code></td></tr>
+    <tr><td>3</td><td>詳細統計（前週比 / 1日平均 / ベスト曜日）</td><td><code>canAccessPremiumStats</code></td></tr>
+    <tr><td>4</td><td>限定テーマ（シェアカードのプレミアムテーマ3種）</td><td><code>canAccessPremiumShareTheme</code></td></tr>
+    <tr><td>5</td><td>広告なし（Banner / Interstitial）</td><td><code>shouldShowAds</code>（false）</td></tr>
+  </table>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>内容</th></tr>
+    <tr><td>特典リスト</td><td>上記5特典をアイコン付きで表示（<code>PremiumBenefit</code> から生成）</td></tr>
+    <tr><td>プラン選択</td><td>年額（上位・「お得」バッジ）→ 月額の順に並ぶ <code>SubscriptionPlanButton</code></td></tr>
+    <tr><td>購入ボタン</td><td>選択中プランで購入実行</td></tr>
+    <tr><td>復元ボタン</td><td>購入を復元</td></tr>
+    <tr><td>法務リンク</td><td>プライバシーポリシー / 利用規約</td></tr>
+  </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示</th></tr>
     <tr><td>未契約</td><td>プラン選択 + 購入ボタン</td></tr>
     <tr><td>契約中</td><td>「ご利用中」 + 復元ボタン</td></tr>
+    <tr><td>購入中</td><td>ProgressView（ローディング）</td></tr>
+    <tr><td>エラー</td><td>エラー文言をインライン表示（ペイウォールに留まる）</td></tr>
   </table>
 
+  <h2>購入挙動（v1.2.1）</h2>
+  <div class="callout warning">
+    購入が成功した場合のみペイウォールを閉じる。キャンセル・失敗・保留（<code>pending</code>）の場合はペイウォールに留まり、原因に応じたエラー文言をインライン表示する。
+  </div>
+  <table>
+    <tr><th>結果</th><th>挙動</th></tr>
+    <tr><td>成功</td><td>ペイウォールを閉じて設定画面に戻る</td></tr>
+    <tr><td>キャンセル</td><td>ペイウォールに留まる（エラー表示なし）</td></tr>
+    <tr><td>失敗</td><td>ペイウォールに留まる + エラー文言表示</td></tr>
+    <tr><td>保留（pending）</td><td>ペイウォールに留まる + 保留メッセージ表示</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>先</th></tr>
+    <tr><td>購入成功</td><td>設定画面（dismiss）</td></tr>
+    <tr><td>閉じるボタン</td><td>設定画面（dismiss）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul>
+    <li><code>SubscriptionPlanButton</code> は年額・月額共通の購入ボタンコンポーネント（v1.2.1 で共通化）</li>
+    <li>特典リストは <code>PremiumBenefit.allCases</code> をループして生成する（ハードコード禁止）</li>
+    <li>アプリアイコンはv1.2.1よりペン+ノートのシンプルデザインに刷新（アセット差替のみ、コードに影響なし）</li>
+  </ul>
+
   <h2>関連</h2>
-  <ul><li><a href="../features/subscription.html">サブスク機能仕様書</a></li></ul>
+  <ul>
+    <li><a href="../features/subscription.html">サブスク課金機能仕様書</a></li>
+    <li><a href="onboarding.html">オンボーディング（Paywallステップ）</a></li>
+    <li><a href="settings.html">設定画面</a></li>
+  </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.2</td><td>2026-06-15</td><td>v1.2.1対応: 特典を5つに整理（成績無制限・週次レポート・詳細統計・限定テーマ・広告なし）、年額/月額2プランを上位/下位に配置、購入挙動（成功のみ閉じる）を追記、PremiumBenefit単一ソース方針を明記、SubscriptionPlanButton共通化を実装メモに追記</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
 </div></body></html>

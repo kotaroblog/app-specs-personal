@@ -22,7 +22,7 @@
     <li>Target — 学習目標時間設定</li>
     <li>Commit — 「始める」</li>
     <li>Notification — 通知許可</li>
-    <li>Paywall — サブスク提示</li>
+    <li>Paywall — サブスク提示（v1.2.1: 年額・月額2プラン表示）</li>
   </ol>
 
   <h2>フロー分岐</h2>
@@ -31,11 +31,43 @@
     <li><strong>受験</strong>: Exam ステップで試験日入力、志望校入力</li>
   </ul>
 
+  <h2>Paywallステップ詳細（v1.2.1）</h2>
+  <div class="callout info">
+    オンボーディング最終ページのペイウォールは設定画面の PremiumView と<strong>同じ特典・順序・文言</strong>を共有する（<code>PremiumBenefit</code> 単一ソース）。
+  </div>
+  <table>
+    <tr><th>要素</th><th>内容</th></tr>
+    <tr><td>特典リスト</td><td>PremiumBenefit の5特典をアイコン付きで表示（成績無制限→週次レポート→詳細統計→限定テーマ→広告なし の順）</td></tr>
+    <tr><td>プラン表示</td><td>年額（上位・「お得」バッジ）→ 月額 の順に <code>SubscriptionPlanButton</code> で表示。無料体験が設定されている場合は年額ボタンに表記</td></tr>
+    <tr><td>購入ボタン</td><td>選択中プランで購入実行</td></tr>
+    <tr><td>スキップリンク</td><td>「あとで」でペイウォールをスキップして ContentView へ</td></tr>
+  </table>
+
+  <h3>購入挙動（v1.2.1）</h3>
+  <table>
+    <tr><th>結果</th><th>挙動</th></tr>
+    <tr><td>購入成功</td><td>ペイウォール（オンボ）を完了して ContentView へ進む（<code>onboardingCompleted = true</code>）</td></tr>
+    <tr><td>キャンセル</td><td>ペイウォールに留まる（エラー表示なし）</td></tr>
+    <tr><td>失敗</td><td>ペイウォールに留まる + エラー文言をインライン表示</td></tr>
+    <tr><td>保留（pending）</td><td>ペイウォールに留まる + 保留メッセージ表示</td></tr>
+    <tr><td>スキップ</td><td>購入なしで ContentView へ進む（<code>onboardingCompleted = true</code>）</td></tr>
+  </table>
+
   <h2>遷移</h2>
-  <p>完了時に <code>onboardingCompleted = true</code> → ContentView</p>
+  <p>完了時に <code>onboardingCompleted = true</code> → ContentView（購入成功・スキップいずれでも同一パス）</p>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="premium.html">プレミアム画面（設定から遷移）</a></li>
+    <li><a href="../features/subscription.html">サブスク課金機能仕様書</a></li>
+  </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-15</td><td>v1.2.1対応: Paywallステップに年額・月額2プラン表示・無料体験表記・PremiumBenefit単一ソース方針・購入挙動（成功のみ進む）を追記</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
 </div></body></html>

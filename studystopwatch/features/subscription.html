@@ -14,16 +14,16 @@
     <h1>サブスクリプション課金</h1>
     <p>StoreKit 2 月額/年額プラン + FeatureGate による機能制限一元管理</p>
     <div class="section-meta">
-      <span class="tag">v1.2.0</span>
+      <span class="tag">v1.2.1</span>
       <span class="tag">機能ID: SS-FEAT-SUB</span>
     </div>
   </header>
 
   <h2>提供商品</h2>
   <table>
-    <tr><th>プラン</th><th>Product ID</th></tr>
-    <tr><td>月額</td><td><code>com.happyboy1002.StudyStopwatch.premium.monthly</code></td></tr>
-    <tr><td>年額</td><td><code>com.happyboy1002.StudyStopwatch.premium.yearly</code></td></tr>
+    <tr><th>プラン</th><th>Product ID</th><th>表示順</th></tr>
+    <tr><td>年額（上位）</td><td><code>com.happyboy1002.StudyStopwatch.premium.yearly</code></td><td>「お得」バッジ付き・先頭表示</td></tr>
+    <tr><td>月額</td><td><code>com.happyboy1002.StudyStopwatch.premium.monthly</code></td><td>年額の下に表示</td></tr>
   </table>
 
   <h2>SubscriptionManager API</h2>
@@ -37,6 +37,21 @@
     func restorePurchases() async throws
     func startTransactionListener()
 }</code></pre>
+
+  <h2>PremiumBenefit 単一ソース（v1.2.1 新規）</h2>
+  <div class="callout info">
+    <strong>特典表示の単一ソース</strong>: プレミアム特典の文言・順序・アイコンは <code>PremiumBenefit</code> 構造体（enum/struct）として一元管理する。
+    設定画面の PremiumView とオンボーディング最終ページのペイウォールは <code>PremiumBenefit.allCases</code> をループして特典リストを生成する（各画面でのハードコード禁止）。
+  </div>
+  <table>
+    <tr><th>順序</th><th>特典</th><th>FeatureGate フラグ</th></tr>
+    <tr><td>1</td><td>成績を無制限に振り返り（無料は直近10件）</td><td><code>canAccessAllTestRecords</code></td></tr>
+    <tr><td>2</td><td>週次レポート</td><td><code>canAccessWeeklyCoachReport</code></td></tr>
+    <tr><td>3</td><td>詳細統計（前週比 / 1日平均 / ベスト曜日）</td><td><code>canAccessPremiumStats</code></td></tr>
+    <tr><td>4</td><td>限定テーマ（シェアカードのプレミアムテーマ3種）</td><td><code>canAccessPremiumShareTheme</code></td></tr>
+    <tr><td>5</td><td>広告なし（Banner / Interstitial）</td><td><code>shouldShowAds</code>（false）</td></tr>
+  </table>
+  <p>表示順方針: 記録の深掘り（成績・週次）を先頭、広告除去を末尾に配置。</p>
 
   <h2>FeatureGate（v1.2.0 新規）</h2>
   <div class="callout info">
@@ -81,7 +96,8 @@
     <li><code>Product.products(for:)</code> で商品取得</li>
     <li>購入時 <code>product.purchase()</code></li>
     <li>結果を <code>checkVerified()</code> で検証</li>
-    <li>成功 → <code>transaction.finish()</code> → <code>isPremium = true</code></li>
+    <li>成功 → <code>transaction.finish()</code> → <code>isPremium = true</code> → ペイウォールを閉じる</li>
+    <li>キャンセル・失敗・保留 → ペイウォールに留まり原因に応じたエラー文言を表示（v1.2.1）</li>
     <li>Transaction.updates 監視で自動更新・解約も処理</li>
   </ol>
 
@@ -98,6 +114,8 @@
     <li>成績ロックバナー表示時に <code>gradeLockShown(hiddenCount:)</code> を計測。バナータップ時に <code>gradeLockTapped</code> を計測</li>
     <li>週次カードロックタップ時に <code>weeklyReportLockTapped</code> を計測</li>
     <li>PremiumView の <code>source</code> パラメータを必ず渡す（paywall_view の source 計測に必要）</li>
+    <li><code>SubscriptionPlanButton</code> は年額・月額共通の購入ボタンコンポーネント（v1.2.1 で共通化）。各画面でボタンUIをコピーせずこのコンポーネントを使う</li>
+    <li>force unwrap（<code>!</code>）禁止。<code>guard let</code> または <code>if let</code> でアンラップする（v1.2.1 でコード全面対応済み）</li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -105,9 +123,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-12</td><td>v1.2.0対応: FeatureGate（機能制限一元化）を追加。Premium機能境界一覧・PaywallSource一覧を追加。成績N件制限・週次ふりかえりをPremium境界に追記</td></tr>
+    <tr><td>1.2</td><td>2026-06-15</td><td>v1.2.1対応: PremiumBenefit単一ソース（特典5つ・表示順方針）を追加。提供商品の表示順（年額上位）を更新。購入フローにキャンセル・失敗・保留時の挙動を追記。SubscriptionPlanButton共通化・force unwrap排除を実装メモに追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-12</footer>
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
 </div>
 </body>
 </html>
