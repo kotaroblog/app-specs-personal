@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - オンボーディング</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / オンボーディング</div>
+
+  <header class="site-header">
+    <h1>オンボーディング</h1>
+    <p>初回起動時のウェルカム・生年月日/目標年齢入力・利用開始フロー（C案ダーク天体トーン全面刷新）。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">S4実装済</span>
+      <span class="tag">画面ID: LR-ONBOARD-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    アプリを初めて起動したユーザーに「人生を振り返るアプリ」であることを静かに伝え、
+    パーソナライズに必要な<strong>生年月日</strong>と<strong>目標年齢</strong>を取得する入口。
+    C案「ダーク天体」トーンに全面刷新し、明朝のヒーロー文・真鍮の細罫・金CTAで
+    アプリのムードを最初から体験させる。
+    プライバシーポリシーへの同意は利用開始ボタンのタップを同意とみなす形式とし、
+    リンクをフッターに設置する。
+  </p>
+
+  <div class="callout">
+    <strong>表示トリガー:</strong> <code>@AppStorage("onboarding.completed")</code> が <code>false</code>（未設定含む）の場合に起動直後に <code>.fullScreenCover</code> で表示する。完了後は <code>true</code> に設定し、次回以降はスキップ。
+  </div>
+
+  <h2>画面構成（スクロール）</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ヒーローテキスト</td><td>テキストブロック</td><td>明朝28pt「あなたの人生を、<br>振り返るために。」（moonWhite）。サブコピー：「日々の記録が、やがて物語になる。」（textMuted・14pt）</td></tr>
+    <tr><td>アプリアイコン or 星図イラスト</td><td>Image / Canvas</td><td>ヒーロービジュアル。night1背景に散らばる小星（StarMapView の軽量版）。アニメ: 起動時に opacity 0→1 fade（800ms）。</td></tr>
+    <tr><td>生年月日入力カード</td><td>AppCard + DatePicker</td><td>真鍮の細罫（goldDim 1px）囲みカード。「あなたの生年月日」ラベル（textMuted・明朝12pt）+ DatePicker（displayedComponents: .date・ホイール形式）。</td></tr>
+    <tr><td>目標年齢入力カード</td><td>AppCard + Stepper / Picker</td><td>同上の細罫カード。「人生の目標年齢」ラベル + 数値ピッカー（60〜120歳・既定: 80歳）。補助テキスト: 「あくまで参考です。あとから設定で変更できます。」（textMuted・11pt）</td></tr>
+    <tr><td>利用開始ボタン（金CTA）</td><td>Button</td><td>「LifeReview をはじめる」。背景: amber（#C2894B）。テキスト: night1色・明朝16pt・bold。角丸12px。disabled: 生年月日未選択時（DatePicker デフォルト値は本日なので事実上 disabled なし）。</td></tr>
+    <tr><td>利用規約・プライバシーリンク</td><td>Text（footnote）</td><td>「はじめる」ボタン下部。「利用開始をもって<a>利用規約</a>・<a>プライバシーポリシー</a>に同意したとみなします。」（textMuted・10pt）</td></tr>
+  </table>
+
+  <h2>デザイントークン（C案「ダーク天体」準拠）</h2>
+  <table>
+    <tr><th>トークン</th><th>HEX</th><th>オンボーディングでの用途</th></tr>
+    <tr><td>night1</td><td>#10141C</td><td>全体背景（白フラッシュ防止の Launch 画面と同色）</td></tr>
+    <tr><td>night2</td><td>#161C28</td><td>入力カード面</td></tr>
+    <tr><td>moonWhite</td><td>#EAE6DC</td><td>ヒーロー文・DatePicker テキスト</td></tr>
+    <tr><td>textMuted</td><td>#8E8B84</td><td>補助テキスト・フッターリンク</td></tr>
+    <tr><td>goldDim</td><td>#C2894B 38%透過</td><td>入力カード枠線（真鍮の細罫）</td></tr>
+    <tr><td>amber</td><td>#C2894B</td><td>CTA ボタン背景</td></tr>
+    <tr><td>cardBorder</td><td>#2A3040</td><td>入力カード内部セパレーター</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示・挙動</th></tr>
+    <tr><td>初期表示</td><td>ヒーロー fade in。DatePicker は本日の日付を初期値として表示。目標年齢は 80 歳を初期値として表示。</td></tr>
+    <tr><td>入力中</td><td>DatePicker / Stepper のインタラクション。CTAボタンは常に活性。</td></tr>
+    <tr><td>利用開始ボタンタップ</td><td><code>@AppStorage("onboarding.completed") = true</code> を設定 → <code>@AppStorage("profile.birthDate")</code> と <code>@AppStorage("profile.targetAge")</code> に保存 → dismiss してメインタブ画面へ。</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「LifeReview をはじめる」ボタンタップ</td><td>onboarding.completed = true を設定後 fullScreenCover を dismiss → メインタブ（今日タブ）へ</td></tr>
+    <tr><td>利用規約リンクタップ</td><td>SafariView（SFSafariViewController）でプライバシーポリシー URL を開く</td></tr>
+    <tr><td>プライバシーポリシーリンクタップ</td><td>SafariView でプライバシーポリシー URL を開く</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// 永続化は @AppStorage（SwiftData 非使用）
+@AppStorage("onboarding.completed") private var isCompleted: Bool = false
+@AppStorage("profile.birthDate")    private var birthDateInterval: Double = 0  // TimeInterval
+@AppStorage("profile.targetAge")    private var targetAge: Int = 80
+
+// 入力値
+@State private var selectedBirthDate: Date = .now
+@State private var selectedTargetAge: Int = 80
+
+// 利用開始アクション
+func complete() {
+    birthDateInterval = selectedBirthDate.timeIntervalSince1970
+    isCompleted = true
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>バックグラウンドは <code>Color("night1")</code>（<code>#10141C</code>）で塗り、Launch 画面と同色にすることでコールドスタート時の白フラッシュを視覚的に防ぐ。</li>
+    <li>DatePicker の tint は <code>AppColors.amber</code>（<code>#C2894B</code>）。ホイール形式（<code>.datePickerStyle(.wheel)</code>）を使用し、ダーク天体の雰囲気に合わせる。</li>
+    <li>目標年齢ピッカーは Stepper または Picker（Wheel スタイル）どちらでも可。60〜120 の範囲。</li>
+    <li><code>interactiveDismissDisabled(true)</code> を設定し、スワイプダウンで閉じられないようにする（必ず「はじめる」ボタンを経由させる）。</li>
+    <li>将来的な多言語対応を見据え、ヒーローコピー・ラベル文言は <code>LocalizedStringKey</code> で包むことを推奨。</li>
+    <li>フォントは <code>AppFont.mincho(28)</code>（ヒーロー）・<code>AppFont.mincho(12)</code>（カードラベル）を使用。他は SF Pro（システムフォント）。</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../index.html">LifeReview アプリトップ</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-16</td><td>初版作成。Phase S4 実装済み: C案ダーク天体トーン全面刷新オンボーディング（明朝ヒーロー文・真鍮細罫入力カード・生年月日/目標年齢入力・金CTA）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-16</footer>
+</div>
+</body>
+</html>

@@ -144,6 +144,7 @@ final class ReflectionSession {
   <ul class="checklist">
     <li><code>isHighlight: Bool = false</code> — LogEntry に Phase S2 で追加。デフォルト false により既存データは自動互換。</li>
     <li>ReflectionSession は Phase S2 で新規追加テーブル。Flutter 版 drift の <code>ReflectionSessions</code> テーブル定義（schemaVersion 5）とデータ構造は対応しているが、移行ツールは未実装（新規ユーザー優先）。</li>
+    <li><strong>Phase S4 補足:</strong> オンボーディングで収集する生年月日（<code>profile.birthDate</code>: TimeInterval）と目標年齢（<code>profile.targetAge</code>: Int）は <code>@AppStorage</code> で管理する。SwiftData の <code>@Model</code> クラスには追加しない（ユーザープロファイル情報は少量でモデル変更コストを避ける設計方針）。</li>
   </ul>
 
   <h2>Flutter 版との対応（参考）</h2>
@@ -167,6 +168,7 @@ final class ReflectionSession {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 時点の SwiftData モデル（LogEntry・ReflectionSession）を記述。Flutter→Swift 移行状況を追記</td></tr>
     <tr><td>1.1</td><td>2026-06-15</td><td>Phase S3 技術置換を反映: flutter_local_notifications→UNUserNotificationCenter・SharedPreferences→@AppStorage を移行対応表に追記</td></tr>
+    <tr><td>1.2</td><td>2026-06-16</td><td>Phase S4 を反映: オンボーディング入力値（birthDate・targetAge）は @AppStorage（TimeInterval/Int）で管理し SwiftData モデルには追加しない方針を補足。マイグレーション方針セクションに注記追加</td></tr>
   </table>
 
   <script>
@@ -176,7 +178,7 @@ final class ReflectionSession {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-15</footer>
+  <footer class="site-footer">最終更新: 2026-06-16</footer>
 </div>
 </body>
 </html>

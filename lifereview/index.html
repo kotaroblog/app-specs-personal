@@ -21,8 +21,8 @@
     <li><span class="k">カテゴリ</span><span class="v">ライフスタイル / 生産性</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">プレミアム買い切り + 広告（検討中）</span></li>
-    <li><span class="k">ステータス</span><span class="v">開発中（フルリニューアル）</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">v1.0 は無料・広告なし。実ユーザーデータを蓄積後、v1.1 以降で課金/広告を設計</span></li>
+    <li><span class="k">ステータス</span><span class="v">開発中（Phase S4 完了・リリース準備中）</span></li>
     <li><span class="k">技術スタック</span><span class="v">Swift / SwiftUI / SwiftData / @Observable（Flutter→Swift全面移行中）</span></li>
     <li><span class="k">デザインテーマ</span><span class="v">C案「ダーク天体」— 墨と藍、琥珀の真鍮、明朝×ゴシック二層</span></li>
   </ul>
@@ -45,6 +45,15 @@
     <a class="card" href="data-model.html">
       <div class="title">データモデル</div>
       <div class="desc">SwiftData @Model 構造・ER図（Flutter→Swift移行の経緯含む）</div>
+    </a>
+  </div>
+
+  <h2>画面仕様書（Phase S4 新規追加）</h2>
+  <div class="card-grid">
+    <a class="card" href="screens/onboarding.html">
+      <div class="title">オンボーディング</div>
+      <div class="desc">C案ダーク天体トーン全面刷新・明朝ヒーロー文・真鍮細罫入力カード・生年月日/目標年齢入力・金CTA</div>
+      <div class="meta"><span class="tag">LR-ONBOARD-01</span> <span class="tag done">S4新規</span></div>
     </a>
   </div>
 
@@ -91,6 +100,36 @@
     </a>
   </div>
 
+  <h2>デザインシステム補足（S4 追加・共通ナビゲーションUI）</h2>
+  <div class="callout">
+    Phase S4 でナビゲーションバーの外観を全画面統一した。
+  </div>
+  <table>
+    <tr><th>要素</th><th>仕様</th></tr>
+    <tr><td>ナビゲーションバー背景</td><td>ダーク天体背景色（night1: <code>#10141C</code>）。<code>UINavigationBarAppearance</code> で <code>configureWithOpaqueBackground()</code> + <code>backgroundColor = UIColor(AppColors.night1)</code>。</td></tr>
+    <tr><td>タイトルフォント</td><td>ヒラギノ明朝 ProN（<code>UIFont(name: "HiraginoMincho-ProN", size: 17)</code> または <code>AppFont.mincho(17)</code>）。moonWhite 色。</td></tr>
+    <tr><td>大タイトル表示</td><td>ルートタブ（ふりかえりホーム等）は <code>.navigationBarTitleDisplayMode(.inline)</code>。ヒーローテキストが見出しを兼ねるため大タイトルは出さない。</td></tr>
+    <tr><td>詳細画面タイトル</td><td>インライン明朝タイトル（<code>.navigationBarTitleDisplayMode(.inline)</code>）。</td></tr>
+    <tr><td>Back ボタン色</td><td>amber（<code>#C2894B</code>）。<code>UINavigationBar.appearance().tintColor</code> で統一指定。</td></tr>
+  </table>
+
+  <h2>Launch 画面（S4 追加）</h2>
+  <p>
+    コールドスタート時の白フラッシュを抑止するため、Launch 画面をダーク天体の基調背景色（night1: <code>#10141C</code>）で塗る。
+    Xcode の <code>LaunchScreen.storyboard</code>（または <code>Info.plist</code> の <code>UILaunchScreen</code>）でビュー背景色を指定する。
+    オンボーディング画面の背景も同色で統一されているため、起動から最初の操作まで一貫したダーク天体体験になる。
+  </p>
+
+  <h2>スクショ自動化（S4 導入）</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>パイプライン</td><td>fastlane snapshot（UITest）→ raw_auto/{ja-JP,en-US}/ → build_store_images.js（Node + Puppeteer）→ store/{ja-JP,en-US}/ へ提出用デザイン（1320×2868px）を生成</td></tr>
+    <tr><td>実行コマンド</td><td><code>fastlane store</code> で1コマンド完結</td></tr>
+    <tr><td>保存先（提出元）</td><td><code>~/Desktop/app-screenshots/LifeReview/store/{ja-JP,en-US}/</code></td></tr>
+    <tr><td>テンプレート</td><td><code>ios-apps/tools/store-screenshot-templates/</code> 共通HTML（hero / features / grid）を使用</td></tr>
+    <tr><td>解像度</td><td>1320 × 2868px（iPhone 17 Pro Max 6.9インチ）</td></tr>
+  </table>
+
   <h2>実装ロードマップ</h2>
   <table>
     <tr><th>Phase</th><th>目的</th><th>状態</th></tr>
@@ -98,7 +137,8 @@
     <tr><td>S1 骨格</td><td>3タブ配置・今日タブ・人生タブ再配置</td><td><span class="tag done">完了</span></td></tr>
     <tr><td>S2 振り返り中核</td><td>振り返りセッション・ホーム・タイムライン・道具箱</td><td><span class="tag done">完了</span></td></tr>
     <tr><td>S3 拡張</td><td>感情の移ろいグラフ・リズムカードdue判定・星図段階表現・週次リマインダー通知</td><td><span class="tag done">完了</span></td></tr>
-    <tr><td>S4 仕上げ</td><td>オンボーディング・プレミアム・アニメ・フォント</td><td><span class="tag">未着手</span></td></tr>
+    <tr><td>S4 仕上げ</td><td>オンボーディング刷新（ダーク天体）・ナビゲーションUIの統一（明朝タイトル）・Launch 画面（白フラッシュ抑止）・スクショ自動化パイプライン導入</td><td><span class="tag done">完了</span></td></tr>
+    <tr><td>v1.0 リリース</td><td>無料・広告なし・App Store 提出準備</td><td><span class="tag">準備中</span></td></tr>
   </table>
 
   <h2>変更履歴</h2>
@@ -106,9 +146,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>v1.0</td><td>2026-06-15</td><td>仕様書ポータル初版作成。Phase S2「振り返り中核」実装完了分を反映（ふりかえりホーム・振り返りセッション・星図タイムライン・道具箱カレンダー/統計・データモデル・機能仕様書）</td></tr>
     <tr><td>v1.1</td><td>2026-06-15</td><td>Phase S3「拡張」実装完了分を反映: 感情の移ろいグラフ（toolbox-stats）・リズムカードdue自動判定（reflect-home）・StarMap段階表現+星座線（reflection-timeline）・リマインダー設定画面（reminder-settings）新規追加。ロードマップS3を完了に更新</td></tr>
+    <tr><td>v1.2</td><td>2026-06-16</td><td>Phase S4「仕上げ」実装完了分を反映: オンボーディング画面（LR-ONBOARD-01）新規追加・デザインシステム補足（ナビゲーションUI統一・明朝タイトル）・Launch画面（白フラッシュ抑止）・スクショ自動化パイプライン導入・マネタイズ方針（v1.0無料）・ロードマップS4完了に更新</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-15</footer>
+  <footer class="site-footer">最終更新: 2026-06-16</footer>
 </div>
 </body>
 </html>
