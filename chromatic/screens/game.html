@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / ゲーム</div>
   <header class="site-header"><h1>ゲーム画面（GameView）</h1><p>メイン画面（タイトル+ゲーム+結果が統合）</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: CR-GAME-01</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: CR-GAME-01</span></div></header>
 
   <h2>UI 構成</h2>
   <table>
@@ -17,12 +17,13 @@
     <tr><td>タイトルバー</td><td>「CHROMATIC」中央 + リーダーボード/設定ボタン両脇</td></tr>
     <tr><td>ScoreHeaderView</td><td>現スコア + 全難易度ベストスコア</td></tr>
     <tr><td>StreakBadgeView</td><td>連続プレイ日数（炎アイコン）</td></tr>
-    <tr><td>StatusTextView</td><td>状態表示（「WATCH」「YOUR TURN」「GAME OVER」）</td></tr>
-    <tr><td>PanelGridView</td><td>2×2パネル（赤/緑/青/黄）</td></tr>
+    <tr><td>StatusTextView</td><td>状態表示（「WATCH」「YOUR TURN」「GAME OVER」「正解はこのパネルでした」）</td></tr>
+    <tr><td>PanelGridView</td><td>パネルグリッド（2/4/6/8パネル切り替え可）。各パネルに <code>panel_0</code> 等の <code>accessibilityIdentifier</code> と <code>.isButton</code> トレイトを付与</td></tr>
     <tr><td>SequenceDotsView</td><td>シーケンスドットインジケーター</td></tr>
     <tr><td>ProgressBarView</td><td>入力進捗</td></tr>
-    <tr><td>難易度Picker</td><td>idle時のみ表示（NORMAL/FAST/INSANE）</td></tr>
-    <tr><td>STARTボタン</td><td>ラベル動的（START / RETRY等）</td></tr>
+    <tr><td>STARTボタン</td><td>ラベル動的（START / RETRY等）。idle時は最上部に配置</td></tr>
+    <tr><td>パネル数 / 難易度セレクター</td><td>idle時のみ表示。STARTボタンの直下に配置（PANELS 選択ピル → SPEED 選択ピルの順）</td></tr>
+    <tr><td>Daily Challenge ボタン</td><td>待機画面のセレクター下に配置（最下部）</td></tr>
     <tr><td>BannerAdView</td><td>下部（広告削除なし時）</td></tr>
     <tr><td>MilestoneFlashView</td><td>ラウンド5/10/15/20到達時の演出</td></tr>
     <tr><td>GameOverOverlayView</td><td>ゲームオーバー時のオーバーレイ</td></tr>
@@ -34,6 +35,7 @@
     <tr><td>idle</td><td>難易度選択 + STARTボタン</td></tr>
     <tr><td>showing</td><td>シーケンス表示（点灯）</td></tr>
     <tr><td>playerTurn</td><td>パネルタップ受付</td></tr>
+    <tr><td>wrongAnswerFeedback</td><td>正解パネルを約0.42秒点灯し「正解はこのパネルでした」と表示。完了後 gameOver へ自動遷移</td></tr>
     <tr><td>gameOver</td><td>GameOverOverlayView 表示</td></tr>
   </table>
 
@@ -42,7 +44,7 @@
     <tr><th>操作</th><th>遷移先</th></tr>
     <tr><td>STARTタップ</td><td>showing 状態へ</td></tr>
     <tr><td>正解</td><td>シーケンス満了で次ラウンド</td></tr>
-    <tr><td>不正解</td><td>gameOver</td></tr>
+    <tr><td>不正解</td><td>wrongAnswerFeedback → 約0.42秒後に gameOver</td></tr>
     <tr><td>RETRY</td><td>Interstitial表示 → 新ゲーム</td></tr>
     <tr><td>MODE SELECT</td><td>Interstitial表示 → idle</td></tr>
     <tr><td>SHARE</td><td>ShareCardView → ShareSheet</td></tr>
@@ -53,9 +55,11 @@
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li class="done">scenePhase 監視 → refreshStreakOnLaunch()</li>
-    <li class="done">ATT 要求は初回ゲームオーバー時</li>
-    <li class="done">Interstitial は2ゲームに1回（gameCount % 2 == 0）</li>
+    <li class="done">ATT 要求は 3ゲーム完了後かつ notDetermined 時のみ（初回ゲームオーバー時から変更）</li>
+    <li class="done">Interstitial は4ゲームに1回（gameCount % 4 == 0）</li>
     <li class="done">hasSeenOnboarding=false でOnboardingView (sheet, interactiveDismissDisabled)</li>
+    <li class="done">wrongAnswerFeedback 状態中はパネルタップを受け付けない（二重誤タップ防止）</li>
+    <li class="done">パネルに accessibilityIdentifier（panel_0〜panel_N）と .isButton トレイトを付与（UITest 対応）</li>
   </ul>
 
   <h2>関連</h2>
@@ -65,7 +69,11 @@
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-15</td><td>wrongAnswerFeedback 状態追加・ATTタイミング変更（初回→3ゲーム後）・インタースティシャル頻度変更（2回→4回に1回）・待機画面主導線整理（START最上部・セレクター順・Daily Challenge下配置）・パネルアクセシビリティ強化（accessibilityIdentifier / .isButton）</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
 </div></body></html>

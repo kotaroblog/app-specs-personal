@@ -8,29 +8,37 @@
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / 設定</div>
-  <header class="site-header"><h1>設定画面（SettingsView）</h1><p>サウンド・色覚サポート・課金</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: CR-SET-01</span></div></header>
+  <header class="site-header"><h1>設定画面（SettingsView）</h1><p>サウンド・色覚サポート・課金・ヘルプ</p>
+  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: CR-SET-01</span></div></header>
 
   <h2>UI 構成</h2>
   <table>
     <tr><th>セクション</th><th>項目</th></tr>
     <tr><td>サウンド</td><td>有効/無効トグル</td></tr>
-    <tr><td>アクセシビリティ</td><td>色覚サポートモード（R/G/B/Y記号表示）</td></tr>
+    <tr><td>アクセシビリティ</td><td>色覚サポートモード（パネルに数字表示。「R/G/B/Y」から「1/2/3/4」等の数字表記に変更）</td></tr>
     <tr><td>広告</td><td>「広告を削除（¥240）」 / 「購入を復元」</td></tr>
+    <tr><td>ヘルプ</td><td>「遊び方を見る」→ OnboardingView をsheet表示</td></tr>
     <tr><td>法務</td><td>利用規約 / プライバシー（外部リンク）</td></tr>
   </table>
 
   <h2>遷移</h2>
   <p>シート表示。閉じると GameView へ。</p>
+  <p>「遊び方を見る」タップ → OnboardingView（sheet）を重ねて表示</p>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li class="done">@AppStorage で各設定値を直接バインド</li>
     <li class="done">PurchaseManager.verifyEntitlements() で起動時に StoreKit から最新を取得</li>
+    <li class="done">色覚サポート有効時は「R/G/B/Y」の代わりに「1/2/3/4」等の数字をパネル上に重ね表示</li>
+    <li class="done">「遊び方を見る」は hasSeenOnboarding をリセットしない（sheet 呼び出しのみ）</li>
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-15</td><td>色覚サポート表示を「R/G/B/Y」から数字表記に変更。「遊び方を見る」項目を追加（OnboardingView再表示）</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
 </div></body></html>

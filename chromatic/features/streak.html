@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / ストリーク</div>
   <header class="site-header"><h1>ストリーク機能（StreakManager）</h1>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: CR-FEAT-STREAK</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">機能ID: CR-FEAT-STREAK</span></div></header>
 
   <h2>API</h2>
   <pre><code>final class StreakManager {
@@ -32,6 +32,14 @@
     <li>refreshStreakOnLaunch(): 最終プレイから2日以上経過 → 0リセット</li>
   </ol>
 
+  <h2>通知許可リクエスト</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>要求タイミング</td><td>ストリーク2日以上達成時（streak_count &gt;= 2 かつ未決定の場合のみ）</td></tr>
+    <tr><td>通知内容</td><td>毎日21時のリマインダー（v1.1 ドーパミン強化アップデートから）</td></tr>
+    <tr><td>要求条件</td><td>UNAuthorizationStatus が .notDetermined の場合のみリクエスト。.denied の場合は要求しない</td></tr>
+  </table>
+
   <h2>UI 表示（StreakBadgeView）</h2>
   <table>
     <tr><th>日数</th><th>色</th></tr>
@@ -42,7 +50,11 @@
   </table>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-15</td><td>通知許可リクエストのタイミングをストリーク2日以上達成時に明文化（notDetermined の場合のみ）</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
 </div></body></html>

@@ -9,13 +9,13 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / 広告制御</div>
   <header class="site-header"><h1>広告制御機能</h1><p>Banner + Interstitial</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: CR-FEAT-AD</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">機能ID: CR-FEAT-AD</span></div></header>
 
   <h2>広告構成</h2>
   <table>
     <tr><th>種類</th><th>表示</th><th>無料/購入</th></tr>
     <tr><td>Banner</td><td>GameView下部に常時（高さ50pt）</td><td>無料のみ</td></tr>
-    <tr><td>Interstitial</td><td>2ゲームに1回（gameCount % 2 == 0）</td><td>無料のみ</td></tr>
+    <tr><td>Interstitial</td><td>4ゲームに1回（gameCount % 4 == 0）</td><td>無料のみ</td></tr>
   </table>
 
   <h2>AdMob ID（Info.plist）</h2>
@@ -37,11 +37,15 @@
   <ul>
     <li>広告削除なし</li>
     <li>広告ロード済み</li>
-    <li>gameCount が偶数（2ゲームに1回）</li>
+    <li>gameCount % 4 == 0（4ゲームに1回。v1.0〜v1.1 は 2ゲームに1回だったが、UX改善のため緩和）</li>
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-15</td><td>インタースティシャル表示頻度を2ゲームに1回から4ゲームに1回に緩和（UX改善）</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
 </div></body></html>

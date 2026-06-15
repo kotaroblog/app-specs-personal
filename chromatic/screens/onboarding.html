@@ -8,29 +8,41 @@
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / オンボーディング</div>
-  <header class="site-header"><h1>オンボーディング（OnboardingView）</h1><p>初回起動時の3ステップチュートリアル</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: CR-ONB-01</span></div></header>
+  <header class="site-header"><h1>オンボーディング（OnboardingView）</h1><p>初回起動時の4ステップチュートリアル（設定画面から再表示可）</p>
+  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: CR-ONB-01</span></div></header>
 
-  <h2>3ステップ構成</h2>
+  <h2>4ステップ構成</h2>
   <ol>
     <li><strong>WATCH</strong> — シーケンス観察の説明</li>
     <li><strong>TAP</strong> — パネルタップ操作の説明</li>
     <li><strong>BEAT</strong> — 速度加速ルールの説明</li>
+    <li><strong>おすすめ設定</strong> — 「最初は4パネルとNORMALがおすすめです」のヒント</li>
   </ol>
 
   <h2>UI 構成</h2>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>TabView (PageStyle)</td><td>3ページの順次遷移</td></tr>
-    <tr><td>「START PLAYING」ボタン</td><td>最後のページで終了</td></tr>
-    <tr><td>interactiveDismissDisabled</td><td>スワイプで閉じられない</td></tr>
+    <tr><td>TabView (PageStyle)</td><td>4ページの順次遷移</td></tr>
+    <tr><td>「START PLAYING」ボタン</td><td>最後のページ（ステップ4）で表示して終了</td></tr>
+    <tr><td>interactiveDismissDisabled</td><td>スワイプで閉じられない（初回起動時）</td></tr>
   </table>
 
   <h2>遷移</h2>
   <p>「START PLAYING」タップで <code>hasSeenOnboarding = true</code> → GameView</p>
+  <p>設定画面の「遊び方を見る」タップ → OnboardingView（sheet。この場合は interactiveDismissDisabled を適用しない）</p>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">設定画面から再表示する場合は <code>hasSeenOnboarding</code> をリセットせず、sheet 表示のみ行う</li>
+    <li class="done">初回とリプレイでスワイプ閉じ禁止の挙動が異なるため、呼び出し元から <code>allowDismiss</code> フラグを渡す実装を推奨</li>
+  </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-15</td><td>「最初は4パネルとNORMALがおすすめです」ステップを追加（4ステップ化）。設定画面の「遊び方を見る」から再表示可能に対応</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
 </div></body></html>

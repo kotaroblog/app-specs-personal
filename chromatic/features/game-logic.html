@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / ゲームロジック</div>
   <header class="site-header"><h1>ゲームロジック</h1><p>シーケンス記憶・速度加速・マイルストーン</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: CR-FEAT-LOGIC</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">機能ID: CR-FEAT-LOGIC</span></div></header>
 
   <h2>ゲームフロー</h2>
   <ol>
@@ -18,8 +18,22 @@
     <li><code>showSequence()</code>: 各色を順に点灯（litMs+音） → 消灯（gapMs） → playerTurn</li>
     <li><code>handlePanelTap()</code>: 正解判定 → playerIndex+1</li>
     <li>シーケンス満了 → score+1 → checkMilestone() → nextRound()</li>
-    <li>不正解 → triggerGameOver()</li>
+    <li>不正解 → <code>triggerWrongAnswerFeedback()</code> → 約0.42秒後に <code>triggerGameOver()</code></li>
   </ol>
+
+  <h2>ミスフィードバック処理（wrongAnswerFeedback）</h2>
+  <p>プレイヤーが誤ったパネルをタップした際、即ゲームオーバーにせず以下の順で処理する:</p>
+  <ol>
+    <li>state を <code>wrongAnswerFeedback</code> に変更（パネルタップを即時無効化）</li>
+    <li>正解パネル（現在の sequence[playerIndex] に対応するパネル）を約420ms間点灯</li>
+    <li>StatusTextView に「正解はこのパネルでした」を表示</li>
+    <li>420ms 経過後、state を <code>gameOver</code> に変更 → GameOverOverlayView 表示</li>
+  </ol>
+  <table>
+    <tr><th>パラメータ</th><th>値</th></tr>
+    <tr><td>点灯時間</td><td>420ms（0.42秒）</td></tr>
+    <tr><td>フィードバック中のタップ受付</td><td>無効（state != .playerTurn で自動ガード）</td></tr>
+  </table>
 
   <h2>速度計算（computeSpeed）</h2>
   <p>実効ラウンド = sequence.count + difficulty.roundOffset</p>
@@ -57,7 +71,11 @@
   <p>showingTask / milestoneTask を <code>Task&lt;Void, Never&gt;</code> で保持。新ゲーム開始時に cancel()。deinit では MainActor.assumeIsolated で安全アクセス。</p>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-15</td><td>wrongAnswerFeedback 状態を追加。ミス時に即ゲームオーバーではなく正解パネルを420ms点灯後に遷移する処理フローを追記</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
 </div></body></html>
