@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - 振り返りセッション</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / 振り返りセッション</div>
+
+  <header class="site-header">
+    <h1>振り返りセッション</h1>
+    <p>週/月/年の5ステップ振り返りフロー。完了画面で星がひとつ灯る。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">S2実装済</span>
+      <span class="tag">画面ID: LR-SESSION-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    「立ち止まり、見返し、言葉にする」体験を5ステップの儀式として提供する中核画面。
+    週次・月次・年次で共通フローを使い、期間・問い文言・ラベルを <code>ReflectionType</code> で切り替える。
+    セッション完了時に ReflectionSession を SwiftData へ保存し、選択したログの <code>isHighlight</code> を true に更新する。
+    C案規律: セッション中（STEP1〜5）は<strong>星・グロー・絵文字を一切出さない</strong>。完了画面でのみ星が1つ灯る（唯一許可する発光演出）。
+  </p>
+
+  <h2>ステップ構成</h2>
+  <table>
+    <tr><th>STEP</th><th>画面</th><th>内容</th></tr>
+    <tr><td>STEP 1</td><td>ReflectionStepReview</td><td>期間内のログ一覧を見返す（記録がない場合も進行可能）</td></tr>
+    <tr><td>STEP 2</td><td>ReflectionStepChoose</td><td>心に残ったログをハイライトとして選ぶ（複数可・任意）</td></tr>
+    <tr><td>STEP 3</td><td>ReflectionStepPrompts</td><td>静かな問い（種別ごとに3問ローテーション）に自由記述で答える</td></tr>
+    <tr><td>STEP 4</td><td>ReflectionStepMood</td><td>期間の総括感情を5種から1つ選ぶ（任意）</td></tr>
+    <tr><td>STEP 5</td><td>ReflectionStepNote</td><td>気づき・自由メモを入力（任意）→「振り返りを完了する」ボタン</td></tr>
+    <tr><td>完了</td><td>ReflectionCompletionView</td><td>星が1つふわりと灯る演出（fade 600ms ease-out）。累計振り返り数・期間・総括感情を表示。「閉じる」で dismiss。</td></tr>
+  </table>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>プログレスバー</td><td>ReflectionProgressBar</td><td>STEP1〜5の進捗を線形表示。右端に閉じる（×）ボタン。完了画面では非表示。</td></tr>
+    <tr><td>コンテンツエリア</td><td>step 値で @ViewBuilder 切替</td><td>各 Step View をスライドアニメで切り替え。進む: trailing→leading。戻る: leading→trailing。</td></tr>
+    <tr><td>中断確認アラート</td><td>Alert</td><td>「振り返りを中断しますか？」入力内容は保存されない旨を明示。hasAnyInput が false の場合はアラートなしで dismiss。</td></tr>
+    <tr><td>期間ラベル</td><td>periodLabel</td><td>週次: 「MM/DD – MM/DD」、月次: 「YYYY年M月」、年次: 「YYYY年」</td></tr>
+  </table>
+
+  <h2>静かな問い（ReflectionPrompts）</h2>
+  <table>
+    <tr><th>種別</th><th>問い1</th><th>問い2</th><th>問い3</th></tr>
+    <tr><td>週次</td><td>この一週間で、心が動いた瞬間は？</td><td>会えてよかった人は？</td><td>来週、大切にしたいことは？</td></tr>
+    <tr><td>月次</td><td>今月、自分の中で変わったことは？</td><td>手放してよかったものは？</td><td>印象に残っている一日は？</td></tr>
+    <tr><td>年次</td><td>今年の自分を一言で表すと？</td><td>来年の自分へ、一言。</td><td>今年いちばんの"心が動いた"出来事は？</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示・挙動</th></tr>
+    <tr><td>通常（step 0〜4）</td><td>プログレスバー表示。各 Step View をスライド遷移。</td></tr>
+    <tr><td>保存中（isSaving: true）</td><td>STEP5 の完了ボタンを無効化（重複送信防止）。</td></tr>
+    <tr><td>保存成功</td><td>completedCount を SwiftData から取得。step を stepCount(5) に進め完了画面へ。</td></tr>
+    <tr><td>保存失敗</td><td>Logger.error でログ記録。isSaving を false に戻し STEP5 に留まる（エラーアラートは S3 以降で追加予定）。</td></tr>
+    <tr><td>完了画面</td><td>プログレスバー非表示。星の fade 演出。「閉じる」ボタンで dismiss。</td></tr>
+    <tr><td>中断確認</td><td>hasAnyInput が true の場合に閉じる（×）タップでアラート表示。</td></tr>
+  </table>
+
+  <h2>期間計算ルール</h2>
+  <table>
+    <tr><th>種別</th><th>periodStart</th><th>periodEnd</th></tr>
+    <tr><td>weekly</td><td>今日から6日前の日の開始（startOfDay）</td><td>今日の 23:59:59</td></tr>
+    <tr><td>monthly</td><td>今月の月初（startOfMonth）</td><td>今日の 23:59:59</td></tr>
+    <tr><td>yearly</td><td>今年の元日 0:00:00</td><td>今日の 23:59:59</td></tr>
+  </table>
+  <p>期間は <code>init(type:)</code> で確定し、<code>@Query</code> の <code>filter</code> に渡す。開いてから時をまたいでも期間は変わらない。</p>
+
+  <h2>保存ロジック</h2>
+  <ul class="checklist">
+    <li>answers: 各 Step3 の回答（空白のみは除外）を <code>[ReflectionAnswer]</code> に変換。</li>
+    <tr>
+    <li>highlightLogIds: STEP2 で選んだ LogEntry の id 集合。SwiftData に保存後、対応 LogEntry の <code>isHighlight = true</code> を更新。</li>
+    <li>note: STEP5 の気づきメモ（空白のみは nil 保存）。</li>
+    <li><code>modelContext.save()</code> 成功後に <code>completedCount</code> を FetchDescriptor でカウント取得。</li>
+    <li>保存エラーは <code>Logger(subsystem: "com.happyboy1002.LifeReview", category: "Reflection")</code> に .error レベルで記録。</li>
+  </ul>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移</th></tr>
+    <tr><td>「次へ」ボタン（STEP1〜4）</td><td>次の STEP へスライド遷移（forward: true）</td></tr>
+    <tr><td>「戻る」ボタン（STEP2〜5）</td><td>前の STEP へスライド遷移（forward: false）</td></tr>
+    <tr><td>「振り返りを完了する」（STEP5）</td><td>finish() → 保存 → 完了画面へ</td></tr>
+    <tr><td>×ボタン（セッション中・未入力）</td><td>そのまま dismiss</td></tr>
+    <tr><td>×ボタン（セッション中・入力あり）</td><td>中断確認アラート → 「中断する」で dismiss</td></tr>
+    <tr><td>「閉じる」（完了画面）</td><td>dismiss。ふりかえりホームに戻る。</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// 期間述語は init で確定
+@Query(filter: #Predicate&lt;LogEntry&gt; { $0.date &gt;= start && $0.date &lt;= end },
+       sort: [SortDescriptor(\.date, order: .reverse)])
+private var entries: [LogEntry]
+
+// 完了時に挿入
+let session = ReflectionSession(
+    type: type,
+    periodStart: periodStart,
+    periodEnd: periodEnd,
+    moodSummary: mood,
+    answers: savedAnswers,
+    highlightLogIds: Array(highlightIds),
+    note: trimmedNote.isEmpty ? nil : trimmedNote
+)
+modelContext.insert(session)
+// ハイライト更新
+for entry in entries where highlightIds.contains(entry.id) {
+    entry.isHighlight = true
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>sessionType: ReflectionType?</code> が Identifiable なため、<code>.fullScreenCover(item:)</code> で種別ごとに自動的に新しいインスタンスが生成される。</li>
+    <li>アニメーション: <code>.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading))</code>。戻る時は逆。duration 0.28秒。</li>
+    <li><code>interactiveDismissDisabled(true)</code> でスワイプダウンを禁止（中断確認を必ず経由させる）。</li>
+    <li>完了演出の星 fade: 600ms ease-out 1回のみ（C案「1画面1灯」。紙吹雪の代替）。</li>
+    <li>Logger は <code>private static let logger</code> として宣言しシングルトン運用。</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a></li>
+    <li><a href="reflection-timeline.html">これまでの軌跡（LR-TIMELINE-01）</a></li>
+    <li><a href="../features/reflection-session-flow.html">振り返りセッション機能仕様</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（ReflectionSessionView + 各 StepView）を反映。週次・月次・年次共通フローを記述</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - 道具箱: 統計</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / 道具箱: 統計</div>
+
+  <header class="site-header">
+    <h1>道具箱: 統計</h1>
+    <p>サマリー4カード・カテゴリ円グラフ・カテゴリ内訳。感情推移グラフは S3 予定。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">S2実装済</span>
+      <span class="tag">画面ID: LR-TOOLBOX-STATS</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    日々の記録（LogEntry）を集計し、カテゴリ分布・記録頻度をビジュアルで把握する画面。
+    振り返りの「道具箱」として「自分はどんなことをよく記録しているか」を俯瞰する用途。
+    感情の推移グラフは Swift Charts を使った時系列表示として S3 で追加予定。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>サマリーカード（4枚）</td><td>LazyVGrid 2列 × SummaryCard</td><td>総記録数 / 今月の記録日数 / 最多カテゴリ / 記録率。各カード: SF Symbol + 大きな数値（22pt bold）+ ラベル（12pt textMuted）。</td></tr>
+    <tr><td>カテゴリ別割合（円グラフ）</td><td>Swift Charts SectorMark</td><td>ドーナツ型。各カテゴリの件数割合をカテゴリカラーで表示。innerRadius: 0.5。angularInset: 1.5。cornerRadius: 3。</td></tr>
+    <tr><td>カテゴリ内訳リスト</td><td>ForEach + HStack</td><td>件数降順。アイコン + カテゴリ名 + 件数 + 割合（%）。</td></tr>
+    <tr><td>空状態</td><td>EmptyStateView</td><td>ログ0件時: 「記録をつけると統計が表示されます」。chart.bar アイコン（64px）。</td></tr>
+  </table>
+
+  <h2>集計ロジック</h2>
+  <table>
+    <tr><th>指標</th><th>計算方法</th></tr>
+    <tr><td>総記録数</td><td>logs.count</td></tr>
+    <tr><td>今月の記録日数</td><td>今月のログを year × month でフィルタ → 日（day）の Set のカウント</td></tr>
+    <tr><td>最多カテゴリ</td><td>breakdown（件数降順）の first?.category</td></tr>
+    <tr><td>記録率</td><td>今月記録日数 / 今月経過日数 × 100（%）。小数1桁表示。</td></tr>
+    <tr><td>カテゴリ内訳</td><td>LogCategory.allCases × 件数 Dict。0件は非表示。件数降順ソート。</td></tr>
+  </table>
+
+  <h2>サマリーカード詳細</h2>
+  <table>
+    <tr><th>カード</th><th>値</th><th>SF Symbol</th><th>iconColor</th></tr>
+    <tr><td>総記録数</td><td>totalCount（件）</td><td>square.and.pencil</td><td>textMuted</td></tr>
+    <tr><td>今月の記録</td><td>monthlyRecordDays（日）</td><td>calendar</td><td>orange</td></tr>
+    <tr><td>最多カテゴリ</td><td>topCategory.label または「—」</td><td>topCategory.symbolName</td><td>topCategory.color</td></tr>
+    <tr><td>記録率</td><td>recordRate（XX.X%）</td><td>chart.line.uptrend.xyaxis</td><td>#2563EB（青）</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>ログ0件</td><td>EmptyStateView（chart.bar / 64px / メッセージ）。サマリーカード・グラフは非表示。</td></tr>
+    <tr><td>ログ1件以上</td><td>サマリー → 円グラフ → カテゴリ内訳を縦スクロールで表示。</td></tr>
+  </table>
+
+  <h2>S3 以降の拡張予定</h2>
+  <ul class="checklist">
+    <li>感情推移グラフ（Swift Charts LineMark）: 週単位の LogMood 分布を折れ線で表示。S3 予定。</li>
+    <li>振り返り頻度グラフ: ReflectionSession の completedAt を週単位で集計。S3 以降。</li>
+  </ul>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Query
+private var logs: [LogEntry]
+
+// breakdown: [(category: LogCategory, count: Int)] — 件数降順・0件除外
+// topCategory: LogCategory? — breakdown.first?.category
+// monthlyRecordDays: Int — 今月の記録日の Set カウント
+// recordRate: Double — 記録率（%）</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>Swift Charts（<code>import Charts</code>）を使用。iOS 16+ 必須。本アプリは iOS 18+ なので問題なし。</li>
+    <li>SummaryCard は private struct として StatsView 内に定義。AppCard（cornerRadius: 12）ベース。値テキストは <code>.minimumScaleFactor(0.6)</code> で長い文字列も収める。</li>
+    <li>breakdown は computed var で毎回計算（ログ数が少ないため許容）。ログ数が増える場合はメモ化を検討。</li>
+    <li>カテゴリカラーは LogCategory.color（Flutter 版の配色を踏襲）。</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a></li>
+    <li><a href="toolbox-calendar.html">道具箱: カレンダー（LR-TOOLBOX-CAL）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（StatsView）を反映。感情推移グラフは S3 予定として記載</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
+</div>
+</body>
+</html>

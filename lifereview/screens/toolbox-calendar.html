@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - 道具箱: カレンダー</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / 道具箱: カレンダー</div>
+
+  <header class="site-header">
+    <h1>道具箱: カレンダー</h1>
+    <p>記録の積み重なりをヒートマップで可視化し、日付選択でその日のログを展開する。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">S2実装済</span>
+      <span class="tag">画面ID: LR-TOOLBOX-CAL</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    振り返りの「道具箱」として、記録（LogEntry）を時間軸で俯瞰する画面。
+    月カレンダーのヒートマップで「どの日に何件記録したか」を色で示し、
+    日付をタップするとその日のログ一覧を展開する。
+    振り返りセッションの STEP1「見返す」前に下調べする用途にも使える。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>月ナビゲーション</td><td>HStack + Button</td><td>「&lt;」「&gt;」ボタンで前月・翌月に移動。中央に「YYYY年M月」表示（18pt bold）。</td></tr>
+    <tr><td>曜日ラベル行</td><td>HStack</td><td>月〜日の7列。土: 青、日: 赤、平日: textMuted。月曜起点。</td></tr>
+    <tr><td>カレンダーグリッド</td><td>VStack × rows</td><td>月の日数分のセルをグリッド配置。各セルは dayCell（44px 高）。</td></tr>
+    <tr><td>日付セル（dayCell）</td><td>Button + RoundedRectangle</td><td>記録件数に応じたヒートマップ色塗り。今日は amber の 4px ドット表示。選択中は amber 2px 枠。</td></tr>
+    <tr><td>選択日ログ展開</td><td>selectedEntries()</td><td>日付選択時に区切り線 + 「曜日/日付 — N件」見出し + LogCardView × N を下部に表示。記録なし時は「この日の記録はありません」。</td></tr>
+    <tr><td>ログカード</td><td>NavigationLink + LogCardView</td><td>タップで LogDetailView へ遷移。</td></tr>
+  </table>
+
+  <h2>ヒートマップ配色</h2>
+  <table>
+    <tr><th>件数</th><th>トークン</th><th>説明</th></tr>
+    <tr><td>0件</td><td>heatmap0</td><td>背景色に近い（記録なし）</td></tr>
+    <tr><td>1件</td><td>heatmap1</td><td>薄い強調</td></tr>
+    <tr><td>2件</td><td>heatmap2</td><td>中程度</td></tr>
+    <tr><td>3件</td><td>heatmap3</td><td>濃い強調（テキストを white に切替）</td></tr>
+    <tr><td>4件以上</td><td>heatmap4</td><td>最大強調</td></tr>
+  </table>
+
+  <h2>カレンダーグリッド計算ロジック</h2>
+  <ul class="checklist">
+    <li>月の第1日の weekday を取得し、月曜起点のオフセット（月=0, 火=1, …, 日=6）を計算。</li>
+    <li>totalCells = offset + daysInMonth。rows = ceil(totalCells / 7)。</li>
+    <li>dailyCounts: ログを year × month でフィルタして日ごとの件数 Dict を生成。</li>
+  </ul>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>日付未選択</td><td>月カレンダーのみ表示。</td></tr>
+    <tr><td>日付選択・記録あり</td><td>カレンダー下部に LogCardView を件数分表示。</td></tr>
+    <tr><td>日付選択・記録なし</td><td>「この日の記録はありません」（outline 色）。</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「&lt;」ボタン</td><td>前月に移動（month state を -1か月）</td></tr>
+    <tr><td>「&gt;」ボタン</td><td>翌月に移動（month state を +1か月）</td></tr>
+    <tr><td>日付セルタップ</td><td>selected state を更新 → ログ展開</td></tr>
+    <tr><td>ログカードタップ</td><td>LogDetailView へ NavigationLink 遷移</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Query(sort: \LogEntry.date, order: .reverse)
+private var logs: [LogEntry]
+
+// dailyCounts(year:month:) — year × month でフィルタして日ごとの件数を集計
+private func dailyCounts(year: Int, month m: Int) -> [Int: Int]
+
+// selectedEntries(_ date: Date) — 選択日の LogEntry をフィルタ</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>month: Date</code> は startOfMonth を保持（1日の 0:00:00）。</li>
+    <li>曜日ラベルは固定配列 <code>["月", "火", "水", "木", "金", "土", "日"]</code>。</li>
+    <li>ヒートマップ色は AppColors トークン（heatmap0〜4）で管理。C案「ダーク天体」規律に従い暖色寄りのグラデを採用予定（S4 仕上げで確定）。</li>
+    <li>LogDetailView・LogCardView は 今日タブ（Today）と共有コンポーネント。</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a></li>
+    <li><a href="toolbox-stats.html">道具箱: 統計（LR-TOOLBOX-STATS）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（CalendarView）を反映</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
+</div>
+</body>
+</html>

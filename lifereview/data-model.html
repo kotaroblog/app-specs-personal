@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - データモデル</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← Personal App Specs</a> / <a href="./">LifeReview</a> / データモデル</div>
+
+  <header class="site-header">
+    <h1>データモデル</h1>
+    <p>SwiftData @Model 構造とリレーション（Phase S2 時点）</p>
+  </header>
+
+  <div class="callout warn">
+    <strong>技術移行メモ:</strong> LifeReview は Flutter（drift / Riverpod）から Swift（SwiftData / @Observable）へ全面移行中。
+    本ドキュメントは Swift 実装の正を記述する。Flutter 版の drift スキーマ（ReflectionSessions テーブル等）は参考として併記する。
+  </div>
+
+  <h2>ER 図</h2>
+  <div class="mermaid">
+erDiagram
+  LogEntry {
+    UUID id
+    Date date
+    String content
+    String[] imagePaths
+    String categoryRaw
+    String moodRaw
+    Bool isHighlight
+    Date createdAt
+  }
+  ReflectionSession {
+    UUID id
+    String typeRaw
+    Date periodStart
+    Date periodEnd
+    String moodSummaryRaw
+    ReflectionAnswer[] answers
+    UUID[] highlightLogIds
+    String note
+    Date completedAt
+    Date createdAt
+  }
+  ReflectionSession }o--o{ LogEntry : "highlights (highlightLogIds)"
+  </div>
+
+  <h2>LogEntry</h2>
+  <p>日々の記録（ログ）。振り返りの素材になる。</p>
+  <pre><code>@Model
+final class LogEntry {
+    var id: UUID = UUID()
+    var date: Date = Date()
+    /// 本文（任意・最大500文字想定）
+    var content: String?
+    /// 添付画像のファイルパス配列
+    var imagePaths: [String] = []
+    /// カテゴリ（rawValue で保存 → LogCategory enum アクセサで取得）
+    var categoryRaw: String = LogCategory.experience.rawValue
+    /// 感情タグ（任意・rawValue で保存）
+    var moodRaw: String?
+    /// 振り返りで「心に残った」と選んだ記録か
+    var isHighlight: Bool = false
+    var createdAt: Date = Date()
+}</code></pre>
+
+  <h3>LogCategory（7種）</h3>
+  <table>
+    <tr><th>rawValue</th><th>表示名</th><th>SF Symbol</th><th>カラー</th></tr>
+    <tr><td>experience</td><td>体験</td><td>star</td><td>#EA580C（オレンジ）</td></tr>
+    <tr><td>achievement</td><td>達成</td><td>trophy</td><td>#CA8A04（黄）</td></tr>
+    <tr><td>relationship</td><td>人間関係</td><td>heart</td><td>#DB2777（ピンク）</td></tr>
+    <tr><td>creation</td><td>作品・創作</td><td>paintpalette</td><td>#7C3AED（紫）</td></tr>
+    <tr><td>learning</td><td>学び</td><td>book</td><td>#2563EB（青）</td></tr>
+    <tr><td>travel</td><td>旅</td><td>airplane</td><td>#0F766E（緑）</td></tr>
+    <tr><td>happiness</td><td>日常の幸せ</td><td>sun.max</td><td>#EAB308（黄）</td></tr>
+  </table>
+
+  <h3>LogMood（5種）</h3>
+  <table>
+    <tr><th>rawValue</th><th>表示名</th><th>SF Symbol</th><th>カラー</th></tr>
+    <tr><td>joy</td><td>喜び</td><td>face.smiling</td><td>#EAB308</td></tr>
+    <tr><td>fulfilled</td><td>充実</td><td>sparkles</td><td>#2563EB</td></tr>
+    <tr><td>calm</td><td>穏やか</td><td>leaf</td><td>#0F766E</td></tr>
+    <tr><td>tired</td><td>疲れ</td><td>moon.zzz</td><td>#64748B</td></tr>
+    <tr><td>anxious</td><td>不安</td><td>cloud</td><td>#9333EA</td></tr>
+  </table>
+
+  <h2>ReflectionSession</h2>
+  <p>完了した振り返りセッション（週次・月次・年次共通）。蓄積されたこれ自体がアプリ固有の価値資産になる。</p>
+  <pre><code>@Model
+final class ReflectionSession {
+    var id: UUID = UUID()
+    /// 種別（rawValue で保存）— weekly / monthly / yearly
+    var typeRaw: String = ReflectionType.weekly.rawValue
+    var periodStart: Date = Date()
+    var periodEnd: Date = Date()
+    /// 期間の総括感情（任意・rawValue で保存）
+    var moodSummaryRaw: String?
+    /// 静かな問いへの回答（[{prompt, answer}]）
+    var answers: [ReflectionAnswer] = []
+    /// ハイライトに選んだ LogEntry の id 集合
+    var highlightLogIds: [UUID] = []
+    /// 気づき・自由記述（任意）
+    var note: String?
+    var completedAt: Date = Date()
+    var createdAt: Date = Date()
+}</code></pre>
+
+  <h3>ReflectionAnswer（埋め込み型）</h3>
+  <pre><code>struct ReflectionAnswer: Codable, Hashable {
+    var prompt: String   // 問い文言
+    var answer: String   // ユーザーの回答
+}</code></pre>
+
+  <h3>ReflectionType（3種）</h3>
+  <table>
+    <tr><th>rawValue</th><th>label</th><th>shortLabel</th><th>対象期間</th></tr>
+    <tr><td>weekly</td><td>週の振り返り</td><td>週</td><td>直近7日（今日の末まで）</td></tr>
+    <tr><td>monthly</td><td>月の振り返り</td><td>月</td><td>当月月初〜今日末</td></tr>
+    <tr><td>yearly</td><td>年の振り返り</td><td>年</td><td>今年元日〜今日末</td></tr>
+  </table>
+
+  <h2>ReflectionPrompts（コード定数テーブル）</h2>
+  <p>問い文は assets ではなくコード内の <code>ReflectionPrompts</code> 定数で集約（多言語化を見据えた設計）。</p>
+  <table>
+    <tr><th>種別</th><th>問い</th></tr>
+    <tr><td>週次</td><td>「この一週間で、心が動いた瞬間は？」「会えてよかった人は？」「来週、大切にしたいことは？」</td></tr>
+    <tr><td>月次</td><td>「今月、自分の中で変わったことは？」「手放してよかったものは？」「印象に残っている一日は？」</td></tr>
+    <tr><td>年次</td><td>「今年の自分を一言で表すと？」「来年の自分へ、一言。」「今年いちばんの"心が動いた"出来事は？」</td></tr>
+  </table>
+
+  <h2>マイグレーション方針</h2>
+  <div class="callout warn">
+    SwiftData の <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する。
+    Swift 版では drift の <code>schemaVersion</code> 管理は不要だが、SwiftData の <code>ModelConfiguration</code> でスキーマバージョンが変わる場合は <code>MigrationPlan</code> を実装する。
+  </div>
+  <ul class="checklist">
+    <li><code>isHighlight: Bool = false</code> — LogEntry に Phase S2 で追加。デフォルト false により既存データは自動互換。</li>
+    <li>ReflectionSession は Phase S2 で新規追加テーブル。Flutter 版 drift の <code>ReflectionSessions</code> テーブル定義（schemaVersion 5）とデータ構造は対応しているが、移行ツールは未実装（新規ユーザー優先）。</li>
+  </ul>
+
+  <h2>Flutter 版との対応（参考）</h2>
+  <div class="callout">
+    Flutter 版（drift）から Swift 版（SwiftData）への移行中。主要な構造対応は下記の通り。
+  </div>
+  <table>
+    <tr><th>Flutter / drift</th><th>Swift / SwiftData</th></tr>
+    <tr><td>LogEntries テーブル</td><td>LogEntry @Model</td></tr>
+    <tr><td>ReflectionSessions テーブル（schemaVersion 5）</td><td>ReflectionSession @Model</td></tr>
+    <tr><td>intEnum&lt;ReflectionType&gt;()</td><td>typeRaw: String（rawValue保存）</td></tr>
+    <tr><td>answers: TextColumn（JSON文字列）</td><td>answers: [ReflectionAnswer]（Codable配列）</td></tr>
+    <tr><td>highlightLogIds: TextColumn（JSON配列）</td><td>highlightLogIds: [UUID]</td></tr>
+    <tr><td>Riverpod AsyncNotifier</td><td>@Observable @MainActor ViewModel（移行中）</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 時点の SwiftData モデル（LogEntry・ReflectionSession）を記述。Flutter→Swift 移行状況を追記</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
+</div>
+</body>
+</html>

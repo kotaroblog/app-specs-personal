@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - ふりかえりホーム</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / ふりかえりホーム</div>
+
+  <header class="site-header">
+    <h1>ふりかえりホーム</h1>
+    <p>振り返りタブの入口。週/月/年のリズムカード・道具箱・これまでの軌跡を集約する。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">S2実装済</span>
+      <span class="tag">画面ID: LR-REFLECT-HOME</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    ユーザーが「振り返り」タブを開いたときの起点画面。
+    週/月/年それぞれのリズムカードで「立ち止まる」タイミングを静かに促し、道具箱（カレンダー/統計）への導線と、
+    過去の軌跡プレビューを1画面に集約する。
+    C案「ダーク天体」規律に従い、<strong>グロー禁止・金は線のみ・1画面1灯（週次カード見出しに明度を集約）</strong>。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ヒーローテキスト</td><td>テキストブロック</td><td>明朝26pt「すこし、立ち止まってみませんか」+ 補足文（textMuted）。moonWhite色。</td></tr>
+    <tr><td>週の振り返りカード</td><td>RhythmCard（isDue: true）</td><td>SF Symbol: calendar。<strong>「そろそろ」バッジ</strong>（金カプセル枠）付き。金ヘアライン罫・見出し moonWhite で静かに格上げ。</td></tr>
+    <tr><td>月の振り返りカード</td><td>RhythmCard（isDue: false）</td><td>SF Symbol: moon。標準スタイル（cardBorder枠）。前回からの経過日数を表示。</td></tr>
+    <tr><td>年の振り返りカード</td><td>RhythmCard（isDue: false）</td><td>SF Symbol: moon.stars。標準スタイル。</td></tr>
+    <tr><td>区切り線</td><td>Rectangle（1px cardBorder）</td><td>リズムカードと道具箱の間。</td></tr>
+    <tr><td>道具箱セクションヘッダ</td><td>SectionHeader</td><td>「道具箱」ラベル。</td></tr>
+    <tr><td>カレンダー導線カード</td><td>ToolCard + NavigationLink</td><td>「記録の積み重なりを、日ごとに眺める」。CalendarView へ遷移。</td></tr>
+    <tr><td>統計導線カード</td><td>ToolCard + NavigationLink</td><td>「カテゴリと感情の移ろいをたどる」。StatsView へ遷移。</td></tr>
+    <tr><td>これまでの軌跡セクション</td><td>セクション</td><td>振り返り履歴がある場合: TrajectoryPreview（最新1件の気づきプレビュー + 「軌跡を見る」リンク）。なし: EmptyState「まだ星のない夜」。</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>初回起動（振り返り0件）</td><td>軌跡セクションに EmptyState「まだ星のない夜」。リズムカードの meta は「はじめての振り返り」等の固定文言。</td></tr>
+    <tr><td>振り返り履歴あり</td><td>軌跡セクションに TrajectoryPreview（最新1件のプレビューテキスト + 「軌跡を見る」）。リズムカードの meta に「前回からN日」を表示。</td></tr>
+    <tr><td>週次カード（isDue: true 固定）</td><td>金ヘアライン罫・「そろそろ」バッジを常時表示（現時点は週次のみ固定 true）。S3でリマインダー判定連動予定。</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>週の振り返りカードをタップ</td><td>ReflectionSessionView（type: .weekly）をフルスクリーン表示</td></tr>
+    <tr><td>月の振り返りカードをタップ</td><td>ReflectionSessionView（type: .monthly）をフルスクリーン表示</td></tr>
+    <tr><td>年の振り返りカードをタップ</td><td>ReflectionSessionView（type: .yearly）をフルスクリーン表示</td></tr>
+    <tr><td>カレンダー導線カードをタップ</td><td>CalendarView へ NavigationLink 遷移</td></tr>
+    <tr><td>統計導線カードをタップ</td><td>StatsView へ NavigationLink 遷移</td></tr>
+    <tr><td>軌跡プレビュータップ</td><td>ReflectionTimelineView へ NavigationLink 遷移</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// @Query（completedAt 降順）で ReflectionSession 全件取得
+@Query(sort: \ReflectionSession.completedAt, order: .reverse)
+private var history: [ReflectionSession]
+
+// latest(:) — 種別ごとに最新1件を返すヘルパー
+// meta(for:fallback:) — 前回からの経過日数文字列を生成</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>sessionType: ReflectionType?</code> を @State で持ち、<code>.fullScreenCover(item: $sessionType)</code> でセッション画面を表示する（Identifiable 準拠により種別ごとに自動生成）。</li>
+    <li>RhythmCard の <code>isDue</code> は現状 weekly のみ true（固定）。S3 でリマインダー/前回日時判定と連動予定。</li>
+    <li>TrajectoryPreview のプレビューテキスト優先順: note（気づきメモ）→ answers[0].answer → nil（fallback: 「直近の振り返りが残っています」）。</li>
+    <li>C案規律: 金（<code>AppColors.amber</code> / <code>goldDim</code>）は isDue カードのヘアライン・バッジ・TrajectoryPreview の引用符のみ。ホーム・セッション中は星を出さない（完了画面でのみ灯す）。</li>
+    <li>ヒーローテキストは <code>AppFont.mincho(26)</code>（Shippori Mincho 相当）。</li>
+  </ul>
+
+  <h2>デザイントークン（C案「ダーク天体」）</h2>
+  <table>
+    <tr><th>トークン</th><th>HEX</th><th>用途</th></tr>
+    <tr><td>night1</td><td>#10141C</td><td>基調背景</td></tr>
+    <tr><td>night2</td><td>#161C28</td><td>カード面（不透明・半透明白でない）</td></tr>
+    <tr><td>moonWhite</td><td>#EAE6DC</td><td>見出し・ヒーローテキスト（生成りの白）</td></tr>
+    <tr><td>textBody</td><td>#C9C5BA</td><td>本文</td></tr>
+    <tr><td>textMuted</td><td>#8E8B84</td><td>補助テキスト・meta 情報</td></tr>
+    <tr><td>gold / amber</td><td>#C2894B</td><td>isDue 強調・引用符（1画面1役）</td></tr>
+    <tr><td>goldDim</td><td>#C2894B 38%透過</td><td>isDue カードのヘアライン罫・バッジ枠</td></tr>
+  </table>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="reflection-session.html">振り返りセッション（LR-SESSION-01）</a></li>
+    <li><a href="reflection-timeline.html">これまでの軌跡（LR-TIMELINE-01）</a></li>
+    <li><a href="toolbox-calendar.html">道具箱: カレンダー（LR-TOOLBOX-CAL）</a></li>
+    <li><a href="toolbox-stats.html">道具箱: 統計（LR-TOOLBOX-STATS）</a></li>
+    <li><a href="../features/reflection-session-flow.html">振り返りセッション機能仕様</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（ReflectHomeView）を反映</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
+</div>
+</body>
+</html>

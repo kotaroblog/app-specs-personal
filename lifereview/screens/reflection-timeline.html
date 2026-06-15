@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - これまでの軌跡（星図タイムライン）</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / これまでの軌跡</div>
+
+  <header class="site-header">
+    <h1>これまでの軌跡（星図タイムライン）</h1>
+    <p>振り返り数だけ星を灯す星図・タリー（累計/連続週/ハイライト計）・縦タイムライン。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">S2実装済</span>
+      <span class="tag">画面ID: LR-TIMELINE-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    「蓄積された振り返りそのものがアプリ固有の価値資産」（DESIGN.md 4.4）を体現する画面。
+    過去の振り返りを時系列カードで積み上げ、読み返せる「振り返りの軌跡」として提示する。
+    <strong>「星＝あなたの振り返り」</strong>と再定義し、C案「ダーク天体」の最大の差別化要素として星図を上部に配置。
+    壁紙としての星は全廃し、振り返り1回ごとに意味のある1粒が灯る。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>StarMapView</td><td>Canvas描画</td><td>振り返りセッション数だけ小星を描画。シードRNG（seed: 20260613）でクラスタ配置。グロー禁止・textBody 色の2px前後。</td></tr>
+    <tr><td>キャプション</td><td>Text（明朝11.5pt）</td><td>「あなたが振り返った夜の数だけ、星が灯る」（textMuted）</td></tr>
+    <tr><td>タリーカード</td><td>AppCard（3列）</td><td>これまでの振り返り（累計）/ 連続した週 / 残したハイライト。等幅24pt数字 + 11pt補助ラベル。</td></tr>
+    <tr><td>縦タイムライン</td><td>ForEach + ReflectionTile</td><td>completedAt 降順で全件表示。各タイルに種別バッジ・期間・総括感情・気づきメモ冒頭・ハイライト数を表示。</td></tr>
+    <tr><td>空状態（EmptyNight）</td><td>EmptyStateView風</td><td>「まだ星のない夜」明朝16pt + 説明文。「最初の振り返りを始める」CTAボタン（金ヘアライン枠 + 明朝15pt）。</td></tr>
+  </table>
+
+  <h2>StarMapView 描画仕様</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>星の数</td><td>振り返りセッション数（= starCount）</td></tr>
+    <tr><td>座標生成</td><td>シード固定（20260613）の擬似乱数 SeededGenerator。再描画でも位置がぶれない。</td></tr>
+    <tr><td>クラスタ配置</td><td>clusterCount = ceil(starCount / 4)。クラスタ中心から散らすことでノイズ感を回避。</td></tr>
+    <tr><td>星のサイズ</td><td>radius: 1.0〜1.25px（均等サイズ禁止。3段階相当のゆらぎ）</td></tr>
+    <tr><td>星の明度</td><td>opacity: 0.5〜0.75（均等明度禁止）</td></tr>
+    <tr><td>色</td><td>AppColors.textBody（#C9C5BA）。紫・青グラデ禁止。</td></tr>
+    <tr><td>グロー</td><td>禁止（外周 box-shadow 相当は一切使わない）</td></tr>
+    <tr><td>高さ</td><td>frame height: 150px。RoundedRectangle(cornerRadius: 16) + cardBorder 1px 枠。</td></tr>
+  </table>
+
+  <h2>タリー集計ロジック（TimelineTally）</h2>
+  <ul class="checklist">
+    <li><strong>total</strong>: sessions.count（全種別の合計）</li>
+    <li><strong>highlightCount</strong>: sessions の highlightLogIds.count を reduce 集計。</li>
+    <li><strong>streakWeeks</strong>: weekly セッションの periodStart を週月曜 0:00 に正規化 → 降順でひと続きになっている週数をカウント。1週ずつ途切れた時点で終了。</li>
+  </ul>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>振り返り0件</td><td>EmptyNight（空状態）。「最初の振り返りを始める」CTA → fullScreenCover で weekly セッション起動。</td></tr>
+    <tr><td>振り返り1件以上</td><td>StarMapView + キャプション + タリーカード + 縦タイムライン。</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「最初の振り返りを始める」ボタン（空状態）</td><td>ReflectionSessionView（type: .weekly）フルスクリーン</td></tr>
+    <tr><td>ReflectionTile タップ（予定）</td><td>振り返り詳細（S3 以降実装予定）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Query(sort: \ReflectionSession.completedAt, order: .reverse)
+private var sessions: [ReflectionSession]
+
+// StarMapView に starCount として sessions.count を渡す
+StarMapView(starCount: sessions.count)
+
+// タリー集計
+let tally = TimelineTally(sessions: sessions)</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>StarMapView は <code>Canvas</code> API（SwiftUI）で描画。CPU 負荷はほぼゼロ（静的描画）。</li>
+    <li>SeededGenerator はカスタム RNG（<code>RandomNumberGenerator</code> 準拠）。seed: 20260613 固定。</li>
+    <li>空状態のCTAボタンスタイル: 金ヘアライン枠（goldDim 1px）、明朝テキスト、amber 色。グラデ・グロー禁止。</li>
+    <li>振り返り詳細画面（ReflectionDetailView）は S3 以降の実装予定。現状は ReflectionTile は非タップ。</li>
+    <li>年次振り返りの特別演出（その年のハイライト写真まとめ）は S4 以降で検討。</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a></li>
+    <li><a href="reflection-session.html">振り返りセッション（LR-SESSION-01）</a></li>
+    <li><a href="../features/reflection-session-flow.html">振り返りセッション機能仕様</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（ReflectionTimelineView・StarMapView・TimelineTally）を反映</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
+</div>
+</body>
+</html>

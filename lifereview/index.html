@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - Specs</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← Personal App Specs</a></div>
+
+  <header class="site-header">
+    <h1>LifeReview</h1>
+    <p>振り返り中心の人生記録アプリ · Bundle ID: <code>com.happyboy1002.lifeReviewApp</code></p>
+  </header>
+
+  <h2>概要</h2>
+  <ul class="kv-list">
+    <li><span class="k">カテゴリ</span><span class="v">ライフスタイル / 生産性</span></li>
+    <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
+    <li><span class="k">言語</span><span class="v">日本語</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">プレミアム買い切り + 広告（検討中）</span></li>
+    <li><span class="k">ステータス</span><span class="v">開発中（フルリニューアル）</span></li>
+    <li><span class="k">技術スタック</span><span class="v">Swift / SwiftUI / SwiftData / @Observable（Flutter→Swift全面移行中）</span></li>
+    <li><span class="k">デザインテーマ</span><span class="v">C案「ダーク天体」— 墨と藍、琥珀の真鍮、明朝×ゴシック二層</span></li>
+  </ul>
+
+  <div class="callout">
+    <strong>コンセプト一文:</strong>「記録するアプリ」から「定期的に立ち止まり、人生を振り返るアプリ」へ。<br>
+    日々の記録は素材集め。アプリの主役を <strong>週次・月次・年次の振り返り（リフレクション）</strong> に据える。
+  </div>
+
+  <h2>タブ構成（3タブ）</h2>
+  <table>
+    <tr><th>タブ</th><th>役割</th><th>内容</th></tr>
+    <tr><td>今日 Today</td><td>毎日の入口</td><td>簡素化したホーム・ログ記録・残り時間ミニ表示・○年前の今日</td></tr>
+    <tr><td>ふりかえり Reflect ★中核</td><td>立ち止まり、言葉にする</td><td>週/月/年レビュー・振り返りセッション・蓄積タイムライン・道具箱（カレンダー/統計）</td></tr>
+    <tr><td>人生 Life</td><td>長期視点・有限性</td><td>週グリッド（Your Life in Weeks）・カウントダウン・バケットリスト・大切な人・設定（右上歯車）</td></tr>
+  </table>
+
+  <h2>全体仕様書</h2>
+  <div class="card-grid">
+    <a class="card" href="data-model.html">
+      <div class="title">データモデル</div>
+      <div class="desc">SwiftData @Model 構造・ER図（Flutter→Swift移行の経緯含む）</div>
+    </a>
+  </div>
+
+  <h2>画面仕様書（ふりかえりタブ — Phase S2 実装済）</h2>
+  <div class="card-grid">
+    <a class="card" href="screens/reflect-home.html">
+      <div class="title">ふりかえりホーム</div>
+      <div class="desc">週/月/年リズムカード・道具箱導線・これまでの軌跡プレビュー</div>
+      <div class="meta"><span class="tag">LR-REFLECT-HOME</span></div>
+    </a>
+    <a class="card" href="screens/reflection-session.html">
+      <div class="title">振り返りセッション</div>
+      <div class="desc">STEP1〜5の5ステップフロー・完了画面で星が灯る</div>
+      <div class="meta"><span class="tag">LR-SESSION-01</span></div>
+    </a>
+    <a class="card" href="screens/reflection-timeline.html">
+      <div class="title">これまでの軌跡（星図タイムライン）</div>
+      <div class="desc">振り返り数だけ星を灯す星図・タリー・縦タイムライン</div>
+      <div class="meta"><span class="tag">LR-TIMELINE-01</span></div>
+    </a>
+    <a class="card" href="screens/toolbox-calendar.html">
+      <div class="title">道具箱: カレンダー</div>
+      <div class="desc">記録ヒートマップ・日付選択でログ展開</div>
+      <div class="meta"><span class="tag">LR-TOOLBOX-CAL</span></div>
+    </a>
+    <a class="card" href="screens/toolbox-stats.html">
+      <div class="title">道具箱: 統計</div>
+      <div class="desc">サマリー4カード・カテゴリ円グラフ・カテゴリ内訳</div>
+      <div class="meta"><span class="tag">LR-TOOLBOX-STATS</span></div>
+    </a>
+  </div>
+
+  <h2>機能仕様書</h2>
+  <div class="card-grid">
+    <a class="card" href="features/reflection-session-flow.html">
+      <div class="title">振り返りセッション機能</div>
+      <div class="desc">5ステップフロー・保存・ハイライト更新・期間計算ロジック</div>
+      <div class="meta"><span class="tag">LR-FEAT-SESSION</span></div>
+    </a>
+  </div>
+
+  <h2>実装ロードマップ</h2>
+  <table>
+    <tr><th>Phase</th><th>目的</th><th>状態</th></tr>
+    <tr><td>S0 基盤</td><td>3タブ化・デザインシステム確立・SwiftData移行</td><td><span class="tag done">完了</span></td></tr>
+    <tr><td>S1 骨格</td><td>3タブ配置・今日タブ・人生タブ再配置</td><td><span class="tag done">完了</span></td></tr>
+    <tr><td>S2 振り返り中核</td><td>振り返りセッション・ホーム・タイムライン・道具箱</td><td><span class="tag done">完了</span></td></tr>
+    <tr><td>S3 拡張</td><td>月次/年次リマインダー・感情推移グラフ</td><td><span class="tag warn">着手中</span></td></tr>
+    <tr><td>S4 仕上げ</td><td>オンボーディング・プレミアム・アニメ・フォント</td><td><span class="tag">未着手</span></td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>v1.0</td><td>2026-06-15</td><td>仕様書ポータル初版作成。Phase S2「振り返り中核」実装完了分を反映（ふりかえりホーム・振り返りセッション・星図タイムライン・道具箱カレンダー/統計・データモデル・機能仕様書）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
+</div>
+</body>
+</html>

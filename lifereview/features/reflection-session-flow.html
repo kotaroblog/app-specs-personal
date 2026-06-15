@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - 振り返りセッション機能</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / 振り返りセッション機能</div>
+
+  <header class="site-header">
+    <h1>振り返りセッション機能</h1>
+    <p>5ステップフロー・保存・ハイライト更新・期間計算ロジックの機能仕様。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">S2実装済</span>
+      <span class="tag">機能ID: LR-FEAT-SESSION</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    LifeReview の中核機能。「立ち止まり、見返し、言葉にする」儀式を5ステップで提供し、
+    完了時に <code>ReflectionSession</code> を SwiftData へ保存、選択したログの <code>isHighlight</code> を更新する。
+    週次・月次・年次を <code>ReflectionType</code> で統一フローとして扱い、
+    期間計算・問い文言・ラベル表示のみを type に応じて切り替える設計。
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a> — セッション起動ポイント</li>
+    <li><a href="../screens/reflection-session.html">振り返りセッション（LR-SESSION-01）</a> — メイン実装画面</li>
+    <li><a href="../screens/reflection-timeline.html">これまでの軌跡（LR-TIMELINE-01）</a> — 完了後の確認先</li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant Home as ReflectHomeView
+  participant Session as ReflectionSessionView
+  participant Context as ModelContext
+
+  U->>Home: リズムカードをタップ（週/月/年）
+  Home->>Session: fullScreenCover(item: type)
+  Session->>Session: period(for: type) で対象期間を確定
+  Session->>Context: @Query で期間内 LogEntry を取得
+  U->>Session: STEP1 ログを見返す → 「次へ」
+  U->>Session: STEP2 ハイライト選択 → 「次へ」
+  U->>Session: STEP3 静かな問いに回答 → 「次へ」
+  U->>Session: STEP4 総括感情を選択 → 「次へ」
+  U->>Session: STEP5 気づきメモ入力 → 「振り返りを完了する」
+  Session->>Context: ReflectionSession を insert
+  Session->>Context: 選択 LogEntry の isHighlight = true
+  Session->>Context: modelContext.save()
+  Context-->>Session: 保存成功
+  Session->>Session: step = stepCount → 完了画面へ
+  Session-->>U: 星がひとつ灯る演出（fade 600ms）
+  U->>Session: 「閉じる」
+  Session-->>Home: dismiss
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>周期は強制しない。「やりたい時に」できる設計。ただし前回からの経過日数をホームで表示し、静かに促す。</li>
+    <li>未記録期間でも振り返り可能（「今週は記録が少なかった」も気づき）。ログ0件でも STEP1 を通過できる。</li>
+    <li>各入力（ハイライト選択・問い回答・感情・メモ）はすべて任意。1つも入力せず完了してもよい。</li>
+    <li>answers は空白のみの回答を除外して保存する。</li>
+    <li>note は空白のみの場合は nil として保存する。</li>
+    <li>保存は isSaving フラグで二重送信を防ぐ。</li>
+    <li>中断時（×ボタン）: hasAnyInput が true の場合はアラートで確認。false の場合は確認なし dismiss。</li>
+    <li>セッション画面は <code>interactiveDismissDisabled(true)</code> でスワイプダウンを禁止。×ボタン経由のみ閉じられる。</li>
+  </ul>
+
+  <h2>期間計算ロジック</h2>
+  <div class="mermaid">
+flowchart TD
+  A[ReflectionType] -->|weekly| B["periodStart = 今日-6日 の startOfDay<br>periodEnd = 今日の 23:59:59"]
+  A -->|monthly| C["periodStart = 今月の月初（startOfMonth）<br>periodEnd = 今日の 23:59:59"]
+  A -->|yearly| D["periodStart = 今年の元日 0:00:00<br>periodEnd = 今日の 23:59:59"]
+  </div>
+  <p>
+    期間は <code>init(type:)</code> 時に確定し、<code>@Query</code> の <code>filter</code> 述語として渡す。
+    セッションを開いてから日付が変わっても期間は変わらない（init 時確定）。
+  </p>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>SwiftData ModelContext</td><td>ReflectionSession 保存・LogEntry isHighlight 更新</td><td>@Environment(\.modelContext) で取得</td></tr>
+    <tr><td>os.log (Logger)</td><td>保存失敗時のエラーロギング</td><td>subsystem: com.happyboy1002.LifeReview、category: Reflection</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>modelContext.save() が throw する</td><td>Logger.error でログ記録。isSaving = false に戻す。STEP5 に留まる（ユーザーは再試行可能）。エラーアラートは S3 以降で追加予定。</td></tr>
+    <tr><td>completedCount の FetchDescriptor が失敗</td><td>completedCount を 1 にフォールバック。完了画面の表示には影響しない。</td></tr>
+  </table>
+
+  <h2>ReflectionType ごとの差分一覧</h2>
+  <table>
+    <tr><th>項目</th><th>weekly</th><th>monthly</th><th>yearly</th></tr>
+    <tr><td>periodLabel</td><td>MM/DD – MM/DD</td><td>YYYY年M月</td><td>YYYY年</td></tr>
+    <tr><td>問い（prompts）</td><td>週次3問</td><td>月次3問</td><td>年次3問</td></tr>
+    <tr><td>セッション所要</td><td>1〜2分</td><td>3〜5分</td><td>5〜10分</td></tr>
+    <tr><td>typeRaw（保存値）</td><td>"weekly"</td><td>"monthly"</td><td>"yearly"</td></tr>
+    <tr><td>shortLabel（バッジ）</td><td>週</td><td>月</td><td>年</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>ReflectionType: Identifiable</code>（id = rawValue）。<code>.fullScreenCover(item: $sessionType)</code> で型安全に種別ごとのセッションを起動できる。</li>
+    <li>問い（prompts）は <code>ReflectionPrompts.forType(type)</code> で取得。コード定数テーブルで管理（多言語化対応の余地あり）。</li>
+    <li>アニメーション: <code>withAnimation(.easeInOut(duration: 0.28))</code> + <code>.transition(.asymmetric(...))</code>。</li>
+    <li>セッションの <code>answers</code> は <code>[Int: String]</code>（prompts インデックスキー）で STEP3 中に保持 → 完了時に <code>[ReflectionAnswer]</code> に変換して保存。</li>
+    <li>Flutter 版との構造対応: drift の <code>answers: TextColumn（JSON文字列）</code> → Swift の <code>answers: [ReflectionAnswer]（Codable配列）</code>。SwiftData が内部的にシリアライズする。</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（ReflectionSessionView・period計算・保存ロジック）を反映。週次・月次・年次共通設計を記述</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
+</div>
+</body>
+</html>
