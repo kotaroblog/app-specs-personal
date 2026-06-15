@@ -13,18 +13,18 @@
 
   <header class="site-header">
     <h1>道具箱: 統計</h1>
-    <p>サマリー4カード・カテゴリ円グラフ・カテゴリ内訳。感情推移グラフは S3 予定。</p>
+    <p>サマリー4カード・カテゴリ円グラフ・カテゴリ内訳・感情の移ろいグラフ。</p>
     <div style="margin-top:8px;">
-      <span class="tag done">S2実装済</span>
+      <span class="tag done">S3実装済</span>
       <span class="tag">画面ID: LR-TOOLBOX-STATS</span>
     </div>
   </header>
 
   <h2>目的・役割</h2>
   <p>
-    日々の記録（LogEntry）を集計し、カテゴリ分布・記録頻度をビジュアルで把握する画面。
-    振り返りの「道具箱」として「自分はどんなことをよく記録しているか」を俯瞰する用途。
-    感情の推移グラフは Swift Charts を使った時系列表示として S3 で追加予定。
+    日々の記録（LogEntry）を集計し、カテゴリ分布・記録頻度・感情の移ろいをビジュアルで把握する画面。
+    振り返りの「道具箱」として「自分はどんなことをよく記録しているか」「感情がどう変化しているか」を俯瞰する用途。
+    Phase S3 で感情の移ろいグラフ（Swift Charts 月別スタック棒グラフ）を追加実装済み。
   </p>
 
   <h2>UI 構成</h2>
@@ -55,17 +55,45 @@
     <tr><td>記録率</td><td>recordRate（XX.X%）</td><td>chart.line.uptrend.xyaxis</td><td>#2563EB（青）</td></tr>
   </table>
 
+  <h2>感情の移ろいグラフ（S3 追加）</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>グラフ種別</td><td>Swift Charts BarMark（スタック棒グラフ）</td></tr>
+    <tr><td>表示期間</td><td>直近6か月（今月を含む6か月分）</td></tr>
+    <tr><td>X軸</td><td>月（YYYY-MM 形式を "M月" に整形して表示）</td></tr>
+    <tr><td>Y軸</td><td>件数（ラベル自動、目盛り4本程度）</td></tr>
+    <tr><td>スタック方式</td><td>LogMood 5種をそれぞれ積み上げ。感情ごとに foregroundStyle で色分け。</td></tr>
+    <tr><td>感情カラー</td><td>joy: #EAB308 / fulfilled: #2563EB / calm: #0F766E / tired: #64748B / anxious: #9333EA（LogMood カラーと同一）</td></tr>
+    <tr><td>凡例</td><td>グラフ下部にインライン凡例（感情ラベル + 色サンプル丸。横スクロール可）</td></tr>
+    <tr><td>空状態</td><td>感情タグ付き記録が0件の場合: 「感情タグをつけて記録すると、感情の移ろいが表示されます」をグラフエリア中央に表示</td></tr>
+  </table>
+
+  <h2>感情グラフの集計ロジック</h2>
+  <pre><code>// 直近6か月の (year, month) ペアを生成
+let months: [(year: Int, month: Int)] = ...  // 降順で6か月
+
+// moodData: [(month: String, mood: LogMood, count: Int)]
+// logs から moodRaw != nil のものを抽出 → (year, month, mood) でグループ集計
+let moodData = logs
+    .compactMap { log -> (Date, LogMood)? in
+        guard let raw = log.moodRaw,
+              let mood = LogMood(rawValue: raw) else { return nil }
+        return (log.date, mood)
+    }
+    .filter { /* 直近6か月 */ }
+    .grouped(by: ...) // (monthLabel, mood) → count</code></pre>
+
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>ログ0件</td><td>EmptyStateView（chart.bar / 64px / メッセージ）。サマリーカード・グラフは非表示。</td></tr>
-    <tr><td>ログ1件以上</td><td>サマリー → 円グラフ → カテゴリ内訳を縦スクロールで表示。</td></tr>
+    <tr><td>ログ0件</td><td>EmptyStateView（chart.bar / 64px / 「記録をつけると統計が表示されます」）。サマリーカード・グラフは非表示。</td></tr>
+    <tr><td>ログあり・感情タグなし</td><td>サマリー → 円グラフ → カテゴリ内訳 → 感情グラフ（空状態メッセージ）の順で表示。</td></tr>
+    <tr><td>ログあり・感情タグあり</td><td>サマリー → 円グラフ → カテゴリ内訳 → 感情の移ろいグラフ（スタック棒）を縦スクロールで表示。</td></tr>
   </table>
 
-  <h2>S3 以降の拡張予定</h2>
+  <h2>S4 以降の拡張予定</h2>
   <ul class="checklist">
-    <li>感情推移グラフ（Swift Charts LineMark）: 週単位の LogMood 分布を折れ線で表示。S3 予定。</li>
-    <li>振り返り頻度グラフ: ReflectionSession の completedAt を週単位で集計。S3 以降。</li>
+    <li>振り返り頻度グラフ: ReflectionSession の completedAt を週単位で集計。S4 以降。</li>
   </ul>
 
   <h2>使用するデータモデル</h2>
@@ -75,7 +103,8 @@ private var logs: [LogEntry]
 // breakdown: [(category: LogCategory, count: Int)] — 件数降順・0件除外
 // topCategory: LogCategory? — breakdown.first?.category
 // monthlyRecordDays: Int — 今月の記録日の Set カウント
-// recordRate: Double — 記録率（%）</code></pre>
+// recordRate: Double — 記録率（%）
+// moodData: [(monthLabel: String, mood: LogMood, count: Int)] — 直近6か月・感情別件数</code></pre>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
@@ -83,6 +112,8 @@ private var logs: [LogEntry]
     <li>SummaryCard は private struct として StatsView 内に定義。AppCard（cornerRadius: 12）ベース。値テキストは <code>.minimumScaleFactor(0.6)</code> で長い文字列も収める。</li>
     <li>breakdown は computed var で毎回計算（ログ数が少ないため許容）。ログ数が増える場合はメモ化を検討。</li>
     <li>カテゴリカラーは LogCategory.color（Flutter 版の配色を踏襲）。</li>
+    <li>感情グラフの BarMark は <code>.foregroundStyle(by: .value("感情", mood.label))</code> + <code>.chartForegroundStyleScale</code> でカラーマッピングを明示指定する。</li>
+    <li>6か月分データが存在しない月（記録0件）はスタック棒を表示しない（X軸のラベルは表示）。</li>
   </ul>
 
   <h2>関連</h2>
@@ -96,6 +127,7 @@ private var logs: [LogEntry]
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（StatsView）を反映。感情推移グラフは S3 予定として記載</td></tr>
+    <tr><td>1.1</td><td>2026-06-15</td><td>Phase S3 実装済み: 感情の移ろいグラフ（Swift Charts 月別スタック棒グラフ・直近6か月・5感情色分け・凡例・空状態メッセージ）を追加</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-06-15</footer>

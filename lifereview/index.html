@@ -48,12 +48,12 @@
     </a>
   </div>
 
-  <h2>画面仕様書（ふりかえりタブ — Phase S2 実装済）</h2>
+  <h2>画面仕様書（ふりかえりタブ — Phase S2/S3 実装済）</h2>
   <div class="card-grid">
     <a class="card" href="screens/reflect-home.html">
       <div class="title">ふりかえりホーム</div>
-      <div class="desc">週/月/年リズムカード・道具箱導線・これまでの軌跡プレビュー</div>
-      <div class="meta"><span class="tag">LR-REFLECT-HOME</span></div>
+      <div class="desc">週/月/年リズムカード（isDue 自動判定）・道具箱導線・これまでの軌跡プレビュー</div>
+      <div class="meta"><span class="tag">LR-REFLECT-HOME</span> <span class="tag done">S3更新</span></div>
     </a>
     <a class="card" href="screens/reflection-session.html">
       <div class="title">振り返りセッション</div>
@@ -62,8 +62,8 @@
     </a>
     <a class="card" href="screens/reflection-timeline.html">
       <div class="title">これまでの軌跡（星図タイムライン）</div>
-      <div class="desc">振り返り数だけ星を灯す星図・タリー・縦タイムライン</div>
-      <div class="meta"><span class="tag">LR-TIMELINE-01</span></div>
+      <div class="desc">振り返り数だけ星を灯す星図（週次/月次/年次で段階表現）・星座線・タリー・縦タイムライン</div>
+      <div class="meta"><span class="tag">LR-TIMELINE-01</span> <span class="tag done">S3更新</span></div>
     </a>
     <a class="card" href="screens/toolbox-calendar.html">
       <div class="title">道具箱: カレンダー</div>
@@ -72,8 +72,13 @@
     </a>
     <a class="card" href="screens/toolbox-stats.html">
       <div class="title">道具箱: 統計</div>
-      <div class="desc">サマリー4カード・カテゴリ円グラフ・カテゴリ内訳</div>
-      <div class="meta"><span class="tag">LR-TOOLBOX-STATS</span></div>
+      <div class="desc">サマリー4カード・カテゴリ円グラフ・カテゴリ内訳・感情の移ろいグラフ（S3追加）</div>
+      <div class="meta"><span class="tag">LR-TOOLBOX-STATS</span> <span class="tag done">S3更新</span></div>
+    </a>
+    <a class="card" href="screens/reminder-settings.html">
+      <div class="title">リマインダー設定</div>
+      <div class="desc">週次振り返りの曜日・時刻を設定するローカル通知設定画面（端末内完結・サーバー不要）</div>
+      <div class="meta"><span class="tag">LR-REMINDER-01</span> <span class="tag done">S3新規</span></div>
     </a>
   </div>
 
@@ -92,7 +97,7 @@
     <tr><td>S0 基盤</td><td>3タブ化・デザインシステム確立・SwiftData移行</td><td><span class="tag done">完了</span></td></tr>
     <tr><td>S1 骨格</td><td>3タブ配置・今日タブ・人生タブ再配置</td><td><span class="tag done">完了</span></td></tr>
     <tr><td>S2 振り返り中核</td><td>振り返りセッション・ホーム・タイムライン・道具箱</td><td><span class="tag done">完了</span></td></tr>
-    <tr><td>S3 拡張</td><td>月次/年次リマインダー・感情推移グラフ</td><td><span class="tag warn">着手中</span></td></tr>
+    <tr><td>S3 拡張</td><td>感情の移ろいグラフ・リズムカードdue判定・星図段階表現・週次リマインダー通知</td><td><span class="tag done">完了</span></td></tr>
     <tr><td>S4 仕上げ</td><td>オンボーディング・プレミアム・アニメ・フォント</td><td><span class="tag">未着手</span></td></tr>
   </table>
 
@@ -100,6 +105,7 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>v1.0</td><td>2026-06-15</td><td>仕様書ポータル初版作成。Phase S2「振り返り中核」実装完了分を反映（ふりかえりホーム・振り返りセッション・星図タイムライン・道具箱カレンダー/統計・データモデル・機能仕様書）</td></tr>
+    <tr><td>v1.1</td><td>2026-06-15</td><td>Phase S3「拡張」実装完了分を反映: 感情の移ろいグラフ（toolbox-stats）・リズムカードdue自動判定（reflect-home）・StarMap段階表現+星座線（reflection-timeline）・リマインダー設定画面（reminder-settings）新規追加。ロードマップS3を完了に更新</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-06-15</footer>

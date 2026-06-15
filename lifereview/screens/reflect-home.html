@@ -47,7 +47,9 @@
     <tr><th>状態</th><th>表示内容</th></tr>
     <tr><td>初回起動（振り返り0件）</td><td>軌跡セクションに EmptyState「まだ星のない夜」。リズムカードの meta は「はじめての振り返り」等の固定文言。</td></tr>
     <tr><td>振り返り履歴あり</td><td>軌跡セクションに TrajectoryPreview（最新1件のプレビューテキスト + 「軌跡を見る」）。リズムカードの meta に「前回からN日」を表示。</td></tr>
-    <tr><td>週次カード（isDue: true 固定）</td><td>金ヘアライン罫・「そろそろ」バッジを常時表示（現時点は週次のみ固定 true）。S3でリマインダー判定連動予定。</td></tr>
+    <tr><td>週次カード（isDue: 自動判定）</td><td>前回週次振り返りから7日以上経過（or 週次振り返り未実施）の場合 isDue: true → 金ヘアライン罫・「そろそろ」バッジ表示。</td></tr>
+    <tr><td>月次カード（isDue: 自動判定）</td><td>今月の月次振り返りが未実施の場合 isDue: true。</td></tr>
+    <tr><td>年次カード（isDue: 自動判定）</td><td>今年の年次振り返りが未実施の場合 isDue: true。</td></tr>
   </table>
 
   <h2>遷移</h2>
@@ -69,10 +71,31 @@ private var history: [ReflectionSession]
 // latest(:) — 種別ごとに最新1件を返すヘルパー
 // meta(for:fallback:) — 前回からの経過日数文字列を生成</code></pre>
 
+  <h2>isDue 判定ロジック（S3 実装済）</h2>
+  <table>
+    <tr><th>種別</th><th>isDue = true の条件</th></tr>
+    <tr><td>週次（weekly）</td><td>週次の振り返りが一度もない <strong>または</strong> 最後の週次振り返りの periodStart から現在まで 7日以上経過</td></tr>
+    <tr><td>月次（monthly）</td><td>今月（year + month）の月次振り返りが0件</td></tr>
+    <tr><td>年次（yearly）</td><td>今年（year）の年次振り返りが0件</td></tr>
+  </table>
+  <pre><code>// ReflectHomeViewModel の isDue 計算例
+func isDue(for type: ReflectionType, history: [ReflectionSession]) -> Bool {
+    let sessions = history.filter { $0.typeRaw == type.rawValue }
+    switch type {
+    case .weekly:
+        guard let last = sessions.first else { return true }
+        return Calendar.current.dateComponents([.day], from: last.periodStart, to: .now).day ?? 0 >= 7
+    case .monthly:
+        return !sessions.contains { Calendar.current.isDate($0.periodStart, equalTo: .now, toGranularity: .month) }
+    case .yearly:
+        return !sessions.contains { Calendar.current.isDate($0.periodStart, equalTo: .now, toGranularity: .year) }
+    }
+}</code></pre>
+
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li><code>sessionType: ReflectionType?</code> を @State で持ち、<code>.fullScreenCover(item: $sessionType)</code> でセッション画面を表示する（Identifiable 準拠により種別ごとに自動生成）。</li>
-    <li>RhythmCard の <code>isDue</code> は現状 weekly のみ true（固定）。S3 でリマインダー/前回日時判定と連動予定。</li>
+    <li>RhythmCard の <code>isDue</code> は S3 で自動判定に切り替え済み（固定値から上記ロジックへ変更）。</li>
     <li>TrajectoryPreview のプレビューテキスト優先順: note（気づきメモ）→ answers[0].answer → nil（fallback: 「直近の振り返りが残っています」）。</li>
     <li>C案規律: 金（<code>AppColors.amber</code> / <code>goldDim</code>）は isDue カードのヘアライン・バッジ・TrajectoryPreview の引用符のみ。ホーム・セッション中は星を出さない（完了画面でのみ灯す）。</li>
     <li>ヒーローテキストは <code>AppFont.mincho(26)</code>（Shippori Mincho 相当）。</li>
@@ -104,6 +127,7 @@ private var history: [ReflectionSession]
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（ReflectHomeView）を反映</td></tr>
+    <tr><td>1.1</td><td>2026-06-15</td><td>Phase S3 実装済み: リズムカード isDue 判定ロジックを自動化（週=7日以上/月=今月未実施/年=今年未実施）。固定 true から動的判定へ変更</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-06-15</footer>

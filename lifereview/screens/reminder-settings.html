@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - リマインダー設定</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / リマインダー設定</div>
+
+  <header class="site-header">
+    <h1>リマインダー設定</h1>
+    <p>週次振り返りの曜日・時刻をユーザーが指定する端末内ローカル通知設定画面。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">S3実装済</span>
+      <span class="tag">画面ID: LR-REMINDER-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    ユーザーが週次振り返りを習慣化できるよう、毎週指定した曜日・時刻にローカル通知を送る設定画面。
+    端末内の <code>UNUserNotificationCenter</code> を使用するため、サーバーへのデータ送信は一切行わない。
+    設定→通知セクションから遷移する。
+  </p>
+
+  <div class="callout">
+    <strong>プライバシーポリシー上の重要事項:</strong> 通知スケジュール（曜日・時刻）はデバイス内にのみ保持し、サーバー送信・外部共有は行わない。
+    通知許可ダイアログはシステム提供のもの（UNUserNotificationCenter.requestAuthorization）を使用する。
+  </div>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>有効/無効トグル</td><td>Toggle（SwiftUI）</td><td>「週次リマインダー」ラベル付き。ON にすると通知許可リクエストを発行し、以降の設定を表示する。OFF にすると既存の通知を全キャンセル。</td></tr>
+    <tr><td>許可拒否時の案内</td><td>callout warn</td><td>通知許可が拒否されている場合「設定アプリ → LifeReview → 通知を有効にしてください」とリンク付きガイドを表示（UIApplication.open で設定アプリへ遷移）。</td></tr>
+    <tr><td>曜日ピッカー</td><td>Picker（.segmented スタイル）</td><td>日・月・火・水・木・金・土の7択。既定: 日（Weekday index 1）。トグルが ON の場合のみ表示。</td></tr>
+    <tr><td>時刻ピッカー</td><td>DatePicker（.hourAndMinute・displayedComponents: .hourAndMinute）</td><td>既定: 21:00。トグルが ON の場合のみ表示。</td></tr>
+    <tr><td>次回通知日時プレビュー</td><td>Text（textMuted）</td><td>「次回: 〇月〇日（日）21:00」を動的計算して表示。設定変更のたびにリアルタイム更新。</td></tr>
+    <tr><td>通知プレビューカード</td><td>AppCard（静的表示）</td><td>実際に届く通知のタイトル/本文をプレビュー表示（下記「通知内容」参照）。</td></tr>
+  </table>
+
+  <h2>通知内容</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>タイトル</td><td>「そろそろ、ふりかえりませんか」</td></tr>
+    <tr><td>本文</td><td>「この一週間で、心が動いた瞬間は？」</td></tr>
+    <tr><td>繰り返し</td><td>毎週同じ曜日・同じ時刻（UNCalendarNotificationTrigger・repeats: true）</td></tr>
+    <tr><td>タイムゾーン</td><td>Asia/Tokyo 固定</td></tr>
+    <tr><td>サウンド</td><td>UNNotificationSound.default</td></tr>
+    <tr><td>通知 ID</td><td><code>"lifereview.weekly.reminder"</code>（固定・再設定時に上書き）</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>初期表示（未設定）</td><td>トグルOFF。曜日・時刻ピッカーは非表示。既定値（日・21:00）はトグルON時に適用。</td></tr>
+    <tr><td>トグルON・通知許可済み</td><td>曜日ピッカー + 時刻ピッカー + 次回通知プレビュー + 通知プレビューカードを表示。</td></tr>
+    <tr><td>トグルON・通知未許可</td><td>システム許可ダイアログを表示。許可された場合は「許可済み」状態へ遷移。</td></tr>
+    <tr><td>トグルON・通知拒否済み</td><td>callout warn（設定アプリへの案内）を表示。曜日・時刻ピッカーは非表示。</td></tr>
+    <tr><td>トグルOFF</td><td>既存の通知を UNUserNotificationCenter でキャンセル（identifier: "lifereview.weekly.reminder"）。</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>画面を閉じる（または戻るボタン）</td><td>設定画面に戻る</td></tr>
+    <tr><td>通知拒否時の「設定を開く」リンクをタップ</td><td>UIApplication.open(URL(string: UIApplication.openSettingsURLString)!) → システム設定アプリ（LifeReview通知設定）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// 設定値は @AppStorage で端末内に永続化（UserDefaults 経由・SwiftData 非使用）
+@AppStorage("reminder.enabled") private var isEnabled: Bool = false
+@AppStorage("reminder.weekday") private var weekday: Int = 1    // 1=日曜
+@AppStorage("reminder.hour")    private var hour: Int = 21
+@AppStorage("reminder.minute")  private var minute: Int = 0
+
+// 通知スケジュール（UNUserNotificationCenter）
+// ※ サーバー送信なし・端末内完結
+func scheduleWeeklyReminder(weekday: Int, hour: Int, minute: Int) {
+    let center = UNUserNotificationCenter.current()
+    let content = UNMutableNotificationContent()
+    content.title = "そろそろ、ふりかえりませんか"
+    content.body  = "この一週間で、心が動いた瞬間は？"
+    content.sound = .default
+
+    var components = DateComponents()
+    components.weekday = weekday    // 1=日 〜 7=土
+    components.hour    = hour
+    components.minute  = minute
+    components.timeZone = TimeZone(identifier: "Asia/Tokyo")
+
+    let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+    let request = UNNotificationRequest(
+        identifier: "lifereview.weekly.reminder",
+        content: content,
+        trigger: trigger
+    )
+    center.removePendingNotificationRequests(withIdentifiers: ["lifereview.weekly.reminder"])
+    center.add(request)
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>通知許可状態は画面表示のたびに <code>UNUserNotificationCenter.current().getNotificationSettings</code> で非同期確認する（アプリ外で変更される場合があるため）。</li>
+    <li>トグルを ON にする瞬間に <code>requestAuthorization(options: [.alert, .sound])</code> を呼ぶ。許可済みの場合はダイアログは出ない（システム挙動）。</li>
+    <li>Flutter 版の <code>flutter_local_notifications</code> 相当の機能を UNUserNotificationCenter に置換。@AppStorage は <code>SharedPreferences</code> からの移行先。</li>
+    <li>通知の identifier を固定（"lifereview.weekly.reminder"）することで、再設定時に <code>removePendingNotificationRequests</code> で確実に上書きできる。</li>
+    <li>次回通知日時は <code>Calendar.current.nextDate(after: .now, matching: components, matchingPolicy: .nextTime)</code> で計算して表示する。</li>
+    <li>C案デザイン規律: 設定画面はシンプル構成。金色の装飾は使わない。</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a></li>
+    <li><a href="../features/reflection-session-flow.html">振り返りセッション機能仕様</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S3 実装済み（UNUserNotificationCenter 週次リマインダー設定画面）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-15</footer>
+</div>
+</body>
+</html>

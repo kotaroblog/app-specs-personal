@@ -38,18 +38,35 @@
     <tr><td>空状態（EmptyNight）</td><td>EmptyStateView風</td><td>「まだ星のない夜」明朝16pt + 説明文。「最初の振り返りを始める」CTAボタン（金ヘアライン枠 + 明朝15pt）。</td></tr>
   </table>
 
-  <h2>StarMapView 描画仕様</h2>
+  <h2>StarMapView 描画仕様（S3 段階表現追加）</h2>
   <table>
     <tr><th>項目</th><th>仕様</th></tr>
     <tr><td>星の数</td><td>振り返りセッション数（= starCount）</td></tr>
     <tr><td>座標生成</td><td>シード固定（20260613）の擬似乱数 SeededGenerator。再描画でも位置がぶれない。</td></tr>
     <tr><td>クラスタ配置</td><td>clusterCount = ceil(starCount / 4)。クラスタ中心から散らすことでノイズ感を回避。</td></tr>
-    <tr><td>星のサイズ</td><td>radius: 1.0〜1.25px（均等サイズ禁止。3段階相当のゆらぎ）</td></tr>
-    <tr><td>星の明度</td><td>opacity: 0.5〜0.75（均等明度禁止）</td></tr>
-    <tr><td>色</td><td>AppColors.textBody（#C9C5BA）。紫・青グラデ禁止。</td></tr>
+    <tr><td>星の種別（S3 追加）</td><td>振り返り種別に応じて3段階の大きさ・明るさを使い分け（下表参照）。</td></tr>
     <tr><td>グロー</td><td>禁止（外周 box-shadow 相当は一切使わない）</td></tr>
+    <tr><td>色</td><td>週次/月次は AppColors.textBody（#C9C5BA）。年次は moonWhite（#EAE6DC）。紫・青グラデ禁止。</td></tr>
+    <tr><td>星座線（S3 追加）</td><td>年次振り返りが2件以上の場合、年次の星同士を completedAt 昇順で金の細線（#C2894B・不透明度0.45・lineWidth 0.5）で結ぶ。</td></tr>
     <tr><td>高さ</td><td>frame height: 150px。RoundedRectangle(cornerRadius: 16) + cardBorder 1px 枠。</td></tr>
   </table>
+
+  <h3>星の段階表現（S3 追加）</h3>
+  <table>
+    <tr><th>振り返り種別</th><th>呼称</th><th>radius</th><th>opacity</th><th>補足</th></tr>
+    <tr><td>weekly（週次）</td><td>小星（petite star）</td><td>1.0〜1.25px</td><td>0.5〜0.65</td><td>ベースの星。最も数が多い。</td></tr>
+    <tr><td>monthly（月次）</td><td>明星（bright star）</td><td>1.8〜2.2px</td><td>0.72〜0.85</td><td>週次より明確に大きく明るい。</td></tr>
+    <tr><td>yearly（年次）</td><td>節目の星（milestone star）</td><td>3.0〜3.5px</td><td>0.92〜1.0</td><td>最も明るく大きい。moonWhite 色。年次が2件以上で星座線を結ぶ。</td></tr>
+  </table>
+
+  <h3>StarMapView への渡し方（S3 以降）</h3>
+  <pre><code>// sessions を種別ごとに分類して StarMapView に渡す
+StarMapView(
+    weeklySessions: sessions.filter { $0.typeRaw == "weekly" },
+    monthlySessions: sessions.filter { $0.typeRaw == "monthly" },
+    yearlySessions: sessions.filter { $0.typeRaw == "yearly" }
+)
+// 従来の starCount: Int は互換維持しつつ種別配列も受け取る形に拡張</code></pre>
 
   <h2>タリー集計ロジック（TimelineTally）</h2>
   <ul class="checklist">
@@ -87,7 +104,9 @@ let tally = TimelineTally(sessions: sessions)</code></pre>
     <li>StarMapView は <code>Canvas</code> API（SwiftUI）で描画。CPU 負荷はほぼゼロ（静的描画）。</li>
     <li>SeededGenerator はカスタム RNG（<code>RandomNumberGenerator</code> 準拠）。seed: 20260613 固定。</li>
     <li>空状態のCTAボタンスタイル: 金ヘアライン枠（goldDim 1px）、明朝テキスト、amber 色。グラデ・グロー禁止。</li>
-    <li>振り返り詳細画面（ReflectionDetailView）は S3 以降の実装予定。現状は ReflectionTile は非タップ。</li>
+    <li>振り返り詳細画面（ReflectionDetailView）は S4 以降の実装予定。現状は ReflectionTile は非タップ。</li>
+    <li>星座線は Canvas の <code>context.stroke</code> で描画。Path を年次セッションの座標リストから順に生成。</li>
+    <li>座標の決定: 各セッションは SeededGenerator の連番シードで座標が確定しているため、種別を分けても位置の再現性は保たれる。</li>
     <li>年次振り返りの特別演出（その年のハイライト写真まとめ）は S4 以降で検討。</li>
   </ul>
 
@@ -103,6 +122,7 @@ let tally = TimelineTally(sessions: sessions)</code></pre>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（ReflectionTimelineView・StarMapView・TimelineTally）を反映</td></tr>
+    <tr><td>1.1</td><td>2026-06-15</td><td>Phase S3 実装済み: StarMapView 段階表現（週次=小星・月次=明星・年次=節目の星）および年次2件以上で星座線（金の細線）を結ぶ演出を追加</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-06-15</footer>

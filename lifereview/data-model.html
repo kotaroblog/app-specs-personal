@@ -19,7 +19,8 @@
 
   <div class="callout warn">
     <strong>技術移行メモ:</strong> LifeReview は Flutter（drift / Riverpod）から Swift（SwiftData / @Observable）へ全面移行中。
-    本ドキュメントは Swift 実装の正を記述する。Flutter 版の drift スキーマ（ReflectionSessions テーブル等）は参考として併記する。
+    本ドキュメントは Swift 実装の正を記述する。Flutter 版の drift スキーマ（ReflectionSessions テーブル等）は参考として併記する。<br>
+    Phase S3 での主な技術置換: <code>flutter_local_notifications</code> → <code>UNUserNotificationCenter</code>（通知）、<code>SharedPreferences</code> → <code>@AppStorage</code>（リマインダー設定の永続化）。
   </div>
 
   <h2>ER 図</h2>
@@ -157,12 +158,15 @@ final class ReflectionSession {
     <tr><td>answers: TextColumn（JSON文字列）</td><td>answers: [ReflectionAnswer]（Codable配列）</td></tr>
     <tr><td>highlightLogIds: TextColumn（JSON配列）</td><td>highlightLogIds: [UUID]</td></tr>
     <tr><td>Riverpod AsyncNotifier</td><td>@Observable @MainActor ViewModel（移行中）</td></tr>
+    <tr><td>flutter_local_notifications</td><td>UNUserNotificationCenter（Phase S3 で実装）</td></tr>
+    <tr><td>SharedPreferences（通知設定の保存）</td><td>@AppStorage（Phase S3 で実装）</td></tr>
   </table>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 時点の SwiftData モデル（LogEntry・ReflectionSession）を記述。Flutter→Swift 移行状況を追記</td></tr>
+    <tr><td>1.1</td><td>2026-06-15</td><td>Phase S3 技術置換を反映: flutter_local_notifications→UNUserNotificationCenter・SharedPreferences→@AppStorage を移行対応表に追記</td></tr>
   </table>
 
   <script>
