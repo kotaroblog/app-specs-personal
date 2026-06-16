@@ -68,6 +68,27 @@
     <li><code>modelContext.delete(clip)</code> で SwiftData レコード削除</li>
   </ol>
 
+  <h2>ClipRoutineSelectSheet（596896d）</h2>
+  <p>クリップタブでルーティンが 2 件以上存在する場合に表示するルーティン選択シート。暗黙の先頭選択（旧挙動）を廃止し、ユーザーに明示的に選ばせる。</p>
+  <ul class="kv-list">
+    <li><span class="k">実装</span><span class="v"><code>DesignsHomeView.swift</code> 内の private struct（<code>ClipRoutineSelectSheet</code>）</span></li>
+    <li><span class="k">表示方式</span><span class="v">sheet（<code>showClipRoutineSelect</code> フラグで制御）</span></li>
+    <li><span class="k">ルーティン行</span><span class="v">アイコン（symbolName または自動推薦）+ 名前 + 「Xステップ・Yクリップ」表示 + chevron.right</span></li>
+    <li><span class="k">選択</span><span class="v"><code>onSelect(routine)</code> コールバック → <code>pendingClipLibraryRoutine</code> にセット → シート dismiss 後 <code>handleClipRoutineSelectorDismissed()</code> で ClipLibraryView 起動</span></li>
+    <li><span class="k">新規作成</span><span class="v">「新しいルーティンを作成」ボタン → <code>onCreateRoutine()</code> → <code>shouldCreateRoutineAfterClipSelector = true</code> → dismiss 後 <code>handleCenterPlusTap()</code> 経由</span></li>
+    <li><span class="k">閉じる</span><span class="v">左上 × ボタン（xmark icon）</span></li>
+  </ul>
+
+  <h2>ClipGenerateView 選択状況カード（596896d）</h2>
+  <p>動画生成時にどのステップのクリップが選択済みかを一目で把握できるカードを画面上部に追加。</p>
+  <ul class="kv-list">
+    <li><span class="k">表示</span><span class="v">「選択済み X/Y」テキスト + 状態ラベル（「すべて選択済み」または「未選択あり」）</span></li>
+    <li><span class="k">プログレスバー</span><span class="v"><code>ProgressView</code>（value: selectedStepCount / total: totalStepCount）/ tint: accentOrange</span></li>
+    <li><span class="k">詳細テキスト</span><span class="v">選択0件 → 「少なくとも1つのクリップを選んでください」/ 全選択 → 「全ステップのクリップを使って動画を作成」/ 一部未選択 → 未選択ステップ名（最大3件）を列挙</span></li>
+    <li><span class="k">生成ボタン文言分岐</span><span class="v">全選択済み → 「動画を作成する」 / 一部のみ → 「選択したクリップで作成」</span></li>
+    <li><span class="k">アクセシビリティ</span><span class="v"><code>.accessibilityElement(children: .combine)</code> + <code>.accessibilityLabel</code>（選択数 + 詳細テキスト）</span></li>
+  </ul>
+
   <h2>作成セッション集約（CreateSessionView / 2026-06-06）</h2>
   <ul class="kv-list">
     <li><span class="k">実装ファイル</span><span class="v"><code>Views/Library/CreateSessionView.swift</code></span></li>
@@ -85,11 +106,12 @@
     </thead>
     <tbody>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。warm white背景、撮影Capsuleボタン化、サムネ拡大、「動画を作る」CTA を Home CTA 統一スタイルへ</td></tr>
+      <tr><td>v1.2</td><td>2026-06-16</td><td>ClipRoutineSelectSheet 追加（596896d）: クリップタブで 2件以上のルーティンがある場合にルーティン選択シートを表示（暗黙の先頭選択を廃止）。ClipGenerateView に選択状況カードを追加: 「選択済み X/Y」+ プログレスバー + 未選択ステップ名 + 生成ボタン文言分岐（全選択 → 「動画を作成する」/ 一部 → 「選択したクリップで作成」）</td></tr>
       <tr><td>v1.1</td><td>2026-06-10</td><td>CreateSessionView 新設で作成セッションを集約（commit 3a32a6c, 2026-06-06）。NavigationStack(path:) + ShootingView 用 fullScreenCover を内包し、ClipGenerate / Preview / ExportComplete をコールバック駆動化。ShootingView 完了時の PreviewView 自動 push 責務も CreateSessionView へ移管。ClipLibrary 冒頭に「全ステップを連続撮影」ボタンを追加</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-10</footer>
+  <footer class="site-footer">最終更新: 2026-06-16</footer>
 </div>
 </body>
 </html>

@@ -65,19 +65,50 @@
     </thead>
     <tbody>
       <tr><td>ホーム</td><td>何もしない（現在の画面）</td></tr>
-      <tr><td>クリップ</td><td>routines.first を libraryRoutine にセット → ClipLibraryView。ルーティン無し時は何もしない</td></tr>
-      <tr><td>中央＋</td><td>新規ルーティン作成（PresetSelect or Paywall）</td></tr>
+      <tr><td>クリップ</td><td>ルーティン件数で3分岐（<a href="#clip-tab-routing">クリップタブ動線</a>参照）</td></tr>
+      <tr><td>中央＋</td><td>新規ルーティン作成（PresetSelect or Paywall trigger: routineLimit）</td></tr>
       <tr><td>作品</td><td>showVideoList = true → VideoListView</td></tr>
       <tr><td>設定</td><td>showSettings = true → SettingsView</td></tr>
     </tbody>
   </table>
   <p>※ホーム以外のタブはモーダル起動後、selectedTab を即 .home に戻す（タブの選択状態を保持しない）</p>
 
+  <h2 id="clip-tab-routing">クリップタブ動線（3分岐・596896d）</h2>
+  <p>旧実装は「クリップタブタップ = routines.first で即撮影開始」だったが、ユーザーの意図（ライブラリを見たい）と乖離していたため修正。</p>
+  <table>
+    <thead>
+      <tr><th>ルーティン件数</th><th>動作</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>0件（ルーティン未作成）</td><td><code>handleCenterPlusTap()</code> 経由でルーティン作成誘導（PresetSelect または Paywall）</td></tr>
+      <tr><td>1件</td><td>その唯一のルーティンの ClipLibraryView を直接起動（<code>startMode: .clipLibrary</code>）</td></tr>
+      <tr><td>2件以上</td><td><code>ClipRoutineSelectSheet</code>（ルーティン選択シート）を sheet で表示し、ユーザーが選んだ後に ClipLibraryView を起動</td></tr>
+    </tbody>
+  </table>
+  <p>クリップタブタップで即撮影開始していたバグは <strong>3b93040</strong> で解消（致命3件のうちの1件）。</p>
+
+  <h2 id="session-payload">SessionPayload と StartMode（596896d）</h2>
+  <p><code>activeSession</code> の型を <code>Routine</code> から <code>SessionPayload</code>（Identifiable struct）へ変更し、起動経路ごとの初期画面を制御する。</p>
+  <ul class="kv-list">
+    <li><span class="k">SessionPayload</span><span class="v"><code>let routine: Routine</code> + <code>let startMode: CreateSessionView.StartMode</code>（UUID で Identifiable）</span></li>
+    <li><span class="k">.clipLibrary</span><span class="v">ClipLibraryView をルート表示。マイルーティン行タップ / クリップタブ / ⋯メニュー「クリップライブラリを開く」で使用</span></li>
+    <li><span class="k">.shootingSequential</span><span class="v">起動と同時に連続撮影（ShootingView）を立ち上げる。「次に撮影」CTA / Quick Start チップ / 通知タップ / URL スキームで使用</span></li>
+  </ul>
+  <p>init 内で <code>_shootingTarget</code> を事前確定するため、ClipLibraryView が一瞬見えてチラつく問題を回避。</p>
+
+  <h2>マイルーティン行タップ挙動（596896d）</h2>
+  <p>旧実装では行タップが即撮影（<code>.shootingSequential</code>）だったが、意図不一致のため <code>.clipLibrary</code> に変更。</p>
+  <ul class="kv-list">
+    <li><span class="k">行タップ（通常）</span><span class="v">ClipLibraryView を開く（<code>startMode: .clipLibrary</code>）</span></li>
+    <li><span class="k">長押し → confirmationDialog</span><span class="v">下記メニューを表示</span></li>
+    <li><span class="k">「すべて見る」ボタン</span><span class="v">v1.0 では未実装（アクション空）のため削除。全件表示に変更（<code>prefix(4)</code> 廃止）</span></li>
+  </ul>
+
   <h2>ルーティンメニュー（confirmationDialog）</h2>
-  <p>マイルーティンカードタップ時のアクションシート 5項目:</p>
+  <p>マイルーティンカード長押し時のアクションシート 5項目:</p>
   <ol>
-    <li>全ステップ続けて撮影 → ShootingView</li>
-    <li>クリップライブラリを開く → ClipLibraryView</li>
+    <li>全ステップ続けて撮影 → ShootingView（<code>startMode: .shootingSequential</code>）</li>
+    <li>クリップライブラリを開く → ClipLibraryView（<code>startMode: .clipLibrary</code>）</li>
     <li>編集する → RoutineEditView</li>
     <li>複製する → duplicate(routine:) で実行</li>
     <li><strong>削除する</strong>（role: .destructive）→ 削除確認 alert → deleteRoutine() で物理ファイル削除 + cascade delete</li>
@@ -86,9 +117,11 @@
   <h2>課金壁とサブスク連携</h2>
   <ul class="kv-list">
     <li><span class="k">無料ルーティン上限</span><span class="v">2件まで（<code>maxFreeRoutines = 2</code>）</span></li>
-    <li><span class="k">3件目作成時</span><span class="v">PaywallView 自動起動</span></li>
-    <li><span class="k">複製時の課金壁</span><span class="v">無料上限到達中は Paywall 起動して複製拒否</span></li>
-    <li><span class="k">Quick Start タップ時の課金壁</span><span class="v">同上、Paywall起動</span></li>
+    <li><span class="k">3件目作成時</span><span class="v">PaywallView 自動起動（<code>trigger: .routineLimit</code>）</span></li>
+    <li><span class="k">複製時の課金壁</span><span class="v">無料上限到達中は Paywall 起動（<code>trigger: .routineLimit</code>）して複製拒否</span></li>
+    <li><span class="k">Quick Start タップ時の課金壁</span><span class="v">同上（<code>trigger: .routineLimit</code>）</span></li>
+    <li><span class="k">保存メーター Paywall</span><span class="v">最近の動画のストレージ上限時（<code>trigger: .storageLimit</code>）</span></li>
+    <li><span class="k">Pro バッジ（無料時）手動タップ</span><span class="v"><code>trigger: .manual</code></span></li>
     <li><span class="k">バナー広告</span><span class="v">無料時のみタブバー上に常時表示（高さ50pt）</span></li>
     <li><span class="k">Pro バッジ</span><span class="v">Pro時は非インタラクティブ（情報のみ）、無料時は Paywall 起動ボタン</span></li>
   </ul>
@@ -194,12 +227,33 @@
   <h2>ロールバック方式</h2>
   <p>リリース後に新Home UIで不具合が発生した場合、<a href="../features/feature-flag.html">FeatureFlag運用</a> 経由でユーザー自身が設定画面の「β機能 → 新しいホーム画面を使う」トグルを OFF にすれば、旧 HomeView に即時切替可能。コード変更・再申請は不要。</p>
 
+  <h2>Quick Start チップの表示ロジック（692882f）</h2>
+  <ul class="kv-list">
+    <li><span class="k">新規ユーザー（routines.isEmpty）</span><span class="v">Quick Start チップを表示（初回の撮影開始導線として機能）</span></li>
+    <li><span class="k">既存ユーザー（routines が 1件以上）</span><span class="v">Quick Start チップを非表示（マイルーティンと重複するため）</span></li>
+    <li><span class="k">代替</span><span class="v">他プリセットを試したい既存ユーザーは中央＋ボタン → PresetSelectView で対応</span></li>
+  </ul>
+
+  <h2>Quick Start タップの動線変更（692882f）</h2>
+  <p>プリセットタップ後の動線を「ClipLibraryView（ステップ毎撮影）」から「連続撮影（ShootingSequential）」に変更。</p>
+  <ul class="kv-list">
+    <li><span class="k">旧</span><span class="v">プリセット選択 → RoutineEditView（編集画面） → ClipLibraryView</span></li>
+    <li><span class="k">新</span><span class="v">プリセット選択 → 連続撮影（<code>startMode: .shootingSequential</code>）直接開始</span></li>
+    <li><span class="k">理由</span><span class="v">「Quick Start = すぐ撮影」のユーザー期待に応える。名前・リマインダーはマイルーティンの ⋯ メニューで後から変更可能</span></li>
+  </ul>
+
+  <h2>「次に撮影」CTA の動線変更（596896d）</h2>
+  <p>旧実装は CTA タップでクリップライブラリを開いていたが、意図（すぐ撮影したい）と合わないため変更。</p>
+  <ul class="kv-list">
+    <li><span class="k">新</span><span class="v">タップで連続撮影を即開始（<code>startMode: .shootingSequential</code>）</span></li>
+    <li><span class="k">クリップライブラリへの誘導</span><span class="v">マイルーティン行タップ / クリップタブ / ⋯メニュー「クリップライブラリを開く」に集約</span></li>
+  </ul>
+
   <h2>v1.1 で予定される改善</h2>
   <ul>
-    <li><strong>DesignsHomeView の200行ルール準拠</strong> — 現在605行。サブView分割で対応予定</li>
-    <li><strong>マイルーティン「すべて見る」展開画面</strong> — 現在は3件まで表示で省略</li>
+    <li><strong>DesignsHomeView の200行ルール準拠</strong> — サブView分割で対応予定</li>
+    <li><strong>マイルーティン「すべて見る」展開画面</strong> — v1.0 では全件表示（prefix 廃止済み）、v1.1 でさらに洗練予定</li>
     <li><strong>DesignsRecordPreviewView の本番接続</strong> — 撮影画面の完全リデザイン</li>
-    <li><strong>クリップタブのルーティン選択画面</strong> — 現在は routines.first を開く挙動</li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -208,6 +262,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.3</td><td>2026-06-16</td><td>UX 改善 (596896d/692882f/3b93040): クリップタブ動線を 0件→作成誘導 / 1件→ClipLibrary直接 / 2件以上→ClipRoutineSelectSheet の3分岐に整理。マイルーティン行タップを即撮影から ClipLibrary 起動に変更。「次に撮影」CTA を連続撮影直接開始に変更。Quick Start チップを既存ユーザーには非表示（新規ユーザーのみ表示）。Quick Start タップ後も連続撮影を即開始するよう変更。activeSession 型を SessionPayload（Routine + StartMode ペア）に変更。全 9 箇所の Paywall 呼び出しに trigger 引数を付与（routineLimit / storageLimit / manual）。マイルーティンの全件表示化（prefix(4) 廃止 / 「すべて見る」ボタン削除）。保存メーター Paywall に trigger: .storageLimit を設定</td></tr>
       <tr><td>v1.2</td><td>2026-06-14</td><td>Opus 4.8 UX レビュー対応: 既存ユーザー時に <code>quickStartChipsSection</code> を非表示（マイルーティンと重複していた）。新規ユーザー（<code>routines.isEmpty</code>）時の Quick Start は維持。既存ユーザーが他プリセットを試したい場合は中央＋ボタン → <code>PresetSelectView</code> で対応可能（commit 692882f）。あわせてアクティブセッション起動の重複コミット <code>3b93040</code> で「次に撮影」/マイルーティン/Quick Start/通知/URL スキームの 9 箇所を <code>SessionPayload(startMode: .shootingSequential)</code> に統一し、撮影到達タップ数を 3→2 に短縮</td></tr>
       <tr><td>v1.1</td><td>2026-06-12</td><td>DesignsHomeView 900→673 行に縮減: <code>DesignsHomeHeroSection</code>（streak メーター + hero コピー、115 行）と <code>DesignsHomeRecentVideosSection</code>（保存メーター + サムネスクロール + DesignsRecentVideoThumbnail、160 行）を独立 struct に切り出し、親はバインディング / コールバック注入で連携（commit b833be4）。<code>SubscriptionManager.shared</code> 直参照 6 箇所を <code>@State subscription</code> 経由に統一し <code>@Observable</code> 追跡を正規化（commit 04bb873）。<a href="../features/analytics.html">Analytics</a> イベント <code>streak_updated</code>（撮影都度）/ <code>video_saved</code>（保存成功時）を組込み</td></tr>
       <tr><td>v1.0</td><td>2026-06-10</td><td>6施策反映（#1-#7）: Hero streak メーター（🔥連続/📹累計バッジ・3パターン分岐）/ マイルーティンに「今日 ✓」バッジ / 最近の動画サムネ実画像化 + RecentVideoPlayerSheet 起動 + 外側Button二重ネスト解消 / 「最近の動画」見出し横に保存メーター（X/3・上限ピンク強調・Paywall起動）/ Quick Start プリセット名を検索意図ワードへ刷新（朝5分/夜の整い/筋トレ10分/集中45分、raw value 不変）+ URL スキーム <code>routinereel://preset/&lt;rawValue&gt;</code> 受け口追加 / Paywall 年額バッジを「X% お得」動的化</td></tr>
@@ -218,7 +273,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-14</footer>
+  <footer class="site-footer">最終更新: 2026-06-16</footer>
 </div>
 </body>
 </html>

@@ -88,7 +88,76 @@
   </ul>
 
   <h3>残課題（既知）</h3>
-  <p>撮影フローには <strong>ShootingView</strong>（シーケンス撮影）と <strong>SingleStepShootingView</strong>（単発撮影）の 2 系統が残存している。レイアウト面は <code>SceneLabelLayout</code> 集約で揃ったが、撮影ロジック本体の統合は <strong>P0-1 / P0-2 として別タスクで実施予定</strong>。</p>
+  <p>撮影フローには <strong>ShootingView</strong>（シーケンス撮影）と <strong>SingleStepShootingView</strong>（単発撮影）の 2 系統が残存している。レイアウト面は <code>SceneLabelLayout</code> 集約で揃ったが、撮影ロジック本体の統合は別タスクで実施予定。</p>
+
+  <h2>SingleStepShootingView UI 統一（P1・596896d）</h2>
+  <p>ShootingView との見た目統一。録画ロジックは変更なし。</p>
+
+  <h3>背景・トップバー</h3>
+  <ul class="kv-list">
+    <li><span class="k">背景色</span><span class="v"><code>Color.black</code> → <code>Color.designsBackground</code>（warm white 系）</span></li>
+    <li><span class="k">閉じるボタン</span><span class="v">白字 → <code>designsSecondaryText</code>、背景 <code>designsCard</code> + <code>designsSoftShadow</code></span></li>
+    <li><span class="k">accessibilityLabel</span><span class="v">「閉じる」→「撮影を閉じる」</span></li>
+    <li><span class="k">ルーティン名・ステップ名</span><span class="v">白字 → <code>designsSecondaryText</code> / <code>designsPrimaryText</code></span></li>
+  </ul>
+
+  <h3>カメラエリア</h3>
+  <ul class="kv-list">
+    <li><span class="k">コーナー半径</span><span class="v">16 → 20pt（RoundedRectangle style: .continuous）</span></li>
+    <li><span class="k">黒背景レイヤー</span><span class="v">カメラプレビューの下に黒い RoundedRectangle を追加（ちらつき防止）</span></li>
+    <li><span class="k">カメラエリア影</span><span class="v">radius 14 / y 4 / opacity 0.12 を追加</span></li>
+  </ul>
+
+  <h3>REC インジケーター（ShootingView と統一）</h3>
+  <ul class="kv-list">
+    <li><span class="k">外側ハロー</span><span class="v">14pt 赤 opacity 0.4 + blur 4 + <code>designsPulse(0.7→1.15, 2.0秒)</code></span></li>
+    <li><span class="k">内側ドット</span><span class="v">8pt red + <code>designsPulse(0.88→1.0, 2.0秒)</code></span></li>
+    <li><span class="k">「REC」文字</span><span class="v">12pt semibold + tracking 0.5 + 白色</span></li>
+    <li><span class="k">背景</span><span class="v">Capsule 黒 opacity 0.32</span></li>
+  </ul>
+
+  <h3>カウントダウン（ShootingView と統一）</h3>
+  <ul class="kv-list">
+    <li><span class="k">フォント</span><span class="v">128pt ultraLight rounded + monospacedDigit</span></li>
+    <li><span class="k">色</span><span class="v">white opacity 0.88</span></li>
+    <li><span class="k">トランジション</span><span class="v">scale 1.4 挿入 / scale 0.6 削除 + opacity asymmetric</span></li>
+    <li><span class="k">アニメーション</span><span class="v">spring(0.45, 0.75)</span></li>
+  </ul>
+
+  <h3>録画ボタン（グラデーション化）</h3>
+  <ul class="kv-list">
+    <li><span class="k">外側リング</span><span class="v">72pt stroke <code>designsDivider</code> opacity 0.7 / lineWidth 2</span></li>
+    <li><span class="k">内側ボタン</span><span class="v">60pt LinearGradient（<code>designsAccentPink</code> → <code>designsAccentOrange</code>）+ shadow pink 0.25 / radius 8 / y 3</span></li>
+    <li><span class="k">保存中</span><span class="v">ProgressView（白）を内側に表示</span></li>
+    <li><span class="k">無効時</span><span class="v">opacity 0.55</span></li>
+  </ul>
+
+  <h3>ステータステキスト（3状態）</h3>
+  <table>
+    <thead>
+      <tr><th>状態</th><th>テキスト</th><th>フォント</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>録画中</td><td>「0:XX」（残り秒数タイマー）</td><td>14pt light monospaced</td></tr>
+      <tr><td>カウントダウン中</td><td>「まもなく録画」</td><td>14pt light</td></tr>
+      <tr><td>保存中</td><td>「クリップを保存中」</td><td>14pt light</td></tr>
+      <tr><td>待機中</td><td>「X秒録画」</td><td>14pt light</td></tr>
+    </tbody>
+  </table>
+
+  <h2>ExportCompleteView 変更（596896d）</h2>
+  <ul class="kv-list">
+    <li><span class="k">自動コピー廃止</span><span class="v">画面表示時のハッシュタグ自動コピーを廃止（驚き・意図しない動作の排除）</span></li>
+    <li><span class="k">明示コピーボタン追加</span><span class="v">「コピー」ボタンをタップするとハッシュタグをコピー + 「コピー済み」フィードバック表示</span></li>
+    <li><span class="k">広告削除</span><span class="v">完了ボタンからインタースティシャル広告を削除</span></li>
+  </ul>
+
+  <h2>ClipPlayerView アクセシビリティ改善（596896d）</h2>
+  <p>トリムハンドルの VoiceOver サポートを追加。</p>
+  <ul class="kv-list">
+    <li><span class="k">accessibilityAdjustableAction</span><span class="v">開始/終了ハンドルに追加。increment/decrement で 0.5秒刻みで移動</span></li>
+    <li><span class="k">accessibilityValue</span><span class="v">「X.X秒」形式で現在値を読み上げ</span></li>
+  </ul>
 
   <h2>REC インジケーター（呼吸する赤）</h2>
   <ul class="kv-list">
@@ -174,6 +243,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.2</td><td>2026-06-16</td><td>SingleStepShootingView を ShootingView 寄り UI に統一（P1・596896d）: 背景を designsBackground に変更、録画ボタンをピンク→オレンジのグラデーション化、REC インジケーターにパルスアニメーション追加、カウントダウンを 128pt spring トランジションに統一、ステータステキストを3状態化（録画中タイマー / 「まもなく録画」/ 「X秒録画」）。ExportCompleteView: 自動ハッシュタグコピー廃止・明示コピーボタン追加・完了ボタンのインタースティシャル広告削除。ClipPlayerView: トリムハンドルに accessibilityAdjustableAction（0.5秒刻み）と accessibilityValue（「X.X秒」）を追加</td></tr>
       <tr><td>v1.1</td><td>2026-06-12</td><td><a href="../features/analytics.html">Analytics</a> イベント組込み: <code>first_recording</code>（初回 1 回のみ、<code>AppSettings.hasRecordedFirst</code> で永続化判定）と <code>streak_updated(days:)</code>（撮影都度、最新 streak 値を送信）を <code>ShootingViewModel.persistClip</code> 成功時に発火（commit 8d0d70b・1d6e91e で日付二重加算を解消）</td></tr>
       <tr><td>v1.0.5</td><td>2026-06-10</td><td>SceneLabelLayout 単一ソース化（配置・サイズ比率・descent slack 補正を集約）/ 撮影プレビュー位置を 7%→22% に統一して完成動画と WYSIWYG 達成 / 長文ステップ名の折り返しを SwiftUI Text / CATextLayer 両方で maxLines=2 に統一 / SingleStepShootingView に底面グラデーションと #Preview を追加（commit 35c6118・a7f8ee2）</td></tr>
       <tr><td>v1.0.4</td><td>2026-05-21</td><td>テロップ時刻を右下→左下ステップ名の上に統合（TikTok/Reels UI衝突回避）/ タイムスタンプデフォルトをOFFに変更</td></tr>
@@ -184,7 +254,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-12</footer>
+  <footer class="site-footer">最終更新: 2026-06-16</footer>
 </div>
 </body>
 </html>

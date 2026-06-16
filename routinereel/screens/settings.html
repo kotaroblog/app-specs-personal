@@ -22,6 +22,7 @@
     <li><span class="k">実装ファイル</span><span class="v"><code>Views/Settings/SettingsView.swift</code></span></li>
     <li><span class="k">表示方式</span><span class="v">sheet（モーダル）</span></li>
     <li><span class="k">起動経路</span><span class="v">ホーム上部歯車アイコン / 下部設定タブ</span></li>
+    <li><span class="k">設定タブアイコン</span><span class="v"><code>gearshape.fill</code>（旧: <code>person.crop.circle</code>、596896d で変更）</span></li>
     <li><span class="k">背景色</span><span class="v">#FAF9F7</span></li>
   </ul>
 
@@ -30,8 +31,8 @@
     <li><strong>プラン</strong>: RoutineReel Pro（Pro時:「ご利用ありがとうございます」/ 無料時:「記録をもっと自由に」）</li>
     <li><strong>一般</strong>: デフォルト撮影秒数 / 動画画質 / タイムスタンプ形式</li>
     <li><strong>β機能</strong>: 新しいホーム画面を使う（FeatureFlag切替）</li>
-    <li><strong>他のアプリ</strong>: WorkoutDiary / StudyStopwatch（App Store 誘導）</li>
-    <li><strong>情報</strong>: プライバシーポリシー / 利用規約 / サポート / レビューを書く</li>
+    <li><strong>他のアプリ</strong>: WorkoutDiary / StudyStopwatch（App Store 検索リンク）</li>
+    <li><strong>情報</strong>: プライバシーポリシー / 利用規約 / サポート / レビューを書く（596896d で実装）</li>
     <li><strong>デバッグ</strong>: Pro機能を有効化（#if DEBUG || BETA のみ表示）</li>
   </ol>
 
@@ -67,6 +68,26 @@
     <li>アイコンは crown.fill + soft warm gradient 円背景</li>
   </ul>
 
+  <h2>情報セクション（v1.1 / 2026-06-16 実装）</h2>
+  <p>commit 596896d で実装。各行の挙動は以下のとおり。</p>
+  <table>
+    <thead>
+      <tr><th>行</th><th>遷移先</th><th>方式</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>プライバシーポリシー</td><td><code>SettingsLegalDocumentView</code>（アプリ内表示）</td><td>NavigationLink</td></tr>
+      <tr><td>利用規約</td><td><code>SettingsLegalDocumentView</code>（アプリ内表示）</td><td>NavigationLink</td></tr>
+      <tr><td>サポート</td><td><code>SettingsSupportView</code>（バージョン / Build / iOS / デバイス情報 + ShareLink）</td><td>NavigationLink</td></tr>
+      <tr><td>レビューを書く</td><td><code>ReviewRequestService.requestReviewFromSettings()</code></td><td>Button（iOS 表示制限に委ねる。保存回数条件を見ない）</td></tr>
+    </tbody>
+  </table>
+
+  <h2>他のアプリセクション（v1.1 / 2026-06-16 実装）</h2>
+  <ul class="kv-list">
+    <li><span class="k">WorkoutDiary</span><span class="v">App Store 検索リンクへ遷移</span></li>
+    <li><span class="k">StudyStopwatch</span><span class="v">App Store 検索リンクへ遷移</span></li>
+  </ul>
+
   <h3>保存メーター統合（v1.0.3 / 2026-06-10）</h3>
   <p>Free ユーザー向け Pro アップグレードカード（proUpgradeCard）に、アプリ内保存件数の現在値を副題内に統合表示する。Paywall への自然な動機付けとして機能。</p>
   <ul class="kv-list">
@@ -86,13 +107,14 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.1</td><td>2026-06-16</td><td>設定タブアイコンを <code>person.crop.circle</code> → <code>gearshape.fill</code> に変更（596896d）。情報セクション実装: プライバシーポリシー / 利用規約 → <code>SettingsLegalDocumentView</code>（NavigationLink）、サポート → <code>SettingsSupportView</code>（バージョン/Build/iOS/デバイス情報 + ShareLink）、レビューを書く → <code>ReviewRequestService.requestReviewFromSettings()</code>（保存回数条件なし・iOS 制限に委ねる）。他のアプリセクション: WorkoutDiary / StudyStopwatch を App Store 検索リンクに接続</td></tr>
       <tr><td>v1.0.3</td><td>2026-06-10</td><td>Pro アップグレードカード（Free 時）の副題に「アプリ内保存 X/3」メーターを統合。上限到達時はピンク強調・accessibilityLabel に上限件数を追記。@Query allVideos を SettingsView に追加</td></tr>
       <tr><td>v1.0.2</td><td>2026-05-21</td><td>Pro アップグレードカードにアクセシビリティラベル追加</td></tr>
       <tr><td>v1.0</td><td>2026-05-21</td><td>List/Form 化 → Card section 化（完全リデザイン）。β機能セクション追加</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-10</footer>
+  <footer class="site-footer">最終更新: 2026-06-16</footer>
 </div>
 </body>
 </html>

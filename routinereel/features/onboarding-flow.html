@@ -33,22 +33,22 @@
       <tr>
         <td>0</td>
         <td>welcome</td>
-        <td>アプリ名・キャッチコピー・"get started"</td>
+        <td>アプリ名・キャッチコピー・「はじめる」ボタン（旧: "get started"・596896d で日本語化）</td>
       </tr>
       <tr>
         <td>1</td>
         <td>features</td>
-        <td>連続撮影 / クリップ蓄積 / 自動編集 の3機能紹介</td>
+        <td>「連続撮影」/「クリップライブラリ」/「自動編集」の3機能紹介（旧: "continuous" / "clip library" / "auto-edit"・596896d で日本語化）。「次へ」ボタン（旧: "next"）</td>
       </tr>
       <tr>
         <td>2</td>
         <td>preset</td>
-        <td>プリセット選択（朝5分 / 夜の整い / 筋トレ10分 / 集中45分 / skip）</td>
+        <td>プリセット選択（朝5分 / 夜の整い / 筋トレ10分 / 集中45分 /「あとで」（旧: "skip for now"・596896d で日本語化））</td>
       </tr>
       <tr>
         <td>3</td>
         <td>reminder</td>
-        <td>朝7:00 / 夜21:00 / あとで の3択。プリセット選択時のみ表示、skip 経路はバイパス</td>
+        <td>朝7:00 / 夜21:00 /「あとで」の3択。プリセット選択時のみ表示、「あとで」経路はバイパス</td>
       </tr>
     </tbody>
   </table>
@@ -60,10 +60,41 @@
     <li><span class="k">granted = false</span><span class="v"><code>reminderEnabled</code> は true のまま保持。後で iOS 設定で許可された場合、RootView.onAppear の <code>refreshAllReminders</code> で自動的にスケジュールされる</span></li>
   </ul>
 
+  <h2>UIテキスト日本語化（596896d）</h2>
+  <p>オンボーディング内の英語テキストをすべて日本語に統一した。</p>
+  <table>
+    <thead>
+      <tr><th>箇所</th><th>旧（英語）</th><th>新（日本語）</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>welcome ページ CTA</td><td>"get started"</td><td>「はじめる」</td></tr>
+      <tr><td>features ページ CTA</td><td>"next"</td><td>「次へ」</td></tr>
+      <tr><td>preset スキップ</td><td>"skip for now"</td><td>「あとで」</td></tr>
+      <tr><td>features 行 1</td><td>"continuous"</td><td>「連続撮影」</td></tr>
+      <tr><td>features 行 2</td><td>"clip library"</td><td>「クリップライブラリ」</td></tr>
+      <tr><td>features 行 3</td><td>"auto-edit"</td><td>「自動編集」</td></tr>
+    </tbody>
+  </table>
+  <p>TabView の swipe 無効化コメントも「次へ」/「あとで」/「プリセットタップ」に更新済み。</p>
+
+  <h2>Quick Start プリセット名日本語化（596896d）</h2>
+  <p><code>DesignsQuickStartPreset.all</code> の <code>title</code> を英語から日本語に変更。<code>id</code>（raw value: morning / night / workout / study）は永続化キー・URL scheme パスとして<strong>不変</strong>。</p>
+  <table>
+    <thead>
+      <tr><th>id（不変）</th><th>旧 title</th><th>新 title</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>morning</td><td>"morning"</td><td>「朝」</td></tr>
+      <tr><td>night</td><td>"night"</td><td>「夜」</td></tr>
+      <tr><td>workout</td><td>"workout"</td><td>「運動」</td></tr>
+      <tr><td>study</td><td>"study"</td><td>「学習」</td></tr>
+    </tbody>
+  </table>
+
   <h2>TabView の swipe 無効化</h2>
   <p>
     オンボーディング画面の TabView に <code>DragGesture()</code> を被せて swipe を無効化している。
-    これにより、ユーザーが Page 2（preset）を skip 操作以外で飛ばして Page 3（reminder）に到達することを防ぎ、
+    これにより、ユーザーが Page 2（preset）を「あとで」操作以外で飛ばして Page 3（reminder）に到達することを防ぎ、
     <code>pendingRoutine</code> が nil のまま reminder ページに到達する経路を塞いでいる。
   </p>
 
@@ -101,11 +132,12 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.1</td><td>2026-06-16</td><td>UIテキスト全面日本語化（596896d）: "get started"→「はじめる」/ "next"→「次へ」/ "skip for now"→「あとで」/ "continuous"→「連続撮影」/ "clip library"→「クリップライブラリ」/ "auto-edit"→「自動編集」。Quick Start プリセット title 日本語化: "morning"→「朝」/ "night"→「夜」/ "workout"→「運動」/ "study"→「学習」（id は URL scheme パスのため不変）</td></tr>
       <tr><td>v1.0</td><td>2026-06-10</td><td>初版作成。Page 3.5 reminder の追加・TabView swipe 無効化・ATT 遅延発火を文書化。</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-10</footer>
+  <footer class="site-footer">最終更新: 2026-06-16</footer>
 </div>
 </body>
 </html>
