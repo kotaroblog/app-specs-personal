@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / ゲーム</div>
   <header class="site-header"><h1>ゲーム画面（GameView）</h1><p>メイン画面（タイトル+ゲーム+結果が統合）</p>
-  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: CR-GAME-01</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.3</span><span class="tag">画面ID: CR-GAME-01</span></div></header>
 
   <h2>UI 構成</h2>
   <table>
@@ -17,7 +17,7 @@
     <tr><td>タイトルバー</td><td>「CHROMATIC」中央 + リーダーボード/設定ボタン両脇</td></tr>
     <tr><td>ScoreHeaderView</td><td>現スコア + 全難易度ベストスコア</td></tr>
     <tr><td>StreakBadgeView</td><td>連続プレイ日数（炎アイコン）</td></tr>
-    <tr><td>StatusTextView</td><td>状態表示（「WATCH」「YOUR TURN」「GAME OVER」「正解はこのパネルでした」）</td></tr>
+    <tr><td>StatusTextView</td><td>状態表示（「WATCH」「YOUR TURN」「ゲームオーバー」「正解はこのパネルでした」）</td></tr>
     <tr><td>PanelGridView</td><td>パネルグリッド（2/4/6/8パネル切り替え可）。各パネルに <code>panel_0</code> 等の <code>accessibilityIdentifier</code> と <code>.isButton</code> トレイトを付与</td></tr>
     <tr><td>SequenceDotsView</td><td>シーケンスドットインジケーター</td></tr>
     <tr><td>ProgressBarView</td><td>入力進捗</td></tr>
@@ -26,7 +26,7 @@
     <tr><td>Daily Challenge ボタン</td><td>待機画面のセレクター下に配置（最下部）</td></tr>
     <tr><td>BannerAdView</td><td>下部（広告削除なし時）</td></tr>
     <tr><td>MilestoneFlashView</td><td>ラウンド5/10/15/20到達時の演出</td></tr>
-    <tr><td>GameOverOverlayView</td><td>ゲームオーバー時のオーバーレイ</td></tr>
+    <tr><td>GameOverOverlayView</td><td>ゲームオーバー時のオーバーレイ。コンテンツは ScrollView 化（小型端末対応）</td></tr>
   </table>
 
   <h2>状態（GameState）</h2>
@@ -39,15 +39,28 @@
     <tr><td>gameOver</td><td>GameOverOverlayView 表示</td></tr>
   </table>
 
+  <h2>ゲームオーバーオーバーレイ（GameOverOverlayView）</h2>
+  <table>
+    <tr><th>要素</th><th>テキスト（v1.3以降）</th><th>旧テキスト</th></tr>
+    <tr><td>タイトル</td><td>ゲームオーバー</td><td>GAME OVER</td></tr>
+    <tr><td>ラウンドラベル</td><td>ラウンド</td><td>ROUND</td></tr>
+    <tr><td>新記録バッジ</td><td>新記録達成！</td><td>NEW BEST RECORD!</td></tr>
+    <tr><td>ベスト差分表示</td><td>ベスト比 +N</td><td>+N FROM BEST</td></tr>
+    <tr><td>リトライボタン</td><td>もう一度</td><td>RETRY</td></tr>
+    <tr><td>モード選択ボタン</td><td>モード選択へ</td><td>MODE SELECT</td></tr>
+    <tr><td>シェアアイコンボタン</td><td>accessibilityLabel: "結果を共有"（新規追加）</td><td>—</td></tr>
+    <tr><td>コンテンツレイアウト</td><td>ScrollView 化（小型端末でボタンが隠れない設計）</td><td>固定レイアウト</td></tr>
+  </table>
+
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
     <tr><td>STARTタップ</td><td>showing 状態へ</td></tr>
     <tr><td>正解</td><td>シーケンス満了で次ラウンド</td></tr>
     <tr><td>不正解</td><td>wrongAnswerFeedback → 約0.42秒後に gameOver</td></tr>
-    <tr><td>RETRY</td><td>Interstitial表示 → 新ゲーム</td></tr>
-    <tr><td>MODE SELECT</td><td>Interstitial表示 → idle</td></tr>
-    <tr><td>SHARE</td><td>ShareCardView → ShareSheet</td></tr>
+    <tr><td>「もう一度」タップ（旧: RETRY）</td><td>Interstitial表示 → 新ゲーム</td></tr>
+    <tr><td>「モード選択へ」タップ（旧: MODE SELECT）</td><td>Interstitial表示 → idle</td></tr>
+    <tr><td>シェアアイコン（accessibilityLabel: "結果を共有"）</td><td>ShareCardView → ShareSheet</td></tr>
     <tr><td>トロフィーアイコン</td><td>Game Center Leaderboard</td></tr>
     <tr><td>設定アイコン</td><td>SettingsView (sheet)</td></tr>
   </table>
@@ -60,6 +73,8 @@
     <li class="done">hasSeenOnboarding=false でOnboardingView (sheet, interactiveDismissDisabled)</li>
     <li class="done">wrongAnswerFeedback 状態中はパネルタップを受け付けない（二重誤タップ防止）</li>
     <li class="done">パネルに accessibilityIdentifier（panel_0〜panel_N）と .isButton トレイトを付与（UITest 対応）</li>
+    <li class="done">GameOverOverlayView のコンテンツを ScrollView 化し、SE（1st gen）等の小型端末でもボタンが隠れない設計</li>
+    <li class="done">シェアアイコンボタンに <code>.accessibilityLabel("結果を共有")</code> を追加（VoiceOver 対応）</li>
   </ul>
 
   <h2>関連</h2>
@@ -73,7 +88,8 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-15</td><td>wrongAnswerFeedback 状態追加・ATTタイミング変更（初回→3ゲーム後）・インタースティシャル頻度変更（2回→4回に1回）・待機画面主導線整理（START最上部・セレクター順・Daily Challenge下配置）・パネルアクセシビリティ強化（accessibilityIdentifier / .isButton）</td></tr>
+    <tr><td>1.3</td><td>2026-06-19</td><td>ゲームオーバー画面UI日本語統一（GAME OVER→ゲームオーバー / ROUND→ラウンド / NEW BEST RECORD!→新記録達成！/ +N FROM BEST→ベスト比 +N / RETRY→もう一度 / MODE SELECT→モード選択へ）・GameOverOverlayViewをScrollView化（小型端末対応）・シェアアイコンボタンにaccessibilityLabel（"結果を共有"）追加</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-15</footer>
+  <footer class="site-footer">最終更新: 2026-06-19</footer>
 </div></body></html>
