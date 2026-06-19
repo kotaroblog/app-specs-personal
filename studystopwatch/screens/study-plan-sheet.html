@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 学習計画シート</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 学習計画シート</div>
+
+  <header class="site-header">
+    <h1>学習計画シート（StudyPlanSheet）</h1>
+    <p>タスクを日付に自動配分する学習計画生成シート</p>
+    <div class="section-meta">
+      <span class="tag done">v1.0</span>
+      <span class="tag">画面ID: SS-PLAN-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    教材タイトル・総量・終了日を入力すると「1日あたり何ページ/問」を計算し、
+    StudyTask として自動配分・一括生成するモーダルシート。
+    カレンダー画面のツールバー「計画」ボタンから呼び出される。
+  </p>
+
+  <h2>UI 構成</h2>
+  <div class="callout info">
+    <strong>UI/UX改善:</strong> 入力ガイド（プレースホルダー・サブテキスト）と単位プリセット候補を追加し、
+    初回利用時の迷いを軽減。
+  </div>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>科目セレクター</td><td>登録済み Subject から選択（任意）。未選択時は「未分類」タスク生成</td></tr>
+    <tr><td>タイトル入力</td><td>計画タイトル（例: 数学ワーク Chapter3）。キーボード自動フォーカス（<code>@FocusState titleFocused</code>）</td></tr>
+    <tr><td>総量入力 + 単位プリセット（改善）</td><td>総量を数値入力。単位は「ページ」「問」「回」「章」「時間」のプリセットボタンで即選択。「カスタム」選択時はフリー入力欄を表示</td></tr>
+    <tr><td>入力ガイド（改善）</td><td>各フィールドにプレースホルダーとサブテキスト（例: 「例: 数学ワーク」「例: 50」）を追加</td></tr>
+    <tr><td>開始日・終了日 DatePicker</td><td>開始日（デフォルト今日）と終了日（デフォルト試験日 or 30日後）の DatePicker</td></tr>
+    <tr><td>分割方法セグメント</td><td>毎日 / 曜日を選ぶ / 1タスク の3種類（<code>SplitMode</code>）</td></tr>
+    <tr><td>曜日選択（曜日モード時）</td><td>日〜土の曜日チェックボックス（<code>includedWeekdays: Set&lt;Int&gt;</code>）</td></tr>
+    <tr><td>プレビューサマリ</td><td>「N日間 / 1日あたり N ページ」を計算してリアルタイム表示</td></tr>
+    <tr><td>生成ボタン</td><td>「学習計画を作る」。<code>canGenerate</code>（タイトル+総量+日付が有効）のときのみ有効</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>初期表示</td><td>各フィールド空欄。終了日 = 試験日（未設定なら今日+30日）。プレビューは「- 日間」</td></tr>
+    <tr><td>タイトル・総量入力済み</td><td>プレビューサマリが更新される</td></tr>
+    <tr><td>生成可能（canGenerate = true）</td><td>「学習計画を作る」ボタンが有効化</td></tr>
+    <tr><td>生成完了</td><td>dismiss() でシートを閉じる。カレンダー画面にタスクが反映される</td></tr>
+    <tr><td>対象日なし（曜日絞りすぎ等）</td><td>「対象日が0日です。曜日を確認してください」警告テキストを表示</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「学習計画を作る」タップ（生成完了）</td><td>シートを閉じる（CalendarScreen に戻る）</td></tr>
+    <tr><td>「キャンセル」タップ</td><td>シートを閉じる（変更破棄）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// 生成されるタスク
+@Model final class StudyTask {
+    var id: UUID
+    var title: String
+    var isCompleted: Bool
+    var dueDate: Date?     // targetDays の各日付が設定される
+    var subject: Subject?
+    var sortOrder: Int
+    var createdAt: Date
+}
+
+// 入力参照
+@Model final class UserSettings {
+    var examDate: Date?   // 終了日のデフォルト値として参照
+}
+
+@Model final class Subject {
+    var id: UUID
+    var name: String
+    var colorHex: String
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">分割ロジック: <code>targetDays</code> 計算プロパティ。<code>splitMode == .single</code> のときは <code>[endDate]</code> のみ返す</li>
+    <li class="done">総量 ÷ 日数の切り上げ配分（端数は最終日タスクに吸収）</li>
+    <li class="done">単位プリセット: <code>["ページ", "問", "回", "章", "時間"]</code>。カスタム選択時は <code>useCustomUnit = true</code></li>
+    <li class="done">生成した StudyTask は modelContext.insert で一括登録後 <code>try modelContext.save()</code></li>
+    <li class="done">試験日（<code>settings?.examDate</code>）が設定済みの場合、終了日の初期値として使用（init() では SwiftData 未ロードのため <code>nil</code> を渡し、onAppear で上書き）</li>
+    <li class="done"><code>titleFocused = true</code> を onAppear で設定してキーボードを自動表示</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="calendar.html">カレンダー画面（呼び出し元）</a></li>
+    <li><a href="task-creation-sheet.html">タスク作成シート（単体タスク追加）</a></li>
+    <li><a href="../features/task-list.html">やることリスト機能仕様書</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-20</td><td>初版作成（UI/UX改善: 入力ガイド・単位プリセット候補追加を含む）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-20</footer>
+</div>
+</body>
+</html>

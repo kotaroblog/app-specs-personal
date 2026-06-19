@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - タスク作成シート</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / タスク作成シート</div>
+
+  <header class="site-header">
+    <h1>タスク作成シート（TaskCreationSheet）</h1>
+    <p>やること（StudyTask）の新規作成・編集モーダルシート</p>
+    <div class="section-meta">
+      <span class="tag done">v1.0</span>
+      <span class="tag">画面ID: SS-TASK-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    単体の StudyTask を新規作成または編集するモーダルシート。
+    タイトルと期限日のみを入力する軽量フォーム。
+    カレンダー画面（日ビューの「📅 期限付き」ボタン）や Today 画面の「期限付きで追加」ボタンから呼び出される。
+    編集モード時はタスク行のタイトルタップから呼び出される。
+  </p>
+
+  <h2>起動モード</h2>
+  <table>
+    <tr><th>モード</th><th>enum</th><th>初期値</th><th>呼び出し元</th></tr>
+    <tr><td>新規作成</td><td><code>Mode.create(defaultDueDate:)</code></td><td>タイトル空・期限日 = defaultDueDate</td><td>カレンダー日ビュー・Today 画面</td></tr>
+    <tr><td>編集</td><td><code>Mode.edit(StudyTask)</code></td><td>既存タイトル・既存期限日</td><td>タスク行タイトルタップ</td></tr>
+  </table>
+
+  <h2>UI 構成</h2>
+  <div class="callout info">
+    <strong>UI/UX改善:</strong> タイトル空欄時に「よく使う例」プリセット候補を表示。
+    プリセットボタンは <code>minHeight: 44pt</code> で HIG 準拠のタップ領域を確保。
+  </div>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>タイトル入力 TextField</td><td>「例: 数学 p.20〜30」プレースホルダー。複数行対応（lineLimit 1...3）。自動フォーカス（<code>@FocusState titleFocused</code>）</td></tr>
+    <tr><td>プリセット候補（改善）</td><td>タイトルが空欄の場合のみ表示。「英単語を覚える」「数学ワークを進める」「復習ノートを見直す」の3候補。タップでタイトルに入力。各ボタンは <code>minHeight: 44pt</code></td></tr>
+    <tr><td>期限日 DatePicker</td><td>グラフィカル表示（<code>.graphical</code> スタイル）。選択した日付が dueDate に反映</td></tr>
+    <tr><td>「保存」ボタン（toolbar trailing）</td><td>タイトルが空でないとき（<code>canSave</code>）のみ有効。タップで保存 → dismiss</td></tr>
+    <tr><td>「キャンセル」ボタン（toolbar leading）</td><td>変更を破棄して dismiss</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>タイトル空欄</td><td>プリセット候補を表示。「保存」ボタン無効</td></tr>
+    <tr><td>タイトル入力済み</td><td>プリセット候補を非表示。「保存」ボタン有効化</td></tr>
+    <tr><td>編集モード初期</td><td>既存タイトル・期限日が入力済み状態で表示。「保存」ボタン有効</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「保存」タップ（新規）</td><td>StudyTask を modelContext に insert して dismiss</td></tr>
+    <tr><td>「保存」タップ（編集）</td><td>既存 StudyTask を更新して dismiss</td></tr>
+    <tr><td>「キャンセル」タップ</td><td>変更破棄して dismiss</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Model final class StudyTask {
+    var id: UUID
+    var title: String
+    var isCompleted: Bool
+    var dueDate: Date?
+    var sortOrder: Int
+    var createdAt: Date
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done"><code>Mode</code> enum の associated value で新規/編集を切り替え。<code>init(mode:)</code> で State の初期値を分岐</li>
+    <li class="done">プリセット候補は <code>let titlePresets = ["英単語を覚える", "数学ワークを進める", "復習ノートを見直す"]</code></li>
+    <li class="done">各プリセットボタンは <code>.frame(minHeight: 44)</code> を付与（HIG 準拠）</li>
+    <li class="done">タイトルの先頭・末尾空白をトリムして空文字チェック（<code>canSave</code>）</li>
+    <li class="done">onAppear で <code>titleFocused = true</code> を設定してキーボード自動表示</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="calendar.html">カレンダー画面（呼び出し元）</a></li>
+    <li><a href="today.html">Today 画面（呼び出し元）</a></li>
+    <li><a href="study-plan-sheet.html">学習計画シート（一括生成）</a></li>
+    <li><a href="../features/task-list.html">やることリスト機能仕様書</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-20</td><td>初版作成（UI/UX改善: プリセット候補3件・44pt タップ領域・自動フォーカスを含む）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-20</footer>
+</div>
+</body>
+</html>

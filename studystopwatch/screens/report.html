@@ -27,15 +27,19 @@
   </p>
 
   <h2>UI 構成（学習時間セグメント）</h2>
+  <div class="callout info">
+    <strong>UI/UX改善:</strong> 空状態にアクション CTA を追加。期間切替 Picker のタップ領域を拡大（44pt 以上）。
+  </div>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
     <tr><td>セグメントPicker</td><td>「学習時間」/ 「成績」（上部に常時表示）</td></tr>
-    <tr><td>期間Picker</td><td>週 / 月 / 通期</td></tr>
+    <tr><td>期間Picker（改善）</td><td>週 / 月 / 通期。<strong>タップ領域を44pt以上に拡大。</strong>SegmentedPickerStyle のパディング調整で実現</td></tr>
     <tr><td>合計学習時間</td><td>選択期間のトータル</td></tr>
     <tr><td>先週のふりかえりカード</td><td>WeeklyCoachReportCard。Premium = サマリー+コーチメッセージ、無料 = blur+ロック誘導（v1.2.0 新規）</td></tr>
     <tr><td>詳細統計（Premium）</td><td>前週比 / 1日平均 / ベスト曜日。FeatureGate.canAccessPremiumStats が false なら非表示+ロックUX</td></tr>
     <tr><td>日別折れ線グラフ</td><td>日別の推移（SwiftUI Charts）</td></tr>
     <tr><td>科目別バー</td><td>科目ごとの時間内訳</td></tr>
+    <tr><td>空状態 CTA（改善）</td><td>記録ゼロの場合、「学習を記録してレポートを作ろう」+ ホームタブへ誘導するボタンを表示（ContentUnavailableView 相当）</td></tr>
     <tr><td>シェアボタン</td><td>toolbar trailing。学習時間セグメント時のみ表示（成績セグメントでは非表示）</td></tr>
   </table>
 
@@ -94,9 +98,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-12</td><td>v1.2.0対応: 「先週のふりかえり」カード（WeeklyCoachReportCard）をUI構成・状態・遷移・実装メモに反映。成績セグメントへの切り替え記述を追加</td></tr>
+    <tr><td>1.2</td><td>2026-06-20</td><td>UI/UX改善反映: 空状態にCTA追加・期間切替Pickerのタップ領域拡大（44pt）を記載</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-12</footer>
+  <footer class="site-footer">最終更新: 2026-06-20</footer>
 </div>
 </body>
 </html>

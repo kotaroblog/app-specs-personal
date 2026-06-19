@@ -14,30 +14,57 @@
   <h2>目的・役割</h2>
   <p>学習結果をSNSにシェアするための画像生成画面。4種類のカード（Daily/Summary/Heatmap/Graph）と複数テーマ。Instagram Stories対応。</p>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（UI/UX改善版）</h2>
+  <div class="callout info">
+    <strong>UI/UX改善:</strong> カード種別セレクターとテーマセレクターのレイアウトを刷新。
+    アイコン＋ラベル付きのグリッド選択UIに変更し、視認性と操作性を向上。
+    選択中の種別・テーマをボーダーと背景色で明確にハイライト。
+  </div>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>カード種別Picker</td><td>Daily/Summary/Heatmap/Graph</td></tr>
-    <tr><td>テーマ選択</td><td>無料(Duotone/Flat) + プレミアム3種</td></tr>
-    <tr><td>プレビュー</td><td>選択したカードのプレビュー</td></tr>
-    <tr><td>シェアボタン</td><td>UIActivityViewController</td></tr>
-    <tr><td>Instagram Storiesボタン</td><td>専用URLスキーム</td></tr>
+    <tr><td>カード種別セレクター（改善）</td><td>Daily / Summary / Heatmap / Graph をアイコン＋ラベル付きグリッドで表示。選択状態を accent ボーダーで明示。各セルは44pt 以上のタップ領域を確保</td></tr>
+    <tr><td>テーマセレクター（改善）</td><td>無料テーマ（Duotone/Flat）+ プレミアム3種をカラーサンプル付きで横スクロール表示。プレミアムテーマは lock アイコンオーバーレイ付き。選択状態をボーダーで明示</td></tr>
+    <tr><td>プレビュー</td><td>選択したカード種別×テーマのプレビューをリアルタイム更新</td></tr>
+    <tr><td>シェアボタン</td><td>UIActivityViewController を呼び出し。44pt 以上のタップ領域</td></tr>
+    <tr><td>Instagram Storiesボタン</td><td>専用URLスキームで Instagram Stories に直接シェア</td></tr>
   </table>
 
   <h2>カード種別</h2>
   <table>
-    <tr><th>種別</th><th>用途</th></tr>
-    <tr><td>Daily</td><td>本日の学習時間</td></tr>
-    <tr><td>Summary</td><td>週間/月間サマリ</td></tr>
-    <tr><td>Heatmap</td><td>カレンダーヒートマップ</td></tr>
-    <tr><td>Graph</td><td>学習推移グラフ</td></tr>
+    <tr><th>種別</th><th>用途</th><th>アイコン</th></tr>
+    <tr><td>Daily</td><td>本日の学習時間</td><td>sun.max.fill</td></tr>
+    <tr><td>Summary</td><td>週間/月間サマリ</td><td>chart.bar.fill</td></tr>
+    <tr><td>Heatmap</td><td>カレンダーヒートマップ</td><td>calendar</td></tr>
+    <tr><td>Graph</td><td>学習推移グラフ</td><td>chart.line.uptrend.xyaxis</td></tr>
+  </table>
+
+  <h2>テーマ種別</h2>
+  <table>
+    <tr><th>テーマ</th><th>区分</th><th>FeatureGate</th></tr>
+    <tr><td>Duotone</td><td>無料</td><td>—</td></tr>
+    <tr><td>Flat</td><td>無料</td><td>—</td></tr>
+    <tr><td>プレミアムテーマ3種</td><td>Premium</td><td><code>canAccessPremiumShareTheme</code></td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>無料プラン + プレミアムテーマ選択</td><td>プレミアムテーマに lock アイコン。タップで PremiumView へ誘導</td></tr>
+    <tr><td>Premiumプラン</td><td>全テーマ選択可</td></tr>
   </table>
 
   <h2>関連</h2>
-  <ul><li><a href="../features/share.html">シェア機能仕様書</a></li></ul>
+  <ul>
+    <li><a href="../features/share.html">シェア機能仕様書</a></li>
+    <li><a href="premium.html">プレミアム画面</a></li>
+  </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-20</td><td>UI/UX改善反映: カード種別・テーマセレクターをグリッドUI・カラーサンプル付き横スクロールに刷新。選択状態ハイライト・プレミアムロックアイコン・44ptタップ領域・テーマ種別テーブルを追記</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-20</footer>
 </div></body></html>

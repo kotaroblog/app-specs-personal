@@ -11,17 +11,22 @@
   <header class="site-header"><h1>設定画面（SettingsView）</h1><p>科目管理・通知・プレミアム・法務</p>
   <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-SET-01</span></div></header>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（UI/UX改善版）</h2>
+  <div class="callout info">
+    <strong>UI/UX改善:</strong> セクション順序を「よく使う設定が上」に整理。学習準備ショートカットセクションを追加。
+    外観モード切替を RootView レベルで適用し、設定即時反映を実現。
+  </div>
   <table>
-    <tr><th>セクション</th><th>項目</th></tr>
-    <tr><td>科目管理</td><td>追加/編集/削除/並べ替え（SubjectEditView 起動）</td></tr>
-    <tr><td>外観</td><td>system / light / dark</td></tr>
-    <tr><td>目標</td><td>dailyGoalMinutes 設定</td></tr>
-    <tr><td>通知</td><td>有効/無効 + 時刻設定（日次リマインダー）</td></tr>
-    <tr><td>通知 — 復帰リマインダー（v1.2.0）</td><td>Toggle「3日間記録がないときに通知する」（デフォルト ON）。<br>OFF にすると <code>NotificationService.shared.cancelReturnReminder()</code> を呼ぶ。<br>設定値は <code>UserDefaults["returnReminderEnabled"]</code> に保存</td></tr>
-    <tr><td>プレミアム</td><td>「Pro版にアップグレード」 / 「購入を復元」</td></tr>
-    <tr><td>法務</td><td>プライバシーポリシー / 利用規約</td></tr>
-    <tr><td>アプリ情報</td><td>バージョン / 開発者</td></tr>
+    <tr><th>セクション</th><th>項目</th><th>備考</th></tr>
+    <tr><td>学習準備（追加）</td><td>フォーカス科目の選択 / 通知リマインダー設定へのショートカット</td><td>新規追加。よく変更する設定を最上部に集約</td></tr>
+    <tr><td>外観（順序変更）</td><td>system / light / dark（<code>.preferredColorScheme</code> を RootView で適用）</td><td>設定変更が即時全画面に反映されるよう RootView で <code>colorSchemePreference</code> を適用</td></tr>
+    <tr><td>目標</td><td>dailyGoalMinutes 設定（日次学習目標分数）</td><td></td></tr>
+    <tr><td>科目管理</td><td>追加/編集/削除/並べ替え（SubjectEditView 起動）</td><td></td></tr>
+    <tr><td>通知</td><td>有効/無効 + 時刻設定（日次リマインダー）</td><td></td></tr>
+    <tr><td>通知 — 復帰リマインダー（v1.2.0）</td><td>Toggle「3日間記録がないときに通知する」（デフォルト ON）。OFF で cancelReturnReminder() 実行</td><td>設定値は <code>UserDefaults["returnReminderEnabled"]</code></td></tr>
+    <tr><td>プレミアム</td><td>「Pro版にアップグレード」 / 「購入を復元」</td><td></td></tr>
+    <tr><td>法務</td><td>プライバシーポリシー / 利用規約</td><td></td></tr>
+    <tr><td>アプリ情報</td><td>バージョン / 開発者</td><td></td></tr>
   </table>
 
   <h3>復帰リマインダー設定の詳細（v1.2.0）</h3>
@@ -52,7 +57,8 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-12</td><td>v1.2.0：通知セクションに復帰リマインダートグル（3日無記録→朝9時通知）の仕様を追加</td></tr>
+    <tr><td>1.2</td><td>2026-06-20</td><td>UI/UX改善反映: セクション順序整理（学習準備ショートカットを最上部に追加）・外観モードをRootViewレベルで即時適用する方針を記載</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-12</footer>
+  <footer class="site-footer">最終更新: 2026-06-20</footer>
 </div></body></html>

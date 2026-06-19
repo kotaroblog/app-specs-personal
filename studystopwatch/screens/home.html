@@ -14,25 +14,34 @@
   <h2>目的・役割</h2>
   <p>科目を選んでタイマーを開始・停止する画面。タイマー実行中はLive Activityとも連動。</p>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（UI/UX改善版）</h2>
+  <div class="callout info">
+    v1.2.1 で学習開始導線を画面上部に集約し、視認性・タップ到達性を改善。
+    フォーカス科目モード（ピン留め科目を強調）と全科目表示モードを自動切り替え。
+  </div>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>科目選択カード</td><td>登録済み Subject 一覧から選択</td></tr>
-    <tr><td>タイマー表示</td><td>HH:MM:SS / 経過時間</td></tr>
-    <tr><td>STARTボタン</td><td>タイマー開始</td></tr>
-    <tr><td>一時停止 / 停止</td><td>実行中のみ表示</td></tr>
-    <tr><td>ポモドーロモードトグル</td><td>集中25分/休憩5分の自動切替</td></tr>
-    <tr><td>セッション履歴</td><td>本日のセッション一覧</td></tr>
+    <tr><td>primaryStudySection（上部）</td><td>フォーカス科目モード有効かつピン留め科目ありなら focusSubjectSection を表示、それ以外は全科目リスト（fullSubjectList）を表示。科目未登録時は ContentUnavailableView「設定タブから科目を追加してください」</td></tr>
+    <tr><td>ポモドーロトグル</td><td>primaryStudySection の直下に配置。集中25分/休憩5分の自動切替</td></tr>
+    <tr><td>dashboardCard</td><td>本日合計・週合計・月合計の時間サマリ。視覚的に目立つカード形式</td></tr>
+    <tr><td>goalsRow</td><td>日/週/月の目標達成率インジケーター（StudyGoal ベース）。タップで GoalEditSheet</td></tr>
+    <tr><td>タイマー実行中表示（timerRunningView）</td><td>タイマー実行中のみ全面切替。HH:MM:SS 大字 + 一時停止/停止ボタン</td></tr>
+    <tr><td>完了トースト</td><td>STOP 後に上部から「お疲れ様でした！ + 経過時間」のトーストをアニメーション表示</td></tr>
+    <tr><td>目標達成オーバーレイ</td><td>日次目標達成時に「目標達成！」フルスクリーンオーバーレイ（タップで閉じる）</td></tr>
+    <tr><td>ツールバー（右上）</td><td>共有ボタン（<code>accessibilityLabel: "学習記録を共有"</code>）</td></tr>
   </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示</th></tr>
-    <tr><td>停止中</td><td>STARTボタン + 科目選択</td></tr>
-    <tr><td>実行中</td><td>経過時間 + 一時停止/停止</td></tr>
-    <tr><td>一時停止中</td><td>再開ボタン</td></tr>
+    <tr><td>停止中（科目あり）</td><td>primaryStudySection + ポモドーロトグル + dashboardCard + goalsRow</td></tr>
+    <tr><td>停止中（科目なし）</td><td>ContentUnavailableView「科目が登録されていません」</td></tr>
+    <tr><td>実行中</td><td>timerRunningView（経過時間大字 + 一時停止/停止）に全面切替</td></tr>
+    <tr><td>一時停止中</td><td>timerRunningView 内に再開ボタン</td></tr>
     <tr><td>ポモドーロ集中中</td><td>「集中タイム N分」表示</td></tr>
     <tr><td>ポモドーロ休憩中</td><td>「休憩タイム N分」表示</td></tr>
+    <tr><td>フォーカス科目モード ON</td><td>ピン留め科目カードを上部に強調表示。他科目は折りたたみ（showOtherSubjects トグルで展開）</td></tr>
+    <tr><td>学習日変更検出</td><td>scenePhase.active 復帰時に todayKey を更新し @Query を再構築</td></tr>
   </table>
 
   <h2>遷移</h2>
@@ -48,15 +57,24 @@ TimerViewModel { isRunning, isPaused, elapsedSeconds, currentSubject, isPomodoro
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li class="done">UserDefaults 経由でタイマー永続化（24時間境界）</li>
-    <li class="done">scenePhase 監視でバックグラウンド時の経過時間補正</li>
+    <li class="done">scenePhase 監視でバックグラウンド時の経過時間補正 / 学習日変更時に <code>todayKey</code> を更新して @Query を再構築</li>
     <li class="done">Live Activity と連動（startActivity / updateActivity / endActivity）</li>
+    <li class="done">フォーカス科目モード: <code>settings?.focusSubjectModeEnabled</code> + <code>settings?.focusSubjectID</code> で制御。FocusSubjectPickerSheet で変更</li>
+    <li class="done">dashboardCard は todaySessions / weekSessions / monthSessions を3つの独立 @Query で取得（パフォーマンス改善）</li>
+    <li class="done">goalsRow は activeGoals（isClosedでフィルタ）から日/週/月の StudyGoal を取得</li>
+    <li class="done">共有ボタンに <code>.accessibilityLabel("学習記録を共有")</code> を付与（HIG準拠）</li>
+    <li class="done">完了セッション数 <code>completedSessionCount</code>（AppStorage）をインクリメントし、閾値でレビューリクエスト（requestReview）</li>
   </ul>
 
   <h2>関連</h2>
   <ul><li><a href="../features/timer.html">タイマー機能仕様書</a></li><li><a href="../features/live-activity.html">Live Activity機能</a></li></ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-06-20</td><td>UI/UX改善反映: 学習開始導線を上部集約・フォーカス科目モード追加・dashboardCard/goalsRow構成・完了トースト・目標達成オーバーレイ・accessibilityLabel追加・空状態ContentUnavailableView対応を記載</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-20</footer>
 </div></body></html>

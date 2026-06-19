@@ -11,24 +11,37 @@
   <header class="site-header"><h1>オンボーディング（OnboardingView）</h1><p>初回起動時のセットアップウィザード</p>
   <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-ONB-01</span></div></header>
 
-  <h2>ステップ構成</h2>
+  <h2>ステップ構成（UI/UX改善版）</h2>
+  <div class="callout info">
+    v1.2.1 でステップ負荷軽減。不要な入力を省略し最短13ステップ→GoalType分岐で枝刈り。ページ名は Firebase Analytics で計測（<code>OnboardingPage.analyticsName</code>）。
+  </div>
   <ol>
-    <li>Welcome — アプリ紹介</li>
-    <li>GoalType — 定期テスト / 高校受験 / 大学受験</li>
-    <li>Subject — 科目選択</li>
-    <li>Score — 現在/目標点数（定期テストのみ）</li>
-    <li>Motivation — 動機入力</li>
-    <li>Exam — 試験日設定（受験のみ）</li>
-    <li>Target — 学習目標時間設定</li>
-    <li>Commit — 「始める」</li>
-    <li>Notification — 通知許可</li>
-    <li>Paywall — サブスク提示（v1.2.1: 年額・月額2プラン表示）</li>
+    <li><strong>welcome</strong> — アプリ紹介（歓迎メッセージ）</li>
+    <li><strong>goalSelection</strong> — 目標タイプ選択: 定期テスト / 高校受験 / 大学受験</li>
+    <li><strong>schoolName</strong> — 志望校名入力（受験のみ。定期テストはスキップ）</li>
+    <li><strong>subjectSelection</strong> — 科目選択（プリセット科目から複数選択）</li>
+    <li><strong>scoreGoals</strong> — 科目別 現在点/目標点 入力（定期テストのみ。受験はスキップ）</li>
+    <li><strong>motivation</strong> — 動機入力（任意テキスト）</li>
+    <li><strong>examDate</strong> — 試験日設定（受験のみ）</li>
+    <li><strong>studyHours</strong> — 1日の学習目標時間設定</li>
+    <li><strong>planCreation</strong> — 学習計画自動生成中（ローディング演出）</li>
+    <li><strong>planResult</strong> — 生成結果プレビュー</li>
+    <li><strong>commit</strong> — 「始める」確認画面</li>
+    <li><strong>notification</strong> — 通知許可リクエスト</li>
+    <li><strong>paywall</strong> — サブスク提示（年額・月額2プラン）</li>
   </ol>
 
   <h2>フロー分岐</h2>
+  <table>
+    <tr><th>目標タイプ</th><th>表示されるステップ</th><th>スキップされるステップ</th></tr>
+    <tr><td>定期テスト</td><td>scoreGoals（科目別点数）</td><td>schoolName, examDate</td></tr>
+    <tr><td>高校受験 / 大学受験</td><td>schoolName, examDate</td><td>scoreGoals</td></tr>
+  </table>
+
+  <h2>文言整理（v1.2.1）</h2>
   <ul>
-    <li><strong>定期テスト</strong>: Score ステップで現状/目標点数入力</li>
-    <li><strong>受験</strong>: Exam ステップで試験日入力、志望校入力</li>
+    <li>各ステップのタイトル・説明文を短縮（読み飛ばし前提のデザインへ）</li>
+    <li>プリセット科目にアイコン（<code>SubjectPreset.iconName</code>）を追加して選択肢を視認しやすく改善</li>
   </ul>
 
   <h2>Paywallステップ詳細（v1.2.1）</h2>
@@ -67,7 +80,8 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-15</td><td>v1.2.1対応: Paywallステップに年額・月額2プラン表示・無料体験表記・PremiumBenefit単一ソース方針・購入挙動（成功のみ進む）を追記</td></tr>
+    <tr><td>1.2</td><td>2026-06-20</td><td>UI/UX改善反映: ステップ構成を13ステップ詳細化（planCreation/planResult追加）・GoalType分岐表をテーブル化・文言整理・プリセット科目アイコン追加を記載</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-15</footer>
+  <footer class="site-footer">最終更新: 2026-06-20</footer>
 </div></body></html>

@@ -50,12 +50,16 @@
   </table>
 
   <h2>DayCalendarView（今日ビュー）</h2>
+  <div class="callout info">
+    <strong>UI/UX改善:</strong> ナビゲーション矢印（左右シェブロン）を44×44pt に拡大（HIG準拠）。各ボタンに <code>accessibilityLabel</code> を付与。
+  </div>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
     <tr><td>ミニ週ストリップ</td><td>当週7日を横並び。タップした日付を selectedDate に更新。当日は accent 色の円形バッジ</td></tr>
-    <tr><td>日付ヘッダ + ナビ</td><td>「YYYY年MM月DD日（曜）」表示。左右シェブロンで前後1日移動</td></tr>
+    <tr><td>日付ヘッダ + ナビ（改善）</td><td>「YYYY年MM月DD日（曜）」表示。左右シェブロンで前後1日移動。<strong>各矢印ボタンのタップ領域を44×44pt以上に拡大。</strong><code>accessibilityLabel: "前日"/"翌日"</code></td></tr>
     <tr><td>TODAY'S STUDY カード</td><td>緑グラデ背景。選択日の合計学習時間・日次目標・達成率（%）を大きく表示</td></tr>
     <tr><td>今日のやることリスト</td><td>dueDate == selectedDate の StudyTask を一覧表示。チェック・タイトル編集・削除・クイック追加TextField 付き</td></tr>
+    <tr><td>クイックアクション（追加）</td><td>各タスク行をスワイプ or 長押しで「完了」「削除」「記録して完了」のクイックアクションメニューを表示</td></tr>
     <tr><td>「📅 期限付き」追加ボタン</td><td>TaskCreationSheet を表示（タイトル + DatePickerグラフィカルで期限日指定）</td></tr>
     <tr><td>期限日サブラベル</td><td>今日以外の期限を行内に小さく表示。期限切れ=赤・2日以内=オレンジ</td></tr>
     <tr><td>科目別実績バー</td><td>科目ごとの当日学習時間を横バーで表示（Subject.colorHex）</td></tr>
@@ -65,10 +69,13 @@
   <div class="callout">
     <strong>v1.3 変更:</strong> 旧「今週のやること（フラットリスト＋日後ラベル）」を廃止し、3段階構成に刷新。
   </div>
+  <div class="callout info">
+    <strong>UI/UX改善:</strong> 週ナビゲーター矢印も44×44pt に拡大。<code>accessibilityLabel: "前の週"/"次の週"</code> を付与。
+  </div>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
     <tr><td>週サマリカード</td><td>週合計時間 / 週次目標 / 達成率リングを上部に表示</td></tr>
-    <tr><td>週ナビゲーター</td><td>左右シェブロンで前後1週間移動</td></tr>
+    <tr><td>週ナビゲーター（改善）</td><td>左右シェブロンで前後1週間移動。<strong>タップ領域44×44pt以上。</strong><code>accessibilityLabel: "前の週"/"次の週"</code></td></tr>
     <tr><td>① 今日のやること（実行リスト）</td><td>今日が期限のタスクをチェックボックス付きで一覧表示。チェックで完了切替（即時永続化）</td></tr>
     <tr><td>取りこぼしセクション</td><td>期限切れ（dueDate &lt; 今日）かつ未完了タスクをオレンジ色の別グループで表示。「取りこぼし N件」ヘッダー付き（責めない演出）</td></tr>
     <tr><td>② 今週の進捗（科目別サマリーバー）</td><td>今日〜日曜の科目別タスクを SubjectProgressRow で集計表示。科目名・カラー・進捗バー・「X/Y件 完了」・「あとN件」を1行で表示。科目未設定は「その他」グループ。日後ラベル（-1日後/2日後等）は全廃</td></tr>
@@ -189,6 +196,7 @@
     <tr><td>1.0</td><td>2026-05-18</td><td>初版作成（旧 SS-CAL-01 CalendarHeatmapView を置き換えるリニューアル版）</td></tr>
     <tr><td>1.1</td><td>2026-06-07</td><td>v1.2.0対応: StudyTask を期限日ベースに移行。日ビューに「📅 期限付き」追加ボタン・期限日サブラベル追加。週ビューに「今週のやること」セクション追加。月ビューにタスクバッジ（未完了件数）追加。右上ツールバーに StudyPlanSheet 導線追加。CountdownCard の試験日当日・過去の状態を追加</td></tr>
     <tr><td>1.2</td><td>2026-06-09</td><td>v1.3.0対応: 週ビューを3段階構成に刷新（①今日の実行リスト・取りこぼしセクション（オレンジ）、②今週の進捗（SubjectProgressRow 科目別サマリー）、③タイムライン）。日後ラベル全廃。状態テーブルに週ビュー新状態を追加</td></tr>
+    <tr><td>1.3</td><td>2026-06-20</td><td>UI/UX改善反映: 日ビュー・週ビューのナビゲーション矢印を44×44ptに拡大・accessibilityLabel追加・日ビューのタスク行クイックアクション（スワイプ/長押しで完了・削除・記録して完了）を記載</td></tr>
   </table>
 
   <script>
@@ -198,7 +206,7 @@
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-09</footer>
+  <footer class="site-footer">最終更新: 2026-06-20</footer>
 </div>
 </body>
 </html>
