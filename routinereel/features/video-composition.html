@@ -104,15 +104,18 @@
     <li><span class="k">frame.height</span><span class="v"><code>singleLineHeight × lineCount</code></span></li>
   </ul>
 
-  <h2>④ 透かし（v1.0で1行化・左上配置）</h2>
+  <h2>④ 透かし（v1.0で1行化・左上配置 / v1.2でy座標修正）</h2>
   <ul class="kv-list">
     <li><span class="k">対象</span><span class="v">無料ユーザーのみ・動画全体に常時表示</span></li>
     <li><span class="k">位置</span><span class="v">左上（右下→左上に変更）</span></li>
     <li><span class="k">内容</span><span class="v">「RoutineReel」のみ（CTA「App Storeで検索」は削除）</span></li>
     <li><span class="k">フォント</span><span class="v">HelveticaNeue-Medium・動画高さ2.0%・opacity 0.75</span></li>
     <li><span class="k">影</span><span class="v">黒シャドウ radius 3</span></li>
+    <li><span class="k">y 座標（v1.2修正後）</span><span class="v"><code>y = renderSize.height - marginY - brandHeight</code>（AVFoundation CALayer は左下原点のため、左上配置には height から引く必要がある）</span></li>
+    <li><span class="k">y 座標（修正前）</span><span class="v"><code>y = marginY</code>（左下原点を考慮せず左下に配置されていた）</span></li>
   </ul>
   <p><strong>v1.0変更前</strong>: 右下・2行（ブランド+CTA）・opacity 0.85 → 「動画体験を削る」「右下UI衝突」と指摘され、左上1行に簡素化。</p>
+  <p><strong>v1.2修正</strong>: y 座標のバグ修正により、撮影時の SwiftUI オーバーレイ（左上）と完成動画内のブランド名位置（左上）が一致するようになった。</p>
 
   <h2>⑤ 末尾アウトロカード（v1.0.6 で QR + #RoutineReel 焼き込み追加・バイラル流入の核）</h2>
   <ul class="kv-list">
@@ -227,6 +230,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.2</td><td>2026-06-19</td><td><strong>ウォーターマーク y 座標バグを修正</strong>。AVFoundation の CALayer は左下原点のため、左上配置には <code>y = renderSize.height - marginY - brandHeight</code> が正しいが、修正前は <code>y = marginY</code>（左下配置）になっていた。修正により撮影時の SwiftUI オーバーレイ（左上）と完成動画内のブランド名位置（左上）が一致</td></tr>
       <tr><td>v1.1</td><td>2026-06-13</td><td><strong>冒頭タイトルカード（時刻 + ルーティン名）の焼き込みを削除</strong>（commit 5d82d0f）。動画再生開始 0.6 秒間、画面上部に「時刻 + ルーティン名」が大きく被さって本編映像を遮るというユーザー報告への対応。<code>VideoCompositionService.addLayers</code> から <code>makeIntroCardLayer(...)</code> 呼び出しを削除し、ログメッセージから「イントロ:」も削除。<code>makeIntroCardLayer</code> 関数本体は再有効化容易のためコメント付きで残置。維持される要素: 末尾アウトロカード（QR + #RoutineReel + ブランド名 + CTA）／本編 SceneLabel（時刻 + ステップ名・SceneLabelLayout で WYSIWYG 一致）／透かし。冒頭テキストを期待していたユーザーには「TikTok 冒頭視聴維持率対策」の意図が失われる影響あり、復活が必要なら 1 行戻すだけで対応可</td></tr>
       <tr><td>v1.0.6</td><td>2026-06-10</td><td>アウトロカードに QR コード（動画幅25%・白背景・角丸・<code>CIQRCodeGenerator</code> + nearest 拡大）と <code>#RoutineReel</code> を焼き込み追加（cta を「QR を読み取るか App Store で検索」へ変更・Pro 加入者は除外）／<code>SceneLabelLayout</code> enum で配置比率・サイズ比率・<code>lineHeightFactor</code>/<code>textHeightFactor</code>/<code>descentSlackFactor</code> を単一ソース化（SwiftUI 用 / CALayer 用ヘルパに分離・撮影プレビューと完成動画の WYSIWYG 達成）／descent slack 補正で CATextLayer の top-anchored グリフ下端浮きを是正／長文ステップ名の折り返しを <code>maxLines = 2</code> に統一（<code>NSAttributedString.boundingRect</code> で <code>actualStepNameLineCount</code> 測定・<code>isWrapped</code> + <code>truncationMode = .end</code>・時刻 y は <code>stepNameHeight</code> 追随）／<code>AppConstants.swift</code> 新設（<code>promotionalShortURL</code> / <code>promotionalHashtag</code>）</td></tr>
       <tr><td>v1.0.5</td><td>2026-05-21</td><td>Cleanフィルタの「シャドウ持ち上げ」を CIExposureAdjust → CIHighlightShadowAdjust に変更（ハイライトを飛ばさない正確な実装へ）</td></tr>
@@ -238,7 +242,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-14</footer>
+  <footer class="site-footer">最終更新: 2026-06-19</footer>
 </div>
 </body>
 </html>

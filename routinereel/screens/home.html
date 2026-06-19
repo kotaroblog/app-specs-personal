@@ -13,7 +13,7 @@
 
   <header class="site-header">
     <h1>ホーム画面（DesignsHomeView）</h1>
-    <p>v1.0 から導入される新ホーム画面。FeatureFlag で旧 HomeView と切替可能。</p>
+    <p>v1.0 から導入された新ホーム画面。v1.4 で FeatureFlag を廃止し唯一のホーム画面として固定。</p>
   </header>
 
   <figure class="screen-shot">
@@ -26,8 +26,8 @@
     <li><span class="k">画面ID</span><span class="v">home</span></li>
     <li><span class="k">実装ファイル</span><span class="v"><code>Views/Designs/DesignsHomeView.swift</code></span></li>
     <li><span class="k">導入バージョン</span><span class="v">v1.0</span></li>
-    <li><span class="k">FeatureFlag</span><span class="v"><code>useDesignHome</code>（デフォルト true）</span></li>
-    <li><span class="k">旧画面</span><span class="v"><code>Views/Home/HomeView.swift</code>（FeatureFlag false 時に表示）</span></li>
+    <li><span class="k">FeatureFlag</span><span class="v">廃止済み（v1.4）。<code>FeatureFlags.swift</code> 削除・<code>DesignsHomeView</code> を唯一のホーム画面として固定</span></li>
+    <li><span class="k">旧画面</span><span class="v"><code>Views/Home/HomeView.swift</code>（削除済み。v1.4 で廃止）</span></li>
     <li><span class="k">背景色</span><span class="v">#FAF9F7（warm white、朝の光感）</span></li>
   </ul>
 
@@ -35,8 +35,8 @@
   <ul class="kv-list">
     <li><span class="k">①上部バー</span><span class="v">アプリ名「RoutineReel」+ Pro バッジ（Pro時は表示のみ・無料時はPaywall起動）+ 設定アイコン</span></li>
     <li><span class="k">②Heroセクション</span><span class="v">メインコピー（streak 状況で 3 パターン分岐）+ サブコピー + streak / 累計バッジ +「次に撮影」CTA。詳細は <a href="#hero-streak">Hero streak メーター</a> 参照</span></li>
-    <li><span class="k">③Quick Start</span><span class="v">横スクロール4プリセット（<strong>朝5分ルーティン / 夜の整いルーティン / 筋トレ10分ルーティン / 集中45分ルーティン</strong>）<strong>150×220pt カード</strong>（v1.0.6で画面幅2枚並びの見切れを解消）。タップで <strong>直接 RoutineEditView 起動</strong>。v1.0 で <a href="#preset-rename">プリセット名を検索意図ワードへ刷新</a>（raw value は不変）</span></li>
-    <li><span class="k">④マイルーティン</span><span class="v">縦並びカード（タップで confirmationDialog 起動）+ 新規ルーティン作成ボタン。<strong>shotToday が true のときのみ chevron 手前に「今日 ✓」緑バッジ</strong>を表示</span></li>
+    <li><span class="k">③Quick Start</span><span class="v">横スクロール4プリセット（<strong>朝5分ルーティン / 夜の整いルーティン / 筋トレ10分ルーティン / 集中45分ルーティン</strong>）<strong>150×220pt カード</strong>（v1.0.6で画面幅2枚並びの見切れを解消）。タップで <strong>ClipLibraryView を開く（<code>startMode: .clipLibrary</code>）</strong>。v1.4 で動線を連続撮影（.shootingSequential）→ クリップライブラリ起動（.clipLibrary）に変更。v1.0 で <a href="#preset-rename">プリセット名を検索意図ワードへ刷新</a>（raw value は不変）</span></li>
+    <li><span class="k">④マイルーティン</span><span class="v">縦並びカード（長押しで iOS 標準 <code>.contextMenu</code> フローティングメニュー起動）+ 新規ルーティン作成ボタン。<strong>shotToday が true のときのみ chevron 手前に「今日 ✓」緑バッジ</strong>を表示</span></li>
     <li><span class="k">⑤最近の動画</span><span class="v">recentVideos が存在する場合のみ表示。<strong>実サムネ画像（VideoStorageService.thumbnailURL）+ 中央 play.circle.fill オーバーレイ</strong>。タップで <a href="#recent-thumb">RecentVideoPlayerSheet</a> を fullScreenCover 起動。見出し横に <a href="#storage-meter">保存メーター</a></span></li>
     <li><span class="k">⑥下部</span><span class="v">バナー広告（無料時のみ）+ 5タブバー + 中央＋ボタン</span></li>
   </ul>
@@ -49,7 +49,7 @@
     <tbody>
       <tr><td>設定アイコン / 設定タブ</td><td>SettingsView</td><td>sheet</td></tr>
       <tr><td>中央＋ボタン / 新規ルーティン作成ボタン</td><td>PresetSelectView</td><td>sheet</td></tr>
-      <tr><td><strong>Quick Start カード（4種）</strong></td><td>RoutineEditView(preset:)</td><td>sheet（item-based・preset直接指定）</td></tr>
+      <tr><td><strong>Quick Start カード（4種）</strong></td><td>ClipLibraryView（<code>startMode: .clipLibrary</code>）</td><td>fullScreenCover（item-based）</td></tr>
       <tr><td>ルーティンカード → 編集する</td><td>RoutineEditView</td><td>sheet（item-based）</td></tr>
       <tr><td>ルーティンカード → 全ステップ続けて撮影 / 「次に撮影」CTA / 通知タップ</td><td>ShootingView</td><td>fullScreenCover（item-based）</td></tr>
       <tr><td>ルーティンカード → クリップライブラリを開く / クリップタブ</td><td>ClipLibraryView</td><td>sheet（item-based / NavigationStack内）</td></tr>
@@ -100,12 +100,12 @@
   <p>旧実装では行タップが即撮影（<code>.shootingSequential</code>）だったが、意図不一致のため <code>.clipLibrary</code> に変更。</p>
   <ul class="kv-list">
     <li><span class="k">行タップ（通常）</span><span class="v">ClipLibraryView を開く（<code>startMode: .clipLibrary</code>）</span></li>
-    <li><span class="k">長押し → confirmationDialog</span><span class="v">下記メニューを表示</span></li>
+    <li><span class="k">長押し → contextMenu</span><span class="v">iOS 標準 <code>.contextMenu</code> フローティングメニューを表示（v1.4 で confirmationDialog から変更）</span></li>
     <li><span class="k">「すべて見る」ボタン</span><span class="v">v1.0 では未実装（アクション空）のため削除。全件表示に変更（<code>prefix(4)</code> 廃止）</span></li>
   </ul>
 
-  <h2>ルーティンメニュー（confirmationDialog）</h2>
-  <p>マイルーティンカード長押し時のアクションシート 5項目:</p>
+  <h2>ルーティンメニュー（contextMenu・v1.4 変更）</h2>
+  <p>マイルーティンカード長押し時に iOS 標準のフローティングメニューを表示。v1.4 以前は <code>confirmationDialog</code>（画面下部シート）だったが、<code>.contextMenu</code> に変更。メニュー項目は <code>DesignsHomeView.myRoutinesListSection</code> に集約（<code>DesignsMyRoutineCard</code> の <code>onLongPressGesture</code> / <code>onMenuTap</code> は削除済み）。</p>
   <ol>
     <li>全ステップ続けて撮影 → ShootingView（<code>startMode: .shootingSequential</code>）</li>
     <li>クリップライブラリを開く → ClipLibraryView（<code>startMode: .clipLibrary</code>）</li>
@@ -224,8 +224,8 @@
   </ul>
   <p>常時アニメーションは意図的に最小化（GPT評価「アニメーション頑張った感」回避のため）。</p>
 
-  <h2>ロールバック方式</h2>
-  <p>リリース後に新Home UIで不具合が発生した場合、<a href="../features/feature-flag.html">FeatureFlag運用</a> 経由でユーザー自身が設定画面の「β機能 → 新しいホーム画面を使う」トグルを OFF にすれば、旧 HomeView に即時切替可能。コード変更・再申請は不要。</p>
+  <h2>ロールバック方式（廃止）</h2>
+  <p>v1.4 で <code>FeatureFlags.swift</code> を削除し、DesignsHomeView を唯一のホーム画面として固定した。旧 <code>HomeView</code> への切替トグル（SettingsView「β機能」セクション）は廃止済み。ロールバックが必要な場合はコード修正・再申請が必要。</p>
 
   <h2>Quick Start チップの表示ロジック（692882f）</h2>
   <ul class="kv-list">
@@ -234,12 +234,12 @@
     <li><span class="k">代替</span><span class="v">他プリセットを試したい既存ユーザーは中央＋ボタン → PresetSelectView で対応</span></li>
   </ul>
 
-  <h2>Quick Start タップの動線変更（692882f）</h2>
-  <p>プリセットタップ後の動線を「ClipLibraryView（ステップ毎撮影）」から「連続撮影（ShootingSequential）」に変更。</p>
+  <h2>Quick Start タップの動線変更（v1.4）</h2>
+  <p>プリセットタップ後の動線を「連続撮影（shootingSequential）」から「ClipLibraryView」に変更（v1.4）。</p>
   <ul class="kv-list">
-    <li><span class="k">旧</span><span class="v">プリセット選択 → RoutineEditView（編集画面） → ClipLibraryView</span></li>
-    <li><span class="k">新</span><span class="v">プリセット選択 → 連続撮影（<code>startMode: .shootingSequential</code>）直接開始</span></li>
-    <li><span class="k">理由</span><span class="v">「Quick Start = すぐ撮影」のユーザー期待に応える。名前・リマインダーはマイルーティンの ⋯ メニューで後から変更可能</span></li>
+    <li><span class="k">v1.3（692882f）</span><span class="v">プリセット選択 → 連続撮影（<code>startMode: .shootingSequential</code>）直接開始</span></li>
+    <li><span class="k">v1.4（最新）</span><span class="v">プリセット選択 → ルーティン作成 + ClipLibraryView 起動（<code>startMode: .clipLibrary</code>）</span></li>
+    <li><span class="k">変更理由</span><span class="v">Quick Start はルーティン作成＋クリップライブラリ起動の動線に整理。即連続撮影ではなくステップ毎の柔軟な撮影を促す</span></li>
   </ul>
 
   <h2>「次に撮影」CTA の動線変更（596896d）</h2>
@@ -262,6 +262,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.4</td><td>2026-06-19</td><td>FeatureFlag 廃止: <code>FeatureFlags.swift</code> 削除・<code>DesignsHomeView</code> を唯一のホーム画面として固定（RootView / SettingsView / SnapshotSeeder の <code>@AppStorage(FeatureFlags.useDesignHomeKey)</code> 参照をすべて削除）。Quick Start タップ動線を <code>.shootingSequential</code>（即撮影）→ <code>.clipLibrary</code>（クリップライブラリ起動）に変更（ルーティン作成＋ライブラリ誘導に整理）。長押しメニューを <code>confirmationDialog</code>（画面下部シート）→ iOS 標準 <code>.contextMenu</code>（フローティングメニュー）に変更。<code>DesignsMyRoutineCard</code> の <code>onLongPressGesture</code> / <code>onMenuTap</code> を削除し全メニュー項目を <code>DesignsHomeView.myRoutinesListSection</code> の <code>.contextMenu</code> に集約</td></tr>
       <tr><td>v1.3</td><td>2026-06-16</td><td>UX 改善 (596896d/692882f/3b93040): クリップタブ動線を 0件→作成誘導 / 1件→ClipLibrary直接 / 2件以上→ClipRoutineSelectSheet の3分岐に整理。マイルーティン行タップを即撮影から ClipLibrary 起動に変更。「次に撮影」CTA を連続撮影直接開始に変更。Quick Start チップを既存ユーザーには非表示（新規ユーザーのみ表示）。Quick Start タップ後も連続撮影を即開始するよう変更。activeSession 型を SessionPayload（Routine + StartMode ペア）に変更。全 9 箇所の Paywall 呼び出しに trigger 引数を付与（routineLimit / storageLimit / manual）。マイルーティンの全件表示化（prefix(4) 廃止 / 「すべて見る」ボタン削除）。保存メーター Paywall に trigger: .storageLimit を設定</td></tr>
       <tr><td>v1.2</td><td>2026-06-14</td><td>Opus 4.8 UX レビュー対応: 既存ユーザー時に <code>quickStartChipsSection</code> を非表示（マイルーティンと重複していた）。新規ユーザー（<code>routines.isEmpty</code>）時の Quick Start は維持。既存ユーザーが他プリセットを試したい場合は中央＋ボタン → <code>PresetSelectView</code> で対応可能（commit 692882f）。あわせてアクティブセッション起動の重複コミット <code>3b93040</code> で「次に撮影」/マイルーティン/Quick Start/通知/URL スキームの 9 箇所を <code>SessionPayload(startMode: .shootingSequential)</code> に統一し、撮影到達タップ数を 3→2 に短縮</td></tr>
       <tr><td>v1.1</td><td>2026-06-12</td><td>DesignsHomeView 900→673 行に縮減: <code>DesignsHomeHeroSection</code>（streak メーター + hero コピー、115 行）と <code>DesignsHomeRecentVideosSection</code>（保存メーター + サムネスクロール + DesignsRecentVideoThumbnail、160 行）を独立 struct に切り出し、親はバインディング / コールバック注入で連携（commit b833be4）。<code>SubscriptionManager.shared</code> 直参照 6 箇所を <code>@State subscription</code> 経由に統一し <code>@Observable</code> 追跡を正規化（commit 04bb873）。<a href="../features/analytics.html">Analytics</a> イベント <code>streak_updated</code>（撮影都度）/ <code>video_saved</code>（保存成功時）を組込み</td></tr>
@@ -273,7 +274,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-16</footer>
+  <footer class="site-footer">最終更新: 2026-06-19</footer>
 </div>
 </body>
 </html>
