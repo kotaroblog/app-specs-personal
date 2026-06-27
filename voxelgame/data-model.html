@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>VoxelGame - データモデル</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">VoxelGame</a> / データモデル</div>
+
+  <header class="site-header">
+    <h1>データモデル</h1>
+    <p>SwiftData @Model の構造とゲーム内データ設計</p>
+  </header>
+
+  <h2>概要</h2>
+  <p>VoxelGame のデータは <strong>永続化層（SwiftData）</strong> と <strong>ゲームランタイム層（インメモリクラス）</strong> の 2 層に分けて管理する。SwiftData はワールドのメタ情報のみを扱い、チャンクの生ブロックデータはドキュメントディレクトリにバイナリファイルとして保存する。</p>
+
+  <h2>ER 図</h2>
+  <div class="mermaid">
+erDiagram
+  WorldRecord ||--o{ ChunkFile : "references (file system)"
+  WorldRecord {
+    UUID id
+    String name
+    Int seed
+    Date lastPlayedAt
+  }
+  ChunkFile {
+    String path "worlds/{worldId}/{cx}_{cz}.chunk"
+    UInt8Array blocks "16x64x16 = 16384 bytes"
+  }
+  </div>
+
+  <h2>WorldRecord（SwiftData @Model）</h2>
+  <pre><code>@Model
+final class WorldRecord {
+    var id: UUID = UUID()
+    var name: String = ""
+    var seed: Int = 0
+    var lastPlayedAt: Date = Date()
+}
+</code></pre>
+  <table>
+    <tr><th>プロパティ</th><th>型</th><th>説明</th></tr>
+    <tr><td>id</td><td>UUID</td><td>ワールド固有ID。チャンクファイルのディレクトリ名に使用</td></tr>
+    <tr><td>name</td><td>String</td><td>ユーザーが入力したワールド名</td></tr>
+    <tr><td>seed</td><td>Int</td><td>地形生成のシード値。省略時は自動生成</td></tr>
+    <tr><td>lastPlayedAt</td><td>Date</td><td>最終プレイ日時。ワールド選択画面の並び順に使用</td></tr>
+  </table>
+
+  <h2>Chunk（ランタイムクラス）</h2>
+  <pre><code>class Chunk {
+    let cx: Int          // チャンク X 座標（ブロック座標 = cx * 16）
+    let cz: Int          // チャンク Z 座標
+    var blocks: [Block]  // 16 × 64 × 16 = 16384 要素。インデックス = x + 16*(y + 64*z)
+    var isDirty: Bool    // 変更済みフラグ（ファイル保存が必要）
+    var node: SCNNode?   // SceneKit ノード参照
+}
+</code></pre>
+  <table>
+    <tr><th>プロパティ</th><th>説明</th></tr>
+    <tr><td>cx, cz</td><td>チャンクグリッド座標。ブロック座標への変換は cx * 16 / cz * 16</td></tr>
+    <tr><td>blocks</td><td>16×64×16 のブロック配列（16384 要素）。Block は UInt8 の enum</td></tr>
+    <tr><td>isDirty</td><td>プレイヤーがブロックを変更した際に true にセット。ファイル保存後に false に戻す</td></tr>
+    <tr><td>node</td><td>生成済み SCNNode。nil の場合はメッシュ未生成</td></tr>
+  </table>
+
+  <h2>Block（UInt8 enum）</h2>
+  <p>全 28 種。raw value が UInt8 として .chunk ファイルに直接書き込まれる。</p>
+  <table>
+    <tr><th>値</th><th>名前</th><th>カテゴリ</th><th>備考</th></tr>
+    <tr><td>0</td><td>air</td><td>-</td><td>透明・衝突なし</td></tr>
+    <tr><td>1</td><td>grass</td><td>地形</td><td>上面が緑、側面が土</td></tr>
+    <tr><td>2</td><td>dirt</td><td>地形</td><td></td></tr>
+    <tr><td>3</td><td>stone</td><td>地形</td><td></td></tr>
+    <tr><td>4</td><td>sand</td><td>地形</td><td>水辺に生成</td></tr>
+    <tr><td>5</td><td>snow</td><td>地形</td><td>山岳バイオーム高所</td></tr>
+    <tr><td>6</td><td>wood</td><td>自然</td><td>木の幹</td></tr>
+    <tr><td>7</td><td>brick</td><td>建築</td><td></td></tr>
+    <tr><td>8</td><td>leaves</td><td>自然</td><td>半透明、衝突なし</td></tr>
+    <tr><td>9</td><td>water</td><td>液体</td><td>半透明、スローダウン</td></tr>
+    <tr><td>10</td><td>coalOre</td><td>鉱石</td><td></td></tr>
+    <tr><td>11</td><td>ironOre</td><td>鉱石</td><td></td></tr>
+    <tr><td>12</td><td>goldOre</td><td>鉱石</td><td></td></tr>
+    <tr><td>13</td><td>diamondOre</td><td>鉱石</td><td>深部にのみ生成</td></tr>
+    <tr><td>14</td><td>lava</td><td>液体</td><td>接触でダメージ</td></tr>
+    <tr><td>15</td><td>cactus</td><td>自然</td><td>砂漠バイオーム、接触ダメージ</td></tr>
+    <tr><td>16</td><td>chickenMeat</td><td>食料</td><td>+3 HP</td></tr>
+    <tr><td>17</td><td>pork</td><td>食料</td><td>+4 HP</td></tr>
+    <tr><td>18</td><td>beef</td><td>食料</td><td>+5 HP</td></tr>
+    <tr><td>19</td><td>torch</td><td>光源</td><td>光源ブロック（将来拡張）</td></tr>
+    <tr><td>20</td><td>chest</td><td>機能</td><td>タップでチェストシートを開く</td></tr>
+    <tr><td>21</td><td>bed</td><td>機能</td><td>タップで就寝・スポーン変更</td></tr>
+    <tr><td>22</td><td>furnace</td><td>機能</td><td>タップでかまどシートを開く</td></tr>
+    <tr><td>23</td><td>ironIngot</td><td>素材</td><td>かまどで鉄鉱石から精錬</td></tr>
+    <tr><td>24</td><td>goldIngot</td><td>素材</td><td>かまどで金鉱石から精錬</td></tr>
+    <tr><td>25</td><td>farmland</td><td>農業</td><td>耕地ブロック</td></tr>
+    <tr><td>26</td><td>wheatYoung</td><td>農業</td><td>未成熟の小麦</td></tr>
+    <tr><td>27</td><td>wheatMature</td><td>農業</td><td>成熟した小麦（収穫可能）</td></tr>
+  </table>
+
+  <h2>Player（ランタイムクラス）</h2>
+  <pre><code>class Player {
+    var position: SCNVector3 = SCNVector3(0, 20, 0)
+    var velocity: SCNVector3 = .init(0, 0, 0)
+    var hp: Int = 20          // 最大 20
+    var hunger: Float = 20.0  // 最大 20
+    var yaw: Float = 0        // 左右視点（ラジアン）
+    var pitch: Float = 0      // 上下視点（ラジアン）
+    var isFlying: Bool = false
+    var spawnPoint: SCNVector3 = SCNVector3(0, 20, 0)
+    var inventory: [Block: Int] = [:]
+    var unlockedTools: Set&lt;ToolType&gt; = [.hand]
+    var selectedTool: ToolType = .hand
+}
+</code></pre>
+
+  <h2>Mob（ランタイムクラス）</h2>
+  <pre><code>enum MobType { case chicken, pig, cow, zombie }
+enum MobState { case idle, wander, flee, chase }
+
+class Mob {
+    let type: MobType
+    var position: SCNVector3
+    var hp: Int
+    var state: MobState = .idle
+    var node: SCNNode?
+}
+</code></pre>
+  <table>
+    <tr><th>種類</th><th>最大HP</th><th>挙動</th></tr>
+    <tr><td>chicken</td><td>4</td><td>パッシブ。プレイヤー接近（6m 以内）で逃走</td></tr>
+    <tr><td>pig</td><td>10</td><td>パッシブ。プレイヤー接近（6m 以内）で逃走</td></tr>
+    <tr><td>cow</td><td>10</td><td>パッシブ。プレイヤー接近（6m 以内）で逃走</td></tr>
+    <tr><td>zombie</td><td>20</td><td>ホスタイル。昼間は燃焼ダメージ。夜間スポーン</td></tr>
+  </table>
+
+  <h2>GameInput（UI状態 ObservableObject）</h2>
+  <pre><code>@Observable @MainActor
+final class GameInput {
+    var showInventory: Bool = false
+    var showCraft: Bool = false
+    var showFurnace: Bool = false
+    var showChest: Bool = false
+    var showSettings: Bool = false
+    var isCreativeMode: Bool = false
+    var currentWeather: WeatherType = .clear
+    var graphicsQuality: GraphicsQuality = .standard
+    var joystickSensitivity: Float   // UserDefaults 永続化
+    var lookSensitivity: Float       // UserDefaults 永続化
+    var deadZone: Float              // UserDefaults 永続化
+}
+</code></pre>
+
+  <h2>チャンクファイル保存パス</h2>
+  <pre><code>// ドキュメントディレクトリ以下
+Documents/
+  worlds/
+    {worldId}/          // WorldRecord.id.uuidString
+      player.json       // プレイヤー状態（位置・HP・インベントリ）
+      {cx}_{cz}.chunk   // チャンクバイナリ（16384 バイト）
+</code></pre>
+
+  <h2>マイグレーション方針</h2>
+  <div class="callout warn">
+    SwiftData の <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する。チャンクファイルのバイナリフォーマット変更時はバージョンヘッダー（先頭 1 バイト）でバージョン判定する。
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-06-27</footer>
+</div>
+</body>
+</html>

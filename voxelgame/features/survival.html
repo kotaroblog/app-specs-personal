@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>VoxelGame - サバイバルシステム</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">VoxelGame</a> / サバイバルシステム</div>
+
+  <header class="site-header">
+    <h1>サバイバルシステム</h1>
+    <p>HP・空腹・ダメージ・食料・死亡・ベッドのゲームプレイ基盤</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-SURVIVAL</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>サバイバルモード時のゲームプレイルールを定義する。HP と空腹が連動し、放置すると死亡する緊張感がゲームの核となる。クリエイティブモード時はこのシステム全体が無効化される。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant Loop as GameLoop（毎フレーム）
+  participant Player
+  participant HUD
+  participant Scene
+
+  Loop->>Player: 移動量に応じて hunger を減算
+  Player->>Player: hunger が 0 になったら毎秒 hp -= 1
+  Loop->>Player: ダメージイベント（落下・モブ・溶岩）
+  Player->>Player: hp を減算
+  Player->>HUD: hp / hunger を更新通知
+  HUD->>HUD: バーアイコンを再描画
+  alt hp が 0 以下
+    Player->>Scene: 死亡処理
+    Scene->>Scene: 所持品半減
+    Scene->>Scene: スポーン地点へ移動
+    Scene->>HUD: hp=20・hunger=20 でリセット
+  end
+  </div>
+
+  <h2>ビジネスルール</h2>
+
+  <h3>HP</h3>
+  <ul>
+    <li>最大値: 20</li>
+    <li>自然回復: hunger が 18 以上の場合、4 秒ごとに +1 HP 回復</li>
+    <li>ダメージ源と量:</li>
+  </ul>
+  <table>
+    <tr><th>ダメージ源</th><th>ダメージ量</th><th>備考</th></tr>
+    <tr><td>落下</td><td>落下距離 - 3（m）の整数値</td><td>3m 以下は無効</td></tr>
+    <tr><td>空腹（hunger=0）</td><td>毎秒 1 HP</td><td>HP が 1 の場合はダメージ停止（死亡しない）</td></tr>
+    <tr><td>ゾンビ攻撃</td><td>3 HP</td><td>攻撃後 1 秒の無敵時間あり</td></tr>
+    <tr><td>溶岩（lava）接触</td><td>毎秒 4 HP</td><td>溶岩ブロックと同じ座標に入ると発動</td></tr>
+    <tr><td>サボテン（cactus）接触</td><td>1 HP / 秒</td><td></td></tr>
+  </table>
+
+  <h3>空腹</h3>
+  <ul>
+    <li>最大値: 20</li>
+    <li>減少速度: 移動中 0.05 / 秒、静止中 0.01 / 秒</li>
+    <li>hunger が 0 になると毎秒 1 HP ダメージ（HP=1 で停止）</li>
+    <li>hunger が 6 以下になると走れなくなる（将来拡張）</li>
+  </ul>
+
+  <h3>食料</h3>
+  <table>
+    <tr><th>食料</th><th>HP 回復量</th><th>hunger 回復量</th></tr>
+    <tr><td>chickenMeat（鶏肉）</td><td>+3</td><td>+6</td></tr>
+    <tr><td>pork（豚肉）</td><td>+4</td><td>+8</td></tr>
+    <tr><td>beef（牛肉）</td><td>+5</td><td>+10</td></tr>
+  </table>
+  <ul>
+    <li>食べるボタンはインベントリに食料が 1 個以上ある場合のみ表示</li>
+    <li>食べたアイテムはインベントリから 1 消費</li>
+    <li>HP・hunger はそれぞれの最大値を超えない</li>
+  </ul>
+
+  <h3>死亡</h3>
+  <ul>
+    <li>hp が 0 以下になったら死亡イベントを発火</li>
+    <li>所持品（inventory）の各スタックを半減（端数切り捨て）する</li>
+    <li>プレイヤー位置をスポーン地点（spawnPoint）にリセットする</li>
+    <li>hp=20・hunger=20 でリセットする</li>
+    <li>死亡演出: 画面が赤くフェード（0.5 秒）→「あなたは死にました」オーバーレイを 2 秒表示 → 自動で復活</li>
+  </ul>
+
+  <h3>ベッド</h3>
+  <ul>
+    <li>夜間（dayFactor &lt; 0.3）にベッドブロックを操作するとスポーン地点を変更できる</li>
+    <li>就寝後は dayFactor を強制的に 0.5（昼）にスキップする（夜スキップ）</li>
+    <li>昼間はベッドを操作しても「夜にしか使えません」トーストを表示する</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>モブ AI（VG-FEAT-MOBAI）</td><td>ゾンビ攻撃ダメージの受け取り</td><td>Mob.attackPlayer() → Player.takeDamage(3) を呼ぶ</td></tr>
+    <tr><td>クリエイティブモード（VG-FEAT-CREATIVE）</td><td>全サバイバルロジックの無効化</td><td>isCreativeMode=true 時はすべての処理をスキップ</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>スポーン地点の Y 座標が地形外（地面がない等）</td><td>Y 座標を 64 にリセットして落下させる（地面が生成されるまで待機）</td></tr>
+    <tr><td>食料アイテム数が負になった場合</td><td>0 にクランプ。Logger.error で記録</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>hp・hunger の更新は GameLoop（SCNSceneRendererDelegate.renderer updateAtTime）で行い、UI 反映は @Observable の Player から SwiftUI に通知する</li>
+    <li>ダメージ後の無敵時間は Player.lastDamageTime と比較して実装（1.0 秒）</li>
+    <li>落下ダメージは velocity.y が -8.0 以下になった次フレームの着地検知で計算する</li>
+    <li>溶岩接触判定はプレイヤーの AABB（0.6×1.8×0.6m）と lava ブロックのバウンディングボックスのオーバーラップで検出する</li>
+    <li>死亡時の所持品半減は Dictionary.mapValues { max(0, $0 / 2) } で処理する</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-06-27</footer>
+</div>
+</body>
+</html>

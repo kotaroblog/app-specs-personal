@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>VoxelGame - ワールド選択</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">VoxelGame</a> / ワールド選択</div>
+
+  <header class="site-header">
+    <h1>ワールド選択画面</h1>
+    <p>保存済みワールドの一覧表示・新規作成・削除を行うエントリー画面</p>
+    <div style="margin-top:8px;">
+      <span class="tag">画面ID: VG-WORLD-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>アプリ起動後に最初に表示される画面。プレイヤーがプレイするワールドを選択するか、新規ワールドを作成してゲームプレイ画面へ遷移する。ワールドは SwiftData（WorldStore）に永続化される。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ナビゲーションタイトル</td><td>NavigationTitle</td><td>「ワールド選択」と表示</td></tr>
+    <tr><td>新規ワールド作成ボタン</td><td>Button（toolbar）</td><td>右上「＋」アイコン。タップでワールド作成シートを表示</td></tr>
+    <tr><td>ワールド一覧</td><td>List</td><td>保存済みワールドを最終プレイ日時の降順で並べる</td></tr>
+    <tr><td>ワールドセル</td><td>ListRow</td><td>ワールド名・シード値・最終プレイ日時を表示。タップでゲームプレイ画面へ遷移</td></tr>
+    <tr><td>削除スワイプアクション</td><td>SwipeAction（.destructive）</td><td>左スワイプで「削除」ボタンを表示。確認アラート後に SwiftData から削除</td></tr>
+    <tr><td>ワールド作成シート</td><td>Sheet</td><td>ワールド名入力（TextField）・シード値入力（TextField / 整数、省略可）・「作成」ボタン</td></tr>
+    <tr><td>エンプティビュー</td><td>ContentUnavailableView</td><td>ワールドが 0 件の場合に「まだワールドがありません」と表示</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>初期表示（ワールドあり）</td><td>ワールド一覧を最終プレイ日時降順で表示</td></tr>
+    <tr><td>初期表示（ワールドなし）</td><td>ContentUnavailableView「まだワールドがありません。＋ボタンで作成してください」</td></tr>
+    <tr><td>作成シート表示中</td><td>ワールド名・シード値入力フォームを表示。作成ボタンは名前が空の場合は無効</td></tr>
+    <tr><td>削除確認アラート</td><td>「このワールドを削除しますか？」確認ダイアログ（削除 / キャンセル）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>ワールドセルをタップ</td><td>ゲームプレイ画面（GameView）へ push。選択した WorldRecord を渡す</td></tr>
+    <tr><td>新規作成シートで「作成」ボタン</td><td>SwiftData に WorldRecord を保存 → シートを閉じる → 一覧に新規ワールドが追加される</td></tr>
+    <tr><td>削除確認で「削除」</td><td>SwiftData から WorldRecord を削除 → 一覧から消える</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Model
+final class WorldRecord {
+    var id: UUID = UUID()
+    var name: String = ""
+    var seed: Int = 0
+    var lastPlayedAt: Date = Date()
+    // チャンクデータは別ファイル（ドキュメントディレクトリ）に保存
+}
+</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>シード値を省略した場合は Int.random(in: Int.min...Int.max) で自動生成する</li>
+    <li>チャンクデータ本体（.chunk ファイル）はドキュメントディレクトリに worldId をキーにして保存する。SwiftData には WorldRecord メタ情報のみ持たせる</li>
+    <li>ワールド削除時は WorldRecord だけでなく関連する .chunk ファイルも削除する</li>
+    <li>最終プレイ日時はゲームプレイ画面を離れる onDisappear タイミングで更新する</li>
+    <li>一覧は @Query(sort: \WorldRecord.lastPlayedAt, order: .reverse) で取得する</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル（WorldRecord）</a></li>
+    <li><a href="gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-27</footer>
+</div>
+</body>
+</html>

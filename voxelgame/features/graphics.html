@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>VoxelGame - グラフィック設定</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">VoxelGame</a> / グラフィック設定</div>
+
+  <header class="site-header">
+    <h1>グラフィック設定</h1>
+    <p>画質プリセット・昼夜サイクル・霧・天候の定義</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-GRAPHICS</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>SceneKit の描画品質を「標準」「高画質」の 2 プリセットで切り替える。設定は UserDefaults に永続化する。昼夜サイクルはゲーム内時間（10 分 / 1 日）で動作し、空の色・霧色・光源強度が変化する。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（設定シート）</a></li>
+  </ul>
+
+  <h2>画質プリセット</h2>
+  <table>
+    <tr><th>項目</th><th>標準（standard）</th><th>高画質（high）</th></tr>
+    <tr><td>MSAA</td><td>2X</td><td>4X</td></tr>
+    <tr><td>シャドウマップ解像度</td><td>1024 × 1024 px</td><td>2048 × 2048 px</td></tr>
+    <tr><td>描画距離</td><td>48 m（±3 チャンク相当）</td><td>64 m（±4 チャンク相当、将来対応）</td></tr>
+    <tr><td>LOD（Level of Detail）</td><td>なし</td><td>なし（将来拡張）</td></tr>
+  </table>
+
+  <h2>昼夜サイクル</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>1 ゲーム日の長さ</td><td>現実時間 10 分</td></tr>
+    <tr><td>dayFactor の範囲</td><td>0.0（深夜）〜 1.0（正午）。サイン波で計算</td></tr>
+    <tr><td>昼判定</td><td>dayFactor &gt; 0.6</td></tr>
+    <tr><td>深夜判定</td><td>dayFactor &lt; 0.05</td></tr>
+    <tr><td>夕焼け・夜明け</td><td>dayFactor = 0.3〜0.6 の区間で空色をオレンジ→青にブレンド</td></tr>
+    <tr><td>星空</td><td>dayFactor &lt; 0.3 の夜間に SCNParticleSystem（白点）を表示</td></tr>
+    <tr><td>霧色</td><td>昼: (0.7, 0.85, 1.0) / 夕焼け: (1.0, 0.5, 0.2) / 夜: (0.0, 0.0, 0.1) の 3 点で補間</td></tr>
+    <tr><td>太陽光源</td><td>SCNLight（directional）の intensity を dayFactor に比例して変化</td></tr>
+    <tr><td>月光源</td><td>intensity = 200（固定）。夜間のみ有効</td></tr>
+  </table>
+
+  <h2>天候</h2>
+  <table>
+    <tr><th>天候</th><th>視覚効果</th><th>ゲームへの影響</th></tr>
+    <tr><td>clear（晴れ）</td><td>通常の空色・霧</td><td>なし</td></tr>
+    <tr><td>rain（雨）</td><td>霧距離を 30m に縮小。雨粒 SCNParticleSystem</td><td>ゾンビの昼間燃焼を無効化（将来実装）</td></tr>
+    <tr><td>thunder（雷雨）</td><td>rain に加え 10〜30 秒間隔で白フラッシュ + 雷鳴音</td><td>同上（将来実装）</td></tr>
+  </table>
+  <p>天候は HUD の天気ボタンでプレイヤーが手動切り替えできる。自動変化は未実装。</p>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>画質設定は UserDefaults キー <code>graphicsQuality</code>（String: "standard" / "high"）に保存する</li>
+    <li>感度・デッドゾーン設定も UserDefaults に保存する</li>
+    <li>画質変更は設定シートを閉じた直後に SCNView に適用する（リスタート不要）</li>
+    <li>デフォルト画質は "standard"（バッテリー消費を抑えるため）</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>GameInput.graphicsQuality</td><td>画質プリセットの状態管理</td><td>@Observable で設定シートと SCNView から参照</td></tr>
+    <tr><td>GameInput.dayFactor</td><td>昼夜サイクルの現在値。モブ AI から参照される</td><td>ゲームループで sin 波から計算して更新</td></tr>
+    <tr><td>モブ AI（VG-FEAT-MOBAI）</td><td>dayFactor を参照してゾンビ燃焼・スポーンを制御</td><td></td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>UserDefaults から不正な graphicsQuality 値を読み込んだ場合</td><td>"standard" にフォールバック</td></tr>
+    <tr><td>高画質設定でフレームレートが著しく低下した場合</td><td>現状は自動切り替えなし。将来は 30fps 未満が 5 秒続いたら「標準に変更しますか？」アラートを表示する予定</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>dayFactor の計算: dayFactor = (sin(gameTime / 600 * 2 * .pi - .pi / 2) + 1) / 2。gameTime は秒単位の累積時間</li>
+    <li>SCNView の antialiasingMode は高画質時 .multisampling4X、標準時 .multisampling2X を設定する</li>
+    <li>シャドウマップは SCNLight の shadowMapSize に CGSize を指定する</li>
+    <li>霧は SCNScene.fogStartDistance / fogEndDistance / fogColor を dayFactor に応じて毎フレーム更新する</li>
+    <li>昼夜の空色変化は SCNScene.background.contents に UIColor のグラデーションを設定する（またはスカイボックス用 SCNNode の SCNMaterial カラーを lerp する）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-27</footer>
+</div>
+</body>
+</html>

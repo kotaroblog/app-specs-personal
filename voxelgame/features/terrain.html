@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>VoxelGame - 地形生成</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">VoxelGame</a> / 地形生成</div>
+
+  <header class="site-header">
+    <h1>地形生成</h1>
+    <p>GKPerlinNoiseSource を用いたチャンク単位のプロシージャル地形生成</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-TERRAIN</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>WorldRecord のシード値を元に GKPerlinNoiseSource で高さマップを生成し、バイオーム別にブロックを配置する。チャンクは 16×64×16 ブロックの単位で管理し、プレイヤー周囲 ±3 チャンクを動的にロード・アンロードする。メッシュ生成は Greedy Meshing で頂点数を削減し、AO（Ambient Occlusion）を付加する。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant P as Player
+  participant CM as ChunkManager
+  participant TG as TerrainGenerator
+  participant MM as ChunkMesher
+  participant SC as SceneKit
+
+  P->>CM: 位置変更通知
+  CM->>CM: ±3チャンク範囲を計算
+  CM->>TG: 未生成チャンクを依頼（async）
+  TG->>TG: GKPerlinNoise で高さマップ生成
+  TG->>TG: バイオーム判定・ブロック配置
+  TG->>TG: 木・サボテン・特殊地物配置
+  TG-->>CM: Chunk を返す
+  CM->>MM: メッシュ生成を依頼（async）
+  MM->>MM: Greedy Meshing + AO 計算
+  MM-->>SC: SCNGeometry を返す
+  SC-->>P: 新チャンク描画完了
+  CM->>CM: 描画範囲外チャンクをアンロード
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>チャンクサイズは 16（X）× 64（Y）× 16（Z）ブロック固定</li>
+    <li>高さ上限は Y=63（0 origin）</li>
+    <li>プレイヤー中心に ±3 チャンク（7×7=49 チャンク）を同時に保持する</li>
+    <li>範囲外チャンクは isDirty の場合のみファイル保存してからアンロード</li>
+    <li>高さマップ生成は GKPerlinNoiseSource（frequency: 0.05, octaveCount: 4）を使用</li>
+    <li>バイオーム判定は別の GKPerlinNoiseSource（frequency: 0.01）で決定し、plains / mountains の 2 種</li>
+    <li>plains バイオーム: 表面高さ 5〜16、mountains バイオーム: 表面高さ 20〜56</li>
+    <li>バイオームブレンド: noiseValue &lt; 0.3 を plains、0.5 以上を mountains、中間は線形補間</li>
+    <li>ブロック配置ルール: 表面=grass、表面-1〜-3=dirt、表面-4 以下=stone</li>
+    <li>Y=0〜3 は bedrock（stone）で固定（破壊不可とする将来拡張を考慮）</li>
+    <li>coalOre / ironOre / goldOre / diamondOre の埋蔵深度は下記テーブルに従う</li>
+    <li>水（water）は Y=8 以下の air ブロックを水で埋める</li>
+    <li>木（leaves + wood × 4）は plains バイオームの地表に 10 チャンクあたり約 5 本生成</li>
+    <li>サボテンは砂バイオームの sand 表面に生成（将来拡張）</li>
+    <li>雪（snow）は mountains バイオームの Y=45 以上の表面に生成</li>
+  </ul>
+
+  <h3>鉱石埋蔵深度テーブル</h3>
+  <table>
+    <tr><th>鉱石</th><th>生成 Y 範囲</th><th>密度（1チャンクあたり）</th></tr>
+    <tr><td>coalOre</td><td>5〜50</td><td>約 30 ブロック</td></tr>
+    <tr><td>ironOre</td><td>3〜30</td><td>約 15 ブロック</td></tr>
+    <tr><td>goldOre</td><td>2〜15</td><td>約 8 ブロック</td></tr>
+    <tr><td>diamondOre</td><td>1〜10</td><td>約 3 ブロック</td></tr>
+  </table>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>GameplayKit（GKPerlinNoiseSource）</td><td>高さマップ・バイオームノイズ生成</td><td>seed を GKPerlinNoiseSource の seed に設定</td></tr>
+    <tr><td>SceneKit（SCNGeometry）</td><td>メッシュ描画</td><td>ChunkMesher が SCNGeometry を生成して返す</td></tr>
+    <tr><td>ドキュメントディレクトリ</td><td>チャンクファイルの永続化</td><td>{worldId}/{cx}_{cz}.chunk</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>チャンクファイル読み込み失敗（破損等）</td><td>地形を再生成（シード値から復元）して上書き保存</td></tr>
+    <tr><td>メモリ不足でチャンクロード失敗</td><td>描画範囲を ±2 チャンクに縮小して再試行。Logger.error で記録</td></tr>
+    <tr><td>ディスク容量不足でチャンク保存失敗</td><td>Logger.error で記録。次回起動時に再生成（変更内容は失われる）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>TerrainGenerator と ChunkMesher は Task で非同期実行し、メインスレッドをブロックしない</li>
+    <li>Greedy Meshing: 同一テクスチャの隣接面をマージして面数を削減。実装は Chunk.greedyMesh() メソッドに集約</li>
+    <li>AO は各頂点で隣接 8 方向のブロック有無をカウントし 0.0〜1.0 の暗さ係数を頂点カラーに乗算する</li>
+    <li>GKPerlinNoiseSource の seed は WorldRecord.seed を Int32 に切り出して渡す</li>
+    <li>チャンクロードは DispatchQueue.global(qos: .userInitiated) で並列実行、SCNNode 追加のみメインスレッドで実行</li>
+    <li>チャンクキャッシュは Dictionary&lt;ChunkKey, Chunk&gt;（ChunkKey = struct of cx, cz）で管理</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-06-27</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>VoxelGame - クラフト</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">VoxelGame</a> / クラフト</div>
+
+  <header class="site-header">
+    <h1>クラフト</h1>
+    <p>ツールレシピと採掘速度テーブルの定義</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-CRAFTING</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>インベントリに素材が揃った状態でクラフト画面を開くと、対象レシピが解放可能になる。クラフト実行で素材を消費し、対応ツールを解放する。解放されたツールはツールバーに追加され、ブロック採掘速度が上昇する。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（クラフト画面シート）</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant CraftView
+  participant Player
+
+  U->>CraftView: クラフトボタンをタップ
+  CraftView->>Player: inventory を参照
+  CraftView->>CraftView: 各レシピの素材充足確認
+  CraftView-->>U: 解放可能レシピをハイライト表示
+  U->>CraftView: レシピをタップ（クラフト実行）
+  CraftView->>Player: inventory から素材を消費
+  CraftView->>Player: unlockedTools にツールを追加
+  Player-->>CraftView: 更新完了
+  CraftView-->>U: 「○○を作成しました」トーストを表示
+  </div>
+
+  <h2>ツールレシピ一覧</h2>
+  <table>
+    <tr><th>ツール</th><th>必要素材</th><th>必要数</th><th>解放後の効果</th></tr>
+    <tr><td>woodPickaxe（木のツルハシ）</td><td>wood</td><td>10 個</td><td>stone の採掘が 2.0s に短縮</td></tr>
+    <tr><td>stonePickaxe（石のツルハシ）</td><td>stone</td><td>10 個</td><td>ironOre / goldOre の採掘が 1.5s に短縮</td></tr>
+    <tr><td>ironPickaxe（鉄のツルハシ）</td><td>ironOre</td><td>10 個</td><td>diamondOre の採掘が 2.0s に短縮</td></tr>
+    <tr><td>diamondPickaxe（ダイヤのツルハシ）</td><td>diamondOre</td><td>5 個</td><td>diamondOre の採掘が 0.8s に短縮</td></tr>
+  </table>
+
+  <h2>採掘速度テーブル（秒）</h2>
+  <p>各ツール × ブロック種別の採掘所要時間。空欄は採掘不可（ツールが不十分）を意味する。</p>
+  <table>
+    <tr><th>ブロック</th><th>素手</th><th>woodPickaxe</th><th>stonePickaxe</th><th>ironPickaxe</th><th>diamondPickaxe</th></tr>
+    <tr><td>grass / dirt / sand</td><td>1.0s</td><td>0.5s</td><td>0.5s</td><td>0.5s</td><td>0.5s</td></tr>
+    <tr><td>stone</td><td>5.0s</td><td>2.0s</td><td>1.0s</td><td>0.8s</td><td>0.5s</td></tr>
+    <tr><td>coalOre</td><td>6.0s</td><td>3.0s</td><td>1.5s</td><td>1.0s</td><td>0.6s</td></tr>
+    <tr><td>ironOre / goldOre</td><td>8.0s</td><td>—（採掘不可）</td><td>1.5s</td><td>1.0s</td><td>0.6s</td></tr>
+    <tr><td>diamondOre</td><td>—（採掘不可）</td><td>—（採掘不可）</td><td>—（採掘不可）</td><td>2.0s</td><td>0.8s</td></tr>
+    <tr><td>wood / leaves</td><td>2.0s</td><td>1.0s</td><td>0.8s</td><td>0.6s</td><td>0.4s</td></tr>
+  </table>
+  <p>採掘不可ブロックに壊すボタンを長押しした場合、進行バーは表示されず採掘時間が経過してもブロックが破壊されない。</p>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>ツールは一度解放したら永続（ワールドをまたいでも保持する）しない。WorldRecord 単位で管理する</li>
+    <li>同じツールを複数回クラフトしても素材だけ消費され、効果は変わらない（重複解放の防止は実装では行わずトースト「すでに解放済みです」を表示する）</li>
+    <li>クリエイティブモード時でもクラフト UI は利用可能だが、素材消費がないため意味をなさない（将来は非表示にする）</li>
+    <li>クラフト画面は素材が不足している場合もレシピを表示する（グレーアウト）</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>Player.inventory</td><td>素材の確認・消費</td><td>クラフト実行時に参照・更新する</td></tr>
+    <tr><td>Player.unlockedTools</td><td>ツール解放状態の管理</td><td>Set&lt;ToolType&gt; に追加する</td></tr>
+    <tr><td>ブロック採掘ロジック（GameLoop）</td><td>採掘速度テーブルの参照</td><td>ToolType × Block → Double（秒）のマッピング</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>クラフト実行時に素材が不足している（UI バグ等）</td><td>クラフトを中断。「素材が不足しています」トーストを表示。Logger.error で記録</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>採掘速度テーブルは static let として ToolType の extension か専用 struct に定義し、GameLoop から参照する</li>
+    <li>採掘進行度はゲームループで deltaTime を積算し、閾値を超えたらブロック破壊イベントを発火する</li>
+    <li>破壊されたブロックのアイテムドロップは Player.inventory[block, default: 0] += 1 で加算する</li>
+    <li>採掘不可の判定は miningTime(tool:block:) → nil で表現し、GameLoop 側で nil の場合は進行しない</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-06-27</footer>
+</div>
+</body>
+</html>

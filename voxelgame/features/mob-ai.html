@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>VoxelGame - モブ AI</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">VoxelGame</a> / モブ AI</div>
+
+  <header class="site-header">
+    <h1>モブ AI</h1>
+    <p>パッシブモブ（chicken / pig / cow）とホスタイルモブ（zombie）の行動ロジック</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-MOBAI</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>モブは状態機械（idle / wander / flee / chase）で制御される。パッシブモブはプレイヤーを脅威として逃走し、ゾンビは夜間に積極的に追跡・攻撃する。ゲームループの毎フレームで AI の更新が行われる。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+  </ul>
+
+  <h2>処理フロー（ゾンビ）</h2>
+  <div class="mermaid">
+stateDiagram-v2
+  [*] --> idle: スポーン
+  idle --> wander: タイマー（3〜8秒）
+  wander --> idle: 移動完了
+  wander --> chase: プレイヤーが 16m 以内
+  chase --> wander: プレイヤーが 20m 以上
+  chase --> attack: プレイヤーが 1.8m 以内
+  attack --> chase: 攻撃後（クールダウン 1 秒）
+  idle --> burnDamage: 昼間（dayFactor > 0.6）
+  wander --> burnDamage: 昼間（dayFactor > 0.6）
+  burnDamage --> idle: 夜間になる
+  </div>
+
+  <h2>ビジネスルール</h2>
+
+  <h3>パッシブモブ（chicken / pig / cow）</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>通常行動（idle / wander）</td><td>3〜8 秒ごとにランダム方向へ 2〜5 m 移動。移動後に idle へ戻る</td></tr>
+    <tr><td>逃走トリガー</td><td>プレイヤーとの距離が 6m 以内になったら flee 状態へ</td></tr>
+    <tr><td>逃走動作</td><td>プレイヤーの反対方向へ移動速度 1.5× で移動</td></tr>
+    <tr><td>逃走解除</td><td>プレイヤーとの距離が 10m 以上になったら wander へ戻る</td></tr>
+    <tr><td>ドロップアイテム</td><td>倒すと chickenMeat / pork / beef をそれぞれ 1〜2 個ドロップ</td></tr>
+  </table>
+
+  <h3>ゾンビ（zombie）</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>検知半径</td><td>16m</td></tr>
+    <tr><td>追跡解除半径</td><td>20m（ヒステリシスあり）</td></tr>
+    <tr><td>攻撃半径</td><td>1.8m</td></tr>
+    <tr><td>攻撃ダメージ</td><td>プレイヤーに 3 HP ダメージ</td></tr>
+    <tr><td>攻撃クールダウン</td><td>1 秒</td></tr>
+    <tr><td>ノックバック</td><td>攻撃方向へ 2m + Y 方向 2.5m の速度ベクトルをプレイヤーに付与</td></tr>
+    <tr><td>昼間（dayFactor &gt; 0.6）</td><td>2 秒ごとに 1 HP ダメージ（燃焼）。オレンジ色フラッシュエフェクト</td></tr>
+    <tr><td>昼間の行動</td><td>燃焼中でも idle / wander を継続する（水中に逃げ込む行動は未実装）</td></tr>
+    <tr><td>夜間スポーン数</td><td>dayFactor &lt; 0.3：最大 6 体、12 秒間隔でスポーン</td></tr>
+    <tr><td>深夜スポーン数</td><td>dayFactor &lt; 0.05：最大 10 体、8 秒間隔でスポーン</td></tr>
+    <tr><td>スポーン範囲</td><td>プレイヤーから 10〜24m の範囲のランダム位置</td></tr>
+    <tr><td>昼間消去</td><td>dayFactor &gt; 0.8 になるとゾンビは自然消去（燃え尽き演出）</td></tr>
+  </table>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>サバイバルシステム（VG-FEAT-SURVIVAL）</td><td>ゾンビ攻撃ダメージをプレイヤーに渡す</td><td>Player.takeDamage(3) を呼ぶ</td></tr>
+    <tr><td>グラフィック設定（VG-FEAT-GRAPHICS）</td><td>dayFactor を参照してスポーン・燃焼を制御</td><td>GameInput.dayFactor</td></tr>
+    <tr><td>クリエイティブモード（VG-FEAT-CREATIVE）</td><td>isCreativeMode=true 時はダメージを与えない</td><td>Player.takeDamage 内でガード</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>モブがチャンク境界外にスポーンしようとする</td><td>スポーン位置をロード済みチャンク内にクランプする</td></tr>
+    <tr><td>モブが地形にめり込む（Y 座標バグ）</td><td>毎フレームの Y 衝突チェックで地面に乗せ直す</td></tr>
+    <tr><td>モブ数が上限を超える（バグ等）</td><td>スポーンロジック入口でカウントチェック。上限超えは Logger.warning で記録しスキップ</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>AI 更新は GameLoop の updateAtTime で毎フレーム呼ぶが、ゾンビの経路計算は 0.25 秒ごとにのみ実行してパフォーマンスを節約する</li>
+    <li>移動方向の計算は (player.position - mob.position).normalized × speed で単純追跡する（A* は未使用）</li>
+    <li>衝突判定はプレイヤー・モブともに AABB（軸並行バウンディングボックス）で行う</li>
+    <li>ノックバックは Player.velocity に直接速度ベクトルを加算する。物理エンジン（SCNPhysics）は使わない</li>
+    <li>モブの SCNNode は Mob クラスに保持し、位置更新は node.position に直接書き込む</li>
+    <li>燃焼エフェクトはオレンジ色の SCNParticleSystem を 0.5 秒周期でトグルする</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-06-27</footer>
+</div>
+</body>
+</html>
