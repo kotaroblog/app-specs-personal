@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - ゲームメイン画面</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb">
+    <a href="../../">App Specs Personal</a> /
+    <a href="../">CraftFrontier</a> /
+    ゲームメイン画面
+  </div>
+
+  <header class="site-header">
+    <h1>ゲームメイン画面</h1>
+    <p>SceneKit 3D フィールド上に SwiftUI HUD をオーバーレイするコアプレイ画面。サバイバル / クリエイティブの両モードをカバーする。</p>
+    <div style="margin-top:8px;">
+      <span class="tag">画面ID: CF-S01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    ゲームの中核となる画面。SCNView（SceneKit）がフルスクリーンでレンダリングを担い、その上に SwiftUI の ZStack で HUD・操作コントロールをオーバーレイする構成をとる。
+    サバイバルモードとクリエイティブモードで表示・操作が一部切り替わる。各種パネル（インベントリ・クラフト・かまど・チェスト・設定・死亡）もこの画面上にシート / オーバーレイで展開される。
+  </p>
+
+  <h2>UI 構成（横画面・Landscape 固定）</h2>
+
+  <h3>HUD レイアウト概要</h3>
+  <table>
+    <tr><th>エリア</th><th>コンポーネント</th><th>表示条件</th></tr>
+    <tr><td>左上</td><td>戻るボタン / クラフトボタン / クリエイティブ切替ボタン / 設定ボタン（ボタン群）</td><td>常時</td></tr>
+    <tr><td>中央上</td><td>ツールバー（解放済みツール選択）</td><td>常時</td></tr>
+    <tr><td>右上</td><td>HP バー + 空腹度バー + 天候アイコン</td><td>サバイバルモード</td></tr>
+    <tr><td>右上</td><td>「∞」表示 + 天候アイコン</td><td>クリエイティブモード</td></tr>
+    <tr><td>中央</td><td>クロスヘア（照準）</td><td>常時</td></tr>
+    <tr><td>下中央</td><td>ホットバー（ブロック選択）</td><td>常時</td></tr>
+    <tr><td>左下</td><td>バーチャルジョイスティック</td><td>常時</td></tr>
+    <tr><td>右下</td><td>アクションボタン群（壊す / 置く / ジャンプ / ダッシュ）</td><td>常時</td></tr>
+  </table>
+
+  <h3>左上ボタン群</h3>
+  <table>
+    <tr><th>ボタン</th><th>種類</th><th>説明</th></tr>
+    <tr><td>戻るボタン</td><td>Button</td><td>タップでゲームを一時停止 → ワールド選択画面へ pop。最終プレイ日時を更新してから遷移する</td></tr>
+    <tr><td>クラフトボタン</td><td>Button</td><td>タップでクラフトパネルを表示。解放可能なツールレシピ一覧を展開する</td></tr>
+    <tr><td>クリエイティブ切替ボタン</td><td>Button（トグル）</td><td>サバイバル ⇔ クリエイティブをトグル切替。切替時に HP / 空腹バーの表示を即時更新する</td></tr>
+    <tr><td>設定ボタン</td><td>Button</td><td>タップで設定パネルを表示（感度・デッドゾーン・採掘ボタン強調・画質）</td></tr>
+  </table>
+
+  <h3>ツールバー（中央上）</h3>
+  <table>
+    <tr><th>ツール種別</th><th>解放条件</th><th>採掘速度倍率</th></tr>
+    <tr><td>素手（fist）</td><td>初期解放済み</td><td>×1（基準）</td></tr>
+    <tr><td>木のツルハシ（woodPickaxe）</td><td>木材 10 個でクラフト</td><td>×2</td></tr>
+    <tr><td>石のツルハシ（stonePickaxe）</td><td>石 10 個でクラフト</td><td>×4</td></tr>
+    <tr><td>鉄のツルハシ（ironPickaxe）</td><td>鉄インゴット 10 個でクラフト</td><td>×8</td></tr>
+    <tr><td>ダイヤのツルハシ（diamondPickaxe）</td><td>ダイヤ 10 個でクラフト</td><td>×16</td></tr>
+  </table>
+  <p>解放済みのツールのみアイコン表示。未解放は非表示（グレーアウトではなく完全非表示）。選択中ツールはハイライト表示。</p>
+
+  <h3>ステータス表示（右上）</h3>
+  <table>
+    <tr><th>要素</th><th>サバイバル</th><th>クリエイティブ</th></tr>
+    <tr><td>HP バー</td><td>ハートアイコン × 10（最大 20 HP / 2 HP per アイコン）を表示</td><td>非表示</td></tr>
+    <tr><td>空腹度バー</td><td>食料アイコン × 10（最大 20 / 2 per アイコン）を HP バー下に表示</td><td>非表示</td></tr>
+    <tr><td>無限表示</td><td>非表示</td><td>「∞」文字を表示（HP / 空腹の代替）</td></tr>
+    <tr><td>天候アイコン</td><td>現在天候（晴れ / 雨 / 雪）をアイコンで表示</td><td>同左</td></tr>
+  </table>
+
+  <h3>クロスヘア（中央）</h3>
+  <p>画面中央に常時固定表示。照準先にブロックが存在する場合はブロック外周をハイライト。照準先なし（空中・遠距離）の場合はハイライトなし。</p>
+
+  <h3>ホットバー（下中央）</h3>
+  <p>選択中ブロック種別のアイコンと所持個数バッジを表示するスロット行。スロットをタップして配置ブロックを切り替える。クリエイティブモードでは個数表示なし（無限）。</p>
+
+  <h3>操作コントロール</h3>
+  <table>
+    <tr><th>要素</th><th>配置</th><th>操作</th><th>説明</th></tr>
+    <tr><td>バーチャルジョイスティック</td><td>左下</td><td>ドラッグ</td><td>ドラッグ量・方向をプレイヤー水平移動速度に変換。デッドゾーン設定（0〜30%）あり</td></tr>
+    <tr><td>視点操作エリア</td><td>右画面半分 DragGesture</td><td>スワイプ</td><td>ドラッグ量を yaw（左右）/ pitch（上下）の視点回転に変換。感度設定（0.5〜1.8x）あり</td></tr>
+    <tr><td>壊すボタン</td><td>右下</td><td>長押し</td><td>長押し中、照準ブロックをツールの採掘時間に応じて破壊。亀裂エフェクトを 0〜5 段階で表示</td></tr>
+    <tr><td>置くボタン</td><td>右下</td><td>タップ</td><td>照準面にホットバー選択中ブロックを設置</td></tr>
+    <tr><td>ジャンプボタン</td><td>右下</td><td>タップ / 長押し</td><td>タップでジャンプ。クリエイティブモードでは長押しで上昇（フライ）</td></tr>
+    <tr><td>ダッシュボタン</td><td>右下</td><td>タップ</td><td>タップで短時間ダッシュ移動を発動</td></tr>
+  </table>
+
+  <h3>シート / パネル一覧</h3>
+  <table>
+    <tr><th>パネル</th><th>トリガー</th><th>内容</th><th>ゲームループ</th></tr>
+    <tr><td>クラフトパネル</td><td>クラフトボタン</td><td>解放可能ツールのレシピ一覧。素材が揃っているレシピをタップでクラフト実行（素材消費 → ツール解放）</td><td>一時停止</td></tr>
+    <tr><td>インベントリパネル</td><td>インベントリボタン（HUD 上）</td><td>全所持アイテムの種別・数量一覧。アイテムをタップでホットバーにセット</td><td>一時停止</td></tr>
+    <tr><td>かまどパネル</td><td>かまどブロックを操作</td><td>鉄鉱石→鉄インゴット / 金鉱石→金インゴットを石炭で精錬。精錬中はプログレスバー表示</td><td>一時停止</td></tr>
+    <tr><td>チェストパネル</td><td>チェストブロックを操作</td><td>スロット 27 個のチェスト中身一覧。アイテムの預け入れ・取り出し</td><td>一時停止</td></tr>
+    <tr><td>設定パネル</td><td>設定ボタン</td><td>視点感度スライダー（0.5〜1.8x）/ 移動デッドゾーンスライダー（0〜30%）/ 採掘ボタン強調トグル / 画質プリセット（low / standard / high）</td><td>一時停止</td></tr>
+    <tr><td>死亡オーバーレイ</td><td>HP が 0 になったとき自動表示</td><td>死亡原因テキスト（例：「溶岩に落ちた」）/ 「復活する」ボタン / 「終了して戻る」ボタン</td><td>停止</td></tr>
+    <tr><td>目標ヒント（ObjectiveHint）</td><td>ゲーム進行に応じて自動表示</td><td>ツール解放に向けたガイドテキスト（例：「石を 10 個集めよう」）</td><td>継続</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>UI の変化</th><th>ゲームループ</th></tr>
+    <tr><td>サバイバルモード</td><td>右上に HP バー + 空腹度バーを表示。モブダメージ / 落下ダメージ / 空腹ダメージ有効</td><td>実行中</td></tr>
+    <tr><td>クリエイティブモード</td><td>右上に「∞」を表示。フライ有効・全ダメージ無効・インベントリ無限</td><td>実行中</td></tr>
+    <tr><td>ブロック破壊中</td><td>照準ブロックに亀裂エフェクト（採掘進行度 0〜5 段階）。壊すボタンを離すと進行度リセット</td><td>実行中</td></tr>
+    <tr><td>パネル表示中</td><td>クラフト / インベントリ / かまど / チェスト / 設定パネルが前面表示</td><td>一時停止（isPaused = true）</td></tr>
+    <tr><td>プレイヤー死亡</td><td>画面が赤フェード → 死亡オーバーレイを表示</td><td>停止</td></tr>
+  </table>
+
+  <h2>死亡・復活フロー</h2>
+  <table>
+    <tr><th>ステップ</th><th>処理</th></tr>
+    <tr><td>1. HP が 0 になる</td><td>死亡原因を記録（溶岩落下 / 落下ダメージ / モブ攻撃 等）</td></tr>
+    <tr><td>2. 赤フェード</td><td>SCNView に赤いオーバーレイをフェードイン</td></tr>
+    <tr><td>3. 死亡オーバーレイ表示</td><td>「あなたは死にました」+ 死亡原因テキスト + 「復活する」「終了して戻る」ボタン</td></tr>
+    <tr><td>4a. 「復活する」</td><td>最終スポーン地点（最後に寝たベッド or ワールド初期スポーン）にリスポーン。HP / 空腹を回復して再開</td></tr>
+    <tr><td>4b. 「終了して戻る」</td><td>最終プレイ日時を更新してワールド選択画面へ pop</td></tr>
+  </table>
+
+  <h2>設定パネル詳細</h2>
+  <table>
+    <tr><th>設定項目</th><th>型</th><th>範囲 / 選択肢</th><th>保存先</th></tr>
+    <tr><td>視点感度</td><td>Slider（Float）</td><td>0.5〜1.8x</td><td>UserDefaults</td></tr>
+    <tr><td>移動デッドゾーン</td><td>Slider（Int）</td><td>0〜30%</td><td>UserDefaults</td></tr>
+    <tr><td>採掘ボタン強調</td><td>Toggle（Bool）</td><td>ON / OFF</td><td>UserDefaults</td></tr>
+    <tr><td>画質</td><td>Picker（enum）</td><td>low / standard / high</td><td>UserDefaults</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>戻るボタン</td><td>ワールド選択画面（CF-S00）へ pop。最終プレイ日時を更新</td></tr>
+    <tr><td>各パネルの閉じる操作</td><td>ゲームメイン画面に戻る（ゲームループ再開）</td></tr>
+    <tr><td>死亡オーバーレイ「終了して戻る」</td><td>ワールド選択画面（CF-S00）へ pop</td></tr>
+    <tr><td>死亡オーバーレイ「復活する」</td><td>同じゲームメイン画面でリスポーン再開</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// プレイヤー状態（非永続・インメモリ）
+struct Player {
+    var position: SCNVector3
+    var velocity: SCNVector3
+    var hp: Int           // 最大 20
+    var hunger: Float     // 最大 20
+    var yaw: Float
+    var pitch: Float
+    var isFlying: Bool
+    var inventory: [BlockType: Int]
+    var unlockedTools: Set&lt;ToolType&gt;
+    var selectedTool: ToolType
+    var selectedBlock: BlockType
+}
+
+// ToolType enum（採掘速度倍率を保持）
+enum ToolType: String {
+    case fist, woodPickaxe, stonePickaxe, ironPickaxe, diamondPickaxe
+
+    var miningSpeedMultiplier: Float { /* 1, 2, 4, 8, 16 */ }
+    var craftCost: (material: BlockType, count: Int)? { /* nil = 初期解放済み */ }
+}
+
+// UI・ゲーム状態（@Observable @MainActor）
+@Observable @MainActor final class GameState {
+    var isCreativeMode: Bool = false
+    var currentWeather: WeatherType = .clear
+    var graphicsQuality: GraphicsQuality = .standard
+    var showCraft: Bool = false
+    var showInventory: Bool = false
+    var showFurnace: Bool = false
+    var showChest: Bool = false
+    var showSettings: Bool = false
+    var isPlayerDead: Bool = false
+    var deathCause: String = ""
+}
+
+// SwiftData 永続モデル
+@Model
+final class WorldRecord {
+    var id: UUID = UUID()
+    var name: String = ""
+    var seed: Int = 0
+    var lastPlayedAt: Date = Date()
+}
+</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>SCNView を UIViewRepresentable でラップし、SwiftUI の ZStack 最背面に配置。HUD は ZStack の前面レイヤーに重ねる</li>
+    <li>ゲームループは SCNSceneRendererDelegate の <code>renderer(_:updateAtTime:)</code> で管理（目標 60fps）</li>
+    <li>パネル表示中は <code>scnView.isPaused = true</code> でレンダリングを停止しバッテリー節約</li>
+    <li>ジョイスティックと右エリア DragGesture は SimultaneousGesture で並列処理し、multiTouch を有効化する</li>
+    <li>視点感度・デッドゾーンは UserDefaults に保存し、GameState 経由でジョイスティックロジックに反映する</li>
+    <li>壊すボタンの長押し判定は <code>DragGesture(minimumDistance: 0)</code> の onChanged / onEnded で実装し、採掘進行度を Timer で更新する</li>
+    <li>採掘完了時はツールの <code>miningSpeedMultiplier</code> を基準時間に掛けて採掘時間を算出する</li>
+    <li>亀裂エフェクトは SCNMaterial のテクスチャを採掘進行度（0.0〜1.0）に応じて段階的に差し替えて表現する（6 段階テクスチャ）</li>
+    <li>クリエイティブモードへの切替はゲーム中いつでも可能だが、サバイバル → クリエイティブに切り替えた場合のドロップアイテムや経験値は消去しない</li>
+    <li>死亡フェードは <code>SCNAction.sequence</code> で赤オーバーレイ SCNNode をフェードイン後、GameState.isPlayerDead = true で SwiftUI オーバーレイを表示する</li>
+    <li>設定パネルの画質プリセットは SCNView の <code>antialiasingMode</code> / shadowMapSize 等を切り替えて反映する</li>
+    <li>横画面固定は Info.plist の <code>UIInterfaceOrientationLandscapeLeft</code> / <code>UIInterfaceOrientationLandscapeRight</code> を設定し、SwiftUI の <code>.supportedOrientations</code> でも制限する</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="S00_world_select.html">ワールド選択画面（CF-S00）</a></li>
+    <li><a href="../features/survival.html">サバイバルシステム（CF-F02）</a></li>
+    <li><a href="../features/crafting.html">クラフト・ツールシステム（CF-F03）</a></li>
+    <li><a href="../features/creative.html">クリエイティブモード（CF-F04）</a></li>
+    <li><a href="../features/terrain.html">地形生成（CF-F01）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-28</td><td>初版作成（HUD 構成・操作方法・ツールテーブル・死亡復活フロー・設定パネル詳細を記載）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-28</footer>
+</div>
+</body>
+</html>

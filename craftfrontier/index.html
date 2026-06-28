@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - Specs</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← App Specs Personal</a></div>
+
+  <header class="site-header">
+    <h1>CraftFrontier</h1>
+    <p>Swift 6 / SwiftUI / SceneKit 製の Minecraft ライク iOS ボクセルサンドボックスゲーム · Bundle ID: <code>com.happyboy1002.CraftFrontier</code></p>
+  </header>
+
+  <h2>概要</h2>
+  <ul class="kv-list">
+    <li><span class="k">カテゴリ</span><span class="v">ゲーム / アドベンチャー</span></li>
+    <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
+    <li><span class="k">画面向き</span><span class="v">横画面固定（Landscape）</span></li>
+    <li><span class="k">言語</span><span class="v">日本語</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">未定</span></li>
+    <li><span class="k">ステータス</span><span class="v">開発中（TestFlight 配信中）</span></li>
+    <li><span class="k">リリース予定</span><span class="v">未定</span></li>
+    <li><span class="k">技術スタック</span><span class="v">Swift 6 / SwiftUI / SceneKit / SwiftData</span></li>
+    <li><span class="k">ゲームモード</span><span class="v">サバイバルモード / クリエイティブモード</span></li>
+  </ul>
+
+  <h2>ゲームモード概要</h2>
+  <table>
+    <tr><th>モード</th><th>HP・空腹</th><th>採掘</th><th>インベントリ</th></tr>
+    <tr><td>サバイバル</td><td>あり（最大 20 / 最大 20）</td><td>ツール種別により採掘時間差あり</td><td>ブロック所持数管理あり</td></tr>
+    <tr><td>クリエイティブ</td><td>なし（∞ 表示）</td><td>瞬間採掘</td><td>無限・所持数消費なし</td></tr>
+  </table>
+
+  <h2>全体仕様書</h2>
+  <div class="card-grid">
+    <a class="card" href="data-model.html">
+      <div class="title">データモデル</div>
+      <div class="desc">SwiftData モデル・ゲーム内データ構造</div>
+    </a>
+  </div>
+
+  <h2>画面仕様書</h2>
+  <div class="card-grid">
+    <a class="card" href="screens/S00_world_select.html">
+      <div class="title">ワールド選択</div>
+      <div class="desc">保存済みワールドの一覧・新規作成・削除</div>
+      <div class="meta"><span class="tag">CF-S00</span></div>
+    </a>
+    <a class="card" href="screens/S01_game_main.html">
+      <div class="title">ゲームメイン</div>
+      <div class="desc">SceneKit 3D フィールド・HUD・操作コントロール・各種パネル</div>
+      <div class="meta"><span class="tag">CF-S01</span></div>
+    </a>
+  </div>
+
+  <h2>機能仕様書</h2>
+  <div class="card-grid">
+    <a class="card" href="features/terrain.html">
+      <div class="title">地形生成</div>
+      <div class="desc">Perlin ノイズによるチャンクベース地形生成・天候システム</div>
+      <div class="meta"><span class="tag">CF-F01</span></div>
+    </a>
+    <a class="card" href="features/survival.html">
+      <div class="title">サバイバルシステム</div>
+      <div class="desc">HP・空腹・死亡・復活・ダメージ源</div>
+      <div class="meta"><span class="tag">CF-F02</span></div>
+    </a>
+    <a class="card" href="features/crafting.html">
+      <div class="title">クラフト・ツールシステム</div>
+      <div class="desc">ツールレシピ・採掘速度テーブル・かまど精錬</div>
+      <div class="meta"><span class="tag">CF-F03</span></div>
+    </a>
+    <a class="card" href="features/creative.html">
+      <div class="title">クリエイティブモード</div>
+      <div class="desc">フライ・無限インベントリ・瞬間採掘・無敵</div>
+      <div class="meta"><span class="tag">CF-F04</span></div>
+    </a>
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-28</td><td>初版作成（アプリ名 CraftFrontier として新規立ち上げ）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-28</footer>
+</div>
+</body>
+</html>
