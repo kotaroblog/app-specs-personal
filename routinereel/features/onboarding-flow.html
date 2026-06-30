@@ -23,8 +23,12 @@
     オンボーディング完了後に遅延発火させる。通知許可ダイアログを先に表示し、続けて
     ATT を表示することで、両ダイアログの許可率を高める設計とした。
   </p>
+  <p>
+    v1.1.0 よりページ数を <strong>4→3 ページ</strong>に圧縮した（旧 Page 1「2つの撮影スタイル解説」を削除）。
+    撮影スタイル解説はクリップライブラリ画面の TipKit（ShootingStyleTip）で文脈表示に移行。
+  </p>
 
-  <h2>ページ構成</h2>
+  <h2>ページ構成（v1.1.0以降・3ページ）</h2>
   <table>
     <thead>
       <tr><th>Page</th><th>名前</th><th>内容</th></tr>
@@ -37,18 +41,28 @@
       </tr>
       <tr>
         <td>1</td>
-        <td>features</td>
-        <td>「連続撮影」/「クリップライブラリ」/「自動編集」の3機能紹介（旧: "continuous" / "clip library" / "auto-edit"・596896d で日本語化）。「次へ」ボタン（旧: "next"）</td>
+        <td>preset</td>
+        <td>プリセット選択（朝5分 / 夜の整い / 筋トレ10分 / 集中45分 /「あとで」）。v1.1.0 で旧 Page 1（撮影スタイル解説）削除に伴い繰り上げ</td>
       </tr>
       <tr>
         <td>2</td>
-        <td>preset</td>
-        <td>プリセット選択（朝5分 / 夜の整い / 筋トレ10分 / 集中45分 /「あとで」（旧: "skip for now"・596896d で日本語化））</td>
-      </tr>
-      <tr>
-        <td>3</td>
         <td>reminder</td>
         <td>朝7:00 / 夜21:00 /「あとで」の3択。プリセット選択時のみ表示、「あとで」経路はバイパス</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>削除されたページ（v1.0の旧 Page 1）</h2>
+  <table>
+    <thead>
+      <tr><th>Page</th><th>名前</th><th>廃止理由</th><th>代替</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>旧 1</td>
+        <td>features（2つの撮影スタイル解説）</td>
+        <td>起動直後に複雑な機能説明を読ませると離脱リスクが高い。「連続撮影」「クリップライブラリ」「自動編集」の3機能紹介は初回体験として効果が薄かった</td>
+        <td>クリップライブラリ画面の TipKit（ShootingStyleTip）で文脈に合ったタイミングに移行。最大3回表示</td>
       </tr>
     </tbody>
   </table>
@@ -58,6 +72,15 @@
     <li><span class="k">pendingRoutine nil 時</span><span class="v">通知許可ダイアログを温存して早期 return（ゴースト Routine 防止）</span></li>
     <li><span class="k">granted = true</span><span class="v">Routine に時刻設定 + <code>scheduleReminder</code> を呼出</span></li>
     <li><span class="k">granted = false</span><span class="v"><code>reminderEnabled</code> は true のまま保持。後で iOS 設定で許可された場合、RootView.onAppear の <code>refreshAllReminders</code> で自動的にスケジュールされる</span></li>
+  </ul>
+
+  <h2>ShootingStyleTip（TipKit・v1.1.0追加）</h2>
+  <p>旧 Page 1「2つの撮影スタイル解説」をオンボーディングから外した代わりに、クリップライブラリ画面で文脈に沿ったタイミングに表示する TipKit ヒントに移行した。</p>
+  <ul class="kv-list">
+    <li><span class="k">表示場所</span><span class="v">ClipLibraryView（クリップライブラリ画面）冒頭</span></li>
+    <li><span class="k">表示回数上限</span><span class="v">最大3回（TipKit の <code>maxDisplayCount</code> で制御）</span></li>
+    <li><span class="k">内容</span><span class="v">「連続撮影」と「クリップライブラリ（単発撮影）」2つの撮影スタイルの使い分け方を簡潔に案内</span></li>
+    <li><span class="k">却下</span><span class="v">× ボタンで閉じる（以後カウントは継続、上限到達で自動非表示）</span></li>
   </ul>
 
   <h2>UIテキスト日本語化（596896d）</h2>
@@ -132,12 +155,13 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.2</td><td>2026-06-30</td><td>v1.1.0 反映 (#3): オンボーディング 4→3 ページに圧縮。旧 Page 1「2つの撮影スタイル解説（features）」を削除。新フロー: Welcome(0) → プリセット選択(1) → リマインダー(2)。撮影スタイル解説は ClipLibraryView の TipKit（ShootingStyleTip、最大3回表示）に移行</td></tr>
       <tr><td>v1.1</td><td>2026-06-16</td><td>UIテキスト全面日本語化（596896d）: "get started"→「はじめる」/ "next"→「次へ」/ "skip for now"→「あとで」/ "continuous"→「連続撮影」/ "clip library"→「クリップライブラリ」/ "auto-edit"→「自動編集」。Quick Start プリセット title 日本語化: "morning"→「朝」/ "night"→「夜」/ "workout"→「運動」/ "study"→「学習」（id は URL scheme パスのため不変）</td></tr>
       <tr><td>v1.0</td><td>2026-06-10</td><td>初版作成。Page 3.5 reminder の追加・TabView swipe 無効化・ATT 遅延発火を文書化。</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-16</footer>
+  <footer class="site-footer">最終更新: 2026-06-30</footer>
 </div>
 </body>
 </html>

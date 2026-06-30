@@ -97,19 +97,28 @@
   </ul>
 
   <h2>保存ロジック</h2>
-  <p>保存ボタンタップで <code>handleSaveTapped()</code> → クリップ存在チェック → <code>save()</code></p>
+  <p>保存ボタンタップで <code>handleSaveTapped()</code> → クリップ削除要否チェック（v1.1.0以降）→ <code>save()</code></p>
   <ol>
     <li>name trimming + 空チェック</li>
     <li>reminderTime から hour/minute 抽出</li>
     <li>新規作成 or 既存編集の分岐</li>
-    <li>既存編集時: 紐づくクリップ・ステップを<strong>スナップショット化してから削除</strong>（並行更新防止）</li>
+    <li>既存編集時: <code>stepsChanged</code> computed property で変更判定。<strong>ステップ構成が変わった場合のみ</strong>クリップを削除（スナップショット化してから削除）。名前・アイコン・フォント・リマインダー変更ではクリップを保持</li>
     <li>各 EditableStep から Step エンティティ生成 + modelContext.insert</li>
     <li>ReminderService.scheduleReminder() を Task で実行</li>
     <li>dismiss()</li>
   </ol>
 
+  <h3>stepsChanged computed property（v1.1.0追加）</h3>
+  <p>編集前スナップショット（<code>originalSteps</code>）と現在の <code>editableSteps</code> を比較し、クリップ削除が必要かどうかを判定する。</p>
+  <ul class="kv-list">
+    <li><span class="k">判定対象</span><span class="v">ステップ数・各ステップの名前・各ステップの秒数（順番込み）</span></li>
+    <li><span class="k">非判定（クリップ保持）</span><span class="v">ルーティン名・アイコン・フォント・リマインダー時刻の変更</span></li>
+    <li><span class="k">trueの場合</span><span class="v">クリップ削除警告 alert を表示してから save()</span></li>
+    <li><span class="k">falseの場合</span><span class="v">alert をスキップして save()（クリップはそのまま保持）</span></li>
+  </ul>
+
   <h3>クリップ削除警告</h3>
-  <p>既存ルーティンが紐づくクリップを持っている場合のみ alert を挟む:</p>
+  <p><code>stepsChanged == true</code> かつ既存ルーティンが紐づくクリップを持っている場合のみ alert を挟む（v1.1.0以降・以前は常に alert）:</p>
   <ul class="kv-list">
     <li><span class="k">文言</span><span class="v">「このルーティンには〇件のクリップが保存されています。ステップを更新するとクリップライブラリがすべて削除されます。続けますか？」</span></li>
     <li><span class="k">ボタン</span><span class="v">「更新する」(destructive) / 「キャンセル」</span></li>
@@ -130,6 +139,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.1</td><td>2026-06-30</td><td>v1.1.0 反映 (#2): 編集保存でのクリップ削除を緩和。名前/アイコン/フォント/リマインダー変更ではクリップを保持し、ステップ構成（数・名前・秒数）が変わった場合のみクリップを削除。<code>stepsChanged</code> computed property で判定（originalSteps と editableSteps を比較）</td></tr>
       <tr><td>v1.0.6</td><td>2026-05-25</td><td>RoutinePreset.displayName 日本語化に伴い loadData() の初期名が「morning routine」→「モーニングルーティン」へ自動切替</td></tr>
       <tr><td>v1.0.5</td><td>2026-05-25</td><td>全面 Home UI 統一: 背景black→warm white / 全セクション Card section 化 / accent orange アクセント / DurationPickerSheet も統一 / 既存ローカル変更（clipStorage refactor + accessibility日本語化）統合</td></tr>
       <tr><td>v1.0.1</td><td>2026-05-20</td><td>maxFreeSteps 4 → 5 に引き上げ</td></tr>
@@ -137,7 +147,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-25</footer>
+  <footer class="site-footer">最終更新: 2026-06-30</footer>
 </div>
 </body>
 </html>

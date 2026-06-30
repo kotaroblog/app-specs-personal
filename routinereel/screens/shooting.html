@@ -229,12 +229,32 @@
   <h2>BGM 機能の扱い</h2>
   <p>v1.0 で<strong>完全削除</strong>。撮影時の BGM 試聴・合成時の BGM 焼き込みは廃止。詳細は <a href="../features/bgm-removal.html">BGM機能削除の意思決定記録</a> 参照。</p>
 
-  <h2>v1.1 で予定される改善</h2>
+  <h2>連続撮影の中断 → クリップ保持（v1.1.0・#1）</h2>
+  <p>v1.1.0 以前は連続撮影を中断した際、録画済みのクリップもすべて破棄されていた。v1.1.0 でクリップ保持に変更し、中断コストを大幅に軽減した。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">中断でセッション内の全クリップを破棄</span></li>
+    <li><span class="k">変更後</span><span class="v">録画済みクリップはクリップライブラリに保持。録画中の現在ステップのクリップのみ破棄</span></li>
+    <li><span class="k">制御フラグ</span><span class="v"><code>isCancelled</code> フラグで録画中ステップのみ識別して破棄対象にする</span></li>
+    <li><span class="k">中断アラート</span><span class="v">「撮影を中断しますか？」→「保存して終了」（録画済みクリップを保持して閉じる）/ 「キャンセル」（撮影に戻る）</span></li>
+    <li><span class="k">アラートトリガー</span><span class="v">閉じる × ボタンタップ（ShootingView / SingleStepShootingView 共通）</span></li>
+  </ul>
+
+  <h2>Dynamic Type クランプ（v1.1.0・#5）</h2>
+  <p>固定サイズフォントが多いため、アクセシビリティ設定で過大なサイズを選択した場合のレイアウト崩れを防止するクランプを設定した。</p>
+  <ul class="kv-list">
+    <li><span class="k">設定箇所</span><span class="v">RootView（アプリ全体に適用）</span></li>
+    <li><span class="k">制限範囲</span><span class="v"><code>.dynamicTypeSize(.xSmall ... .accessibility2)</code></span></li>
+    <li><span class="k">上限の根拠</span><span class="v">accessibility3 以上は固定フォントを多用する撮影 UI / クリップサムネ等でレイアウト崩れが確認されたため</span></li>
+    <li><span class="k">v1.2 方針</span><span class="v">セマンティックフォント（<code>.headline</code> / <code>.body</code> 等）へ段階的に移行してクランプを外す方向</span></li>
+  </ul>
+
+  <h2>v1.1 で予定される改善（更新）</h2>
   <ul>
     <li><strong>DesignsRecordPreviewView との本格統合</strong> — モック背景の生活感（粒子・露出フリッカー・鏡）を実カメラに統合</li>
     <li><strong>テロップのプリセット別最適化</strong> — 時刻表示を「経過時間」「Day Count」へ切替可能化（workout/study 向け）</li>
     <li><strong>撮り直しボタンの位置移動</strong> — 誤タップ防止のため遠い位置へ</li>
     <li><strong>テロップフォント拡大</strong> — 24pt 以上を検討</li>
+    <li><strong>Dynamic Type セマンティックフォント対応（v1.2）</strong> — セマンティックフォントへの段階移行でクランプを除去</li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -243,6 +263,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.3</td><td>2026-06-30</td><td>v1.1.0 反映 (#1/#5): 連続撮影の中断→クリップ保持に変更（録画済みクリップをクリップライブラリに保持、録画中ステップのみ isCancelled フラグで破棄、「保存して終了」アラート追加）。Dynamic Type クランプを RootView に追加（<code>.dynamicTypeSize(.xSmall ... .accessibility2)</code>）。v1.2 でセマンティックフォント対応予定</td></tr>
       <tr><td>v1.2</td><td>2026-06-16</td><td>SingleStepShootingView を ShootingView 寄り UI に統一（P1・596896d）: 背景を designsBackground に変更、録画ボタンをピンク→オレンジのグラデーション化、REC インジケーターにパルスアニメーション追加、カウントダウンを 128pt spring トランジションに統一、ステータステキストを3状態化（録画中タイマー / 「まもなく録画」/ 「X秒録画」）。ExportCompleteView: 自動ハッシュタグコピー廃止・明示コピーボタン追加・完了ボタンのインタースティシャル広告削除。ClipPlayerView: トリムハンドルに accessibilityAdjustableAction（0.5秒刻み）と accessibilityValue（「X.X秒」）を追加</td></tr>
       <tr><td>v1.1</td><td>2026-06-12</td><td><a href="../features/analytics.html">Analytics</a> イベント組込み: <code>first_recording</code>（初回 1 回のみ、<code>AppSettings.hasRecordedFirst</code> で永続化判定）と <code>streak_updated(days:)</code>（撮影都度、最新 streak 値を送信）を <code>ShootingViewModel.persistClip</code> 成功時に発火（commit 8d0d70b・1d6e91e で日付二重加算を解消）</td></tr>
       <tr><td>v1.0.5</td><td>2026-06-10</td><td>SceneLabelLayout 単一ソース化（配置・サイズ比率・descent slack 補正を集約）/ 撮影プレビュー位置を 7%→22% に統一して完成動画と WYSIWYG 達成 / 長文ステップ名の折り返しを SwiftUI Text / CATextLayer 両方で maxLines=2 に統一 / SingleStepShootingView に底面グラデーションと #Preview を追加（commit 35c6118・a7f8ee2）</td></tr>
@@ -254,7 +275,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-16</footer>
+  <footer class="site-footer">最終更新: 2026-06-30</footer>
 </div>
 </body>
 </html>

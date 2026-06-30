@@ -27,9 +27,20 @@
 
   <h2>画面構成</h2>
   <ol>
+    <li><strong>ShootingStyleTip（TipKit）</strong>（v1.1.0追加・最大3回表示）</li>
     <li><strong>ステップセクション</strong>（ルーティンの sortedSteps を順に展開）</li>
     <li><strong>動画を作るCTA</strong>（クリップが1件以上ある時のみ）</li>
   </ol>
+
+  <h2>ShootingStyleTip（TipKit・v1.1.0）</h2>
+  <p>オンボーディングから削除された「2つの撮影スタイル解説」をクリップライブラリ画面で文脈表示する TipKit ヒント。初めてクリップライブラリを開いた際に表示され、連続撮影と単発撮影の違いを案内する。</p>
+  <ul class="kv-list">
+    <li><span class="k">表示位置</span><span class="v">画面最上部（ステップ一覧より上）</span></li>
+    <li><span class="k">表示回数上限</span><span class="v">最大3回（<code>maxDisplayCount = 3</code>）</span></li>
+    <li><span class="k">内容</span><span class="v">「連続撮影」（全ステップを一気に撮るモード）と「クリップライブラリ」（ステップ別に1本ずつ撮るモード）の使い分けを案内</span></li>
+    <li><span class="k">却下</span><span class="v">× ボタンで閉じる（以後カウントは継続し上限到達で自動非表示）</span></li>
+    <li><span class="k">関連</span><span class="v"><a href="../features/onboarding-flow.html">オンボーディングフロー</a>（旧 Page 1 削除の経緯）</span></li>
+  </ul>
 
   <h2>ステップセクション</h2>
   <ul class="kv-list">
@@ -106,12 +117,13 @@
     </thead>
     <tbody>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。warm white背景、撮影Capsuleボタン化、サムネ拡大、「動画を作る」CTA を Home CTA 統一スタイルへ</td></tr>
+      <tr><td>v1.3</td><td>2026-06-30</td><td>v1.1.0 反映 (#3): ShootingStyleTip (TipKit) を画面冒頭に追加（最大3回表示）。オンボーディングから削除した撮影スタイル解説をクリップライブラリで文脈表示に移行</td></tr>
       <tr><td>v1.2</td><td>2026-06-16</td><td>ClipRoutineSelectSheet 追加（596896d）: クリップタブで 2件以上のルーティンがある場合にルーティン選択シートを表示（暗黙の先頭選択を廃止）。ClipGenerateView に選択状況カードを追加: 「選択済み X/Y」+ プログレスバー + 未選択ステップ名 + 生成ボタン文言分岐（全選択 → 「動画を作成する」/ 一部 → 「選択したクリップで作成」）</td></tr>
       <tr><td>v1.1</td><td>2026-06-10</td><td>CreateSessionView 新設で作成セッションを集約（commit 3a32a6c, 2026-06-06）。NavigationStack(path:) + ShootingView 用 fullScreenCover を内包し、ClipGenerate / Preview / ExportComplete をコールバック駆動化。ShootingView 完了時の PreviewView 自動 push 責務も CreateSessionView へ移管。ClipLibrary 冒頭に「全ステップを連続撮影」ボタンを追加</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-16</footer>
+  <footer class="site-footer">最終更新: 2026-06-30</footer>
 </div>
 </body>
 </html>
