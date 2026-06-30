@@ -36,7 +36,7 @@
     <li><span class="k">②Hero</span><span class="v">メインコピー「毎日の記録を、もっと心地よく。」+ サブコピー「透かしなし・無制限保存・広告非表示」</span></li>
     <li><span class="k">③特典リスト</span><span class="v">4項目・SF Symbols（infinity / sparkles / wand.and.stars / square.and.arrow.up）+ soft warm gradient 円背景</span></li>
     <li><span class="k">④プラン選択</span><span class="v">年額（「X% お得」動的バッジ・pink→orange グラデ）+ 月額。Card セレクトUI</span></li>
-    <li><span class="k">⑤購入CTA</span><span class="v">「7日間無料で試す」/「月額プランで始める」 + 補足「いつでもキャンセル可能」</span></li>
+    <li><span class="k">⑤購入CTA</span><span class="v">「プレミアムにアップグレード」/「月額プランで始める」 + 補足「いつでもキャンセル可能」（v1.1.0: 年額のCTA文言をトライアルなし表記「プレミアムにアップグレード」に変更）</span></li>
     <li><span class="k">⑥フッター</span><span class="v">「あとで」「購入を復元」（小さく控えめ）</span></li>
   </ul>
 
@@ -57,9 +57,10 @@
   <h2>プラン設計</h2>
   <ul class="kv-list">
     <li><span class="k">月額</span><span class="v">¥480（<code>com.happyboy1002.RoutineReel.monthly</code>）</span></li>
-    <li><span class="k">年額</span><span class="v">¥3,800・7日間無料トライアル付（<code>com.happyboy1002.RoutineReel.yearly</code>）</span></li>
+    <li><span class="k">年額</span><span class="v">¥3,800・<strong>無料トライアルなし</strong>（<code>com.happyboy1002.RoutineReel.yearly</code>）</span></li>
     <li><span class="k">月換算（年額）</span><span class="v">¥317（34%オフ訴求）</span></li>
     <li><span class="k">デフォルト選択</span><span class="v">年額（「X% お得」バッジ付き）</span></li>
+    <li><span class="k">トライアル廃止（v1.1.0）</span><span class="v">年額の7日間無料トライアルを廃止。CTA文言・trialNoticeSection・planSubtitle をすべてトライアルなし表記に統一</span></li>
   </ul>
 
   <h2>年額バッジ動的化（X% お得）</h2>
@@ -73,9 +74,9 @@
     <li><span class="k">バッジ装飾</span><span class="v">既存の pink→orange グラデーション・shape は維持</span></li>
   </ul>
 
-  <h3>planSubtitle（既存仕様維持）</h3>
+  <h3>planSubtitle（v1.1.0更新）</h3>
   <ul class="kv-list">
-    <li><span class="k">年額</span><span class="v">「7日間無料、以降 X/月」（X = <code>SubscriptionManager.yearlyMonthlyPrice</code>）</span></li>
+    <li><span class="k">年額</span><span class="v">「X/月」（X = <code>SubscriptionManager.yearlyMonthlyPrice</code>。v1.1.0 でトライアル廃止に伴い「7日間無料、以降」プレフィックスを削除）</span></li>
     <li><span class="k">月額</span><span class="v">「月額プラン」</span></li>
   </ul>
 
@@ -113,6 +114,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.2</td><td>2026-07-01</td><td>v1.1.0 反映: 年額の7日間無料トライアルを廃止。プラン設計・planSubtitle・trialNoticeSection・CTA文言（「7日間無料で試す」→「プレミアムにアップグレード」）をトライアルなし表記に一括更新。P1-a バグ修正（temp削除/Preview入力消失）: <code>inFlightTempURLs: Set&lt;URL&gt;</code> を追加し、persistClip 実行中の temp URL を cleanupTempFiles() がスキップするよう保護。<code>persistClip</code> 内での <code>removeItem(sourceURL)</code> を削除（PreviewView が temp URL を参照するため）。Task 完了後の <code>MainActor.run</code> に <code>guard !self.isCancelled</code> ガードを追加（ShootingViewModel 変更のため paywall 仕様への影響なし、記録として追記）。SnapshotGalleryポスターを RoutineVideoPoster に刷新（既存の Snapshot → 合成動画の縦型ポスター表示に変更）</td></tr>
       <tr><td>v1.1</td><td>2026-06-14</td><td>Opus 4.8 UX レビュー対応 2件: (B5-1) 特典 4 項目を「動画日記専用」訴求に刷新。順序を「SNS発信→蓄積→ユーティリティ」へ並び替え（クリーンな投稿 → シーン別の世界観 → 動画資産を貯め続ける → 集中して撮れる）。コピーも各特典で動画日記文脈に統一。(B5-2) <code>trialNoticeSection</code> 新規追加で「7日間無料、以降は年額プランで自動継続（¥3,800/年・月換算 ¥316）。いつでもキャンセル可能。」を StoreKit <code>displayPrice</code> 経由で動的表示。Product 未取得時は短縮版にフォールバック。スクショ撮影モード（<code>AppEnvironment.isUISnapshot</code>）では非表示で価格非掲載方針を維持。App Store Review Guideline 3.1.2(a) 推奨に準拠（commit 692882f）</td></tr>
       <tr><td>v1.0.4</td><td>2026-06-12</td><td><strong>本番バグ修正</strong>: <code>yearlySavingPercentage</code> が常に 0 を返していたため「34% お得」が実は「0% お得」と表示されていた問題を、<a href="../features/testing.html">ユニットテスト</a>経由で検出・修正（commit b7ebfd6、<code>NSDecimalNumber.doubleValue</code> 経由の比率計算に変更）。<a href="../features/analytics.html">Analytics</a> イベント <code>paywall_shown(trigger:)</code> を onAppear で発火（v1.0 では trigger=.manual 固定。routine_limit / storage_limit / pro_filter / pro_font 別の trigger 引数化は次タスク）。購入成功時 <code>paywall_converted(plan:)</code> を SubscriptionManager.purchase 内で発火（commit 8d0d70b）</td></tr>
       <tr><td>v1.0.3</td><td>2026-06-10</td><td>年額カードのバッジを「おすすめ」固定 → 「X% お得」動的表示に変更（<code>SubscriptionManager.yearlySavingPercentage</code>）。Product 取得不能時は「おすすめ」フォールバック。planSubtitle 仕様は維持。</td></tr>
@@ -121,7 +123,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-14</footer>
+  <footer class="site-footer">最終更新: 2026-07-01</footer>
 </div>
 </body>
 </html>

@@ -16,13 +16,13 @@
     <p>価格戦略・Pro特典・課金壁設計・v1.1値上げ計画</p>
   </header>
 
-  <h2>v1.0 価格設定</h2>
+  <h2>価格設定（v1.1.0現在）</h2>
   <ul class="kv-list">
     <li><span class="k">月額</span><span class="v">¥480（<code>com.happyboy1002.RoutineReel.monthly</code>）</span></li>
     <li><span class="k">年額</span><span class="v">¥3,800（<code>com.happyboy1002.RoutineReel.yearly</code>）</span></li>
-    <li><span class="k">無料トライアル</span><span class="v">年額に7日間無料</span></li>
+    <li><span class="k">無料トライアル</span><span class="v"><strong>廃止（v1.1.0）</strong>。旧: 年額に7日間無料。廃止に伴い CTA・planSubtitle・trialNoticeSection をすべてトライアルなし表記に統一</span></li>
     <li><span class="k">月換算（年額）</span><span class="v">¥317（34%オフ訴求）</span></li>
-    <li><span class="k">デフォルト推奨</span><span class="v">年額（おすすめバッジ付き）</span></li>
+    <li><span class="k">デフォルト推奨</span><span class="v">年額（「X% お得」バッジ付き）</span></li>
     <li><span class="k">サブスクグループ</span><span class="v">RoutineReel Pro</span></li>
   </ul>
 
@@ -128,11 +128,12 @@
     </tbody>
   </table>
 
-  <h2>トライアル価格明示セクション（596896d）</h2>
-  <p>App Store Review Guideline 3.1.2(a) 推奨に対応し、トライアル後の自動課金額と課金周期を明示する <code>trialNoticeSection</code> を追加。</p>
+  <h2>トライアル価格明示セクション（596896d / v1.1.0更新）</h2>
+  <p>App Store Review Guideline 3.1.2(a) 推奨に対応し、年額プランの課金条件を明示する <code>trialNoticeSection</code>。v1.1.0 でトライアル廃止に伴い表示テキストを更新。</p>
   <ul class="kv-list">
-    <li><span class="k">表示テキスト（価格取得時）</span><span class="v">「7日間無料、以降は年額プランで自動継続（¥3,800/年・月換算 ¥316）。」</span></li>
-    <li><span class="k">フォールバック（価格未取得時）</span><span class="v">「7日間無料、以降は年額プランで自動継続。」</span></li>
+    <li><span class="k">表示テキスト（v1.0・廃止）</span><span class="v">「7日間無料、以降は年額プランで自動継続（¥3,800/年・月換算 ¥316）。」</span></li>
+    <li><span class="k">表示テキスト（v1.1.0・現在）</span><span class="v">「年額プランで自動継続（¥3,800/年・月換算 ¥316）。」（トライアル文言を削除）</span></li>
+    <li><span class="k">フォールバック（価格未取得時）</span><span class="v">「年額プランで自動継続。」</span></li>
     <li><span class="k">キャンセル告知</span><span class="v">「いつでもキャンセル可能。」（light weight・tertiary text）</span></li>
     <li><span class="k">価格取得</span><span class="v">StoreKit 動的取得（<code>subscription.yearlyProduct?.displayPrice</code> / <code>subscription.yearlyMonthlyPrice</code>）。将来の値上げに自動追随</span></li>
     <li><span class="k">スクショモード</span><span class="v"><code>AppEnvironment.isUISnapshot</code> = true 時は非表示（<code>snapshotPlanCard</code> と整合）</span></li>
@@ -201,12 +202,13 @@
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成。BGM削除後の特典4項目、v1.1値上げ計画、競合比較を確立</td></tr>
       <tr><td>v1.1</td><td>2026-06-10</td><td>#7 反映: <code>yearlySavingPercentage</code> 新設で Paywall 年額バッジを「X% お得」動的化（フォールバック「おすすめ」）。ホーム「最近の動画」見出し横と SettingsView Pro セクションに保存メーター（X/3・∞ 保存）を統合。#2 連動で <code>ReviewRequestService.onSharedToSNS</code>（シェア実行成功時のみ、30日ガード共用）と <code>ReminderService.scheduleSharePromptNotification</code>（翌日10:00、share-prompt prefix で重複防止、.authorized/.provisional 許可）を追加</td></tr>
       <tr><td>v1.3</td><td>2026-06-16</td><td>PaywallTrigger 6 分類を確立（596896d）: <code>routineLimit / stepLimit / storageLimit / proFilter / proFont / manual</code>。<code>PaywallView</code> に <code>trigger</code> 引数追加（デフォルト <code>.manual</code>）。全呼び出し元で trigger を適切に設定（paywallTrigger State → showPaywall = true の実装パターンに統一）。Paywall 特典表示を SNS 発信意欲層向けに刷新（「クリーンな投稿 / シーン別の世界観 / 動画資産を貯め続ける / 集中して撮れる」4項目）。<code>trialNoticeSection</code> 追加（7日間無料 + 年額・月換算の明示、StoreKit 動的取得）。692882f で Paywall フィルタ右端フェードグラデを追加（UI改善）</td></tr>
+      <tr><td>v1.5</td><td>2026-07-01</td><td>v1.1.0 反映: 年額の7日間無料トライアルを廃止。CTA文言（「7日間無料で試す」→「プレミアムにアップグレード」）・planSubtitle（「7日間無料、以降 X/月」→「X/月」）・trialNoticeSection（「7日間無料、以降は年額プランで自動継続」→「年額プランで自動継続」）を一括更新。フォールバックテキストも同様に更新。AdMob 本番 App ID への切り替えも実施（仕様書非記載）</td></tr>
       <tr><td>v1.4</td><td>2026-06-30</td><td>v1.1.0 反映 (#4): フリーミアム上限を <code>VideoStorageService.freeRoutineLimit = 3</code> に一元化（旧: <code>maxFreeRoutines = 2</code> が散在）。ルーティン上限 2→3 件、動画保存上限も 3 件で統一。Pro 特典表示の「2件まで」を「3件まで」に更新。PaywallTrigger <code>routineLimit</code> の発火タイミングも「3件目」→「4件目」に修正</td></tr>
       <tr><td>v1.2</td><td>2026-06-12</td><td><strong>本番バグ修正</strong>: <code>yearlySavingPercentage</code> が常に 0 を返していた問題を <a href="testing.html">ユニットテスト</a>経由で検出・修正。<code>Decimal</code> の <code>/</code> 演算子が scale=0 で整数除算的に動く仕様への対応として、<code>NSDecimalNumber.doubleValue</code> 経由の比率計算に変更。Paywall「34% お得」バッジが正常表示されるようになった（commit b7ebfd6）。あわせて <code>SubscriptionManager.shared</code> 直参照 6 箇所を <code>@State</code> 経由に統一し <code>@Observable</code> 追跡を正規化（commit 04bb873）。購入成功時 <a href="analytics.html"><code>paywall_converted</code></a> イベント送信を追加（commit 8d0d70b）</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-30</footer>
+  <footer class="site-footer">最終更新: 2026-07-01</footer>
 </div>
 </body>
 </html>
