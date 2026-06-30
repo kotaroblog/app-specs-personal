@@ -44,14 +44,38 @@
   <div class="card-grid">
     <a class="card" href="data-model.html">
       <div class="title">データモデル</div>
-      <div class="desc">SwiftData @Model 構造・ER図（Flutter→Swift移行の経緯含む）</div>
+      <div class="desc">SwiftData @Model 全5モデル（UserProfile・LogEntry・ReflectionSession・BucketItem・Relation）・ER図</div>
+    </a>
+  </div>
+
+  <h2>画面仕様書（タブ統合・2026-06-30追加）</h2>
+  <div class="card-grid">
+    <a class="card" href="screens/S01_onboarding.html">
+      <div class="title">オンボーディング（S01）</div>
+      <div class="desc">初回起動・生年月日/目標年齢入力・UserProfile 作成。C案ダーク天体トーン適用版の完全仕様</div>
+      <div class="meta"><span class="tag">LR-S01</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="screens/S02_today.html">
+      <div class="title">今日タブ（S02）</div>
+      <div class="desc">毎日の記録入口。残り時間ミニ・記録CTA・直近3件・○年前の今日・LogFormView・LogDetailView・週グリッド全画面</div>
+      <div class="meta"><span class="tag">LR-S02</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="screens/S03_reflect_home.html">
+      <div class="title">ふりかえりタブ（S03）</div>
+      <div class="desc">週/月/年リズムカード（isDue判定）・振り返りセッション5ステップ・道具箱・これまでの軌跡。アプリ中核タブ</div>
+      <div class="meta"><span class="tag">LR-S03</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="screens/S04_life.html">
+      <div class="title">人生タブ（S04）</div>
+      <div class="desc">残り時間カウントダウン・週グリッド（Canvas）・大切な人・バケットリスト・設定（プロフィール編集/データ削除）</div>
+      <div class="meta"><span class="tag">LR-S04</span> <span class="tag done">実装済</span></div>
     </a>
   </div>
 
   <h2>画面仕様書（Phase S4 新規追加）</h2>
   <div class="card-grid">
     <a class="card" href="screens/onboarding.html">
-      <div class="title">オンボーディング</div>
+      <div class="title">オンボーディング（旧）</div>
       <div class="desc">C案ダーク天体トーン全面刷新・明朝ヒーロー文・真鍮細罫入力カード・生年月日/目標年齢入力・金CTA</div>
       <div class="meta"><span class="tag">LR-ONBOARD-01</span> <span class="tag done">S4新規</span></div>
     </a>
@@ -147,9 +171,10 @@
     <tr><td>v1.0</td><td>2026-06-15</td><td>仕様書ポータル初版作成。Phase S2「振り返り中核」実装完了分を反映（ふりかえりホーム・振り返りセッション・星図タイムライン・道具箱カレンダー/統計・データモデル・機能仕様書）</td></tr>
     <tr><td>v1.1</td><td>2026-06-15</td><td>Phase S3「拡張」実装完了分を反映: 感情の移ろいグラフ（toolbox-stats）・リズムカードdue自動判定（reflect-home）・StarMap段階表現+星座線（reflection-timeline）・リマインダー設定画面（reminder-settings）新規追加。ロードマップS3を完了に更新</td></tr>
     <tr><td>v1.2</td><td>2026-06-16</td><td>Phase S4「仕上げ」実装完了分を反映: オンボーディング画面（LR-ONBOARD-01）新規追加・デザインシステム補足（ナビゲーションUI統一・明朝タイトル）・Launch画面（白フラッシュ抑止）・スクショ自動化パイプライン導入・マネタイズ方針（v1.0無料）・ロードマップS4完了に更新</td></tr>
+    <tr><td>v1.3</td><td>2026-06-30</td><td>タブ統合仕様書（LR-S01〜S04）新規追加: オンボーディング・今日タブ・ふりかえりタブ・人生タブの全サブ画面を網羅。データモデル仕様書に UserProfile・BucketItem・Relation を追記（v1.3）。全体仕様書カードの説明文を更新</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-16</footer>
+  <footer class="site-footer">最終更新: 2026-06-30</footer>
 </div>
 </body>
 </html>

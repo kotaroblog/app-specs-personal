@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - オンボーディング（S01）</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / オンボーディング</div>
+
+  <header class="site-header">
+    <h1>オンボーディング（S01）</h1>
+    <p>初回起動時に生年月日・目標年齢を入力し UserProfile を作成する。C案「ダーク天体」トーン全面適用。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">実装済</span>
+      <span class="tag">画面ID: LR-S01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    アプリを初めて起動したユーザーに「人生を振り返るアプリ」であることを静かに伝え、
+    残り時間・週グリッドのパーソナライズに必要な<strong>生年月日</strong>と<strong>目標年齢</strong>を収集する。
+    C案「ダーク天体」トーン（墨と藍・琥珀の真鍮・明朝×ゴシック二層）を最初から体験させ、
+    アプリのムードを印象づける入口となる。
+  </p>
+  <div class="callout">
+    <strong>表示トリガー:</strong> <code>@AppStorage("onboardingCompleted")</code> が <code>false</code>（未設定含む）の場合、
+    起動直後に <code>.fullScreenCover</code> で表示する。「はじめる」ボタン経由で <code>true</code> に設定してから閉じる。
+    スワイプダウンでの dismiss は <code>interactiveDismissDisabled(true)</code> で禁止。
+  </div>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>全体背景</td><td>ZStack / Color</td><td><code>AppColors.background（night1: #10141C）</code> で塗りつぶす。Launch 画面と同色で起動時の白フラッシュを防ぐ。</td></tr>
+    <tr><td>ウェルカムブロック</td><td>VStack テキスト群</td><td>ラベル「人生アルバム」（明朝 15pt・tracking 4・textMuted）＋ヒーロー文「立ち止まり、\nこれまでを振り返るために。」（明朝 24pt・moonWhite）＋サブコピー（13.5pt・textMuted）。</td></tr>
+    <tr><td>真鍮の細罫</td><td>Rectangle（1px）</td><td>幅 40px・goldDim 色・ウェルカムブロックとフィーチャーリストの間に配置。</td></tr>
+    <tr><td>フィーチャーリスト</td><td>VStack + HStack 箇条書き</td><td>「日々の出来事を、ひとつずつ記録する」「週・月・年の節目で振り返る」「人生の時間を、静かに俯瞰する」3行。各行先頭に真鍮細線（12px × 0.75px・goldDim）。</td></tr>
+    <tr><td>入力ヒントテキスト</td><td>Text</td><td>「生年月日と目標年齢は、人生の週と\n残り時間の計算に使います。」（12pt・textMuted 70%透過）</td></tr>
+    <tr><td>入力カード</td><td>AppCard（RoundedRectangle cornerRadius 16・cardBorder 1px 枠）</td><td>生年月日 DatePicker（in: ...Date()・displayedComponents: .date）と目標年齢 Stepper（40...120・既定 80）を縦並びで格納。中間に cardBorder 1px セパレーター。目標年齢の値は amber 色 16pt semibold。</td></tr>
+    <tr><td>はじめるボタン（金 CTA）</td><td>Button（safeAreaInset .bottom）</td><td>「はじめる」テキスト（16pt semibold・#14110A 色）。背景 AppColors.amber・角丸 14px・高さ 52px・横フル幅。画面最下部に固定表示。</td></tr>
+    <tr><td>保存エラーアラート</td><td>.alert</td><td>UserProfile の save 失敗時に表示。rollback 後に再試行を促すメッセージ。</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示・挙動</th></tr>
+    <tr><td>初期表示</td><td>生年月日の初期値は 1995-01-01（DatePicker のデフォルト）。目標年齢は 80 歳。CTA は常に活性。</td></tr>
+    <tr><td>入力中</td><td>DatePicker のホイール操作で日付が更新される。Stepper 操作で目標年齢が 40〜120 の範囲でインクリメント／デクリメント。</td></tr>
+    <tr><td>保存成功</td><td>UserProfile を modelContext に insert + save → isCompleted = true → fullScreenCover が閉じてメインタブへ遷移。</td></tr>
+    <tr><td>保存失敗</td><td>modelContext.rollback() 後に保存エラーアラートを表示。OK タップで再試行可能。</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「はじめる」ボタンタップ（保存成功）</td><td>fullScreenCover を dismiss → RootTabView（今日タブ）へ</td></tr>
+    <tr><td>スワイプダウン</td><td>interactiveDismissDisabled(true) により無効化</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// SwiftData（書き込みのみ・読み込みは行わない）
+@Environment(\.modelContext) private var modelContext
+
+// ローカル入力ステート
+@State private var birthDate: Date = ...   // 初期値: 1995-01-01
+@State private var targetAge: Int = 80
+
+// 保存アクション
+func start() {
+    let profile = UserProfile(birthDate: birthDate, targetAge: targetAge)
+    modelContext.insert(profile)
+    do {
+        try modelContext.save()
+        isCompleted = true    // @Binding → RootTabView の onboardingCompleted を true に
+    } catch {
+        modelContext.rollback()
+        saveError = "プロフィールを保存できませんでした。もう一度お試しください。"
+    }
+}
+
+// UserProfile（SwiftData @Model）
+//   var birthDate: Date = Date()
+//   var targetAge: Int = 80
+</code></pre>
+
+  <h2>デザイントークン（C案「ダーク天体」準拠）</h2>
+  <table>
+    <tr><th>トークン</th><th>HEX</th><th>オンボーディングでの用途</th></tr>
+    <tr><td>night1（background）</td><td>#10141C</td><td>全体背景。Launch 画面と同色で白フラッシュを防ぐ</td></tr>
+    <tr><td>surface</td><td>#161C28</td><td>入力カードの面</td></tr>
+    <tr><td>moonWhite</td><td>#EAE6DC</td><td>ヒーロー文・onSurface テキスト</td></tr>
+    <tr><td>textMuted</td><td>#8E8B84</td><td>補助テキスト・フィーチャーリスト</td></tr>
+    <tr><td>goldDim</td><td>#C2894B（38%透過）</td><td>入力カード枠線・フィーチャーリスト先頭細線</td></tr>
+    <tr><td>amber</td><td>#C2894B</td><td>CTA ボタン背景・目標年齢の値テキスト</td></tr>
+    <tr><td>cardBorder</td><td>#2A3040</td><td>入力カード内部のセパレーター・カード外枠</td></tr>
+  </table>
+
+  <h2>アクセシビリティ対応</h2>
+  <ul class="checklist">
+    <li>DatePicker に <code>.accessibilityLabel("生年月日")</code> を付与。</li>
+    <li>Stepper に <code>.accessibilityLabel("目標年齢")</code> + <code>.accessibilityValue("\(targetAge)歳")</code> を付与。</li>
+    <li>はじめるボタンはシステムフォントサイズに追従（minimumScaleFactor は未設定だが短文のため問題なし）。</li>
+    <li>背景色は night1 固定（ダーク専用アプリのため preferredColorScheme の考慮不要）。</li>
+  </ul>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>バックグラウンドは <code>AppColors.background.ignoresSafeArea()</code> で塗り、Launch 画面（night1）と同色にする。</li>
+    <li>ScrollView + <code>.safeAreaInset(edge: .bottom)</code> でコンテンツをスクロールさせつつ、「はじめる」ボタンを常に画面下部に固定する。</li>
+    <li>DatePicker の tint は amber 色。<code>.labelsHidden()</code> でシステムラベルを非表示にする。</li>
+    <li>目標年齢は Stepper（40〜120）。値は amber 色 16pt semibold で左隣に表示し、視覚的に強調する。</li>
+    <li>保存エラー時は <code>modelContext.rollback()</code> を必ず呼び出す。insert をキャンセルしないと再試行時に重複が発生する。</li>
+    <li>UserProfile は常に1件のみ存在する想定。重複防止は RootTabView 側でオンボーディングを once のみ表示することで担保する。</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../index.html">LifeReview アプリトップ</a></li>
+    <li><a href="../data-model.html">データモデル（UserProfile）</a></li>
+    <li><a href="S02_today.html">今日タブ（LR-S02）</a></li>
+    <li><a href="onboarding.html">旧オンボーディング仕様書（S4以前）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-30</td><td>初版作成。ソースコード（OnboardingView.swift）を元に実装済み仕様を記述</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-30</footer>
+</div>
+</body>
+</html>

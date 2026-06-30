@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - 人生タブ（S04）</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / 人生タブ</div>
+
+  <header class="site-header">
+    <h1>人生タブ（S04）</h1>
+    <p>長期視点の集約画面。残り時間カウントダウン・人生の週グリッド・大切な人・バケットリスト・設定を提供する。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">実装済</span>
+      <span class="tag">画面ID: LR-S04</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    「人生」タブは有限性を可視化し、長期的な視点でのアクション（バケットリスト・大切な人）への入口を提供する。
+    <strong>Your Life in Weeks</strong> の週グリッドと残り時間カウントダウンで、ユーザーが自分の人生の全体像を静かに俯瞰できる空間。
+    設定（歯車アイコン）は右上から開き、プロフィール編集・リマインダー設定・データ削除を集約する。
+  </p>
+  <div class="callout">
+    <strong>C案規律:</strong> 週グリッドの経過セル（amber 45%透過）と今週セル（red）のみが画面のアクセント。カウントダウン数字は onSurface。金面は使わない。
+  </div>
+
+  <h2>UI 構成（LifeView）</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>NavigationStack</td><td>コンテナ</td><td>タイトル「人生」（明朝インライン）。右上に設定アイコン（gearshape）→ SettingsView へ NavigationLink。</td></tr>
+    <tr><td>残り時間カウントダウン（CountdownView）</td><td>AppCard</td><td>「これからの時間」ラベル（caption・tracking 2）＋残り年数・ヶ月数（40pt semibold monospacedDigit・onSurface）＋ThinProgressBar（amber）＋「これまで ○% を歩いてきました」（caption・textMuted）。UserProfile が存在する場合のみ表示。</td></tr>
+    <tr><td>人生の週セクション</td><td>VStack + AppCard</td><td>SectionHeader「人生の週」＋ AppCard 内に WeekGridBody（サマリー・凡例・Canvas グリッド）。UserProfile が存在する場合のみ表示。</td></tr>
+    <tr><td>大切な人カード（NavCard）</td><td>NavigationLink → RelationsListView</td><td>person.2 アイコン＋「大切な人」＋「残りあと何回、会えるだろう」（caption・textMuted）。chevron.right。</td></tr>
+    <tr><td>バケットリストカード（NavCard）</td><td>NavigationLink → BucketListView</td><td>checklist アイコン＋「バケットリスト」＋「生きているうちに、やりたいこと」。chevron.right。</td></tr>
+  </table>
+
+  <h3>CountdownView の詳細</h3>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>残り時間表示</td><td>profile.remainingYearsMonths() から年数・ヶ月数を取得。40pt semibold monospacedDigit。</td></tr>
+    <tr><td>ThinProgressBar</td><td>profile.progress()（0.0〜1.0）を amber 細線で表示。</td></tr>
+    <tr><td>進捗テキスト</td><td>「これまで ○% を歩いてきました」（○ = Int(progress * 100)）。</td></tr>
+    <tr><td>アクセシビリティ</td><td>.accessibilityElement(children: .combine)・accessibilityLabel「これからの時間」・accessibilityValue「○年○ヶ月。これまで○パーセントを歩いてきました」。</td></tr>
+  </table>
+
+  <h3>WeekGridBody / WeekGridCanvas の詳細</h3>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>サマリーカード</td><td>現在年齢・経過週（amber）・残り週（onSurfaceVariant）・合計週（textMuted）の4カラム統計を AppCard 内に表示。縦セパレーターで区切る。</td></tr>
+    <tr><td>凡例</td><td>「経過した週」（amber 45%透過）・「今週」（red）・「残りの週」（cardBorder）の3種。</td></tr>
+    <tr><td>WeekGridCanvas</td><td>52列 × targetAge 行の週グリッドを Canvas で描画。cellW=(width-gutter-gap*52)/52・cellH=5px・rowGap=2px。10年毎に年齢ラベル（8pt・textMuted）を左端に表示。経過セル: amber 45%透過・今週セル: red・残りセル: cardBorder。</td></tr>
+    <tr><td>アクセシビリティ</td><td>Canvas 全体に「人生の週グリッド」accessibilityLabel・「経過○週、残り○週」accessibilityValue。</td></tr>
+  </table>
+
+  <h2>サブ画面（人生タブから遷移）</h2>
+
+  <h3>バケットリスト（BucketListView）</h3>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>List + BucketRow</td><td>BucketItem を createdAt 降順で一覧表示。各行: チェックボタン（checkmark.circle.fill / circle）＋タイトル＋メモ（任意）＋目標期日（任意）。</td></tr>
+    <tr><td>完了状態</td><td>isCompleted=true のとき取り消し線＋textMuted 色＋チェックアイコン amber 色。</td></tr>
+    <tr><td>スワイプ削除</td><td>.onDelete で削除。確認アラートなし（List の標準動作）。</td></tr>
+    <tr><td>EmptyStateView</td><td>未登録時: checklist アイコン＋「まだ何もありません」＋「やりたいことを追加」CTA ボタン。</td></tr>
+    <tr><td>追加（BucketEditSheet）</td><td>ナビバー「+」またはEmptyState CTA タップで .sheet 表示。タイトル（必須）・メモ（任意）・目標期日（Toggle + DatePicker）を入力して保存。</td></tr>
+  </table>
+
+  <h3>大切な人（RelationsListView）</h3>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>List + RelationRow</td><td>Relation を createdAt 降順で一覧表示。各行: 名前（subheadline semibold）＋続柄（caption・任意）＋残り会える回数「あと○回」（amber・16pt semibold）。</td></tr>
+    <tr><td>残り回数計算</td><td>currentAge が設定されている場合: (targetAge - currentAge) × meetingsPerYear。設定なしの場合は「年○回」のみ表示。</td></tr>
+    <tr><td>スワイプ削除</td><td>.onDelete で削除。</td></tr>
+    <tr><td>EmptyStateView</td><td>未登録時: person.2 アイコン＋「まだ登録がありません」＋「大切な人を追加」CTA ボタン。</td></tr>
+    <tr><td>追加（RelationEditSheet）</td><td>ナビバー「+」または EmptyState CTA タップで .sheet 表示。名前（必須）・続柄（任意）・年齢（Toggle + Stepper）・会う頻度（Stepper・年1〜365回）を入力して保存。</td></tr>
+  </table>
+
+  <h3>設定（SettingsView）</h3>
+  <table>
+    <tr><th>セクション</th><th>項目</th><th>説明</th></tr>
+    <tr><td>プロフィール</td><td>目標年齢</td><td>タップで TargetAgeSheet（Stepper 40〜120・amber 44pt 数字）を .sheet 表示。保存で UserProfile.targetAge を更新。</td></tr>
+    <tr><td>プロフィール</td><td>生年月日</td><td>タップで BirthDateSheet（DatePicker graphical スタイル）を .sheet 表示。保存で UserProfile.birthDate を更新。</td></tr>
+    <tr><td>通知</td><td>リマインダー</td><td>NavigationLink → ReminderSettingsView（LR-REMINDER-01）。現在の設定サマリー（「オフ」または「日 21:00」形式）を右に表示。</td></tr>
+    <tr><td>アプリ情報</td><td>バージョン</td><td>「1.0.0」固定テキスト。</td></tr>
+    <tr><td>アプリ情報</td><td>プライバシーポリシー</td><td>Link → SFSafariViewController で外部 URL を開く。</td></tr>
+    <tr><td>アプリ情報</td><td>利用規約</td><td>Link → 外部 URL。</td></tr>
+    <tr><td>アプリ情報</td><td>サポート・お問い合わせ</td><td>Link → 外部 URL。</td></tr>
+    <tr><td>危険操作</td><td>全データを削除</td><td>destructive ロールのボタン。確認アラート（「すべての記録・振り返り・設定が削除されます」）経由で実行。削除後に onboardingCompleted = false でオンボーディングに戻る。</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>UserProfile あり</td><td>CountdownView + WeekGridBody + NavCard 群。週グリッドは Canvas 描画（パフォーマンスに優れる）。</td></tr>
+    <tr><td>UserProfile なし（オンボーディング未完了）</td><td>CountdownView・WeekGridBody は非表示。NavCard 群（大切な人・バケットリスト）のみ表示。</td></tr>
+    <tr><td>BucketListView: 未登録</td><td>EmptyStateView（checklist アイコン・「まだ何もありません」・「やりたいことを追加」CTA）。</td></tr>
+    <tr><td>RelationsListView: 未登録</td><td>EmptyStateView（person.2 アイコン・「まだ登録がありません」・「大切な人を追加」CTA）。</td></tr>
+    <tr><td>設定: 全データ削除実行</td><td>削除後に onboardingCompleted=false → アプリ再起動相当でオンボーディング画面を fullScreenCover 表示。</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>ナビバー設定ボタン（gearshape）タップ</td><td>SettingsView へ NavigationLink push</td></tr>
+    <tr><td>「大切な人」NavCard タップ</td><td>RelationsListView へ NavigationLink push</td></tr>
+    <tr><td>「バケットリスト」NavCard タップ</td><td>BucketListView へ NavigationLink push</td></tr>
+    <tr><td>RelationsListView ナビバー「+」タップ</td><td>RelationEditSheet を .sheet で表示</td></tr>
+    <tr><td>BucketListView ナビバー「+」タップ</td><td>BucketEditSheet を .sheet で表示</td></tr>
+    <tr><td>設定「リマインダー」タップ</td><td>ReminderSettingsView へ NavigationLink push（SettingsView からの push）</td></tr>
+    <tr><td>設定「目標年齢」タップ</td><td>TargetAgeSheet を .sheet で表示</td></tr>
+    <tr><td>設定「生年月日」タップ</td><td>BirthDateSheet を .sheet で表示</td></tr>
+    <tr><td>設定「全データを削除」→ 確認</td><td>全 @Model 削除 + onboardingCompleted=false → オンボーディング fullScreenCover を表示</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// LifeView
+@Query private var profiles: [UserProfile]
+
+// UserProfile（SwiftData @Model）
+//   var birthDate: Date
+//   var targetAge: Int
+//   func remainingYearsMonths() -> (years: Int, months: Int)
+//   func progress() -> Double
+//   func elapsedWeeks(from:) -> Int
+//   func currentAge(from:) -> Int
+//   var totalWeeks: Int           // targetAge × 52
+
+// BucketListView
+@Query(sort: \BucketItem.createdAt, order: .reverse) private var items: [BucketItem]
+// BucketItem（SwiftData @Model）
+//   var title: String
+//   var memo: String?
+//   var isCompleted: Bool = false
+//   var targetDate: Date?
+//   var completedAt: Date?
+
+// RelationsListView
+@Query(sort: \Relation.createdAt, order: .reverse) private var relations: [Relation]
+// Relation（SwiftData @Model）
+//   var name: String
+//   var relation: String?          // 続柄
+//   var currentAge: Int?
+//   var targetAge: Int = 80
+//   var meetingsPerYear: Int = 1
+
+// SettingsView（@AppStorage）
+//   onboardingCompleted: Bool
+//   reminderEnabled: Bool
+//   reminderWeekday: Int
+//   reminderHour: Int
+//   reminderMinute: Int
+</code></pre>
+
+  <h2>アクセシビリティ対応</h2>
+  <ul class="checklist">
+    <li>CountdownView: <code>.accessibilityElement(children: .combine)</code> + accessibilityLabel/Value でまとめて読み上げ。</li>
+    <li>WeekGridCanvas: <code>.accessibilityLabel("人生の週グリッド")</code> + <code>.accessibilityValue("経過○週、残り○週")</code>。</li>
+    <li>設定ナビバー「gearshape」ボタン: <code>.accessibilityLabel("設定を開く")</code>。</li>
+    <li>RelationsListView「+」ボタン: <code>.accessibilityLabel("大切な人を追加")</code>。</li>
+    <li>BucketListView「+」ボタン: <code>.accessibilityLabel("やりたいことを追加")</code>。</li>
+    <li>BucketRow のチェックボタン: <code>.accessibilityLabel(item.title)</code> + <code>.accessibilityValue(isCompleted ? "完了済み" : "未完了")</code> + <code>.accessibilityAddTraits(isCompleted ? .isSelected : [])</code>。</li>
+    <li>WeekGridBody サマリーの各 stat セル: <code>.accessibilityElement(children: .combine)</code> でまとめる。</li>
+  </ul>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>LifeView は NavigationStack を持つ。SettingsView・RelationsListView・BucketListView は全て同一 NavigationStack 内に push される。</li>
+    <li>WeekGridCanvas は Canvas（SwiftUI）で描画するため非常に軽量。targetAge=80 では 80×52=4,160 セル分の描画をこなす。</li>
+    <li>WeekGridBody の totalWeeks / elapsedWeeks / currentAge は UserProfile の extension（UserProfile+Life.swift）で計算。ビューに計算ロジックは持たせない。</li>
+    <li>BucketItem・Relation の削除は SwiftData の modelContext.delete() → save()。失敗時は rollback + エラーアラート。</li>
+    <li>SettingsView の「全データを削除」は <code>try modelContext.delete(model: LogEntry.self)</code> 等を種別毎に実行し、最後に save()。失敗時は rollback。</li>
+    <li>SettingsView のプロフィール編集シート（TargetAgeSheet / BirthDateSheet）は UserProfile を直接更新し save() する。</li>
+    <li>残り回数計算（RelationRow）は <code>currentAge</code> が nil の場合に nil を返し、View 側で分岐する。計算は純粋な算術: <code>(targetAge - currentAge) × meetingsPerYear</code>（0以下は max(0,…)でクランプ）。</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../index.html">LifeReview アプリトップ</a></li>
+    <li><a href="../data-model.html">データモデル（UserProfile・BucketItem・Relation）</a></li>
+    <li><a href="reminder-settings.html">リマインダー設定（LR-REMINDER-01）</a></li>
+    <li><a href="S02_today.html">今日タブ（LR-S02）</a></li>
+    <li><a href="S03_reflect_home.html">ふりかえりタブ（LR-S03）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-06-30</td><td>初版作成。ソースコード（LifeView / CountdownView / WeekGridView / BucketListView / RelationsListView / SettingsView）を元に実装済み仕様を記述</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-06-30</footer>
+</div>
+</body>
+</html>

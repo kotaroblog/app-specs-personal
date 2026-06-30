@@ -26,6 +26,12 @@
   <h2>ER 図</h2>
   <div class="mermaid">
 erDiagram
+  UserProfile {
+    UUID id
+    Date birthDate
+    Int targetAge
+    Date createdAt
+  }
   LogEntry {
     UUID id
     Date date
@@ -48,7 +54,52 @@ erDiagram
     Date completedAt
     Date createdAt
   }
+  BucketItem {
+    UUID id
+    String title
+    String memo
+    Bool isCompleted
+    Date targetDate
+    Date completedAt
+    Date createdAt
+  }
+  Relation {
+    UUID id
+    String name
+    String relation
+    Int currentAge
+    Int targetAge
+    Int meetingsPerYear
+    Date createdAt
+  }
   ReflectionSession }o--o{ LogEntry : "highlights (highlightLogIds)"
+  </div>
+
+  <h2>UserProfile</h2>
+  <p>ユーザープロフィール（常に1件のみ存在）。生年月日と目標年齢から残り時間・週グリッドを計算する。</p>
+  <pre><code>@Model
+final class UserProfile {
+    var id: UUID = UUID()
+    /// 生年月日
+    var birthDate: Date = Date()
+    /// 目標年齢（人生の終端として扱う想定年齢）
+    var targetAge: Int = 80
+    var createdAt: Date = Date()
+}
+
+// 計算 extension（UserProfile+Life.swift）
+extension UserProfile {
+    var targetDate: Date      // 誕生日 + targetAge 年後の同月日
+    func remaining(from:) -> TimeInterval       // 残り秒数（過去ならゼロ）
+    func progress(from:) -> Double             // 進捗率 0.0〜1.0
+    func remainingYearsMonths(from:) -> (years: Int, months: Int)
+    var totalWeeks: Int                        // targetAge × 52
+    func elapsedWeeks(from:) -> Int            // 経過週数
+    func currentAge(from:) -> Int              // 現在年齢
+}</code></pre>
+  <div class="callout warn">
+    <strong>注意:</strong> UserProfile は常に1件のみ存在する設計。オンボーディング完了時に1件 insert し、以降は更新のみ行う。
+    設定画面の「全データを削除」で削除後、onboardingCompleted=false を設定してオンボーディングに戻る。
   </div>
 
   <h2>LogEntry</h2>
@@ -136,6 +187,57 @@ final class ReflectionSession {
     <tr><td>年次</td><td>「今年の自分を一言で表すと？」「来年の自分へ、一言。」「今年いちばんの"心が動いた"出来事は？」</td></tr>
   </table>
 
+  <h2>BucketItem</h2>
+  <p>バケットリスト項目（死ぬまでにやりたいこと）。</p>
+  <pre><code>@Model
+final class BucketItem {
+    var id: UUID = UUID()
+    /// やりたいこと（必須）
+    var title: String = ""
+    /// メモ（任意）
+    var memo: String?
+    /// 達成済みか
+    var isCompleted: Bool = false
+    /// 目標期日（任意）
+    var targetDate: Date?
+    /// 達成日時（任意・isCompleted=true の時に設定）
+    var completedAt: Date?
+    var createdAt: Date = Date()
+}</code></pre>
+  <ul class="checklist">
+    <li>createdAt 降順で一覧表示。</li>
+    <li>isCompleted=true にする際、completedAt = Date() を同時に設定する（BucketListView.toggle()）。</li>
+    <li>isCompleted を false に戻す際、completedAt = nil にリセットする。</li>
+  </ul>
+
+  <h2>Relation</h2>
+  <p>大切な人（家族・友人など）。残り会える回数を見積もる対象。</p>
+  <pre><code>@Model
+final class Relation {
+    var id: UUID = UUID()
+    /// 名前（必須）
+    var name: String = ""
+    /// 続柄（父・母・親友など・任意）
+    var relation: String?
+    /// 現在の年齢（任意・nil の場合は回数計算を行わない）
+    var currentAge: Int?
+    /// 想定の終端年齢（既定: 80）
+    var targetAge: Int = 80
+    /// 年あたりに会える回数（既定: 1）
+    var meetingsPerYear: Int = 1
+    var createdAt: Date = Date()
+}
+
+// 残り会える回数（RelationRow 内のロジック）
+var remainingMeetings: Int? {
+    guard let age = currentAge else { return nil }
+    return max(0, targetAge - age) * meetingsPerYear
+}</code></pre>
+  <ul class="checklist">
+    <li>currentAge が nil の場合、残り回数は表示せず「年○回」のみ表示する（RelationRow）。</li>
+    <li>meetingsPerYear の範囲: 1〜365（RelationEditSheet の Stepper 設定）。</li>
+  </ul>
+
   <h2>マイグレーション方針</h2>
   <div class="callout warn">
     SwiftData の <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する。
@@ -169,6 +271,7 @@ final class ReflectionSession {
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 時点の SwiftData モデル（LogEntry・ReflectionSession）を記述。Flutter→Swift 移行状況を追記</td></tr>
     <tr><td>1.1</td><td>2026-06-15</td><td>Phase S3 技術置換を反映: flutter_local_notifications→UNUserNotificationCenter・SharedPreferences→@AppStorage を移行対応表に追記</td></tr>
     <tr><td>1.2</td><td>2026-06-16</td><td>Phase S4 を反映: オンボーディング入力値（birthDate・targetAge）は @AppStorage（TimeInterval/Int）で管理し SwiftData モデルには追加しない方針を補足。マイグレーション方針セクションに注記追加</td></tr>
+    <tr><td>1.3</td><td>2026-06-30</td><td>UserProfile・BucketItem・Relation モデルを追加。ER 図に5モデル全てを反映。各モデルの注意事項・計算ロジックを追記</td></tr>
   </table>
 
   <script>
@@ -178,7 +281,7 @@ final class ReflectionSession {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-16</footer>
+  <footer class="site-footer">最終更新: 2026-06-30</footer>
 </div>
 </body>
 </html>
