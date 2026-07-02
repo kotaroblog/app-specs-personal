@@ -100,6 +100,20 @@
     <li><span class="k">アクセシビリティ</span><span class="v"><code>.accessibilityElement(children: .combine)</code> + <code>.accessibilityLabel</code>（選択数 + 詳細テキスト）</span></li>
   </ul>
 
+  <h2>ClipGenerateView: 空状態「撮影する」ボタン・二重タップ防止（v1.1.0・UI/UX改善バッチ）</h2>
+  <ul class="kv-list">
+    <li><span class="k">未撮影ステップの空状態</span><span class="v">従来はテキストのみ表示だったが「撮影する」ボタンを追加し、単発撮影（SingleStepShootingView）を直接起動できるようになった</span></li>
+    <li><span class="k">「動画を作成する」二重タップ防止</span><span class="v">ボタン押下後に即時 disabled 化し、合成処理の多重起動を防止</span></li>
+  </ul>
+
+  <h2>CreateSessionView: プレビュー準備失敗時のフォールバック（v1.1.0・UI/UX改善バッチ）</h2>
+  <p>プレビュー準備に失敗した場合、従来は行き止まりテキストのみ表示されていたが、「クリップ選択に戻る」ボタンを追加して回復経路を明示した。</p>
+  <ul class="kv-list">
+    <li><span class="k">表示条件</span><span class="v"><code>CreateSessionView</code> でプレビュー準備が失敗した状態</span></li>
+    <li><span class="k">ボタン文言</span><span class="v">「クリップ選択に戻る」</span></li>
+    <li><span class="k">動作</span><span class="v">NavigationStack を pop して ClipLibraryView（クリップ選択）に戻る</span></li>
+  </ul>
+
   <h2>作成セッション集約（CreateSessionView / 2026-06-06）</h2>
   <ul class="kv-list">
     <li><span class="k">実装ファイル</span><span class="v"><code>Views/Library/CreateSessionView.swift</code></span></li>
@@ -117,13 +131,14 @@
     </thead>
     <tbody>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。warm white背景、撮影Capsuleボタン化、サムネ拡大、「動画を作る」CTA を Home CTA 統一スタイルへ</td></tr>
+      <tr><td>v1.4</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: ClipGenerateView に未撮影ステップの空状態「撮影する」ボタン追加（単発撮影を直接起動）。「動画を作成する」の二重タップ防止（押下後即時 disabled 化）。CreateSessionView: プレビュー準備失敗時の行き止まりテキストに「クリップ選択に戻る」ボタンを追加（回復経路を明示）</td></tr>
       <tr><td>v1.3</td><td>2026-06-30</td><td>v1.1.0 反映 (#3): ShootingStyleTip (TipKit) を画面冒頭に追加（最大3回表示）。オンボーディングから削除した撮影スタイル解説をクリップライブラリで文脈表示に移行</td></tr>
       <tr><td>v1.2</td><td>2026-06-16</td><td>ClipRoutineSelectSheet 追加（596896d）: クリップタブで 2件以上のルーティンがある場合にルーティン選択シートを表示（暗黙の先頭選択を廃止）。ClipGenerateView に選択状況カードを追加: 「選択済み X/Y」+ プログレスバー + 未選択ステップ名 + 生成ボタン文言分岐（全選択 → 「動画を作成する」/ 一部 → 「選択したクリップで作成」）</td></tr>
       <tr><td>v1.1</td><td>2026-06-10</td><td>CreateSessionView 新設で作成セッションを集約（commit 3a32a6c, 2026-06-06）。NavigationStack(path:) + ShootingView 用 fullScreenCover を内包し、ClipGenerate / Preview / ExportComplete をコールバック駆動化。ShootingView 完了時の PreviewView 自動 push 責務も CreateSessionView へ移管。ClipLibrary 冒頭に「全ステップを連続撮影」ボタンを追加</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-30</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div>
 </body>
 </html>

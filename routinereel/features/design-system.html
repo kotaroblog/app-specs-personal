@@ -80,7 +80,7 @@
       <tr><td>designsBackground</td><td>#FAF9F7</td><td>アプリ全体背景（warm white）</td></tr>
       <tr><td>designsPrimaryText</td><td>(0.110, 0.110, 0.118)</td><td>主要テキスト（深いチャコール）</td></tr>
       <tr><td>designsSecondaryText</td><td>(0.498, 0.498, 0.510)</td><td>サブテキスト</td></tr>
-      <tr><td>designsTertiaryText</td><td>(0.659, 0.659, 0.671)</td><td>三次テキスト・補足</td></tr>
+      <tr><td>designsTertiaryText</td><td>(0.52, 0.52, 0.53)</td><td>三次テキスト・補足（v1.1.0 で 0.659→0.52 に暗く調整・WCAG コントラスト改善）</td></tr>
       <tr><td>designsAccentOrange</td><td>(1.000, 0.529, 0.310)</td><td>朝焼けオレンジ</td></tr>
       <tr><td>designsAccentPink</td><td>(1.000, 0.388, 0.451)</td><td>アクセントピンク</td></tr>
       <tr><td>designsCard</td><td>white</td><td>カード白</td></tr>
@@ -128,8 +128,27 @@
   <h2>共通コンポーネント</h2>
   <ul class="kv-list">
     <li><span class="k">DesignsCardContainer</span><span class="v">padding / cornerRadius / background / shadow を一括適用</span></li>
-    <li><span class="k">designsSheetStyle()</span><span class="v">presentationCornerRadius 32 + presentationDragIndicator + presentationBackground</span></li>
+    <li><span class="k">designsSheetStyle()</span><span class="v">presentationCornerRadius 32（DesignsRadius.sheet）+ presentationDragIndicator(.visible) + presentationBackground(warm white)。v1.1.0 で設定 / プリセット選択 / ルーティン編集 / 作品一覧 / Paywall の各シートに適用（シートスタイルを統一）</span></li>
     <li><span class="k">designsCardShadow()</span><span class="v">標準カード影を1行で適用</span></li>
+    <li><span class="k">designsCTAGradient</span><span class="v">LinearGradient（designsAccentPink → designsAccentOrange）。v1.1.0 で全 CTA ボタンのグラデを共通定数に統一</span></li>
+  </ul>
+
+  <h2>タップターゲット最小44pt化（v1.1.0・HIG準拠）</h2>
+  <p>視覚サイズを変えずに <code>.contentShape(Rectangle().size(...))</code> または <code>.frame(minWidth: 44, minHeight: 44)</code> でヒット領域を HIG 最小44pt に拡大した。</p>
+  <table>
+    <thead>
+      <tr><th>対象ボタン</th><th>視覚サイズ</th><th>ヒット領域（変更後）</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>クリップ削除 ×</td><td>22pt</td><td>44pt</td></tr>
+      <tr><td>各画面 丸アイコンボタン（閉じる等）</td><td>30〜36pt</td><td>44pt</td></tr>
+    </tbody>
+  </table>
+
+  <h2>CTA意匠統一（v1.1.0）</h2>
+  <ul class="kv-list">
+    <li><span class="k">グラデーション</span><span class="v">全 CTA ボタンのグラデーションを <code>designsCTAGradient</code> に統一（個別 LinearGradient を廃止）</span></li>
+    <li><span class="k">主役 CTA 角丸</span><span class="v"><code>DesignsRadius.xl（22pt）</code> に統一</span></li>
   </ul>
 
   <h2>時間帯別ヘルパー（DesignsGreeting）</h2>
@@ -158,11 +177,12 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.1</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: designsTertiaryText を 0.659→0.52 に暗く調整（WCAG コントラスト改善）。designsCTAGradient（Pink→Orange）を共通定数として追加し全 CTA ボタンのグラデを統一。主役 CTA 角丸を DesignsRadius.xl (22pt) に統一。designsSheetStyle() を設定 / プリセット選択 / ルーティン編集 / 作品一覧 / Paywall の各シートに適用（角丸32pt・ドラッグインジケータ・warm white 背景）。HIG 準拠タップターゲット 44pt 化: クリップ削除 ×（22pt→44pt）/ 各画面丸アイコンボタン（30〜36pt→44pt）</td></tr>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成。DesignSystem.swift / DesignsColor.swift / DesignsAnimations.swift を全画面で参照する基盤確立</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-21</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div>
 </body>
 </html>

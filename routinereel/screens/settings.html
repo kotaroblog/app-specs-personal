@@ -105,6 +105,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.3</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ: <code>designsSheetStyle()</code> を適用（角丸 32pt・ドラッグインジケータ・warm white 背景）。シート外観をアプリ全体で統一</td></tr>
       <tr><td>v1.2</td><td>2026-06-19</td><td>β機能セクション削除: <code>FeatureFlags.swift</code> 廃止にともない「新しいホーム画面を使う」トグルをセクションごと削除。ファイル分割: <code>SettingsLegalDocument</code> / <code>SettingsLegalDocumentView</code> / <code>SettingsSupportView</code> を <code>SettingsLegalViews.swift</code> に分離（UX への影響なし）</td></tr>
       <tr><td>v1.1</td><td>2026-06-16</td><td>設定タブアイコンを <code>person.crop.circle</code> → <code>gearshape.fill</code> に変更（596896d）。情報セクション実装: プライバシーポリシー / 利用規約 → <code>SettingsLegalDocumentView</code>（NavigationLink）、サポート → <code>SettingsSupportView</code>（バージョン/Build/iOS/デバイス情報 + ShareLink）、レビューを書く → <code>ReviewRequestService.requestReviewFromSettings()</code>（保存回数条件なし・iOS 制限に委ねる）。他のアプリセクション: WorkoutDiary / StudyStopwatch を App Store 検索リンクに接続</td></tr>
       <tr><td>v1.0.3</td><td>2026-06-10</td><td>Pro アップグレードカード（Free 時）の副題に「アプリ内保存 X/3」メーターを統合。上限到達時はピンク強調・accessibilityLabel に上限件数を追記。@Query allVideos を SettingsView に追加</td></tr>
@@ -113,7 +114,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-19</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div>
 </body>
 </html>

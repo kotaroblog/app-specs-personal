@@ -114,6 +114,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.3</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ: <code>designsSheetStyle()</code> を適用（角丸 32pt・ドラッグインジケータ・warm white 背景）。シート外観をアプリ全体で統一</td></tr>
       <tr><td>v1.2</td><td>2026-07-01</td><td>v1.1.0 反映: 年額の7日間無料トライアルを廃止。プラン設計・planSubtitle・trialNoticeSection・CTA文言（「7日間無料で試す」→「プレミアムにアップグレード」）をトライアルなし表記に一括更新。P1-a バグ修正（temp削除/Preview入力消失）: <code>inFlightTempURLs: Set&lt;URL&gt;</code> を追加し、persistClip 実行中の temp URL を cleanupTempFiles() がスキップするよう保護。<code>persistClip</code> 内での <code>removeItem(sourceURL)</code> を削除（PreviewView が temp URL を参照するため）。Task 完了後の <code>MainActor.run</code> に <code>guard !self.isCancelled</code> ガードを追加（ShootingViewModel 変更のため paywall 仕様への影響なし、記録として追記）。SnapshotGalleryポスターを RoutineVideoPoster に刷新（既存の Snapshot → 合成動画の縦型ポスター表示に変更）</td></tr>
       <tr><td>v1.1</td><td>2026-06-14</td><td>Opus 4.8 UX レビュー対応 2件: (B5-1) 特典 4 項目を「動画日記専用」訴求に刷新。順序を「SNS発信→蓄積→ユーティリティ」へ並び替え（クリーンな投稿 → シーン別の世界観 → 動画資産を貯め続ける → 集中して撮れる）。コピーも各特典で動画日記文脈に統一。(B5-2) <code>trialNoticeSection</code> 新規追加で「7日間無料、以降は年額プランで自動継続（¥3,800/年・月換算 ¥316）。いつでもキャンセル可能。」を StoreKit <code>displayPrice</code> 経由で動的表示。Product 未取得時は短縮版にフォールバック。スクショ撮影モード（<code>AppEnvironment.isUISnapshot</code>）では非表示で価格非掲載方針を維持。App Store Review Guideline 3.1.2(a) 推奨に準拠（commit 692882f）</td></tr>
       <tr><td>v1.0.4</td><td>2026-06-12</td><td><strong>本番バグ修正</strong>: <code>yearlySavingPercentage</code> が常に 0 を返していたため「34% お得」が実は「0% お得」と表示されていた問題を、<a href="../features/testing.html">ユニットテスト</a>経由で検出・修正（commit b7ebfd6、<code>NSDecimalNumber.doubleValue</code> 経由の比率計算に変更）。<a href="../features/analytics.html">Analytics</a> イベント <code>paywall_shown(trigger:)</code> を onAppear で発火（v1.0 では trigger=.manual 固定。routine_limit / storage_limit / pro_filter / pro_font 別の trigger 引数化は次タスク）。購入成功時 <code>paywall_converted(plan:)</code> を SubscriptionManager.purchase 内で発火（commit 8d0d70b）</td></tr>
@@ -123,7 +124,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-01</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div>
 </body>
 </html>

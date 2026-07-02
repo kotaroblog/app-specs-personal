@@ -159,6 +159,30 @@
     <li><span class="k">accessibilityValue</span><span class="v">「X.X秒」形式で現在値を読み上げ</span></li>
   </ul>
 
+  <h2>ClipPlayerView アクセシビリティ追加（v1.1.0・UI/UX改善バッチ）</h2>
+  <p>プレビュー書き出し画面（ClipPlayerView / プレビュービュー）への VoiceOver 対応を追加。</p>
+  <ul class="kv-list">
+    <li><span class="k">ミュートToggle VoiceOver ラベル</span><span class="v">ミュートトグルボタンに <code>.accessibilityLabel("ミュート")</code> / <code>.accessibilityLabel("ミュート解除")</code> を付与（状態に応じて切替）</span></li>
+    <li><span class="k">動画タップ再生切替</span><span class="v"><code>.accessibilityAddTraits(.isButton)</code> を付与し、VoiceOver でボタンとして正しく認識される</span></li>
+  </ul>
+
+  <h2>エラーリカバリ出し分け（v1.1.0・UI/UX改善バッチ）</h2>
+  <p>プレビュー書き出し画面のエラー状態に <code>Recovery</code> 種別を導入し、エラー内容に応じた回復経路を提示する。</p>
+  <table>
+    <thead>
+      <tr><th>Recovery種別</th><th>表示ボタン</th><th>説明</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>recompose</code></td><td>「再合成する」</td><td>合成自体が失敗した場合。クリップ選択からやり直す</td></tr>
+      <tr><td><code>retrySave</code></td><td>「保存をやり直す」</td><td>合成は成功したが保存のみ失敗した場合。再合成せず保存のみ再試行</td></tr>
+      <tr><td><code>openSettings</code></td><td>「設定を開く」</td><td>写真ライブラリの権限が拒否されている場合。iOS 設定アプリを開く</td></tr>
+    </tbody>
+  </table>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">全エラーで「再合成」ボタンのみ表示（保存失敗でも不要な再合成を強制）</span></li>
+    <li><span class="k">変更後</span><span class="v">エラー原因に応じた Recovery 種別で最小コストの回復経路を提示</span></li>
+  </ul>
+
   <h2>REC インジケーター（呼吸する赤）</h2>
   <ul class="kv-list">
     <li><span class="k">外側ハロー</span><span class="v">14pt 赤 opacity 0.4 + blur 4 + DesignsPulse (0.7→1.15, 2.0秒周期)</span></li>
@@ -229,6 +253,35 @@
   <h2>BGM 機能の扱い</h2>
   <p>v1.0 で<strong>完全削除</strong>。撮影時の BGM 試聴・合成時の BGM 焼き込みは廃止。詳細は <a href="../features/bgm-removal.html">BGM機能削除の意思決定記録</a> 参照。</p>
 
+  <h2>カメラ反転ボタン常設化（v1.1.0・UI/UX改善バッチ）</h2>
+  <p>従来は「撮り直し」ボタンと排他表示され、1本撮影後は反転できなかった。トップバー右に常設することで、<code>.ready</code> 状態の間はいつでも反転可能になった。</p>
+  <ul class="kv-list">
+    <li><span class="k">配置</span><span class="v">トップバー右（<code>HStack</code> trailing）</span></li>
+    <li><span class="k">表示条件</span><span class="v"><code>.ready</code> 状態のみ（録画中・カウントダウン中は非表示）</span></li>
+    <li><span class="k">変更前</span><span class="v">下部コントロール左側で「撮り直し」ボタンと排他表示。1本撮影後は反転不可だった</span></li>
+  </ul>
+
+  <h2>カウントダウン秒数・スキップ仕様変更（v1.1.0・UI/UX改善バッチ）</h2>
+  <ul class="kv-list">
+    <li><span class="k">1本目カウントダウン</span><span class="v">3秒（変更なし）</span></li>
+    <li><span class="k">2本目以降カウントダウン</span><span class="v">1秒に短縮（旧: 3秒固定）</span></li>
+    <li><span class="k">カウントダウン中タップでスキップ</span><span class="v">録画ボタンタップで即録画開始（<code>skipCountdown</code>）。カウントダウン待ちのストレスを排除</span></li>
+  </ul>
+
+  <h2>録画失敗アラート（v1.1.0・UI/UX改善バッチ）</h2>
+  <p>録画失敗時に従来は無言で <code>.ready</code> に復帰していたが、「録画エラー」アラートを表示するよう変更。</p>
+  <ul class="kv-list">
+    <li><span class="k">アラートタイトル</span><span class="v">「録画エラー」</span></li>
+    <li><span class="k">トリガー</span><span class="v"><code>CameraManager</code> の録画失敗コールバック</span></li>
+  </ul>
+
+  <h2>保存失敗アラートと録画中クローズ確認（v1.1.0・UI/UX改善バッチ）</h2>
+  <p>単発ステップ撮影（<code>SingleStepShootingView</code>）に追加されたエラーハンドリング。</p>
+  <ul class="kv-list">
+    <li><span class="k">保存失敗時アラート</span><span class="v">「クリップを保存できませんでした。空き容量を確認してください。」</span></li>
+    <li><span class="k">録画中クローズ確認</span><span class="v">録画中に閉じるボタンをタップした場合、「録画中の映像は保存されません。」という中断確認アラートを表示</span></li>
+  </ul>
+
   <h2>連続撮影の中断 → クリップ保持（v1.1.0・#1）</h2>
   <p>v1.1.0 以前は連続撮影を中断した際、録画済みのクリップもすべて破棄されていた。v1.1.0 でクリップ保持に変更し、中断コストを大幅に軽減した。</p>
   <ul class="kv-list">
@@ -248,13 +301,12 @@
     <li><span class="k">v1.2 方針</span><span class="v">セマンティックフォント（<code>.headline</code> / <code>.body</code> 等）へ段階的に移行してクランプを外す方向</span></li>
   </ul>
 
-  <h2>v1.1 で予定される改善（更新）</h2>
+  <h2>v1.2 以降で予定される改善</h2>
   <ul>
-    <li><strong>DesignsRecordPreviewView との本格統合</strong> — モック背景の生活感（粒子・露出フリッカー・鏡）を実カメラに統合</li>
     <li><strong>テロップのプリセット別最適化</strong> — 時刻表示を「経過時間」「Day Count」へ切替可能化（workout/study 向け）</li>
-    <li><strong>撮り直しボタンの位置移動</strong> — 誤タップ防止のため遠い位置へ</li>
     <li><strong>テロップフォント拡大</strong> — 24pt 以上を検討</li>
     <li><strong>Dynamic Type セマンティックフォント対応（v1.2）</strong> — セマンティックフォントへの段階移行でクランプを除去</li>
+    <li><strong>撮影2系統の統合</strong> — ShootingView / SingleStepShootingView の録画ロジック統合（別タスク）</li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -263,6 +315,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.4</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: カメラ反転ボタンをトップバー右に常設（.ready 状態のみ表示、下部コントロールからの排他表示を廃止）。カウントダウン秒数を2本目以降は1秒に短縮、カウントダウン中の録画ボタンタップで即録画開始（skipCountdown）。録画失敗時に「録画エラー」アラートを表示（旧: 無言 ready 復帰）。SingleStepShootingView: 保存失敗時アラート「クリップを保存できませんでした。空き容量を確認してください。」追加、録画中クローズで中断確認アラート（「録画中の映像は保存されません。」）追加。ClipPlayerView/プレビュー: エラーリカバリ種別（recompose / retrySave / openSettings）を導入、ミュートToggle に VoiceOver ラベル付与、動画タップに isButton トレイト付与</td></tr>
       <tr><td>v1.3</td><td>2026-06-30</td><td>v1.1.0 反映 (#1/#5): 連続撮影の中断→クリップ保持に変更（録画済みクリップをクリップライブラリに保持、録画中ステップのみ isCancelled フラグで破棄、「保存して終了」アラート追加）。Dynamic Type クランプを RootView に追加（<code>.dynamicTypeSize(.xSmall ... .accessibility2)</code>）。v1.2 でセマンティックフォント対応予定</td></tr>
       <tr><td>v1.2</td><td>2026-06-16</td><td>SingleStepShootingView を ShootingView 寄り UI に統一（P1・596896d）: 背景を designsBackground に変更、録画ボタンをピンク→オレンジのグラデーション化、REC インジケーターにパルスアニメーション追加、カウントダウンを 128pt spring トランジションに統一、ステータステキストを3状態化（録画中タイマー / 「まもなく録画」/ 「X秒録画」）。ExportCompleteView: 自動ハッシュタグコピー廃止・明示コピーボタン追加・完了ボタンのインタースティシャル広告削除。ClipPlayerView: トリムハンドルに accessibilityAdjustableAction（0.5秒刻み）と accessibilityValue（「X.X秒」）を追加</td></tr>
       <tr><td>v1.1</td><td>2026-06-12</td><td><a href="../features/analytics.html">Analytics</a> イベント組込み: <code>first_recording</code>（初回 1 回のみ、<code>AppSettings.hasRecordedFirst</code> で永続化判定）と <code>streak_updated(days:)</code>（撮影都度、最新 streak 値を送信）を <code>ShootingViewModel.persistClip</code> 成功時に発火（commit 8d0d70b・1d6e91e で日付二重加算を解消）</td></tr>
@@ -275,7 +328,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-30</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div>
 </body>
 </html>

@@ -249,11 +249,32 @@
     <li><span class="k">クリップライブラリへの誘導</span><span class="v">マイルーティン行タップ / クリップタブ / ⋯メニュー「クリップライブラリを開く」に集約</span></li>
   </ul>
 
-  <h2>v1.1 で予定される改善</h2>
+  <h2>マイルーティン行・クリップサムネのButton化（v1.1.0・UI/UX改善バッチ）</h2>
+  <p>VoiceOver で正しく認識されるよう、タップ可能な要素を <code>Button</code> または <code>.accessibilityAddTraits(.isButton)</code> に変更。</p>
+  <ul class="kv-list">
+    <li><span class="k">対象</span><span class="v">マイルーティン行 / 「最近の動画」内クリップサムネ</span></li>
+    <li><span class="k">変更前</span><span class="v"><code>onTapGesture</code> や外側に Button を被せた構成（VoiceOver が「ボタン」と認識しない場合があった）</span></li>
+    <li><span class="k">変更後</span><span class="v"><code>Button { ... } label: { ... }</code> に統一。VoiceOver が適切な "ボタン" トレイトを付与</span></li>
+  </ul>
+
+  <h2>colorScheme 是正（v1.1.0・UI/UX改善バッチ）</h2>
+  <p>アプリ全体の <code>colorScheme</code> 適用を整理し、warm white ホームでのステータスバーの視認性バグを修正した。</p>
+  <ul class="kv-list">
+    <li><span class="k">RootView</span><span class="v"><code>.preferredColorScheme(.light)</code> をルートに設定。warm white 背景でステータスバーが白文字になり不可視だった潜在バグを解消</span></li>
+    <li><span class="k">例外（個別 .dark）</span><span class="v">黒背景の再生系3画面（<code>ClipPlayerView</code> / <code>RecentVideoPlayerSheet</code> / <code>VideoPlayerSheet</code>）は個別に <code>.preferredColorScheme(.dark)</code> を付与し視認性を維持</span></li>
+    <li><span class="k">影響範囲</span><span class="v">設定シート・Paywall・プリセット選択など全モーダルはルートの .light を継承</span></li>
+  </ul>
+
+  <h2>デッドコード削除（v1.1.0・UI/UX改善バッチ）</h2>
+  <p>v1.1.0 で以下の未使用ファイル（計約850行）を削除した。</p>
+  <ul class="kv-list">
+    <li><span class="k">削除ファイル</span><span class="v"><code>Views/Home/HomeView.swift</code>（旧ホーム画面・v1.4 の FeatureFlag 廃止で既に不使用）/ <code>DesignsRecordPreviewView.swift</code>（モックデザイン検討用プレビュー、本番未使用）/ <code>DesignsRecentProjectCard.swift</code>（DesignsHomeView の旧プロジェクトカード、DesignsHomeRecentVideosSection に置換済み）</span></li>
+    <li><span class="k">影響</span><span class="v">仕様書内の旧 HomeView への言及はすべて DesignsHomeView に統一済み</span></li>
+  </ul>
+
+  <h2>v1.2 以降で予定される改善</h2>
   <ul>
-    <li><strong>DesignsHomeView の200行ルール準拠</strong> — サブView分割で対応予定</li>
-    <li><strong>マイルーティン「すべて見る」展開画面</strong> — v1.0 では全件表示（prefix 廃止済み）、v1.1 でさらに洗練予定</li>
-    <li><strong>DesignsRecordPreviewView の本番接続</strong> — 撮影画面の完全リデザイン</li>
+    <li><strong>マイルーティン「すべて見る」展開画面</strong> — v1.0 では全件表示（prefix 廃止済み）、v1.2 でさらに洗練予定</li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -262,6 +283,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.5</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: マイルーティン行・クリップサムネを Button 化（VoiceOver ボタントレイト付与）。colorScheme 是正: RootView を .light に固定（warm white ホームでのステータスバー不可視バグ修正）、ClipPlayerView / RecentVideoPlayerSheet / VideoPlayerSheet は個別 .dark を維持。デッドコード削除: HomeView.swift / DesignsRecordPreviewView.swift / DesignsRecentProjectCard.swift（計約850行）を削除。仕様書内の旧 HomeView 言及を DesignsHomeView に統一</td></tr>
       <tr><td>v1.4</td><td>2026-06-19</td><td>FeatureFlag 廃止: <code>FeatureFlags.swift</code> 削除・<code>DesignsHomeView</code> を唯一のホーム画面として固定（RootView / SettingsView / SnapshotSeeder の <code>@AppStorage(FeatureFlags.useDesignHomeKey)</code> 参照をすべて削除）。Quick Start タップ動線を <code>.shootingSequential</code>（即撮影）→ <code>.clipLibrary</code>（クリップライブラリ起動）に変更（ルーティン作成＋ライブラリ誘導に整理）。長押しメニューを <code>confirmationDialog</code>（画面下部シート）→ iOS 標準 <code>.contextMenu</code>（フローティングメニュー）に変更。<code>DesignsMyRoutineCard</code> の <code>onLongPressGesture</code> / <code>onMenuTap</code> を削除し全メニュー項目を <code>DesignsHomeView.myRoutinesListSection</code> の <code>.contextMenu</code> に集約</td></tr>
       <tr><td>v1.3</td><td>2026-06-16</td><td>UX 改善 (596896d/692882f/3b93040): クリップタブ動線を 0件→作成誘導 / 1件→ClipLibrary直接 / 2件以上→ClipRoutineSelectSheet の3分岐に整理。マイルーティン行タップを即撮影から ClipLibrary 起動に変更。「次に撮影」CTA を連続撮影直接開始に変更。Quick Start チップを既存ユーザーには非表示（新規ユーザーのみ表示）。Quick Start タップ後も連続撮影を即開始するよう変更。activeSession 型を SessionPayload（Routine + StartMode ペア）に変更。全 9 箇所の Paywall 呼び出しに trigger 引数を付与（routineLimit / storageLimit / manual）。マイルーティンの全件表示化（prefix(4) 廃止 / 「すべて見る」ボタン削除）。保存メーター Paywall に trigger: .storageLimit を設定</td></tr>
       <tr><td>v1.2</td><td>2026-06-14</td><td>Opus 4.8 UX レビュー対応: 既存ユーザー時に <code>quickStartChipsSection</code> を非表示（マイルーティンと重複していた）。新規ユーザー（<code>routines.isEmpty</code>）時の Quick Start は維持。既存ユーザーが他プリセットを試したい場合は中央＋ボタン → <code>PresetSelectView</code> で対応可能（commit 692882f）。あわせてアクティブセッション起動の重複コミット <code>3b93040</code> で「次に撮影」/マイルーティン/Quick Start/通知/URL スキームの 9 箇所を <code>SessionPayload(startMode: .shootingSequential)</code> に統一し、撮影到達タップ数を 3→2 に短縮</td></tr>
@@ -274,7 +296,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-19</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div>
 </body>
 </html>

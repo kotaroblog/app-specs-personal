@@ -49,6 +49,17 @@
     <li><span class="k">中央</span><span class="v">VideoPlayer aspectRatio 9:16</span></li>
     <li><span class="k">下部</span><span class="v">ルーティン名 + 撮影日時</span></li>
     <li><span class="k">player</span><span class="v">AVPlayer + onAppear で auto play / onDisappear で pause</span></li>
+    <li><span class="k">colorScheme</span><span class="v"><code>.preferredColorScheme(.dark)</code> を個別付与（RootView の .light に対する例外。黒地での白テキスト視認性を確保）</span></li>
+    <li><span class="k">ミュートToggle VoiceOver</span><span class="v">ミュートトグルボタンに <code>.accessibilityLabel</code>（「ミュート」/ 「ミュート解除」）を付与</span></li>
+    <li><span class="k">動画タップ再生切替</span><span class="v"><code>.accessibilityAddTraits(.isButton)</code> を付与し VoiceOver でボタンとして認識</span></li>
+  </ul>
+
+  <h2>動画ファイル欠損時の表示（v1.1.0・UI/UX改善バッチ）</h2>
+  <p>動画ファイルが見つからない場合、従来は無限スピナーまたは黒画面のまま止まっていたが、明示的なエラー表示に変更した。</p>
+  <ul class="kv-list">
+    <li><span class="k">表示内容</span><span class="v">「動画ファイルが見つかりません」テキストを画面中央に表示</span></li>
+    <li><span class="k">変更前</span><span class="v">AVPlayer がファイルなしで生成されローディングスピナーが無限回転 / 黒画面のまま停止</span></li>
+    <li><span class="k">トリガー</span><span class="v"><code>VideoStorageService</code> でファイルURL存在チェックが失敗した場合</span></li>
   </ul>
 
   <h2>削除処理</h2>
@@ -70,11 +81,12 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.1</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: VideoPlayerSheet に .preferredColorScheme(.dark) を個別付与（RootView .light 化に伴う例外対応）。ミュートToggle に VoiceOver ラベル付与、動画タップ再生切替に isButton トレイト付与。動画ファイル欠損時に「動画ファイルが見つかりません」を表示（旧: 無限スピナー / 黒画面）</td></tr>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。3列→2列、サムネ大型化、ナビタイトルを「保存した動画」→「私の記録」、空状態コピー刷新、accent orange は black背景に維持</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-21</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div>
 </body>
 </html>
