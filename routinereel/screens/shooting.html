@@ -268,6 +268,26 @@
     <li><span class="k">カウントダウン中タップでスキップ</span><span class="v">録画ボタンタップで即録画開始（<code>skipCountdown</code>）。カウントダウン待ちのストレスを排除</span></li>
   </ul>
 
+  <h2>SingleStepShootingView 機能パリティ（4471820）</h2>
+  <p>単発撮影（SingleStepShootingView）に、連続撮影（ShootingView）が v1.1.0 で実装済みだった2機能を横展開し、操作方法を統一した。</p>
+
+  <h3>カメラ反転ボタン（トップバー）</h3>
+  <ul class="kv-list">
+    <li><span class="k">配置</span><span class="v">トップバー右（ShootingView と同じ位置）</span></li>
+    <li><span class="k">表示条件</span><span class="v">撮影前（録画中・カウントダウン中・保存中でない状態）のみ表示</span></li>
+    <li><span class="k">変更前</span><span class="v">SingleStepShootingView にカメラ反転機能自体が存在しなかった</span></li>
+    <li><span class="k">変更後</span><span class="v">ShootingView と同じ条件・位置でカメラ反転が可能になり、前面・背面カメラを自由に切り替えられる</span></li>
+  </ul>
+
+  <h3>カウントダウン中タップでスキップ</h3>
+  <ul class="kv-list">
+    <li><span class="k">動作</span><span class="v">カウントダウン中に録画ボタンをタップすると <code>skipCountdown()</code> が呼ばれ即座に録画開始（ShootingView と同仕様）</span></li>
+    <li><span class="k">変更前</span><span class="v">カウントダウン中は録画ボタンが完全に無効化されており、スキップ不可だった</span></li>
+    <li><span class="k">変更後</span><span class="v">録画ボタンのタップ判定をカウントダウン中も有効化し、待ちのストレスを排除</span></li>
+  </ul>
+
+  <p><strong>機能パリティ確認</strong>: これにより連続撮影と単発撮影でカメラ反転・カウントダウンスキップの操作が統一された。単発撮影はクリップライブラリの各ステップ行「撮影/再撮影」ボタン、またはClipGenerateViewの空ステップ「撮影する」から起動する。</p>
+
   <h2>録画失敗アラート（v1.1.0・UI/UX改善バッチ）</h2>
   <p>録画失敗時に従来は無言で <code>.ready</code> に復帰していたが、「録画エラー」アラートを表示するよう変更。</p>
   <ul class="kv-list">
@@ -315,6 +335,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.5</td><td>2026-07-03</td><td>SingleStepShootingView に機能パリティを実装（4471820）: カメラ反転ボタンをトップバー右に追加（撮影前のみ表示・従来この画面には反転機能自体が存在しなかった）。カウントダウン中に録画ボタンをタップすると skipCountdown() で即録画開始（従来はカウントダウン中に録画ボタンが完全に無効化されていた）。これにより連続撮影（ShootingView）と単発撮影（SingleStepShootingView）でカメラ反転・カウントダウンスキップの操作が統一された</td></tr>
       <tr><td>v1.4</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: カメラ反転ボタンをトップバー右に常設（.ready 状態のみ表示、下部コントロールからの排他表示を廃止）。カウントダウン秒数を2本目以降は1秒に短縮、カウントダウン中の録画ボタンタップで即録画開始（skipCountdown）。録画失敗時に「録画エラー」アラートを表示（旧: 無言 ready 復帰）。SingleStepShootingView: 保存失敗時アラート「クリップを保存できませんでした。空き容量を確認してください。」追加、録画中クローズで中断確認アラート（「録画中の映像は保存されません。」）追加。ClipPlayerView/プレビュー: エラーリカバリ種別（recompose / retrySave / openSettings）を導入、ミュートToggle に VoiceOver ラベル付与、動画タップに isButton トレイト付与</td></tr>
       <tr><td>v1.3</td><td>2026-06-30</td><td>v1.1.0 反映 (#1/#5): 連続撮影の中断→クリップ保持に変更（録画済みクリップをクリップライブラリに保持、録画中ステップのみ isCancelled フラグで破棄、「保存して終了」アラート追加）。Dynamic Type クランプを RootView に追加（<code>.dynamicTypeSize(.xSmall ... .accessibility2)</code>）。v1.2 でセマンティックフォント対応予定</td></tr>
       <tr><td>v1.2</td><td>2026-06-16</td><td>SingleStepShootingView を ShootingView 寄り UI に統一（P1・596896d）: 背景を designsBackground に変更、録画ボタンをピンク→オレンジのグラデーション化、REC インジケーターにパルスアニメーション追加、カウントダウンを 128pt spring トランジションに統一、ステータステキストを3状態化（録画中タイマー / 「まもなく録画」/ 「X秒録画」）。ExportCompleteView: 自動ハッシュタグコピー廃止・明示コピーボタン追加・完了ボタンのインタースティシャル広告削除。ClipPlayerView: トリムハンドルに accessibilityAdjustableAction（0.5秒刻み）と accessibilityValue（「X.X秒」）を追加</td></tr>
