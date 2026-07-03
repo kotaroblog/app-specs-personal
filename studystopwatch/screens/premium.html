@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / プレミアム</div>
   <header class="site-header"><h1>プレミアム画面（PremiumView）</h1><p>サブスク購入（設定画面から遷移）</p>
-  <div class="section-meta"><span class="tag done">v1.2</span><span class="tag">画面ID: SS-PREMIUM-01</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.4</span><span class="tag">画面ID: SS-PREMIUM-01</span></div></header>
 
   <h2>目的・役割</h2>
   <p>設定画面の「Pro版にアップグレード」ボタンから遷移するペイウォール。年額・月額の2プランを提示し、サブスクリプション購入・復元を行う。</p>
@@ -77,10 +77,30 @@
     <tr><td>閉じるボタン</td><td>設定画面（dismiss）</td></tr>
   </table>
 
+  <h2>ロック表示UIの共通化（PremiumLockOverlay）</h2>
+  <div class="callout info">
+    無料ユーザーに Premium 機能への誘導を出す「ぼかし＋lockアイコン＋誘導文言」のロック表示UIを、
+    これまで<strong>レポート詳細統計・週次コーチレポート・成績履歴・シェアテーマの4箇所で個別実装</strong>していたが、
+    <code>PremiumLockOverlay</code> という共通コンポーネントに統一した。
+  </div>
+  <ul>
+    <li>誘導カード（lockアイコン・見出し・補足文）の見た目とタップ挙動を1箇所に集約し、4画面で再利用</li>
+    <li>ロックの表示計測・タップ計測もコンポーネント内で一元化（詳細は<a href="../logging.html">ロギング方針</a>参照）</li>
+  </ul>
+
+  <h2>画面別コンバージョン計測</h2>
+  <div class="callout info">
+    購入イベント（購入開始・購入成功）に「どの画面からペイウォールを開いたか」を示す発火元（<code>source</code>）が付与され、
+    <strong>画面別のコンバージョン率</strong>が計測できるようになった。
+    どの導線（成績ロック・週次レポート・詳細統計・シェアテーマ・設定・オンボーディング）が購入につながりやすいかを分析できる。
+  </div>
+
   <h2>実装メモ</h2>
   <ul>
     <li><code>SubscriptionPlanButton</code> は年額・月額共通の購入ボタンコンポーネント（v1.2.1 で共通化）</li>
     <li>特典リストは <code>PremiumBenefit.allCases</code> をループして生成する（ハードコード禁止）</li>
+    <li>ロック表示は <code>PremiumLockOverlay</code> を使う（4画面で手書きせずこのコンポーネントに寄せる）</li>
+    <li>購入イベントには発火元 <code>source</code> を必ず渡す（画面別CVR計測に必要）</li>
     <li>アプリアイコンはv1.2.1よりペン+ノートのシンプルデザインに刷新（アセット差替のみ、コードに影響なし）</li>
   </ul>
 
@@ -97,7 +117,8 @@
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.2</td><td>2026-06-15</td><td>v1.2.1対応: 特典を5つに整理（成績無制限・週次レポート・詳細統計・限定テーマ・広告なし）、年額/月額2プランを上位/下位に配置、購入挙動（成功のみ閉じる）を追記、PremiumBenefit単一ソース方針を明記、SubscriptionPlanButton共通化を実装メモに追記</td></tr>
     <tr><td>1.3</td><td>2026-06-20</td><td>UI/UX改善反映: 特典訴求強化（説明文改訂・訴求順序明記）・SubscriptionPlanButton の選択状態視認性向上・無料体験表記位置改善・購入ボタン44ptタップ領域を記載</td></tr>
+    <tr><td>1.4</td><td>2026-07-03</td><td>ロック表示UIを PremiumLockOverlay に共通化（レポート詳細統計・週次コーチレポート・成績履歴・シェアテーマの4箇所）。購入イベントに発火元(source)を付与し画面別コンバージョン計測を追加</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-20</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div></body></html>

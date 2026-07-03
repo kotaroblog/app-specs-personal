@@ -9,28 +9,32 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / Live Activity機能</div>
   <header class="site-header"><h1>Live Activity機能</h1><p>ActivityKit連携・ロック画面とDynamic Island</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: SS-FEAT-LA</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">機能ID: SS-FEAT-LA</span></div></header>
 
   <h2>概要</h2>
   <p>ActivityKitを使用してロック画面・Dynamic Islandにタイマー経過時間を表示する機能。
-  本体タイマーと1秒同期、終了時のクリーンアップ含む安全な実装。</p>
+  経過時間はアンカー日時（計測開始基準時刻）を起点にシステム側で自動更新するため、
+  アプリがバックグラウンドに入っても表示が凍結しない。終了時のクリーンアップを含む安全な実装。</p>
 
-  <h2>LiveActivityService API</h2>
-  <pre><code>final class LiveActivityService {
-    static let shared: LiveActivityService
+  <h2>経過時間の表示方式（v1.1）</h2>
+  <div class="callout info">
+    <strong>変更点</strong>: 「毎秒アプリ側で経過時間を更新」する方式から、
+    「アンカー日時（計測開始の基準時刻）＋ システムの経過時間自動更新（<code>Text(timerInterval:)</code>）」方式に変更した。
+    これによりアプリがバックグラウンドに入っても経過時間の表示が凍結しなくなった。
+  </div>
+  <ul>
+    <li><strong>計測中</strong>: アンカー日時を起点にシステムが経過時間を自動でカウントアップ表示する（アプリが前面にいなくても止まらない）</li>
+    <li><strong>一時停止中</strong>: 凍結した経過秒を静的表示する</li>
+    <li>アプリ側は「開始/一時停止/再開/フェーズ切替」などの状態変化時のみ Activity を更新する（秒ごとの更新は不要）</li>
+  </ul>
 
-    func startActivity(subject: Subject) async
-    func updateActivity(elapsedSeconds: Int) async
-    func endActivity() async
-    func cleanupOrphanedActivities() async  // 起動時に呼出
-}</code></pre>
-
-  <h2>処理フロー</h2>
+  <h2>処理フロー（v1.1）</h2>
   <ol>
-    <li>タイマー開始 → <code>Activity.request(attributes:contentState:)</code></li>
-    <li>1秒ごと → <code>activity.update(.init(state:))</code></li>
-    <li>タイマー停止 → <code>activity.end(.init(state:))</code></li>
-    <li>アプリ起動時 → <code>cleanupOrphanedActivities()</code> で残骸検出・削除</li>
+    <li>タイマー開始 → Activity を起動（アンカー日時＝計測開始時刻をセット）</li>
+    <li>状態変化時（一時停止 / 再開 / ポモドーロのフェーズ切替）→ アンカー日時・一時停止経過秒を更新</li>
+    <li>計測中の経過時間 → システムがアンカー日時を起点に自動表示（アプリ側の毎秒更新は行わない）</li>
+    <li>タイマー停止 → Activity を終了</li>
+    <li>アプリ起動時 → 残存 Activity を検出・削除（クリーンアップ）</li>
   </ol>
 
   <h2>ビジネスルール</h2>
@@ -48,7 +52,7 @@
   </table>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr><tr><td>1.1</td><td>2026-07-03</td><td>timerInterval方式に変更しバックグラウンドでの表示凍結を解消。API・処理フローを状態変化ベースに更新</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div></body></html>

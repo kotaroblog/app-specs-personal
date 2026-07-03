@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / Live Activity</div>
   <header class="site-header"><h1>Live Activity（StudyStopwatchLiveActivity）</h1><p>ロック画面・Dynamic Islandタイマー表示</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-LA-01</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">画面ID: SS-LA-01</span></div></header>
 
   <h2>表示モード</h2>
   <table>
@@ -21,7 +21,7 @@
     <tr><td>Dynamic Island Minimal</td><td>科目アイコン</td></tr>
   </table>
 
-  <h2>データソース</h2>
+  <h2>データソース（v1.1）</h2>
   <pre><code>struct StudyActivityAttributes: ActivityAttributes {
     var subjectName: String
     var subjectColorHex: String
@@ -29,23 +29,29 @@
     var startTime: Date
 
     struct ContentState: Codable {
-        var elapsedSeconds: Int
+        var anchorDate: Date            // 計測開始の基準日時（=現在時刻−累積経過秒）
+        var pausedElapsedSeconds: Int?  // 一時停止中の凍結表示用経過秒。nil=計測中
         var subjectName: String
     }
 }</code></pre>
+  <div class="callout info">
+    経過時間は <code>anchorDate</code> を起点にシステムが <code>Text(timerInterval:)</code> で自動表示する。
+    一時停止中は <code>pausedElapsedSeconds</code> の値を静的表示する（nil のときは計測中＝自動更新）。
+  </div>
 
-  <h2>更新タイミング</h2>
+  <h2>更新タイミング（v1.1）</h2>
   <ul>
-    <li>タイマー開始時 → <code>Activity.request()</code></li>
-    <li>タイマー1秒ごと → <code>Activity.update(state)</code></li>
-    <li>タイマー停止時 → <code>Activity.end()</code></li>
+    <li>タイマー開始時 → Activity 起動（anchorDate をセット）</li>
+    <li>状態変化時（一時停止 / 再開 / フェーズ切替）→ ContentState を更新</li>
+    <li>計測中の経過時間 → システムが anchorDate から自動更新（アプリ側の毎秒更新は行わない）</li>
+    <li>タイマー停止時 → Activity 終了</li>
   </ul>
 
   <h2>関連</h2>
   <ul><li><a href="../features/live-activity.html">Live Activity機能仕様書</a></li></ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr><tr><td>1.1</td><td>2026-07-03</td><td>timerInterval方式に変更しバックグラウンドでの表示凍結を解消。ContentState（anchorDate/pausedElapsedSeconds）・更新タイミングを更新</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div></body></html>

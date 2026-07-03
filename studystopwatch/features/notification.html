@@ -13,7 +13,7 @@
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 通知機能</div>
   <header class="site-header">
     <h1>通知機能</h1>
-    <p>ローカル通知（日次リマインダー / 復帰リマインダー / 週次ふりかえり）</p>
+    <p>ローカル通知（日次リマインダー / 復帰リマインダー / 週次ふりかえり / ポモドーロ フェーズ終了）</p>
     <div class="section-meta">
       <span class="tag">v1.2.0</span>
       <span class="tag">機能ID: SS-FEAT-NOTIF</span>
@@ -21,7 +21,7 @@
   </header>
 
   <h2>概要</h2>
-  <p>すべてローカル通知（UNUserNotificationCenter）で実装する。サーバー不要。v1.2.0 時点で3種類の通知識別子を管理している。</p>
+  <p>すべてローカル通知（UNUserNotificationCenter）で実装する。サーバー不要。4種類の通知識別子を管理している。</p>
 
   <h2>通知識別子一覧</h2>
   <table>
@@ -47,6 +47,13 @@
       <td>Premium</td>
       <td>常時有効（通知権限が許可されている場合）</td>
     </tr>
+    <tr>
+      <td><code>"pomodoroPhaseEnd"</code></td>
+      <td>ポモドーロ フェーズ終了</td>
+      <td>現フェーズ（集中/休憩）の残り時間後に1回発火（バックグラウンドで進行中のみ予約）</td>
+      <td>無料</td>
+      <td>ポモドーロモード利用時に自動</td>
+    </tr>
   </table>
 
   <h2>NotificationService API（v1.2.0）</h2>
@@ -54,6 +61,7 @@
     static let shared: NotificationService
     static let returnReminderID = "returnReminder"
     static let returnReminderEnabledKey = "returnReminderEnabled"  // @AppStorage キー
+    static let pomodoroPhaseEndID = "pomodoroPhaseEnd"
 
     func activateDelegate()           // アプリ起動時に1度呼ぶ（通知タップ計測）
     func requestPermission() async -> Bool
@@ -61,6 +69,8 @@
     func cancelReminder()                            // dailyReminder を取り消す
     func rescheduleReturnReminder(lastStudyDate: Date)  // 復帰リマインダーを上書き予約
     func cancelReturnReminder()                      // 復帰リマインダーを取り消す
+    func schedulePomodoroPhaseEnd(after: TimeInterval, title: String, body: String)  // フェーズ終了通知を予約
+    func cancelPomodoroPhaseEnd()                    // フェーズ終了通知を取り消す
 }</code></pre>
 
   <h2>日次リマインダー（dailyReminder）</h2>
@@ -115,6 +125,23 @@ sequenceDiagram
   <p><strong>通知タイトル</strong>: 「先週のふりかえりが届きました」<br>
   <strong>通知本文</strong>: 「先週の勉強をまとめました。今週のペースづくりに役立てよう」</p>
 
+  <h2>ポモドーロ フェーズ終了（pomodoroPhaseEnd）v1.1 新規</h2>
+  <div class="callout info">
+    ポモドーロモードで計測中にアプリをバックグラウンドへ移した際、現フェーズ（集中/休憩）の終わりに気づけるよう、
+    残り時間後に発火するローカル通知を予約する。バックグラウンドで進行しているときのみ予約され、フォアグラウンド復帰・停止時に取り消す。
+  </div>
+  <ul>
+    <li>現フェーズの残り時間（秒）を <code>UNTimeIntervalNotificationTrigger</code> にセットして1回だけ発火</li>
+    <li>予約のたびに既存の <code>"pomodoroPhaseEnd"</code> を上書き（重複予約しない）</li>
+    <li>通知権限が未許可のときは静かにスキップ（このためだけに許可は求めない）</li>
+    <li>集中フェーズと休憩フェーズで文言を出し分ける</li>
+  </ul>
+  <p><strong>集中終了時タイトル</strong>: 「N分の集中が終わりました」<br>
+  <strong>集中終了時本文</strong>: 「M分休憩しよう」（M=休憩分数）<br>
+  <strong>休憩終了時タイトル</strong>: 「休憩終了」<br>
+  <strong>休憩終了時本文</strong>: 「次の集中を始めよう」</p>
+  <p>関連: <a href="timer.html">タイマー機能仕様（ポモドーロのバックグラウンド対応）</a></p>
+
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th></tr>
@@ -128,6 +155,7 @@ sequenceDiagram
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-12</td><td>v1.2.0対応: 復帰リマインダー（returnReminder）と週次ふりかえり（weeklyReportReminder）を追加。通知識別子一覧表・処理フロー図・NotificationService API を全面更新</td></tr>
+    <tr><td>1.2</td><td>2026-07-03</td><td>ポモドーロ フェーズ終了通知（pomodoroPhaseEnd）を追加。バックグラウンド中の集中/休憩の終わりを通知。識別子一覧・API を更新</td></tr>
   </table>
 
   <script>
@@ -137,7 +165,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-12</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div>
 </body>
 </html>

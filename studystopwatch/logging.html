@@ -55,7 +55,7 @@
     識別子（科目ID、セッションID）は <code>privacy: .public</code>。
   </div>
 
-  <h2>Firebase Analytics 計測イベント一覧（v1.2.0）</h2>
+  <h2>Firebase Analytics 計測イベント一覧</h2>
   <p>
     <code>AnalyticsManager.shared.log(_:)</code> 経由で送信する。イベント名は Firebase Analytics の制約（40文字以内・英数とアンダースコアのみ）に準拠。
     ユーザー入力値（科目名・点数・志望校名）はパラメータに含めない。
@@ -66,14 +66,16 @@
     <tr><td><code>onboarding_page_view</code></td><td><code>.onboardingPageView</code></td><td>オンボーディング各ページ表示</td><td><code>page_name</code>, <code>page_index</code></td></tr>
     <tr><td><code>onboarding_complete</code></td><td><code>.onboardingComplete</code></td><td>オンボーディング完了</td><td><code>goal_type</code></td></tr>
     <tr><td><code>paywall_view</code></td><td><code>.paywallView(source:)</code></td><td>ペイウォール表示</td><td><code>source</code>（onboarding / settings / reportStats / gradeLock / weeklyReport / shareTheme）</td></tr>
-    <tr><td><code>purchase_start</code></td><td><code>.purchaseStart</code></td><td>購入フロー開始（StoreKit ボタンタップ）</td><td><code>product_id</code></td></tr>
-    <tr><td><code>purchase_success</code></td><td><code>.purchaseSuccess</code></td><td>購入完了（トランザクション検証成功）</td><td><code>product_id</code></td></tr>
+    <tr><td><code>purchase_start</code></td><td><code>.purchaseStart(productID:source:)</code></td><td>購入フロー開始（StoreKit ボタンタップ）</td><td><code>product_id</code>, <code>source</code>（v1.2〜追加）</td></tr>
+    <tr><td><code>purchase_success</code></td><td><code>.purchaseSuccess(productID:source:)</code></td><td>購入完了（トランザクション検証成功）</td><td><code>product_id</code>, <code>source</code>（v1.2〜追加）</td></tr>
+    <tr><td><code>premium_lock_shown</code></td><td><code>.premiumLockShown(source:)</code></td><td>Premiumロック共通コンポーネント（PremiumLockOverlay）を表示したとき（View生存中1回。v1.2〜）</td><td><code>source</code></td></tr>
+    <tr><td><code>premium_lock_tapped</code></td><td><code>.premiumLockTapped(source:)</code></td><td>Premiumロック共通コンポーネントをタップしてペイウォールへ遷移したとき（v1.2〜）</td><td><code>source</code></td></tr>
     <tr><td><code>session_recorded</code></td><td><code>.sessionRecorded</code></td><td>学習セッション保存時</td><td><code>duration_minutes</code>, <code>is_manual</code></td></tr>
     <tr><td><code>test_record_added</code></td><td><code>.testRecordAdded</code></td><td>テスト結果を新規保存したとき（v1.1.0〜）</td><td><code>test_type</code></td></tr>
-    <tr><td><code>grade_lock_shown</code></td><td><code>.gradeLockShown(hiddenCount:)</code></td><td>成績N件制限のロックバナーを表示したとき（v1.2.0〜）</td><td><code>hidden_count</code></td></tr>
-    <tr><td><code>grade_lock_tapped</code></td><td><code>.gradeLockTapped</code></td><td>成績ロックバナーをタップしてペイウォールへ遷移したとき（v1.2.0〜）</td><td>なし</td></tr>
+    <tr><td><code>grade_lock_shown</code></td><td><code>.gradeLockShown(hiddenCount:)</code></td><td>成績N件制限のロックバナーを表示したとき（v1.2.0〜／<span class="tag warn">移行中</span>）</td><td><code>hidden_count</code></td></tr>
+    <tr><td><code>grade_lock_tapped</code></td><td><code>.gradeLockTapped</code></td><td>成績ロックバナーをタップしてペイウォールへ遷移したとき（v1.2.0〜／<span class="tag warn">移行中</span>）</td><td>なし</td></tr>
     <tr><td><code>weekly_report_viewed</code></td><td><code>.weeklyReportViewed</code></td><td>Premium ユーザーが週次ふりかえりカードを表示したとき（v1.2.0〜）</td><td>なし</td></tr>
-    <tr><td><code>weekly_report_lock_tapped</code></td><td><code>.weeklyReportLockTapped</code></td><td>無料ユーザーが週次レポートロックバナーをタップしたとき（v1.2.0〜）</td><td>なし</td></tr>
+    <tr><td><code>weekly_report_lock_tapped</code></td><td><code>.weeklyReportLockTapped</code></td><td>無料ユーザーが週次レポートロックバナーをタップしたとき（v1.2.0〜／<span class="tag warn">移行中</span>）</td><td>なし</td></tr>
     <tr><td><code>return_reminder_scheduled</code></td><td><code>.returnReminderScheduled</code></td><td>復帰リマインダー（3日無記録）をスケジュールしたとき（v1.2.0〜）</td><td>なし</td></tr>
     <tr><td><code>return_reminder_opened</code></td><td><code>.returnReminderOpened</code></td><td>復帰リマインダー通知をタップしてアプリを起動したとき（v1.2.0〜）</td><td>なし</td></tr>
     <tr><td><code>ad_interstitial_shown</code></td><td><code>.adInterstitialShown</code></td><td>インタースティシャル広告を表示したとき</td><td>なし</td></tr>
@@ -86,14 +88,24 @@
     <code>gradeLock</code>（成績N件制限）/ <code>weeklyReport</code>（週次レポート）/ <code>shareTheme</code>（シェアカードテーマ）
   </div>
 
+  <div class="callout warn">
+    <strong>ロック計測イベントの移行運用（v1.2〜）</strong>:
+    ロック表示UIを <code>PremiumLockOverlay</code> に共通化したことで、ロックの表示・タップ計測は
+    発火元付きの <code>premium_lock_shown</code> / <code>premium_lock_tapped</code> に一本化する方針。
+    ただし移行期間中は、既存の <code>grade_lock_shown</code> / <code>grade_lock_tapped</code> /
+    <code>weekly_report_lock_tapped</code> と新イベントを<strong>併送</strong>する。
+    Firebase側で新イベントへの集計移行を確認後、旧イベントを撤去する予定。
+  </div>
+
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-12</td><td>v1.2.0計測イベント一覧を追加（grade_lock_shown/tapped・weekly_report_viewed/lock_tapped・return_reminder_scheduled/opened）、カテゴリに WeeklyReport・Analytics を追記</td></tr>
+    <tr><td>1.2</td><td>2026-07-03</td><td>premium_lock_shown / premium_lock_tapped（source付き）を追加。purchase_start / purchase_success に source パラメータを追記。旧ロックイベント（grade_lock_*・weekly_report_lock_tapped）の併送・撤去予定を注記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-12</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div>
 </body>
 </html>

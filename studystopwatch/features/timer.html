@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / タイマー機能</div>
   <header class="site-header"><h1>タイマー機能</h1><p>永続化・バックグラウンド対応・ポモドーロ</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: SS-FEAT-TIMER</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">機能ID: SS-FEAT-TIMER</span></div></header>
 
   <h2>概要</h2>
   <p>科目別の学習時間を計測する中核機能。バックグラウンド・アプリ再起動でも正確に経過時間を保持。
@@ -35,23 +35,51 @@
     <li>フェーズ切替時に通知＋ハプティクス</li>
   </ul>
 
+  <h2>ポモドーロのバックグラウンド対応（v1.1）</h2>
+  <div class="callout info">
+    アプリを閉じている間もポモドーロが正しく進むようにした。ホーム画面や別アプリに切り替えても、集中/休憩の切り替えと🍅カウントがずれない。
+  </div>
+  <ul>
+    <li><strong>フェーズ終了通知</strong>: 集中25分・休憩5分それぞれの終わりにローカル通知が届く（アプリを開いていなくても気づける）。通知内容は<a href="notification.html">通知機能仕様</a>を参照</li>
+    <li><strong>複数フェーズの一括消化</strong>: バックグラウンドで長時間（例: 60分）放置しても、その間に跨いだフェーズ数だけ🍅カウント・集中/休憩フェーズを正しく進めて復帰する</li>
+    <li><strong>一時停止中の強制終了に強い</strong>: 一時停止したままアプリを強制終了しても、再起動時に一時停止状態と経過時間が正しく復元される</li>
+  </ul>
+
   <h2>24時間境界</h2>
   <div class="callout">
     アプリ再起動時、保存済み startTime と現在時刻の差が <strong>24時間以内のみ復元</strong>。
     朝をまたいだ場合は自動リセットして誤った長時間記録を防ぐ。
   </div>
 
+  <h2>計測時間消失バグの修正（v1.1）</h2>
+  <div class="callout warn">
+    <strong>不具合内容</strong>: バックグラウンドに入る前の前面での計測分が累積へ確定されていなかったため、
+    復帰時に経過時間が「バックグラウンド中の経過分だけ」に巻き戻り、それまでの学習時間が消える不具合があった。
+  </div>
+  <p>バックグラウンド移行時に前面での計測分を必ず累積に確定してから離脱するように修正し、
+  復帰後も学習時間が保持されるようにした（v1.1 で修正済み）。</p>
+
+  <h2>セッション完了フローの排他制御（v1.1）</h2>
+  <div class="callout info">
+    セッション完了時に App Store 評価依頼（レビュー依頼）とインタースティシャル広告が同時に発火すると、
+    広告がレビューダイアログを潰してしまう問題があった。
+  </div>
+  <ul>
+    <li><strong>レビュー依頼を出す回は広告を出さない</strong>排他制御を追加（目標達成・節目セッション到達などレビュー依頼条件を満たす回のみレビューを表示し、その回の広告表示はスキップ）</li>
+    <li>レビュー依頼を出さない回は従来どおりインタースティシャル広告を表示する</li>
+  </ul>
+
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th></tr>
     <tr><td>UserDefaults</td><td>タイマー状態永続化</td></tr>
-    <tr><td>LiveActivityService</td><td>1秒ごとに ContentState 更新</td></tr>
+    <tr><td>LiveActivityService</td><td>状態変化（開始/一時停止/再開/フェーズ切替）時のみ ContentState 更新（経過時間はシステム側で自動表示。v1.1）</td></tr>
     <tr><td>WidgetSyncService</td><td>セッション保存後に Widget 同期</td></tr>
     <tr><td>SwiftData</td><td>StudySession として保存</td></tr>
   </table>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr><tr><td>1.1</td><td>2026-07-03</td><td>セッション完了フローの排他制御・ポモドーロのバックグラウンド対応・計測時間消失バグ修正</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-07-03</footer>
 </div></body></html>
