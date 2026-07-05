@@ -13,14 +13,14 @@
 
   <header class="site-header">
     <h1>グラフィック設定</h1>
-    <p>画質プリセット・昼夜サイクル・霧・天候の定義</p>
+    <p>画質プリセット・昼夜サイクル・霧・天候・パフォーマンス計測の定義</p>
     <div style="margin-top:8px;">
       <span class="tag">機能ID: VG-FEAT-GRAPHICS</span>
     </div>
   </header>
 
   <h2>概要</h2>
-  <p>SceneKit の描画品質を「標準」「高画質」の 2 プリセットで切り替える。設定は UserDefaults に永続化する。昼夜サイクルはゲーム内時間（10 分 / 1 日）で動作し、空の色・霧色・光源強度が変化する。</p>
+  <p>SceneKit の描画品質を「標準」「高画質」の2プリセットで切り替える。設定は UserDefaults に永続化する。昼夜サイクルはゲーム内時間（10分/1日）のsin波で光量・霧色・環境音が変化する。実機でのFPS/メモリ確認用に、設定シートからトグルできるパフォーマンス計測HUDも備える。</p>
 
   <h2>関連画面</h2>
   <ul>
@@ -32,72 +32,80 @@
     <tr><th>項目</th><th>標準（standard）</th><th>高画質（high）</th></tr>
     <tr><td>MSAA</td><td>2X</td><td>4X</td></tr>
     <tr><td>シャドウマップ解像度</td><td>1024 × 1024 px</td><td>2048 × 2048 px</td></tr>
-    <tr><td>描画距離</td><td>48 m（±3 チャンク相当）</td><td>64 m（±4 チャンク相当、将来対応）</td></tr>
-    <tr><td>LOD（Level of Detail）</td><td>なし</td><td>なし（将来拡張）</td></tr>
+    <tr><td>shadowSampleCount / shadowRadius</td><td>3 / 2.0</td><td>6 / 2.5</td></tr>
+    <tr><td>チャンク描画半径（viewRadius）</td><td>5チャンク（保証距離80m）</td><td>6チャンク（保証距離96m）</td></tr>
   </table>
+  <p>画質変更は設定シートを閉じた直後、値が変化した場合のみ SCNView に適用する（リスタート不要）。デフォルト画質は standard。</p>
 
   <h2>昼夜サイクル</h2>
   <table>
     <tr><th>項目</th><th>仕様</th></tr>
-    <tr><td>1 ゲーム日の長さ</td><td>現実時間 10 分</td></tr>
-    <tr><td>dayFactor の範囲</td><td>0.0（深夜）〜 1.0（正午）。サイン波で計算</td></tr>
-    <tr><td>昼判定</td><td>dayFactor &gt; 0.6</td></tr>
-    <tr><td>深夜判定</td><td>dayFactor &lt; 0.05</td></tr>
-    <tr><td>夕焼け・夜明け</td><td>dayFactor = 0.3〜0.6 の区間で空色をオレンジ→青にブレンド</td></tr>
-    <tr><td>星空</td><td>dayFactor &lt; 0.3 の夜間に SCNParticleSystem（白点）を表示</td></tr>
-    <tr><td>霧色</td><td>昼: (0.7, 0.85, 1.0) / 夕焼け: (1.0, 0.5, 0.2) / 夜: (0.0, 0.0, 0.1) の 3 点で補間</td></tr>
-    <tr><td>太陽光源</td><td>SCNLight（directional）の intensity を dayFactor に比例して変化</td></tr>
-    <tr><td>月光源</td><td>intensity = 200（固定）。夜間のみ有効</td></tr>
+    <tr><td>1 ゲーム日の長さ</td><td>現実時間 10 分（600秒）。dayTime = fmod(dayTime + dt/600, 1.0) で毎フレーム加算</td></tr>
+    <tr><td>sunFactor</td><td>max(0, sin(dayTime × 2π))。0=深夜〜1=正午付近が最大光量</td></tr>
+    <tr><td>太陽光強度</td><td>sunFactor × 1000</td></tr>
+    <tr><td>環境光強度</td><td>80 + sunFactor × 270</td></tr>
+    <tr><td>夜モード（虫の音）</td><td>sunFactor &lt; 0.15 で ON</td></tr>
+    <tr><td>ゾンビ日光ダメージ判定</td><td>sunFactor（dayFactor） &gt; 0.6 で燃焼開始（詳細は<a href="mob-ai.html">モブAI</a>参照）</td></tr>
+    <tr><td>ゾンビ夜間スポーン判定</td><td>dayFactor &lt; 0.2 でスポーン開始、&lt; 0.05 で深夜（湧き増加）</td></tr>
+    <tr><td>セッション開始時刻</td><td>毎回 dayTime=0.25（正午付近）でリセット。時刻・天候は永続化されない</td></tr>
   </table>
 
   <h2>天候</h2>
   <table>
-    <tr><th>天候</th><th>視覚効果</th><th>ゲームへの影響</th></tr>
-    <tr><td>clear（晴れ）</td><td>通常の空色・霧</td><td>なし</td></tr>
-    <tr><td>rain（雨）</td><td>霧距離を 30m に縮小。雨粒 SCNParticleSystem</td><td>ゾンビの昼間燃焼を無効化（将来実装）</td></tr>
-    <tr><td>thunder（雷雨）</td><td>rain に加え 10〜30 秒間隔で白フラッシュ + 雷鳴音</td><td>同上（将来実装）</td></tr>
+    <tr><th>天候</th><th>SF Symbol</th><th>備考</th></tr>
+    <tr><td>clear（晴れ）</td><td>sun.max.fill</td><td>既定の天候</td></tr>
+    <tr><td>rain（雨）</td><td>cloud.rain.fill</td><td>霧距離を短縮。雨粒 SCNParticleSystem</td></tr>
+    <tr><td>snow（雪）</td><td>cloud.snow.fill</td><td>霧距離を短縮。雪片 SCNParticleSystem</td></tr>
   </table>
-  <p>天候は HUD の天気ボタンでプレイヤーが手動切り替えできる。自動変化は未実装。</p>
+  <p>天候は clear / rain / snow の3種で、雷雨（thunder）は実装されていない。</p>
+
+  <h2>霧テーブル（品質・天候別）</h2>
+  <p>霧の終端は「描画保証距離（viewRadius × 16m）」を超えないよう画質別に別テーブルで管理する。近すぎる霧は地形が透けて見える不具合の原因になるため、標準画質は保証80m・高画質は保証96mを基準に、天候（晴天昼/雨/夜）ごとの開始・終了距離を個別に持つ。</p>
+
+  <h2>パフォーマンス計測（設定 → パフォーマンス表示）</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>トグル</td><td>設定シート内「パフォーマンス表示」。UserDefaults キー voxel_showPerf、既定OFF</td></tr>
+    <tr><td>表示位置</td><td>ON時のみHUD右上（HPバー付近）に等幅小型テキストで表示</td></tr>
+    <tr><td>表示項目</td><td>FPS・メモリ使用量(MB)・ロード済みチャンク数・初回ワールド生成時間(秒)</td></tr>
+    <tr><td>更新頻度</td><td>0.5秒ごとに集計し、値が変化したときのみUIへ反映</td></tr>
+  </table>
 
   <h2>ビジネスルール</h2>
   <ul>
-    <li>画質設定は UserDefaults キー <code>graphicsQuality</code>（String: "standard" / "high"）に保存する</li>
-    <li>感度・デッドゾーン設定も UserDefaults に保存する</li>
-    <li>画質変更は設定シートを閉じた直後に SCNView に適用する（リスタート不要）</li>
-    <li>デフォルト画質は "standard"（バッテリー消費を抑えるため）</li>
+    <li>画質設定は UserDefaults キー <code>voxel_graphicsQuality</code>（String: "standard" / "high"）に保存する</li>
+    <li>感度・デッドゾーン・マスター音量・パフォーマンス表示トグルも同様に UserDefaults に保存する</li>
+    <li>時刻（dayTime）・天候は WorldRecord に永続化されない（毎回正午・晴れから再開）</li>
   </ul>
 
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
-    <tr><td>GameInput.graphicsQuality</td><td>画質プリセットの状態管理</td><td>@Observable で設定シートと SCNView から参照</td></tr>
-    <tr><td>GameInput.dayFactor</td><td>昼夜サイクルの現在値。モブ AI から参照される</td><td>ゲームループで sin 波から計算して更新</td></tr>
-    <tr><td>モブ AI（VG-FEAT-MOBAI）</td><td>dayFactor を参照してゾンビ燃焼・スポーンを制御</td><td></td></tr>
+    <tr><td>GameInput.graphicsQuality</td><td>画質プリセットの状態管理</td><td>@Published。レンダースレッド用ミラー（stateLock保護）経由でChunkManagerのviewRadiusにも反映</td></tr>
+    <tr><td>モブ AI（VG-FEAT-MOBAI）</td><td>sunFactor（dayFactor）を参照してゾンビ燃焼・スポーンを制御</td><td></td></tr>
   </table>
 
   <h2>エラー処理</h2>
   <table>
     <tr><th>発生条件</th><th>対応</th></tr>
-    <tr><td>UserDefaults から不正な graphicsQuality 値を読み込んだ場合</td><td>"standard" にフォールバック</td></tr>
-    <tr><td>高画質設定でフレームレートが著しく低下した場合</td><td>現状は自動切り替えなし。将来は 30fps 未満が 5 秒続いたら「標準に変更しますか？」アラートを表示する予定</td></tr>
+    <tr><td>UserDefaults から不正な graphicsQuality 値を読み込んだ場合</td><td>standard にフォールバック</td></tr>
   </table>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li>dayFactor の計算: dayFactor = (sin(gameTime / 600 * 2 * .pi - .pi / 2) + 1) / 2。gameTime は秒単位の累積時間</li>
-    <li>SCNView の antialiasingMode は高画質時 .multisampling4X、標準時 .multisampling2X を設定する</li>
-    <li>シャドウマップは SCNLight の shadowMapSize に CGSize を指定する</li>
-    <li>霧は SCNScene.fogStartDistance / fogEndDistance / fogColor を dayFactor に応じて毎フレーム更新する</li>
-    <li>昼夜の空色変化は SCNScene.background.contents に UIColor のグラデーションを設定する（またはスカイボックス用 SCNNode の SCNMaterial カラーを lerp する）</li>
+    <li>画質適用は appliedQuality との差分チェックで、値が変化したときのみ SCNView への設定変更を行う（毎フレームの無駄な再設定を避ける）</li>
+    <li>パフォーマンス計測はレンダーループでフレームカウント・task_vm_info（メモリ）・ChunkManagerのロード済みチャンク数を集計し、0.5秒ごとにメインスレッドへミラーする</li>
+    <li>初回ワールド生成時間は入場から初回同期ロード分のメッシュ適用完了までを計測し、Loggerにも出力する</li>
   </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+    <tr><td>2.0</td><td>2026-07-05</td><td>実装との大幅な乖離を解消する全面改訂。天候（雷雨→雪）・描画距離（viewRadiusチャンク単位）・昼夜計算式・パフォーマンス計測HUDを実装どおりに修正</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-27</footer>
+  <footer class="site-footer">最終更新: 2026-07-05</footer>
 </div>
 </body>
 </html>

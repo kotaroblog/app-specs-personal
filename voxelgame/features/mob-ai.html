@@ -21,7 +21,7 @@
   </header>
 
   <h2>概要</h2>
-  <p>モブは状態機械（idle / wander / flee / chase）で制御される。パッシブモブはプレイヤーを脅威として逃走し、ゾンビは夜間に積極的に追跡・攻撃する。ゲームループの毎フレームで AI の更新が行われる。</p>
+  <p>モブは状態機械（idle / wandering / fleeing、ゾンビは追跡/攻撃を含む）で制御される。パッシブモブは<strong>本家Minecraft準拠で「近づいただけでは逃げず、殴られたときのみ逃走する」</strong>。ゾンビは夜間に検知半径内のプレイヤーを追跡・攻撃し、昼間は日光ダメージを受ける。AI更新はレンダーループの毎フレームで行う。</p>
 
   <h2>関連画面</h2>
   <ul>
@@ -32,14 +32,15 @@
   <div class="mermaid">
 stateDiagram-v2
   [*] --> idle: スポーン
-  idle --> wander: タイマー（3〜8秒）
-  wander --> idle: 移動完了
-  wander --> chase: プレイヤーが 16m 以内
-  chase --> wander: プレイヤーが 20m 以上
-  chase --> attack: プレイヤーが 1.8m 以内
-  attack --> chase: 攻撃後（クールダウン 1 秒）
+  idle --> wandering: 1〜3秒
+  wandering --> idle: 移動完了/時間切れ
+  idle --> chase: プレイヤーが検知半径16m以内
+  wandering --> chase: 同上
+  chase --> attack: プレイヤーが攻撃半径1.4m以内
+  attack --> chase: 攻撃後（クールダウン1.5秒）
+  chase --> idle: 検知半径外へ離脱
   idle --> burnDamage: 昼間（dayFactor > 0.6）
-  wander --> burnDamage: 昼間（dayFactor > 0.6）
+  chase --> burnDamage: 昼間（dayFactor > 0.6）
   burnDamage --> idle: 夜間になる
   </div>
 
@@ -48,60 +49,62 @@ stateDiagram-v2
   <h3>パッシブモブ（chicken / pig / cow）</h3>
   <table>
     <tr><th>項目</th><th>仕様</th></tr>
-    <tr><td>通常行動（idle / wander）</td><td>3〜8 秒ごとにランダム方向へ 2〜5 m 移動。移動後に idle へ戻る</td></tr>
-    <tr><td>逃走トリガー</td><td>プレイヤーとの距離が 6m 以内になったら flee 状態へ</td></tr>
-    <tr><td>逃走動作</td><td>プレイヤーの反対方向へ移動速度 1.5× で移動</td></tr>
-    <tr><td>逃走解除</td><td>プレイヤーとの距離が 10m 以上になったら wander へ戻る</td></tr>
-    <tr><td>ドロップアイテム</td><td>倒すと chickenMeat / pork / beef をそれぞれ 1〜2 個ドロップ</td></tr>
+    <tr><td>通常行動（idle / wandering）</td><td>idle 1〜3秒 → ランダム方向へ2〜6m先を目標に4〜7秒かけて移動 → idle へ戻る</td></tr>
+    <tr><td>逃走トリガー</td><td><strong>近づいただけでは逃げない。攻撃を受けた（殴られた）ときのみ fleeing 状態へ遷移する</strong>（本家Minecraft準拠）</td></tr>
+    <tr><td>逃走動作</td><td>プレイヤーの反対方向へ移動速度 1.7× で移動</td></tr>
+    <tr><td>逃走解除</td><td>プレイヤーとの距離が fleeRadius(6m)×1.6=9.6m を超えたら idle(1.0秒) へ戻る</td></tr>
+    <tr><td>最大同時数</td><td>20体（chicken/pig/cow合計）</td></tr>
+    <tr><td>スポーン間隔</td><td>8秒ごとに1〜3体、プレイヤーから13〜22mの円周上に地表判定してスポーン</td></tr>
+    <tr><td>ドロップアイテム</td><td>chicken→鶏肉1個 / pig→豚肉2個 / cow→牛肉3個</td></tr>
+    <tr><td>最大HP</td><td>chicken=4 / pig=10 / cow=10</td></tr>
   </table>
 
   <h3>ゾンビ（zombie）</h3>
   <table>
     <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>最大HP</td><td>20</td></tr>
+    <tr><td>移動速度</td><td>3.2 m/s（パッシブモブは2.8 m/s）</td></tr>
     <tr><td>検知半径</td><td>16m</td></tr>
-    <tr><td>追跡解除半径</td><td>20m（ヒステリシスあり）</td></tr>
-    <tr><td>攻撃半径</td><td>1.8m</td></tr>
-    <tr><td>攻撃ダメージ</td><td>プレイヤーに 3 HP ダメージ</td></tr>
-    <tr><td>攻撃クールダウン</td><td>1 秒</td></tr>
-    <tr><td>ノックバック</td><td>攻撃方向へ 2m + Y 方向 2.5m の速度ベクトルをプレイヤーに付与</td></tr>
-    <tr><td>昼間（dayFactor &gt; 0.6）</td><td>2 秒ごとに 1 HP ダメージ（燃焼）。オレンジ色フラッシュエフェクト</td></tr>
-    <tr><td>昼間の行動</td><td>燃焼中でも idle / wander を継続する（水中に逃げ込む行動は未実装）</td></tr>
-    <tr><td>夜間スポーン数</td><td>dayFactor &lt; 0.3：最大 6 体、12 秒間隔でスポーン</td></tr>
-    <tr><td>深夜スポーン数</td><td>dayFactor &lt; 0.05：最大 10 体、8 秒間隔でスポーン</td></tr>
-    <tr><td>スポーン範囲</td><td>プレイヤーから 10〜24m の範囲のランダム位置</td></tr>
-    <tr><td>昼間消去</td><td>dayFactor &gt; 0.8 になるとゾンビは自然消去（燃え尽き演出）</td></tr>
+    <tr><td>攻撃半径</td><td>1.4m（中心間距離。表面間では約1.0m相当の接触感）</td></tr>
+    <tr><td>攻撃ダメージ</td><td>3 HP</td></tr>
+    <tr><td>攻撃クールダウン</td><td>1.5秒</td></tr>
+    <tr><td>攻撃演出</td><td>被弾側は赤フラッシュ、燃焼中はオレンジフラッシュ</td></tr>
+    <tr><td>昼間燃焼（dayFactor &gt; 0.6）</td><td>2秒ごとに1HPダメージ。HPが尽きれば通常の死亡処理（ドロップ・ノード除去）に合流する</td></tr>
+    <tr><td>夜間スポーン</td><td>dayFactor &lt; 0.2 で発火。12秒ごとに1〜2体、上限6体（maxZombies）</td></tr>
+    <tr><td>深夜スポーン</td><td>dayFactor &lt; 0.05 でさらに湧きが増加。8秒ごとに2〜3体、上限10体</td></tr>
+    <tr><td>スポーン範囲</td><td>プレイヤーから13〜22mの円周上のランダム位置（パッシブモブと同一ロジック）</td></tr>
+    <tr><td>ドロップ</td><td>固定ドロップなし。確率ドロップ: 石炭鉱石50%・鉄インゴット10%（それぞれ独立判定）</td></tr>
   </table>
 
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
-    <tr><td>サバイバルシステム（VG-FEAT-SURVIVAL）</td><td>ゾンビ攻撃ダメージをプレイヤーに渡す</td><td>Player.takeDamage(3) を呼ぶ</td></tr>
-    <tr><td>グラフィック設定（VG-FEAT-GRAPHICS）</td><td>dayFactor を参照してスポーン・燃焼を制御</td><td>GameInput.dayFactor</td></tr>
-    <tr><td>クリエイティブモード（VG-FEAT-CREATIVE）</td><td>isCreativeMode=true 時はダメージを与えない</td><td>Player.takeDamage 内でガード</td></tr>
+    <tr><td>サバイバルシステム（VG-FEAT-SURVIVAL）</td><td>ゾンビ攻撃ダメージをプレイヤーに渡す</td><td>MobManager.update が mobDamage を返し、レンダーループで player.hp に反映</td></tr>
+    <tr><td>グラフィック設定（VG-FEAT-GRAPHICS）</td><td>sunFactor（dayFactor）を参照してスポーン・燃焼を制御</td><td>Coordinatorのレンダーループから毎フレーム渡す</td></tr>
+    <tr><td>クリエイティブモード（VG-FEAT-CREATIVE）</td><td>isCreativeMode=true 時はダメージを与えない</td><td>プレイヤー側の !creative ガードで無効化</td></tr>
   </table>
 
   <h2>エラー処理</h2>
   <table>
     <tr><th>発生条件</th><th>対応</th></tr>
-    <tr><td>モブがチャンク境界外にスポーンしようとする</td><td>スポーン位置をロード済みチャンク内にクランプする</td></tr>
-    <tr><td>モブが地形にめり込む（Y 座標バグ）</td><td>毎フレームの Y 衝突チェックで地面に乗せ直す</td></tr>
-    <tr><td>モブ数が上限を超える（バグ等）</td><td>スポーンロジック入口でカウントチェック。上限超えは Logger.warning で記録しスキップ</td></tr>
+    <tr><td>スポーン地点の地表が見つからない（洞窟内・水中等）</td><td>randomSurface が nil を返しそのスポーン試行をスキップする</td></tr>
+    <tr><td>木・葉の上にスポーンしようとする</td><td>surfaceY 判定で leaves/wood を地面扱いから除外し回避する</td></tr>
   </table>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li>AI 更新は GameLoop の updateAtTime で毎フレーム呼ぶが、ゾンビの経路計算は 0.25 秒ごとにのみ実行してパフォーマンスを節約する</li>
-    <li>移動方向の計算は (player.position - mob.position).normalized × speed で単純追跡する（A* は未使用）</li>
-    <li>衝突判定はプレイヤー・モブともに AABB（軸並行バウンディングボックス）で行う</li>
-    <li>ノックバックは Player.velocity に直接速度ベクトルを加算する。物理エンジン（SCNPhysics）は使わない</li>
-    <li>モブの SCNNode は Mob クラスに保持し、位置更新は node.position に直接書き込む</li>
-    <li>燃焼エフェクトはオレンジ色の SCNParticleSystem を 0.5 秒周期でトグルする</li>
+    <li>AI更新は MobManager.update（レンダースレッド専用、NSLock不要）で毎フレーム実行する</li>
+    <li>移動方向の計算は (player.position - mob.position) の単純追跡（A*等の経路探索は未使用）</li>
+    <li>ノックバックは player.velocity へ直接速度ベクトルを加算する（SCNPhysics不使用）</li>
+    <li>モブのSCNNodeはMobクラスに保持し、位置更新はnode.simdPositionへ直接書き込む</li>
+    <li>死亡演出はSCNAction.sequence（拡大→縮小→removeFromParentNode）による自己消滅</li>
   </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+    <tr><td>2.0</td><td>2026-07-05</td><td>実装との乖離を解消する改訂。パッシブモブの逃走トリガー（近接自動→被弾時のみ）・攻撃半径/クールダウンの数値・スポーン範囲/間隔・確率ドロップを実装どおりに修正</td></tr>
   </table>
 
   <script>
@@ -111,7 +114,7 @@ stateDiagram-v2
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-27</footer>
+  <footer class="site-footer">最終更新: 2026-07-05</footer>
 </div>
 </body>
 </html>
