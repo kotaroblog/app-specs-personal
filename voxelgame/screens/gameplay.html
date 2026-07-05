@@ -20,98 +20,78 @@
   </header>
 
   <h2>目的・役割</h2>
-  <p>ゲームの中核となる画面。SceneKit のレンダリングレイヤー（SCNView）の上に SwiftUI の HUD・操作ボタンレイヤーをオーバーレイする構成。サバイバルとクリエイティブの 2 モードを切り替えて遊べる。</p>
+  <p>ゲームの中核となる画面。SceneKit のレンダリングレイヤー（SCNView）の上に SwiftUI の HUD・操作ボタンレイヤーをオーバーレイする構成。三人称視点（TPS）がデフォルトで、切替ボタンで一人称（FPS）にも変更できる。サバイバルとクリエイティブの2モードを切り替えて遊べる。</p>
 
   <h2>UI 構成</h2>
 
   <h3>操作コントロール</h3>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>左バーチャルジョイスティック</td><td>DragGesture オーバーレイ</td><td>左下隅に固定。ドラッグ量・方向をプレイヤーの水平移動速度に変換する</td></tr>
-    <tr><td>右エリアドラッグ</td><td>DragGesture（画面右半分）</td><td>ドラッグ量を yaw（左右）・pitch（上下）視点回転に変換する</td></tr>
-    <tr><td>壊すボタン</td><td>Button（長押し判定付き）</td><td>長押し中、照準ブロックをツール採掘時間に応じて破壊する</td></tr>
-    <tr><td>置くボタン</td><td>Button</td><td>タップで照準面に選択中ブロックを設置する</td></tr>
+    <tr><td>左バーチャルジョイスティック</td><td>DragGesture オーバーレイ</td><td>左下隅に固定（半径55pt）。ドラッグ量・方向をプレイヤーの水平移動速度に変換する</td></tr>
+    <tr><td>右エリアドラッグ（LookPad）</td><td>DragGesture（画面右58%）</td><td>ドラッグ量を yaw（左右）・pitch（上下）視点回転に変換する。上部（safeArea.top+88pt）はHUDボタンとのタップ競合を避けるためヒットテスト除外</td></tr>
+    <tr><td>壊すボタン</td><td>Button（長押し判定付き）</td><td>長押し中、照準ブロックをツール採掘時間に応じて破壊する。進行に応じてひび割れ演出（<a href="../features/mining.html">採掘演出</a>参照）</td></tr>
+    <tr><td>置くボタン</td><td>Button</td><td>タップで照準面に選択中ブロックを設置する。チェスト/かまど/ベッドはこのボタン経由で専用UIが開く</td></tr>
     <tr><td>ジャンプボタン</td><td>Button（長押し判定付き）</td><td>タップでジャンプ。クリエイティブ時は長押しで上昇（フライ）</td></tr>
-    <tr><td>食べるボタン</td><td>Button</td><td>所持食料がある場合のみ表示。バッジで所持数を表示。タップで食料消費 → HP・空腹を回復</td></tr>
+    <tr><td>食べるボタン</td><td>Button</td><td>所持食料がある場合のみ表示。回復量の小さい順に自動で1つ消費する</td></tr>
+    <tr><td>視点切替ボタン</td><td>Button（HUD上段）</td><td>三人称（既定）⇔一人称をトグル</td></tr>
   </table>
 
   <h3>HUD（ヘッドアップディスプレイ）</h3>
   <table>
     <tr><th>要素</th><th>位置</th><th>説明</th></tr>
-    <tr><td>HP バー</td><td>左上</td><td>❤️ アイコン × 10。サバイバル時のみ表示。最大 20 HP を 2 HP / アイコンで表現</td></tr>
-    <tr><td>空腹バー</td><td>左上（HP バー下）</td><td>🍗 アイコン × 10。サバイバル時のみ表示。最大 20 を 2 / アイコンで表現</td></tr>
-    <tr><td>クリエイティブ表示</td><td>左上</td><td>クリエイティブモード時は HP・空腹バーの代わりに「∞」を表示</td></tr>
-    <tr><td>ホットバー</td><td>下中央</td><td>選択中ブロック種別アイコンと所持個数バッジを表示</td></tr>
-    <tr><td>ツールバー</td><td>下部</td><td>解放済みツール（素手・woodPickaxe・stonePickaxe・ironPickaxe・diamondPickaxe）を選択する行</td></tr>
-    <tr><td>天気切り替えボタン</td><td>右上</td><td>晴れ / 雨 / 雷雨をサイクル切り替え</td></tr>
-    <tr><td>クリエイティブ切り替えボタン</td><td>右上（天気ボタン下）</td><td>サバイバル / クリエイティブをトグル</td></tr>
-    <tr><td>照準（クロスヘア）</td><td>中央</td><td>画面中央に固定表示。照準先ブロックのハイライトと連動</td></tr>
+    <tr><td>上段ボタン列</td><td>左上</td><td>戻る・クラフト・クリエイティブ切替・視点切替（TPS/FPS）・設定の5ボタン</td></tr>
+    <tr><td>HP バー</td><td>右上</td><td>heart.fillアイコン+連続バー（最大20を110×15ptの帯で表現）。サバイバル時のみ表示</td></tr>
+    <tr><td>空腹バー</td><td>右上（HPバー下）</td><td>fork.knifeアイコン+連続バー（同上）</td></tr>
+    <tr><td>クリエイティブ表示</td><td>右上</td><td>クリエイティブモード時はHP・空腹バーの代わりに「∞」+天気アイコンを表示</td></tr>
+    <tr><td>天気アイコン</td><td>右上</td><td>晴れ/雨/雪を表示（タップ操作不可。日付の変わり目に70%/20%/10%の確率で自動変化）</td></tr>
+    <tr><td>パフォーマンス表示</td><td>右上（HP列の下）</td><td>設定でONにした場合のみ、FPS・メモリ(MB)・チャンク数・初回生成時間を等幅小型テキストで表示</td></tr>
+    <tr><td>ツールバー</td><td>2段目</td><td>解放済みツール（素手＋クラフト済みのツルハシ/剣）を横並びで選択する行</td></tr>
+    <tr><td>目標ガイド</td><td>3段目</td><td>16段階の目標タイトル+進捗バー。達成のたびチャイムが鳴り次の目標に切り替わる。クリエイティブ時は非表示（詳細は下記）</td></tr>
+    <tr><td>ホットバー</td><td>下部</td><td>固定8スロット（石/土/砂/木/レンガ/葉/松明/チェスト）+選択中の追加アイテム欄+所持品ボタン</td></tr>
+    <tr><td>照準（クロスヘア）</td><td>中央</td><td>画面中央に固定表示。採掘進捗リングと連動</td></tr>
   </table>
 
   <h3>シート / モーダル</h3>
   <table>
     <tr><th>シート</th><th>トリガー</th><th>内容</th></tr>
-    <tr><td>インベントリ</td><td>インベントリボタン</td><td>全所持アイテムの種別・数量一覧。アイテムをタップでホットバーにセット</td></tr>
-    <tr><td>クラフト画面</td><td>クラフトボタン</td><td>解放可能なツールレシピ一覧。素材が揃っているレシピをタップでクラフト実行</td></tr>
-    <tr><td>かまど</td><td>かまどブロック操作</td><td>鉄鉱石 → 鉄インゴット、金鉱石 → 金インゴットに精錬。精錬中はプログレスバー表示</td></tr>
-    <tr><td>チェスト</td><td>チェストブロック操作</td><td>チェストの中身一覧（スロット 27 個）。アイテムを預け入れ・取り出しする</td></tr>
-    <tr><td>設定画面</td><td>設定ボタン</td><td>感度・デッドゾーン調整スライダー、画質プリセット（標準 / 高画質）切り替え</td></tr>
+    <tr><td>インベントリ</td><td>所持品ボタン</td><td>全所持アイテムの種別・数量一覧。タップでホットバーにセット</td></tr>
+    <tr><td>クラフト画面</td><td>クラフトボタン</td><td>解放可能なツールレシピ・アイテムレシピ一覧。詳細は<a href="../features/crafting.html">クラフト</a>参照</td></tr>
+    <tr><td>かまど</td><td>かまどブロック操作</td><td>鉄鉱石/金鉱石/砂/石をそれぞれ鉄インゴット/金インゴット/ガラス/レンガへ即時精錬（燃料：石炭）</td></tr>
+    <tr><td>チェスト</td><td>チェストブロック操作</td><td>中身一覧（容量制限なし）。1個/半分/全部単位で出し入れ</td></tr>
+    <tr><td>設定画面</td><td>設定ボタン</td><td>マスター音量・視点感度・移動デッドゾーン・採掘ボタン強調・画質プリセット・パフォーマンス表示トグル</td></tr>
   </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>サバイバルモード</td><td>HP・空腹バーを表示。モブダメージ・落下ダメージ・空腹ダメージが有効</td></tr>
-    <tr><td>クリエイティブモード</td><td>「∞」表示。フライ有効・ブロック破壊即時・所持数消費なし・全ダメージ無効</td></tr>
-    <tr><td>プレイヤー死亡</td><td>画面が赤フェード → 「あなたは死にました」オーバーレイ → リスポーン後ワールド選択へ or スポーン地点に復帰</td></tr>
-    <tr><td>ブロック破壊中</td><td>照準ブロックにひび割れオーバーレイを表示（採掘進行度に応じて 4 段階。閾値 0.25 / 0.5 / 0.75）。破壊完了時にブロック色の破片パーティクルがバースト。詳細は<a href="../features/mining.html">採掘演出</a>を参照</td></tr>
-    <tr><td>インベントリ / シート表示中</td><td>ゲームループを一時停止。操作コントロールを無効化</td></tr>
+    <tr><td>初回ワールドロード中</td><td>黒オーバーレイ+「ワールドを生成中…」+ProgressView。初回同期ロード分のメッシュ適用完了で0.5秒フェードアウト（保険として入場8秒で強制解除）。表示中は入力を遮断</td></tr>
+    <tr><td>初回操作ヒント</td><td>初めてプレイする場合のみ「視点操作」→「移動」→「採掘」の3段ヒントを各3秒ずつ順送り表示</td></tr>
+    <tr><td>サバイバルモード</td><td>HP・空腹バーを表示。落下/ゾンビ/溶岩/サボテン/飢餓ダメージが有効</td></tr>
+    <tr><td>クリエイティブモード</td><td>「∞」表示。フライ有効・ブロック破壊0.05秒・所持数消費なし・全ダメージ無効・目標ガイド非表示</td></tr>
+    <tr><td>プレイヤー死亡</td><td>環境音停止→死亡オーバーレイ（死因表示+「復活する」/「終了して戻る」の2ボタン、自動復活ではない）。復活でhp=20/hunger=20・スポーン地点へ</td></tr>
+    <tr><td>ブロック破壊中</td><td>照準ブロックにひび割れオーバーレイを表示（採掘進行度に応じて4段階、閾値0.25/0.5/0.75）。破壊完了時にブロック色の破片パーティクルがバースト。詳細は<a href="../features/mining.html">採掘演出</a>を参照</td></tr>
+    <tr><td>インベントリ/シート表示中</td><td>ゲームループを一時停止（カメラ・チャンクストリーミング・メッシュ適用のみ継続）。昼夜サイクル・空腹・モブ更新・採掘進行が停止し、操作コントロールは無効化</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>戻るボタン / バックスワイプ</td><td>ワールド選択画面へ pop。最終プレイ日時を更新してから遷移</td></tr>
+    <tr><td>戻るボタン</td><td>ワールド選択画面へ pop。最終プレイ日時を更新してから遷移</td></tr>
     <tr><td>各シートを閉じる</td><td>ゲームプレイ画面に戻る（ゲームループ再開）</td></tr>
+    <tr><td>死亡オーバーレイ「終了して戻る」</td><td>ワールド選択画面へ pop</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
-  <pre><code>// ゲームプレイに関わる主要クラス
-class Player {
-    var position: SCNVector3
-    var velocity: SCNVector3
-    var hp: Int           // 最大 20
-    var hunger: Float     // 最大 20
-    var yaw: Float
-    var pitch: Float
-    var isFlying: Bool
-    var inventory: [Block: Int]
-    var unlockedTools: Set&lt;ToolType&gt;
-    var selectedTool: ToolType
-}
-
-// @Observable @MainActor で UI 状態を共有
-class GameInput: ObservableObject {
-    var showInventory: Bool
-    var showCraft: Bool
-    var showFurnace: Bool
-    var showChest: Bool
-    var showSettings: Bool
-    var isCreativeMode: Bool
-    var currentWeather: WeatherType
-    var graphicsQuality: GraphicsQuality
-}
-</code></pre>
+  <p>プレイヤー状態（HP・満腹度・所持品・解放ツール・進行フラグ）とUI状態（GameInput）の詳細は<a href="../data-model.html">データモデル</a>を参照。</p>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li>SCNView を UIViewRepresentable でラップし、SwiftUI の ZStack 上に HUD をオーバーレイする構成をとる</li>
-    <li>ゲームループは SCNSceneRendererDelegate の renderer(_:updateAtTime:) で 60fps を目指す</li>
-    <li>ジョイスティック・右エリアドラッグは独立した DragGesture で処理し、multiTouch を有効化する</li>
-    <li>食べるボタンは inventory に食料アイテムが 1 つ以上ある場合のみ表示する（.opacity 制御ではなく条件分岐で非表示）</li>
-    <li>シート表示中は SCNView のゲームループを isPaused = true で停止する</li>
-    <li>ホットバーのブロックアイコンは Assets.xcassets の UIImage テクスチャと一致させる</li>
-    <li>設定画面の感度・デッドゾーン値は UserDefaults に保存し、GameInput 経由でジョイスティックロジックに反映する</li>
+    <li>ゲームループは Coordinator（SCNSceneRendererDelegate）の renderer(_:updateAtTime:) で毎フレーム実行される</li>
+    <li>入力は GameInput（NSLock保護のrequestXxx/consumeXxxパターン）でUIスレッドとレンダースレッドを仲介する</li>
+    <li>食べるボタンは所持食料が1個以上ある場合のみ表示する（条件分岐で非表示、opacity制御ではない）</li>
+    <li>シート表示中はGameInputのisPausedミラー経由でレンダーループを早期returnさせる（死亡中の早期returnと同型の分岐）</li>
+    <li>ホットバーのブロックアイコンは TextureAtlas（起動時コード生成の1枚絵）から切り出して表示する</li>
   </ul>
 
   <h2>関連</h2>
@@ -123,6 +103,7 @@ class GameInput: ObservableObject {
     <li><a href="../features/mining.html">採掘演出</a></li>
     <li><a href="../features/creative.html">クリエイティブモード</a></li>
     <li><a href="../features/mob-ai.html">モブ AI</a></li>
+    <li><a href="../features/terrain.html">地形生成</a></li>
     <li><a href="../features/graphics.html">グラフィック設定</a></li>
   </ul>
 
@@ -130,7 +111,8 @@ class GameInput: ObservableObject {
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
-    <tr><td>1.1</td><td>2026-07-05</td><td>ブロック破壊中の状態を採掘演出（ひび割れ 4 段階・破片パーティクル）に合わせて更新し、機能仕様書へのリンクを追加</td></tr>
+    <tr><td>1.1</td><td>2026-07-05</td><td>ブロック破壊中の状態を採掘演出（ひび割れ4段階・破片パーティクル）に合わせて更新し、機能仕様書へのリンクを追加</td></tr>
+    <tr><td>2.0</td><td>2026-07-05</td><td>実装との大幅な乖離を解消する全面改訂。HUD形式（アイコン×10→連続バー）・天気（手動サイクル→自動変化）・目標ガイド16段階・パフォーマンス表示・ローディング画面・操作ヒント多段化・モーダル中ポーズ・死亡演出（手動復活）を実装どおりに修正</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-07-05</footer>
