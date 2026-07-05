@@ -64,7 +64,7 @@
     <tr><td>サバイバルモード</td><td>HP・空腹バーを表示。モブダメージ・落下ダメージ・空腹ダメージが有効</td></tr>
     <tr><td>クリエイティブモード</td><td>「∞」表示。フライ有効・ブロック破壊即時・所持数消費なし・全ダメージ無効</td></tr>
     <tr><td>プレイヤー死亡</td><td>画面が赤フェード → 「あなたは死にました」オーバーレイ → リスポーン後ワールド選択へ or スポーン地点に復帰</td></tr>
-    <tr><td>ブロック破壊中</td><td>照準ブロックに亀裂エフェクト（採掘進行度に応じて 0〜5 段階）</td></tr>
+    <tr><td>ブロック破壊中</td><td>照準ブロックにひび割れオーバーレイを表示（採掘進行度に応じて 4 段階。閾値 0.25 / 0.5 / 0.75）。破壊完了時にブロック色の破片パーティクルがバースト。詳細は<a href="../features/mining.html">採掘演出</a>を参照</td></tr>
     <tr><td>インベントリ / シート表示中</td><td>ゲームループを一時停止。操作コントロールを無効化</td></tr>
   </table>
 
@@ -120,6 +120,7 @@ class GameInput: ObservableObject {
     <li><a href="world-select.html">ワールド選択画面（VG-WORLD-01）</a></li>
     <li><a href="../features/survival.html">サバイバルシステム</a></li>
     <li><a href="../features/crafting.html">クラフト</a></li>
+    <li><a href="../features/mining.html">採掘演出</a></li>
     <li><a href="../features/creative.html">クリエイティブモード</a></li>
     <li><a href="../features/mob-ai.html">モブ AI</a></li>
     <li><a href="../features/graphics.html">グラフィック設定</a></li>
@@ -129,9 +130,10 @@ class GameInput: ObservableObject {
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-07-05</td><td>ブロック破壊中の状態を採掘演出（ひび割れ 4 段階・破片パーティクル）に合わせて更新し、機能仕様書へのリンクを追加</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-27</footer>
+  <footer class="site-footer">最終更新: 2026-07-05</footer>
 </div>
 </body>
 </html>

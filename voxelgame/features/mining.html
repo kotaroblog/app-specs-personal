@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>VoxelGame - 採掘演出</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">VoxelGame</a> / 採掘演出</div>
+
+  <header class="site-header">
+    <h1>採掘演出</h1>
+    <p>ブロック破壊（採掘）に対する視覚フィードバック。採掘中のひび割れ表示と破壊完了時の破片パーティクル</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-MINING</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>プレイヤーが「壊す」ボタンを長押ししてブロックを採掘する際、進行度と破壊完了を直感的に伝えるための演出。採掘中は対象ブロックにひび割れが段階的に深まり、破壊した瞬間にブロック色の破片が飛び散る。これによりツールごとの採掘時間差や「あと少しで壊れる」という手応えを視覚的に提示する。採掘速度そのものの仕様は<a href="crafting.html">クラフト（採掘速度テーブル）</a>を参照。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（壊すボタン・照準）</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant GV as GameView
+  participant TA as TextureAtlas
+  participant Scene as SceneKit Scene
+
+  U->>GV: 壊すボタン長押し（照準ブロック）
+  loop 採掘中（progress 0→1）
+    GV->>GV: progress を更新
+    GV->>TA: crackStageImages[stage] を取得
+    GV->>Scene: breakOverlayNode を対象ブロックに追従表示
+  end
+  Note over GV: progress ≥ 1.0 でブロック破壊
+  GV->>Scene: 対象ブロックノードを除去
+  GV->>GV: spawnBreakParticles(color: colorTop)
+  GV->>Scene: SCNParticleSystem をワンショット再生
+  Note over Scene: 約0.55秒後に自動消滅
+  </div>
+
+  <h2>ひび割れ表示</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>表示ノード</td><td>採掘中の対象ブロックに追従するオーバーレイノード（<code>breakOverlayNode</code>）。照準ハイライト（<code>highlightNode</code>）と同様の追従の仕組みで実装</td></tr>
+    <tr><td>テクスチャ</td><td><code>TextureAtlas.crackStageImages</code>。決定論的ノイズパターンで生成した半透明の黒い線からなる 4 段階のひび割れテクスチャ</td></tr>
+    <tr><td>段階数</td><td>4 段階（progress 0〜1 に対応）</td></tr>
+    <tr><td>段階の閾値</td><td>progress 0.25 / 0.5 / 0.75 を境に次の段階へ切り替え</td></tr>
+    <tr><td>生成方式</td><td>決定論的ノイズ（seed 固定）で生成するため、同一ブロックでは常に同じひび割れパターンになる</td></tr>
+  </table>
+
+  <h2>破片パーティクル</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>発生タイミング</td><td>ブロックが壊れた瞬間にワンショットで 1 回バースト（<code>spawnBreakParticles</code>）</td></tr>
+    <tr><td>実装</td><td><code>SCNParticleSystem</code></td></tr>
+    <tr><td>破片の色</td><td>壊したブロックの色（<code>colorTop</code>）を使用</td></tr>
+    <tr><td>飛散方向</td><td>放射状（<code>spreadingAngle</code> 160 度）</td></tr>
+    <tr><td>運動</td><td>重力の影響を受けて落下する</td></tr>
+    <tr><td>寿命</td><td>約 0.55 秒後に自動消滅</td></tr>
+    <tr><td>対象</td><td>全ブロック種別で共通発生（松明・植生・チェスト・農地・小麦・通常ブロック）</td></tr>
+  </table>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>ひび割れは採掘進行度（progress: 0〜1）に連動し、progress 0.25 / 0.5 / 0.75 の閾値で 4 段階に切り替える</li>
+    <li>ひび割れテクスチャは決定論的ノイズで生成するため、生成結果はビルド間・プレイ間で一貫する</li>
+    <li>破片パーティクルはブロック種別を問わず必ず発生し、破片色は破壊したブロックの <code>colorTop</code> を採用する</li>
+    <li>クリエイティブモードでのブロック破壊は即時のため、ひび割れ段階が視認されないケースがある（破片バーストは発生しうる）</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>TextureAtlas（crackStageImages）</td><td>ひび割れ 4 段階テクスチャの供給</td><td>決定論的ノイズで生成</td></tr>
+    <tr><td>SceneKit（SCNParticleSystem）</td><td>破片バーストの描画</td><td>ワンショット・自動消滅</td></tr>
+    <tr><td>クラフト（VG-FEAT-CRAFTING）</td><td>採掘進行度を決めるツール別採掘速度</td><td>progress の進み方を規定</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>採掘中に対象ブロックが照準から外れた / 採掘が中断された</td><td>breakOverlayNode を除去し、progress をリセットする</td></tr>
+    <tr><td>crackStageImages の段階インデックスが範囲外</td><td>閾値ロジックで 0〜3 にクランプし、範囲外参照を避ける</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>実装箇所: <code>GameView.swift</code>（<code>breakOverlayNode</code> の追従表示、<code>spawnBreakParticles</code> のバースト生成）</li>
+    <li>実装箇所: <code>TextureAtlas.swift</code>（<code>crackStageImages</code> のひび割れテクスチャ生成）</li>
+    <li>breakOverlayNode は highlightNode と同じく対象ブロックに毎フレーム追従させる</li>
+    <li>段階切り替えは progress を 0.25 刻みの閾値で 4 段階にマッピングする</li>
+    <li>破片パーティクルは spreadingAngle 160 度・重力あり・寿命約 0.55 秒でワンショット再生し、再生後は自動でノードを解放する</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+    <li><a href="crafting.html">クラフト（採掘速度テーブル）</a></li>
+    <li><a href="graphics.html">グラフィック設定</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-05</td><td>初版作成（採掘中のひび割れ表示・破壊完了時の破片パーティクルを追加）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-07-05</footer>
+</div>
+</body>
+</html>
