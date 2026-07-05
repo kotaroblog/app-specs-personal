@@ -18,163 +18,168 @@
   </header>
 
   <h2>概要</h2>
-  <p>VoxelGame のデータは <strong>永続化層（SwiftData）</strong> と <strong>ゲームランタイム層（インメモリクラス）</strong> の 2 層に分けて管理する。SwiftData はワールドのメタ情報のみを扱い、チャンクの生ブロックデータはドキュメントディレクトリにバイナリファイルとして保存する。</p>
+  <p>永続化は<strong>100% SwiftData</strong>（デフォルトの SQLite ストア）で完結しており、独自のバイナリファイル I/O は行わない。モデルは <code>WorldRecord</code>・<code>ChunkRecord</code>・<code>ChestRecord</code> の3つで、いずれも <code>worldID</code>（UUID）でワールドごとに分離する。ゲームロジック自体は SceneKit のレンダースレッド上で動くランタイムクラス（<code>Player</code>・<code>Mob</code> 等）が保持し、変化があったときだけ SwiftData モデルへ書き戻す。</p>
 
   <h2>ER 図</h2>
   <div class="mermaid">
 erDiagram
-  WorldRecord ||--o{ ChunkFile : "references (file system)"
+  WorldRecord ||--o{ ChunkRecord : "worldID"
+  WorldRecord ||--o{ ChestRecord : "worldID"
   WorldRecord {
     UUID id
     String name
     Int seed
     Date lastPlayedAt
+    Int hp
+    Int hunger
+    Data inventoryData
   }
-  ChunkFile {
-    String path "worlds/{worldId}/{cx}_{cz}.chunk"
-    UInt8Array blocks "16x64x16 = 16384 bytes"
+  ChunkRecord {
+    UUID worldID
+    Int cx
+    Int cz
+    Data blocksData "16x64x16=16384バイト"
+  }
+  ChestRecord {
+    UUID worldID
+    Int x
+    Int y
+    Int z
+    Data slotsData
   }
   </div>
 
   <h2>WorldRecord（SwiftData @Model）</h2>
-  <pre><code>@Model
-final class WorldRecord {
-    var id: UUID = UUID()
-    var name: String = ""
-    var seed: Int = 0
-    var lastPlayedAt: Date = Date()
-}
-</code></pre>
+  <p>ワールドのメタ情報・進行状態をまとめて保持する唯一のモデル。プレイヤーの位置・時刻・天候は保存対象外で、毎回スポーン地点から再開する。</p>
   <table>
     <tr><th>プロパティ</th><th>型</th><th>説明</th></tr>
-    <tr><td>id</td><td>UUID</td><td>ワールド固有ID。チャンクファイルのディレクトリ名に使用</td></tr>
-    <tr><td>name</td><td>String</td><td>ユーザーが入力したワールド名</td></tr>
-    <tr><td>seed</td><td>Int</td><td>地形生成のシード値。省略時は自動生成</td></tr>
-    <tr><td>lastPlayedAt</td><td>Date</td><td>最終プレイ日時。ワールド選択画面の並び順に使用</td></tr>
+    <tr><td>id</td><td>UUID</td><td>ワールド固有ID。ChunkRecord/ChestRecord の worldID と紐付く</td></tr>
+    <tr><td>name / seed</td><td>String / Int</td><td>ワールド名・地形生成シード</td></tr>
+    <tr><td>createdAt / lastPlayedAt</td><td>Date</td><td>作成日時・最終プレイ日時（一覧の並び順に使用）</td></tr>
+    <tr><td>totalPlayTime</td><td>TimeInterval</td><td>累計プレイ時間</td></tr>
+    <tr><td>exploredDistance</td><td>Double</td><td>累積移動距離。目標「探索を広げる」の判定に使用</td></tr>
+    <tr><td>spawnX / spawnY / spawnZ</td><td>Float</td><td>スポーン座標。既定 (8, 62, 8)。ベッド使用で更新される</td></tr>
+    <tr><td>inventoryData / unlockedToolsData</td><td>Data / Data</td><td>所持品・解放済みツールのシリアライズ</td></tr>
+    <tr><td>selectedToolRaw</td><td>String</td><td>選択中ツール（既定 "hand"）</td></tr>
+    <tr><td>hunger</td><td>Int</td><td>満腹度（最大20）</td></tr>
+    <tr><td>hp</td><td>Int</td><td>HP（最大20）。死亡画面のまま退出すると 0 が保存され得るため、復元側で 0 以下なら 20 に補正する</td></tr>
+    <tr><td>hasPlacedFurnace</td><td>Bool</td><td>かまど設置履歴（目標「かまどを作る」の巻き戻り防止。かまどは設置で所持数が0に戻るため）</td></tr>
+    <tr><td>hasCraftedTorch / hasPlacedBed / hasSmeltedGlass / hasCraftedGoldenApple</td><td>Bool</td><td>目標ガイドの進行フラグ。いずれも一度 true になったら戻らない</td></tr>
+    <tr><td>hasCompletedAllObjectives</td><td>Bool</td><td>全16目標達成済みか（達成トーストを一度だけ出すため）</td></tr>
+    <tr><td>hasSeenLavaWarning</td><td>Bool</td><td>溶岩の事前警告トーストを表示済みか（初見保護、ワールドごとに一度）</td></tr>
+    <tr><td>hasSavedProgress</td><td>Bool</td><td>一度でも進行状態を保存したか。false なら新規ワールド扱いで初期在庫を使う</td></tr>
   </table>
 
-  <h2>Chunk（ランタイムクラス）</h2>
-  <pre><code>class Chunk {
-    let cx: Int          // チャンク X 座標（ブロック座標 = cx * 16）
-    let cz: Int          // チャンク Z 座標
-    var blocks: [Block]  // 16 × 64 × 16 = 16384 要素。インデックス = x + 16*(y + 64*z)
-    var isDirty: Bool    // 変更済みフラグ（ファイル保存が必要）
-    var node: SCNNode?   // SceneKit ノード参照
-}
-</code></pre>
+  <h2>ChunkRecord（SwiftData @Model）</h2>
   <table>
     <tr><th>プロパティ</th><th>説明</th></tr>
-    <tr><td>cx, cz</td><td>チャンクグリッド座標。ブロック座標への変換は cx * 16 / cz * 16</td></tr>
-    <tr><td>blocks</td><td>16×64×16 のブロック配列（16384 要素）。Block は UInt8 の enum</td></tr>
-    <tr><td>isDirty</td><td>プレイヤーがブロックを変更した際に true にセット。ファイル保存後に false に戻す</td></tr>
-    <tr><td>node</td><td>生成済み SCNNode。nil の場合はメッシュ未生成</td></tr>
+    <tr><td>worldID</td><td>所属ワールドID</td></tr>
+    <tr><td>cx, cz</td><td>チャンクグリッド座標（ブロック座標 = cx/cz × 16）</td></tr>
+    <tr><td>blocksData</td><td>Block.rawValue を 16×64×16=16384 バイトへ直列化した Data。インデックス = x + 16*(y + 64*z)</td></tr>
+  </table>
+  <p>チャンク（ランタイム側の <code>Chunk</code> クラス）はブロック編集のたびに <code>dirtyChunks</code> へ記録され、(a) チャンクアンロード時、(b) アプリのバックグラウンド移行通知時、(c) 30秒ごとの定期保存、の3経路で <code>WorldStore.saveChunk</code>（専用シリアルキュー上の ModelContext）へ書き込まれる。</p>
+
+  <h2>ChestRecord（SwiftData @Model）</h2>
+  <table>
+    <tr><th>プロパティ</th><th>説明</th></tr>
+    <tr><td>worldID, x, y, z</td><td>所属ワールドID・チェストのワールド座標</td></tr>
+    <tr><td>slotsData</td><td>チェスト内アイテムのシリアライズ（形式は下記インベントリと同じ）</td></tr>
   </table>
 
-  <h2>Block（UInt8 enum）</h2>
-  <p>全 28 種。raw value が UInt8 として .chunk ファイルに直接書き込まれる。</p>
+  <h2>Block（UInt8 enum・全34種）</h2>
+  <p>rawValue が UInt8 として <code>blocksData</code> / <code>inventoryData</code> に直接書き込まれる。列 0〜33 を使用済み（アトラス列数は将来の拡張余地を見て40列確保）。</p>
   <table>
     <tr><th>値</th><th>名前</th><th>カテゴリ</th><th>備考</th></tr>
     <tr><td>0</td><td>air</td><td>-</td><td>透明・衝突なし</td></tr>
     <tr><td>1</td><td>grass</td><td>地形</td><td>上面が緑、側面が土</td></tr>
     <tr><td>2</td><td>dirt</td><td>地形</td><td></td></tr>
     <tr><td>3</td><td>stone</td><td>地形</td><td></td></tr>
-    <tr><td>4</td><td>sand</td><td>地形</td><td>水辺に生成</td></tr>
+    <tr><td>4</td><td>sand</td><td>地形</td><td>水辺・砂漠に生成。精錬でガラスに変換可</td></tr>
     <tr><td>5</td><td>snow</td><td>地形</td><td>山岳バイオーム高所</td></tr>
     <tr><td>6</td><td>wood</td><td>自然</td><td>木の幹</td></tr>
-    <tr><td>7</td><td>brick</td><td>建築</td><td></td></tr>
+    <tr><td>7</td><td>brick</td><td>建築</td><td>石の精錬で入手</td></tr>
     <tr><td>8</td><td>leaves</td><td>自然</td><td>半透明、衝突なし</td></tr>
-    <tr><td>9</td><td>water</td><td>液体</td><td>半透明、スローダウン</td></tr>
+    <tr><td>9</td><td>water</td><td>液体</td><td>半透明。泳げる（blocksMovement=false）</td></tr>
     <tr><td>10</td><td>coalOre</td><td>鉱石</td><td></td></tr>
     <tr><td>11</td><td>ironOre</td><td>鉱石</td><td></td></tr>
     <tr><td>12</td><td>goldOre</td><td>鉱石</td><td></td></tr>
     <tr><td>13</td><td>diamondOre</td><td>鉱石</td><td>深部にのみ生成</td></tr>
-    <tr><td>14</td><td>lava</td><td>液体</td><td>接触でダメージ</td></tr>
-    <tr><td>15</td><td>cactus</td><td>自然</td><td>砂漠バイオーム、接触ダメージ</td></tr>
-    <tr><td>16</td><td>chickenMeat</td><td>食料</td><td>+3 HP</td></tr>
-    <tr><td>17</td><td>pork</td><td>食料</td><td>+4 HP</td></tr>
-    <tr><td>18</td><td>beef</td><td>食料</td><td>+5 HP</td></tr>
-    <tr><td>19</td><td>torch</td><td>光源</td><td>光源ブロック（将来拡張）</td></tr>
+    <tr><td>14</td><td>lava</td><td>液体</td><td>接触ダメージ4/秒。破壊不可</td></tr>
+    <tr><td>15</td><td>cactus</td><td>自然</td><td>砂漠バイオーム、接触ダメージ1/秒</td></tr>
+    <tr><td>16</td><td>chickenMeat</td><td>食料</td><td>満腹度+4</td></tr>
+    <tr><td>17</td><td>pork</td><td>食料</td><td>満腹度+8</td></tr>
+    <tr><td>18</td><td>beef</td><td>食料</td><td>満腹度+8</td></tr>
+    <tr><td>19</td><td>torch</td><td>光源</td><td>クロス表示ノード。松明クラフトで入手</td></tr>
     <tr><td>20</td><td>chest</td><td>機能</td><td>タップでチェストシートを開く</td></tr>
-    <tr><td>21</td><td>bed</td><td>機能</td><td>タップで就寝・スポーン変更</td></tr>
+    <tr><td>21</td><td>bed</td><td>機能</td><td>タップでスポーン変更。夜なら朝までスキップ</td></tr>
     <tr><td>22</td><td>furnace</td><td>機能</td><td>タップでかまどシートを開く</td></tr>
     <tr><td>23</td><td>ironIngot</td><td>素材</td><td>かまどで鉄鉱石から精錬</td></tr>
-    <tr><td>24</td><td>goldIngot</td><td>素材</td><td>かまどで金鉱石から精錬</td></tr>
+    <tr><td>24</td><td>goldIngot</td><td>素材</td><td>かまどで金鉱石から精錬。金のリンゴの材料</td></tr>
     <tr><td>25</td><td>farmland</td><td>農業</td><td>耕地ブロック</td></tr>
-    <tr><td>26</td><td>wheatYoung</td><td>農業</td><td>未成熟の小麦</td></tr>
+    <tr><td>26</td><td>wheat</td><td>農業</td><td>未成熟の小麦（若芽）</td></tr>
     <tr><td>27</td><td>wheatMature</td><td>農業</td><td>成熟した小麦（収穫可能）</td></tr>
+    <tr><td>28</td><td>flower</td><td>装飾</td><td>平原の地表装飾。設置可能</td></tr>
+    <tr><td>29</td><td>tallGrass</td><td>装飾</td><td>平原の地表装飾。設置可能</td></tr>
+    <tr><td>30</td><td>mushroom</td><td>食料/装飾</td><td>満腹度+2で食用可。設置可能</td></tr>
+    <tr><td>31</td><td>bread</td><td>食料</td><td>満腹度+6。小麦3個からクラフト</td></tr>
+    <tr><td>32</td><td>glass</td><td>建築</td><td>設置可能な固体ブロック（磨りガラス風）。砂の精錬で入手</td></tr>
+    <tr><td>33</td><td>goldenApple</td><td>食料</td><td>満腹度+8かつHP全回復の非常食。金インゴット2+小麦1からクラフト</td></tr>
   </table>
 
-  <h2>Player（ランタイムクラス）</h2>
-  <pre><code>class Player {
-    var position: SCNVector3 = SCNVector3(0, 20, 0)
-    var velocity: SCNVector3 = .init(0, 0, 0)
-    var hp: Int = 20          // 最大 20
-    var hunger: Float = 20.0  // 最大 20
-    var yaw: Float = 0        // 左右視点（ラジアン）
-    var pitch: Float = 0      // 上下視点（ラジアン）
-    var isFlying: Bool = false
-    var spawnPoint: SCNVector3 = SCNVector3(0, 20, 0)
-    var inventory: [Block: Int] = [:]
-    var unlockedTools: Set&lt;ToolType&gt; = [.hand]
-    var selectedTool: ToolType = .hand
+  <h2>Player（ランタイムクラス・SwiftData対象外）</h2>
+  <pre><code>final class Player {
+    var position: SIMD3&lt;Float&gt; = SIMD3(8, 62, 8)  // 足元基準
+    var yaw: Float = 0
+    var pitch: Float = -0.3
+    var velocityY: Float = 0
+    var grounded: Bool = false
+    var fly: Bool = false             // クリエイティブのフライ
+    var isInWater: Bool = false
+    var isThirdPerson: Bool = true    // 既定は三人称視点
+    var hp: Int = 20
+
+    // 定数
+    let moveSpeed: Float = 6          // m/s
+    let gravity: Float = -24          // m/s²
+    let jumpSpeed: Float = 9          // m/s
+    let eyeHeight: Float = 1.62
+    let halfW: Float = 0.3            // AABB半幅
+    let halfH: Float = 0.9            // AABB半高さ（全高1.8）
 }
 </code></pre>
+  <p>位置・時刻・天候・モブは WorldRecord に保存されない（毎回スポーン地点・正午・晴れから再開）。HP・満腹度・所持品・解放ツール・進行フラグのみが永続化対象。</p>
 
-  <h2>Mob（ランタイムクラス）</h2>
-  <pre><code>enum MobType { case chicken, pig, cow, zombie }
-enum MobState { case idle, wander, flee, chase }
-
-class Mob {
-    let type: MobType
-    var position: SCNVector3
-    var hp: Int
-    var state: MobState = .idle
-    var node: SCNNode?
-}
-</code></pre>
+  <h2>GameInput（UI状態、@MainActor）</h2>
+  <p>SwiftUI 側から参照される <code>@Published</code> の集合。レンダースレッドとの橋渡しは「値が変化したときだけ <code>DispatchQueue.main.async</code> でミラー反映する」規約で統一されている。主なカテゴリ:</p>
   <table>
-    <tr><th>種類</th><th>最大HP</th><th>挙動</th></tr>
-    <tr><td>chicken</td><td>4</td><td>パッシブ。プレイヤー接近（6m 以内）で逃走</td></tr>
-    <tr><td>pig</td><td>10</td><td>パッシブ。プレイヤー接近（6m 以内）で逃走</td></tr>
-    <tr><td>cow</td><td>10</td><td>パッシブ。プレイヤー接近（6m 以内）で逃走</td></tr>
-    <tr><td>zombie</td><td>20</td><td>ホスタイル。昼間は燃焼ダメージ。夜間スポーン</td></tr>
+    <tr><th>カテゴリ</th><th>代表的なプロパティ</th></tr>
+    <tr><td>プレイヤー状態</td><td>playerHP, hunger, selectedBlock, selectedTool, unlockedTools, inventory</td></tr>
+    <tr><td>UI表示制御</td><td>showCrafting, showSettings, showChest, showInventory, showFurnace, isDead, deathCause, toastMessage</td></tr>
+    <tr><td>進行フラグ</td><td>hasPlacedFurnace, hasCraftedTorch, hasPlacedBed, hasSmeltedGlass, hasCraftedGoldenApple, hasCompletedAllObjectives, hasSeenLavaWarning</td></tr>
+    <tr><td>パフォーマンス計測</td><td>showPerf, perfFPS, perfMemoryMB, perfChunkCount, perfGenSeconds（設定シートのトグルで表示切替、既定OFF）</td></tr>
+    <tr><td>設定</td><td>lookSensitivity, masterVolume, joystickDeadZone, miningButtonBoost, graphicsQuality</td></tr>
+    <tr><td>視点・演出</td><td>isThirdPerson（既定true）, damageFlash, breakProgress, isWorldReady, weather</td></tr>
   </table>
 
-  <h2>GameInput（UI状態 ObservableObject）</h2>
-  <pre><code>@Observable @MainActor
-final class GameInput {
-    var showInventory: Bool = false
-    var showCraft: Bool = false
-    var showFurnace: Bool = false
-    var showChest: Bool = false
-    var showSettings: Bool = false
-    var isCreativeMode: Bool = false
-    var currentWeather: WeatherType = .clear
-    var graphicsQuality: GraphicsQuality = .standard
-    var joystickSensitivity: Float   // UserDefaults 永続化
-    var lookSensitivity: Float       // UserDefaults 永続化
-    var deadZone: Float              // UserDefaults 永続化
-}
-</code></pre>
-
-  <h2>チャンクファイル保存パス</h2>
-  <pre><code>// ドキュメントディレクトリ以下
-Documents/
-  worlds/
-    {worldId}/          // WorldRecord.id.uuidString
-      player.json       // プレイヤー状態（位置・HP・インベントリ）
-      {cx}_{cz}.chunk   // チャンクバイナリ（16384 バイト）
-</code></pre>
+  <h2>インベントリ / チェストのシリアライズ形式</h2>
+  <p>個数を UInt8（最大255）でクランプしていた旧形式から、上限を撤廃した新形式に移行済み。先頭バイトで新旧を判別する。</p>
+  <table>
+    <tr><th>形式</th><th>構造</th><th>個数上限</th></tr>
+    <tr><td>旧形式</td><td>[rawValue: UInt8, count: UInt8] の2バイトペアの並び</td><td>255</td></tr>
+    <tr><td>新形式</td><td>先頭に 0xFF、以降 [rawValue: UInt8, countLo: UInt8, countHi: UInt8] の3バイトペア（UInt16 リトルエンディアン）</td><td>65535</td></tr>
+  </table>
+  <p>0xFF は Block の最大 rawValue（33）と衝突しないため、先頭バイトだけで安全に新旧を判別できる。デコードは常に両形式に対応し、エンコードは常に新形式で書く。</p>
 
   <h2>マイグレーション方針</h2>
   <div class="callout warn">
-    SwiftData の <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する。チャンクファイルのバイナリフォーマット変更時はバージョンヘッダー（先頭 1 バイト）でバージョン判定する。
+    SwiftData の <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する（実績: hp・hasCraftedTorch 等はすべてデフォルト値付きで軽量マイグレーション済み）。新しい Block を追加する場合は既存 rawValue を変更せず末尾に追加する。<code>.modelContainer(for:)</code> はコンテナ生成失敗時にフォールバックがなく起動クラッシュになるため、スキーマ変更は「デフォルト値付きプロパティの追加のみ」に限定する運用とする。
   </div>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+    <tr><td>2.0</td><td>2026-07-05</td><td>実装との大幅な乖離を解消する全面改訂。永続化方式（バイナリファイル→SwiftData 3モデル）・Block一覧（28→34種）・WorldRecord/GameInputの実フィールド・インベントリのシリアライズ形式変更を反映</td></tr>
   </table>
 
   <script>
@@ -184,7 +189,7 @@ Documents/
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-27</footer>
+  <footer class="site-footer">最終更新: 2026-07-05</footer>
 </div>
 </body>
 </html>
