@@ -36,7 +36,7 @@
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
     <tr><td>週間進捗バッジ</td><td>WeeklyProgressBadge</td><td>画面上部。今週のトレーニング回数・ストリーク表示。週間目標設定時のみ</td></tr>
     <tr><td>日付セレクター</td><td>HStack + DatePicker popover</td><td>「今日」バッジ付き（Calendar.isDateInToday が true の日に緑Capsuleで表示）。前後矢印でも日付移動可</td></tr>
-    <tr><td>エンプティCTA（記録なし時）</td><td>VStack</td><td>「今日のルーティン」プライマリCTA（緑塗りカード + 種目プレビュー）を最優先表示。ルーティン未該当日は「ルーティンから追加」セカンダリボタン（Capsule）を表示</td></tr>
+    <tr><td>エンプティCTA（記録なし時）</td><td>VStack</td><td>「今日のルーティン」プライマリCTA（緑塗りカード + 種目プレビュー）を最優先表示。ルーティン未該当日は「ワークアウトを追加」をプライマリ（accent塗り+onAccent文字）、「ルーティンから追加」をセカンダリ（枠線テキストボタン）として視覚階層を分けて表示（v1.2.1修正）</td></tr>
     <tr><td>クイックアクションチップ（記録あり時）</td><td>横スクロール HStack</td><td>workoutList 上部に表示。「ルーティンから追加」チップのみ。今日のルーティン該当日は非表示</td></tr>
     <tr><td>ExerciseCard（記録あり時）</td><td>LazyVStack</td><td>種目ごとのカード View（ExerciseCard.swift）。種目ヘッダー右端に削除アイコン。各セット行に編集・削除アイコン常時表示</td></tr>
     <tr><td>FAB（右下固定）</td><td>WorkoutFAB</td><td>56pt 円形。タップで AddWorkoutView を sheet 表示。safeAreaInset(edge: .bottom) で常時表示</td></tr>
@@ -50,7 +50,8 @@
   <table>
     <tr><th>優先度</th><th>表示条件</th><th>UI</th><th>アクション</th></tr>
     <tr><td>プライマリ</td><td>今日の曜日に割り当てられたルーティンが1件以上ある</td><td>緑塗りカード（AppTheme.accent）+ ルーティン名 + 種目プレビュー1行</td><td>RoutineSuggestionService.applyRoutine() を即時実行</td></tr>
-    <tr><td>セカンダリ</td><td>ルーティン未該当（todaysRoutine == nil）</td><td>「ルーティンから追加」Capsule ボタン（accent.opacity(0.15)）</td><td>TemplateListView sheet 表示</td></tr>
+    <tr><td>プライマリ（非該当日）</td><td>ルーティン未該当（todaysRoutine == nil）</td><td>「ワークアウトを追加」accent塗り Capsule + onAccent文字（大きめCTA）</td><td>AddWorkoutView sheet 表示</td></tr>
+    <tr><td>セカンダリ（非該当日）</td><td>同上、「プライマリ」の下部に配置</td><td>「ルーティンから追加」枠線テキストボタン（視覚重量を下げて主従を明確化）</td><td>TemplateListView sheet 表示</td></tr>
   </table>
 
   <h2>状態</h2>
@@ -59,7 +60,7 @@
     <tr><td>記録なし・ルーティン該当日</td><td>エンプティCTA（プライマリ：今日のルーティンカード）</td></tr>
     <tr><td>記録なし・ルーティン非該当日</td><td>エンプティCTA（セカンダリ：「ルーティンから追加」）</td></tr>
     <tr><td>記録あり</td><td>クイックアクションチップ + ExerciseCard リスト + FAB + ボトムアクションバー</td></tr>
-    <tr><td>PR検出</td><td>PRCelebrationView overlay → POST-PR Paywall / シェアプロンプト</td></tr>
+    <tr><td>PR検出</td><td>PRCelebrationView overlay（閉じるボタン付き・Reduce Motion対応・accessibilityAddTraits(.isModal)）→ シェアプロンプト（セッション内1回のみ）</td></tr>
     <tr><td>週間目標達成</td><td>週間目標達成アラート</td></tr>
     <tr><td>実績解除</td><td>AchievementCelebrationView overlay</td></tr>
   </table>
@@ -121,6 +122,12 @@
     <li class="done">v1.1.0: RoutineSuggestionService で todaysRoutine を算出してエンプティCTAに反映</li>
     <li class="done">v1.1.0: ExerciseCard を独立 View（Views/Workout/ExerciseCard.swift）に切り出し</li>
     <li class="done">v1.1.0: クイックアクションチップ（QuickActionChip）を workoutList 先頭に表示</li>
+    <li class="done">v1.2.1: PRCelebrationView/AchievementCelebrationView の見出し .white → .primary（ライトモード白文字バグ修正）</li>
+    <li class="done">v1.2.1: 祝福オーバーレイに明示的「閉じる」ボタン・.accessibilityAddTraits(.isModal)・@Environment(\.accessibilityReduceMotion) 対応</li>
+    <li class="done">v1.2.1: 日付送り chevron ボタンに accessibilityLabel「前の日」「次の日」を付与</li>
+    <li class="done">v1.2.1: EditableSetRow 行を .accessibilityElement(children:.combine) 化・削除を accessibilityAction に移設</li>
+    <li class="done">v1.2.1: 種目追加後シェア確認ダイアログをセッション内 1 回のみに制限（hasShownSharePrompt フラグ）</li>
+    <li class="done">v1.2.1: 記録空状態 CTA の主従を視覚的に明確化（主=accent塗り「ワークアウトを追加」、副=枠線「ルーティンから追加」）</li>
     <li>非同期保存中の入力ロック（v1.x）</li>
   </ul>
 
@@ -147,9 +154,10 @@
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-14</td><td>v1.0.7: 編集・削除アイコンを各セット行右端に常時表示へ変更（左スワイプ削除・長押しコンテキストメニュー廃止）、種目削除ダイアログを日本語化</td></tr>
     <tr><td>1.2</td><td>2026-05-23</td><td>v1.1.0: ホーム画面リデザイン全体（ツールバー整理・FAB導入・ボトムアクションバー・日付セレクター「今日」バッジ・エンプティCTA階層化・クイックアクションチップ・ExerciseCard切り出し・ルーティン提案CTA）を反映</td></tr>
+    <tr><td>1.3</td><td>2026-07-07</td><td>v1.2.1 UI/UX/A11y監査対応: PR祝福見出し .white→.primary（ライトモード白文字修正）、祝福オーバーレイに閉じるボタン・isModal・Reduce Motion対応、日付送りボタンVoiceOverラベル付与、EditableSetRow combine化、シェア確認ダイアログ1回制限、空状態CTA主従明確化</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-23</footer>
+  <footer class="site-footer">最終更新: 2026-07-07</footer>
 </div>
 </body>
 </html>

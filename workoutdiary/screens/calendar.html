@@ -67,8 +67,8 @@
     <tr><td>腕</td><td>arms</td><td>オレンジ（0.95, 0.55, 0.25）</td></tr>
     <tr><td>脚</td><td>legs</td><td>緑（0.30, 0.75, 0.45）</td></tr>
     <tr><td>腹筋</td><td>abs</td><td>紫（0.70, 0.45, 0.90）</td></tr>
-    <tr><td>有酸素</td><td>cardio</td><td>シアン（0.30, 0.80, 0.85）</td></tr>
-    <tr><td>その他</td><td>other</td><td>グレー（white: 0.55）</td></tr>
+    <tr><td>有酸素</td><td>cardio</td><td>シアン（0.30, 0.80, 0.85）— v1.2.1 から彩色に（旧: グレー）</td></tr>
+    <tr><td>その他</td><td>other</td><td>ティール系（0.25, 0.65, 0.70）— v1.2.1 から彩色に（旧: グレー）</td></tr>
   </table>
 
   <h2>状態</h2>
@@ -84,6 +84,7 @@
     <tr><th>操作</th><th>遷移先</th></tr>
     <tr><td>日付タップ</td><td>BottomSheet を sheet 表示（同画面内、編集不可）</td></tr>
     <tr><td>前月・次月ボタン</td><td>同画面内でグリッドを更新</td></tr>
+    <tr><td>BottomSheet 内「シェア」ボタン（v1.2.1 移設）</td><td>WorkoutShareSheet（sheet-over-sheet）— 旧: 親 NavigationStack toolbar（デッドコントロールだったため移設）</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
@@ -110,6 +111,10 @@ enum ExerciseCategory: String {
     <li class="done">v1.1.0: BottomSheet 内「本日のルーティン」セクション（曜日ルーティンがある場合）</li>
     <li class="done">v1.1.0: カレンダー下部に部位カラー凡例セクション</li>
     <li class="done">v1.1.0: 編集・削除・記録ボタンを撤廃して閲覧専用化</li>
+    <li class="done">v1.2.1: CalendarPRCelebrationView の見出し .white → .primary（ライトモード白文字修正）</li>
+    <li class="done">v1.2.1: PR祝福オーバーレイに「閉じる」ボタン・.accessibilityAddTraits(.isModal)・Reduce Motion 対応</li>
+    <li class="done">v1.2.1: 共有ボタンを親 NavigationStack toolbar から detailSheet 内に移設（デッドコントロール解消）</li>
+    <li class="done">v1.2.1: BodyPartDigestCardView の部位カラー定義を削除し ExerciseCategory.color に一本化（SSoT。cardio/other が彩色に変更）</li>
   </ul>
 
   <h2>関連ファイル</h2>
@@ -134,9 +139,10 @@ enum ExerciseCategory: String {
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-14</td><td>v1.0.7: 日付選択後に種目リスト表示・タップでAddWorkoutViewプリセット起動、「ワークアウトを記録／編集」ボタン常設、PRセレブレーションオーバーレイ対応</td></tr>
     <tr><td>1.2</td><td>2026-05-23</td><td>v1.1.0: 編集機能を撤廃して閲覧専用化。日付セルに部位カラードット（最大3つ）、未来日に予定ドット（枠線）、日付タップ BottomSheet（部位タグ・サマリ・種目リスト・ルーティンセクション）、部位カラー凡例セクション追加</td></tr>
+    <tr><td>1.3</td><td>2026-07-07</td><td>v1.2.1 UI/UX/A11y監査対応: PR祝福見出し .white→.primary（ライトモード白文字修正）、祝福オーバーレイに閉じるボタン・isModal・Reduce Motion対応、共有ボタンをdetailSheet内に移設（デッドコントロール解消）、部位カラーをExerciseCategory.colorに統一（BodyPartDigestCardView独自定義を削除）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-23</footer>
+  <footer class="site-footer">最終更新: 2026-07-07</footer>
 </div>
 </body>
 </html>

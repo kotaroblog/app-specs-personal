@@ -72,7 +72,8 @@
     <tr><th>操作</th><th>遷移先</th></tr>
     <tr><td>行タップ</td><td>ExerciseFormView（編集モード）</td></tr>
     <tr><td>右スワイプ「編集」</td><td>ExerciseFormView（編集モード）</td></tr>
-    <tr><td>左スワイプ「削除」</td><td>Undo Toast 表示 → 5秒後に確定 or 「元に戻す」でキャンセル</td></tr>
+    <tr><td>左スワイプ「削除」（履歴0件の種目）</td><td>Undo Toast 表示 → 5秒後に確定 or 「元に戻す」でキャンセル</td></tr>
+    <tr><td>左スワイプ「削除」（履歴あり種目）</td><td>confirmationDialog「この種目にはN件の記録があります。削除すると過去の記録もすべて消えます」（destructive）→ 確認後に Undo Toast（v1.2.1追加）</td></tr>
     <tr><td>追加ボタン（ナビゲーションバー）</td><td>ExerciseFormView（新規モード）</td></tr>
   </table>
 
@@ -107,6 +108,9 @@ enum ExerciseCategory: String, CaseIterable {
     <li class="done">v1.1.1: 頭文字バッジを部位カラー化（fill opacity 0.18 + strokeBorder + minimumScaleFactor 0.7）</li>
     <li class="done">v1.1.1: メタ情報「PR · 最終使用日（相対） · 累計セット数」を ExerciseStatsCalculator から取得</li>
     <li class="done">v1.1.1: pendingDeletionIDs（Set&lt;UUID&gt;）で保留中削除を管理し、Undo Toast に登録</li>
+    <li class="done">v1.2.1: 部位フィルタ Menu ボタンに accessibilityLabel「絞り込み」を付与</li>
+    <li class="done">v1.2.1: 履歴あり種目（累計セット数 ≥ 1）の削除に confirmationDialog を追加（誤削除防止）</li>
+    <li class="done">v1.2.1: 種目行末尾に chevron.right（disclosure indicator）を追加してタップ可能性を可視化</li>
   </ul>
 
   <h2>関連</h2>
@@ -125,9 +129,10 @@ enum ExerciseCategory: String, CaseIterable {
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-23</td><td>v1.1.0: スワイプ削除廃止→「➕/✏️/🗑」アイコン常時表示に変更、行タップ=AddWorkoutViewプリセット起動に統一、ExerciseCategory.color プロパティ追記</td></tr>
     <tr><td>1.2</td><td>2026-05-24</td><td>v1.1.1: 種目一覧刷新。タップ動作をExerciseFormView（編集）直行に変更、「➕/✏️/🗑」アイコン廃止→スワイプ操作（左=Undo Toast削除/右=編集）、Section ヘッダー部位カラー左ボーダー+件数、頭文字バッジ部位カラー化、メタ情報表示（PR・相対日時・累計セット数）、ExerciseStatsCalculator 導入、pendingDeletionIDs による保留中削除パターン</td></tr>
+    <tr><td>1.3</td><td>2026-07-07</td><td>v1.2.1 UI/UX/A11y監査対応: フィルタMenuに「絞り込み」VoiceOverラベル付与、履歴あり種目の削除に確認ダイアログ追加（誤削除防止）、種目行末尾に disclosure indicator（chevron）追加</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-24</footer>
+  <footer class="site-footer">最終更新: 2026-07-07</footer>
 </div>
 </body>
 </html>
