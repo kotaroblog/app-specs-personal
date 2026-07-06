@@ -35,12 +35,22 @@
       <tr><th>役割</th><th>内容</th></tr>
     </thead>
     <tbody>
-      <tr><td>主役</td><td>「TikTok で投稿」（ピンクオレンジグラデ）</td></tr>
-      <tr><td>副役</td><td>「Instagram Reels で投稿」（border）</td></tr>
+      <tr><td>主役</td><td>「TikTok を開いて投稿」（ピンクオレンジグラデ）</td></tr>
+      <tr><td>副役</td><td>「Instagram Reels を開いて投稿」（border）</td></tr>
       <tr><td>脇役</td><td>「その他のアプリでシェア」（テキストリンク）</td></tr>
       <tr><td>完了</td><td>「完了」（最下部、<code>InterstitialAdManager</code> 経由でホーム復帰）</td></tr>
     </tbody>
   </table>
+
+  <h2>2.1 投稿手順インラインガイド（v1.1）</h2>
+  <p>TikTok / Instagram Reels の各ボタンはアプリを開くだけで動画を自動転送しない。初見ユーザーが「ボタンを押したのに投稿できない」と混乱しないよう、ExportCompleteView にインラインガイドを追加した。</p>
+  <ul class="kv-list">
+    <li><span class="k">動画の扱い</span><span class="v">エクスポート完了時点でカメラロールに保存済み</span></li>
+    <li><span class="k">ガイド文言</span><span class="v">「動画はカメラロールに保存済みです。アプリを開いたら、ライブラリから動画を選んで投稿してください。」</span></li>
+    <li><span class="k">表示位置</span><span class="v">TikTok / Reels ボタンの直下（テキストラベルとして配置）</span></li>
+    <li><span class="k">ボタンラベル変更前</span><span class="v">「TikTok で投稿」/「Instagram Reels で投稿」（自動投稿と誤解させる表現）</span></li>
+    <li><span class="k">ボタンラベル変更後</span><span class="v">「TikTok を開いて投稿」/「Instagram Reels を開いて投稿」（アプリを開く動作であることを明示）</span></li>
+  </ul>
 
   <h2>3. URL スキーム順序</h2>
   <p>各 SNS で公式アプリ未インストール時にも自然にフォールバックする多段構成。</p>
@@ -156,11 +166,12 @@ center.removeDeliveredNotifications(withIdentifiers: [sharePromptId])
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.1</td><td>2026-07-07</td><td>操作性改善バッチ（7c014ad / cff03e9）: TikTok / Reels ボタンラベルを実態を反映した表記に変更（「で投稿」→「を開いて投稿」）。ボタンがアプリを開くだけで自動投稿しない点を明示し、投稿手順ガイド（カメラロール保存済みの旨 + ライブラリ選択案内）をボタン直下に追加</td></tr>
       <tr><td>v1.0</td><td>2026-06-10</td><td>初版作成。ExportCompleteView の 4 ボタン構成・URL スキーム多段フォールバック・翌日復帰通知・ディープリンク受け口を定義。</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-10</footer>
+  <footer class="site-footer">最終更新: 2026-07-07</footer>
 </div>
 </body>
 </html>

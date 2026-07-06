@@ -134,14 +134,18 @@
   </ul>
 
   <h2>タップターゲット最小44pt化（v1.1.0・HIG準拠）</h2>
-  <p>視覚サイズを変えずに <code>.contentShape(Rectangle().size(...))</code> または <code>.frame(minWidth: 44, minHeight: 44)</code> でヒット領域を HIG 最小44pt に拡大した。</p>
+  <p>視覚サイズを変えずに <code>.contentShape(Rectangle().size(...))</code> または <code>.frame(minWidth: 44, minHeight: 44)</code> でヒット領域を HIG 最小44pt に拡大した。v1.1.0 初回適用分に加え、操作性改善バッチ（7c014ad / cff03e9）でさらに対象を拡張した。</p>
   <table>
     <thead>
-      <tr><th>対象ボタン</th><th>視覚サイズ</th><th>ヒット領域（変更後）</th></tr>
+      <tr><th>対象ボタン</th><th>視覚サイズ</th><th>ヒット領域（変更後）</th><th>追加バージョン</th></tr>
     </thead>
     <tbody>
-      <tr><td>クリップ削除 ×</td><td>22pt</td><td>44pt</td></tr>
-      <tr><td>各画面 丸アイコンボタン（閉じる等）</td><td>30〜36pt</td><td>44pt</td></tr>
+      <tr><td>クリップ削除 ×</td><td>22pt</td><td>44pt</td><td>v1.1.0</td></tr>
+      <tr><td>各画面 丸アイコンボタン（閉じる等）</td><td>30〜36pt</td><td>44pt</td><td>v1.1.0</td></tr>
+      <tr><td>Pro バッジ（無料時タップ有効）</td><td>〜28pt</td><td>44pt</td><td>操作性改善バッチ</td></tr>
+      <tr><td>保存メーター（X/3 バッジ）</td><td>〜32pt</td><td>44pt</td><td>操作性改善バッチ</td></tr>
+      <tr><td>撮影チップ（Capsule ボタン）</td><td>32〜36pt</td><td>44pt</td><td>操作性改善バッチ</td></tr>
+      <tr><td>コピーボタン（ExportCompleteView）</td><td>〜28pt</td><td>44pt</td><td>操作性改善バッチ</td></tr>
     </tbody>
   </table>
 
@@ -157,6 +161,24 @@
     <li>current: 時間帯別挨拶 + 絵文字（おはよう☀️ / こんにちは🌤 / お疲れさま🌙 / おかえり✨）</li>
     <li>dateText: 日本語日付（M月d日 曜日）</li>
     <li>moodCopy: 時間帯別軽コピー（今日もゆっくり始めよう / 少し整えよう / 5分だけ記録する？ / 静かに振り返ろう）</li>
+  </ul>
+
+  <h2>Reduce Motion 対応（操作性改善バッチ）</h2>
+  <p>iOS「視差効果を減らす」設定が有効な場合、永続的に動作するアニメーション（浮遊・脈動・波紋）を停止する。<code>@Environment(\.accessibilityReduceMotion)</code> を参照し、アニメーションの有無を切り替える。</p>
+  <table>
+    <thead>
+      <tr><th>アニメーション</th><th>Reduce Motion OFF（通常）</th><th>Reduce Motion ON</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>DesignsFloatModifier（浮遊）</td><td>永続的に Y オフセット往復</td><td>静止（オフセット 0 固定）</td></tr>
+      <tr><td>DesignsPulseModifier（脈動）</td><td>永続的に scale 往復（REC インジケーター等）</td><td>静止（scale 1.0 固定）</td></tr>
+      <tr><td>DesignsRingPulseModifier（波紋）</td><td>永続的に scale + opacity 片道アニメ</td><td>静止（非表示）</td></tr>
+    </tbody>
+  </table>
+  <ul class="kv-list">
+    <li><span class="k">実装</span><span class="v">各 modifier の <code>body</code> 内で <code>@Environment(\.accessibilityReduceMotion) var reduceMotion</code> を参照し、<code>true</code> の場合は <code>.animation(nil)</code> + 固定値を返す</span></li>
+    <li><span class="k">押下アニメーション</span><span class="v"><code>DesignsPressableButtonStyle</code> の scale 押下フィードバックは Reduce Motion ON でも維持（ユーザー操作への直接フィードバックのため）</span></li>
+    <li><span class="k">appear 系アニメーション</span><span class="v">フェードイン / spring 切替はユーザー操作起点のため Reduce Motion の影響外</span></li>
   </ul>
 
   <h2>Home UI 統一原則</h2>
@@ -177,12 +199,13 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.2</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: HIG 準拠タップターゲット 44pt 化の対象を追加拡張（Pro バッジ / 保存メーター / 撮影チップ / コピーボタン）。Reduce Motion 対応: @Environment(\.accessibilityReduceMotion) 参照で「視差効果を減らす」ON 時に DesignsFloatModifier（浮遊）/ DesignsPulseModifier（脈動）/ DesignsRingPulseModifier（波紋）の永続アニメーションを停止</td></tr>
       <tr><td>v1.1</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: designsTertiaryText を 0.659→0.52 に暗く調整（WCAG コントラスト改善）。designsCTAGradient（Pink→Orange）を共通定数として追加し全 CTA ボタンのグラデを統一。主役 CTA 角丸を DesignsRadius.xl (22pt) に統一。designsSheetStyle() を設定 / プリセット選択 / ルーティン編集 / 作品一覧 / Paywall の各シートに適用（角丸32pt・ドラッグインジケータ・warm white 背景）。HIG 準拠タップターゲット 44pt 化: クリップ削除 ×（22pt→44pt）/ 各画面丸アイコンボタン（30〜36pt→44pt）</td></tr>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成。DesignSystem.swift / DesignsColor.swift / DesignsAnimations.swift を全画面で参照する基盤確立</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-03</footer>
+  <footer class="site-footer">最終更新: 2026-07-07</footer>
 </div>
 </body>
 </html>

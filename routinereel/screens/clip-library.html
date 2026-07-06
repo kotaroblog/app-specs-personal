@@ -124,6 +124,24 @@
     <li><span class="k">「全ステップを連続撮影」ボタン</span><span class="v">CreateSessionView 経由のセッション起点として ClipLibrary 冒頭に追加。ステップ未撮影分を順に巡回する撮影フローを開始</span></li>
   </ul>
 
+  <h2>ClipPlayerView トリムハンドルタップ領域 44pt 化（v1.1.0）</h2>
+  <p>トリムハンドルの視覚サイズは 28pt だが、HIG 準拠の最小タップターゲット 44pt を確保するため <code>.contentShape(Rectangle())</code> によりヒット領域を拡張した。</p>
+  <ul class="kv-list">
+    <li><span class="k">視覚サイズ</span><span class="v">28pt（変更なし・デザイン維持）</span></li>
+    <li><span class="k">ヒット領域</span><span class="v">44pt（<code>.contentShape(Rectangle().size(CGSize(width: 44, height: 44)))</code>）</span></li>
+    <li><span class="k">対象</span><span class="v">開始ハンドル（左端）/ 終了ハンドル（右端）の両方</span></li>
+  </ul>
+
+  <h2>トリム未保存変更の破棄確認（v1.1.0）</h2>
+  <p>トリム変更を行った状態で閉じる操作（閉じるボタン / 下スワイプ）を行った場合、未保存変更の破棄確認ダイアログを表示する。</p>
+  <ul class="kv-list">
+    <li><span class="k">発火条件</span><span class="v">トリム開始点・終了点を変更した状態（<code>hasUnsavedTrimChanges == true</code>）で閉じる / 下スワイプを実行</span></li>
+    <li><span class="k">ダイアログタイトル</span><span class="v">「変更を破棄しますか？」</span></li>
+    <li><span class="k">ダイアログメッセージ</span><span class="v">「保存されていないトリム変更は失われます。」</span></li>
+    <li><span class="k">ボタン</span><span class="v">「破棄する」（role: .destructive）/ 「キャンセル」（撮影に戻る）</span></li>
+    <li><span class="k">変更前</span><span class="v">未保存変更があっても確認なしで閉じられ、変更が失われていた</span></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table>
     <thead>
@@ -131,6 +149,7 @@
     </thead>
     <tbody>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。warm white背景、撮影Capsuleボタン化、サムネ拡大、「動画を作る」CTA を Home CTA 統一スタイルへ</td></tr>
+      <tr><td>v1.5</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: ClipPlayerView トリムハンドルのヒット領域を視覚 28pt 維持・タップ領域 44pt に拡張（.contentShape 拡張）。トリム未保存変更がある状態での閉じる / 下スワイプ時に「変更を破棄しますか？」確認ダイアログを追加</td></tr>
       <tr><td>v1.4</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: ClipGenerateView に未撮影ステップの空状態「撮影する」ボタン追加（単発撮影を直接起動）。「動画を作成する」の二重タップ防止（押下後即時 disabled 化）。CreateSessionView: プレビュー準備失敗時の行き止まりテキストに「クリップ選択に戻る」ボタンを追加（回復経路を明示）</td></tr>
       <tr><td>v1.3</td><td>2026-06-30</td><td>v1.1.0 反映 (#3): ShootingStyleTip (TipKit) を画面冒頭に追加（最大3回表示）。オンボーディングから削除した撮影スタイル解説をクリップライブラリで文脈表示に移行</td></tr>
       <tr><td>v1.2</td><td>2026-06-16</td><td>ClipRoutineSelectSheet 追加（596896d）: クリップタブで 2件以上のルーティンがある場合にルーティン選択シートを表示（暗黙の先頭選択を廃止）。ClipGenerateView に選択状況カードを追加: 「選択済み X/Y」+ プログレスバー + 未選択ステップ名 + 生成ボタン文言分岐（全選択 → 「動画を作成する」/ 一部 → 「選択したクリップで作成」）</td></tr>
@@ -138,7 +157,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-03</footer>
+  <footer class="site-footer">最終更新: 2026-07-07</footer>
 </div>
 </body>
 </html>

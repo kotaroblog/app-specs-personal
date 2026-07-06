@@ -36,9 +36,9 @@
     <li><span class="k">①上部バー</span><span class="v">アプリ名「RoutineReel」+ Pro バッジ（Pro時は表示のみ・無料時はPaywall起動）+ 設定アイコン</span></li>
     <li><span class="k">②Heroセクション</span><span class="v">メインコピー（streak 状況で 3 パターン分岐）+ サブコピー + streak / 累計バッジ +「次に撮影」CTA。詳細は <a href="#hero-streak">Hero streak メーター</a> 参照</span></li>
     <li><span class="k">③Quick Start</span><span class="v">横スクロール4プリセット（<strong>朝5分ルーティン / 夜の整いルーティン / 筋トレ10分ルーティン / 集中45分ルーティン</strong>）<strong>150×220pt カード</strong>（v1.0.6で画面幅2枚並びの見切れを解消）。タップで <strong>ClipLibraryView を開く（<code>startMode: .clipLibrary</code>）</strong>。v1.4 で動線を連続撮影（.shootingSequential）→ クリップライブラリ起動（.clipLibrary）に変更。v1.0 で <a href="#preset-rename">プリセット名を検索意図ワードへ刷新</a>（raw value は不変）</span></li>
-    <li><span class="k">④マイルーティン</span><span class="v">縦並びカード（長押しで iOS 標準 <code>.contextMenu</code> フローティングメニュー起動）+ 新規ルーティン作成ボタン。<strong>shotToday が true のときのみ chevron 手前に「今日 ✓」緑バッジ</strong>を表示</span></li>
+    <li><span class="k">④マイルーティン</span><span class="v">縦並びカード（行末に ellipsis ⋯ ボタンを常設。長押し iOS 標準 <code>.contextMenu</code> でも同一メニューを表示）+ 新規ルーティン作成ボタン。<strong>shotToday が true のときのみ chevron 手前に「今日 ✓」緑バッジ</strong>を表示</span></li>
     <li><span class="k">⑤最近の動画</span><span class="v">recentVideos が存在する場合のみ表示。<strong>実サムネ画像（VideoStorageService.thumbnailURL）+ 中央 play.circle.fill オーバーレイ</strong>。タップで <a href="#recent-thumb">RecentVideoPlayerSheet</a> を fullScreenCover 起動。見出し横に <a href="#storage-meter">保存メーター</a></span></li>
-    <li><span class="k">⑥下部</span><span class="v">バナー広告（無料時のみ）+ 5タブバー + 中央＋ボタン</span></li>
+    <li><span class="k">⑥下部</span><span class="v">バナー広告（無料時のみ）+ <strong>24pt 非インタラクティブ離隔スペーサー</strong>（AdMob 誤タップ防止）+ 5タブバー + 中央＋ボタン</span></li>
   </ul>
 
   <h2>遷移一覧（8遷移）</h2>
@@ -100,12 +100,13 @@
   <p>旧実装では行タップが即撮影（<code>.shootingSequential</code>）だったが、意図不一致のため <code>.clipLibrary</code> に変更。</p>
   <ul class="kv-list">
     <li><span class="k">行タップ（通常）</span><span class="v">ClipLibraryView を開く（<code>startMode: .clipLibrary</code>）</span></li>
-    <li><span class="k">長押し → contextMenu</span><span class="v">iOS 標準 <code>.contextMenu</code> フローティングメニューを表示（v1.4 で confirmationDialog から変更）</span></li>
+    <li><span class="k">行末 ⋯ ボタンタップ</span><span class="v">iOS 標準 <code>.contextMenu</code> フローティングメニューを表示（長押し contextMenu と同一メニュー。v1.1.0 で常設化）</span></li>
+    <li><span class="k">長押し → contextMenu</span><span class="v">iOS 標準 <code>.contextMenu</code> フローティングメニューを表示（v1.4 で confirmationDialog から変更）。⋯ ボタンと同一メニューを両経路で提供</span></li>
     <li><span class="k">「すべて見る」ボタン</span><span class="v">v1.0 では未実装（アクション空）のため削除。全件表示に変更（<code>prefix(4)</code> 廃止）</span></li>
   </ul>
 
   <h2>ルーティンメニュー（contextMenu・v1.4 変更）</h2>
-  <p>マイルーティンカード長押し時に iOS 標準のフローティングメニューを表示。v1.4 以前は <code>confirmationDialog</code>（画面下部シート）だったが、<code>.contextMenu</code> に変更。メニュー項目は <code>DesignsHomeView.myRoutinesListSection</code> に集約（<code>DesignsMyRoutineCard</code> の <code>onLongPressGesture</code> / <code>onMenuTap</code> は削除済み）。</p>
+  <p>マイルーティンカード行末の ellipsis（⋯）ボタンタップ、または長押しで iOS 標準のフローティングメニューを表示。どちらの経路でも同一メニューを表示する（v1.1.0 で ⋯ ボタンを常設化し発見可能性を改善）。v1.4 以前は <code>confirmationDialog</code>（画面下部シート）だったが、<code>.contextMenu</code> に変更。メニュー項目は <code>DesignsHomeView.myRoutinesListSection</code> に集約（<code>DesignsMyRoutineCard</code> の <code>onLongPressGesture</code> / <code>onMenuTap</code> は削除済み）。</p>
   <ol>
     <li>全ステップ続けて撮影 → ShootingView（<code>startMode: .shootingSequential</code>）</li>
     <li>クリップライブラリを開く → ClipLibraryView（<code>startMode: .clipLibrary</code>）</li>
@@ -277,12 +278,29 @@
     <li><strong>マイルーティン「すべて見る」展開画面</strong> — v1.0 では全件表示（prefix 廃止済み）、v1.2 でさらに洗練予定</li>
   </ul>
 
+  <h2>バナー広告と中央＋ボタンの離隔（v1.1.0）</h2>
+  <p>中央＋ボタンが <code>offset(y: -18)</code> でバナー広告領域に食い込み、AdMob の誤タップが発生するリスクがあった。v1.1.0 でバナー直下に 24pt の非インタラクティブスペーサーを挿入し離隔を確保した。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">中央＋ボタンが <code>offset(y: -18)</code> でバナー領域に重なり、AdMob 誤タップリスクがあった</span></li>
+    <li><span class="k">変更後</span><span class="v">バナー直下に 24pt 非インタラクティブ離隔スペーサーを挿入（タッチイベントを受け取らない）</span></li>
+    <li><span class="k">実装</span><span class="v"><code>Color.clear.frame(height: 24).allowsHitTesting(false)</code> をバナーとタブバーの間に挿入</span></li>
+  </ul>
+
+  <h2>マイルーティン ellipsis ボタン常設化（v1.1.0）</h2>
+  <p>編集・複製・削除などのルーティン操作が長押し contextMenu にしか存在せず、発見性が低かった。v1.1.0 でマイルーティン各行末に ellipsis（⋯）ボタンを常設し、ドリルダウンしなくても操作に気づける設計に変更した。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">操作メニューは長押し contextMenu のみ。初見ユーザーは気づきにくかった</span></li>
+    <li><span class="k">変更後</span><span class="v">行末の ⋯ ボタンタップで contextMenu を即時表示。長押しも引き続き動作し、両経路で同一メニューを提供</span></li>
+    <li><span class="k">実装</span><span class="v"><code>Button { } label: { Image(systemName: "ellipsis") }</code> を各マイルーティン行 HStack の trailing に配置し、<code>.contextMenu</code> を呼び出す</span></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table>
     <thead>
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.6</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: バナー広告直下に 24pt 非インタラクティブ離隔スペーサーを挿入（中央＋ボタンの offset 重なりによる AdMob 誤タップリスクを解消）。マイルーティン行末に ellipsis（⋯）ボタンを常設化（長押し contextMenu と同一メニューを表示。操作の発見性を改善）</td></tr>
       <tr><td>v1.5</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: マイルーティン行・クリップサムネを Button 化（VoiceOver ボタントレイト付与）。colorScheme 是正: RootView を .light に固定（warm white ホームでのステータスバー不可視バグ修正）、ClipPlayerView / RecentVideoPlayerSheet / VideoPlayerSheet は個別 .dark を維持。デッドコード削除: HomeView.swift / DesignsRecordPreviewView.swift / DesignsRecentProjectCard.swift（計約850行）を削除。仕様書内の旧 HomeView 言及を DesignsHomeView に統一</td></tr>
       <tr><td>v1.4</td><td>2026-06-19</td><td>FeatureFlag 廃止: <code>FeatureFlags.swift</code> 削除・<code>DesignsHomeView</code> を唯一のホーム画面として固定（RootView / SettingsView / SnapshotSeeder の <code>@AppStorage(FeatureFlags.useDesignHomeKey)</code> 参照をすべて削除）。Quick Start タップ動線を <code>.shootingSequential</code>（即撮影）→ <code>.clipLibrary</code>（クリップライブラリ起動）に変更（ルーティン作成＋ライブラリ誘導に整理）。長押しメニューを <code>confirmationDialog</code>（画面下部シート）→ iOS 標準 <code>.contextMenu</code>（フローティングメニュー）に変更。<code>DesignsMyRoutineCard</code> の <code>onLongPressGesture</code> / <code>onMenuTap</code> を削除し全メニュー項目を <code>DesignsHomeView.myRoutinesListSection</code> の <code>.contextMenu</code> に集約</td></tr>
       <tr><td>v1.3</td><td>2026-06-16</td><td>UX 改善 (596896d/692882f/3b93040): クリップタブ動線を 0件→作成誘導 / 1件→ClipLibrary直接 / 2件以上→ClipRoutineSelectSheet の3分岐に整理。マイルーティン行タップを即撮影から ClipLibrary 起動に変更。「次に撮影」CTA を連続撮影直接開始に変更。Quick Start チップを既存ユーザーには非表示（新規ユーザーのみ表示）。Quick Start タップ後も連続撮影を即開始するよう変更。activeSession 型を SessionPayload（Routine + StartMode ペア）に変更。全 9 箇所の Paywall 呼び出しに trigger 引数を付与（routineLimit / storageLimit / manual）。マイルーティンの全件表示化（prefix(4) 廃止 / 「すべて見る」ボタン削除）。保存メーター Paywall に trigger: .storageLimit を設定</td></tr>
@@ -296,7 +314,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-03</footer>
+  <footer class="site-footer">最終更新: 2026-07-07</footer>
 </div>
 </body>
 </html>

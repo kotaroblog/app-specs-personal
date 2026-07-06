@@ -66,7 +66,7 @@
   <h3>ステップセクション</h3>
   <ul class="kv-list">
     <li><span class="k">ヘッダー</span><span class="v">「ステップ」+ 件数バッジ（右寄せ）</span></li>
-    <li><span class="k">行構成</span><span class="v">ドラッグハンドル + 番号(monospaced) + ステップ名 TextField + 秒数 Capsule + 削除 x</span></li>
+    <li><span class="k">行構成</span><span class="v">ドラッグハンドル + 番号(monospaced) + ステップ名 TextField + 秒数 Capsule + 削除 x（視覚 32pt・ヒット領域 44pt に <code>.contentShape</code> 拡張）</span></li>
     <li><span class="k">ドラッグ並べ替え</span><span class="v">.draggable + .dropDestination で並び替え対応</span></li>
     <li><span class="k">秒数タップ</span><span class="v">DurationPickerSheet 起動（presentationDetents [.height(280)]）</span></li>
     <li><span class="k">削除アニメ</span><span class="v">withAnimation(.spring(duration: 0.25))</span></li>
@@ -85,6 +85,15 @@
     <li><span class="k">色</span><span class="v">.red opacity 0.75（純赤を避ける）</span></li>
     <li><span class="k">確認 alert</span><span class="v">「ルーティンを削除しますか？」+「この操作は取り消せません。」</span></li>
     <li><span class="k">削除処理</span><span class="v">ReminderService.cancelReminder() → modelContext.delete(routine)</span></li>
+  </ul>
+
+  <h3>ステップ並び替えの VoiceOver 代替アクション（v1.1.0）</h3>
+  <p>ドラッグ＆ドロップによる並び替えは VoiceOver / スイッチコントロール環境では操作できない。アクセシビリティアクションを追加し、補助技術でも並び替えを可能にした。</p>
+  <ul class="kv-list">
+    <li><span class="k">追加アクション</span><span class="v">各ステップ行に「上へ移動」/ 「下へ移動」の <code>accessibilityAction</code> を付与</span></li>
+    <li><span class="k">先頭ステップ</span><span class="v">「上へ移動」は非表示（先頭ステップでは無効）</span></li>
+    <li><span class="k">末尾ステップ</span><span class="v">「下へ移動」は非表示（末尾ステップでは無効）</span></li>
+    <li><span class="k">VoiceOver ラベル</span><span class="v">各ステップ行に <code>.accessibilityLabel("\(stepName)、\(order)番目")</code> を付与し、現在の順番をフォーカス時に読み上げ</span></li>
   </ul>
 
   <h2>DurationPickerSheet（秒数ピッカー）</h2>
@@ -139,6 +148,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.3</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: ステップ削除ボタンのヒット領域を 32→44pt に拡張（.contentShape 拡張・視覚サイズ維持）。ドラッグ並び替えに VoiceOver 代替アクションを追加（「上へ移動」/「下へ移動」、先頭・末尾では非表示）。各ステップ行に accessibilityLabel で順番を読み上げ</td></tr>
       <tr><td>v1.2</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ: <code>designsSheetStyle()</code> を適用（角丸 32pt・ドラッグインジケータ・warm white 背景）。シート外観をアプリ全体で統一</td></tr>
       <tr><td>v1.1</td><td>2026-06-30</td><td>v1.1.0 反映 (#2): 編集保存でのクリップ削除を緩和。名前/アイコン/フォント/リマインダー変更ではクリップを保持し、ステップ構成（数・名前・秒数）が変わった場合のみクリップを削除。<code>stepsChanged</code> computed property で判定（originalSteps と editableSteps を比較）</td></tr>
       <tr><td>v1.0.6</td><td>2026-05-25</td><td>RoutinePreset.displayName 日本語化に伴い loadData() の初期名が「morning routine」→「モーニングルーティン」へ自動切替</td></tr>
@@ -148,7 +158,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-03</footer>
+  <footer class="site-footer">最終更新: 2026-07-07</footer>
 </div>
 </body>
 </html>
