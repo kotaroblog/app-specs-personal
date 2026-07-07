@@ -86,6 +86,7 @@
       <tr><td>designsCard</td><td>white</td><td>カード白</td></tr>
       <tr><td>designsDivider</td><td>white 0.93</td><td>微妙な区切り線</td></tr>
       <tr><td>designsProGold</td><td>(0.949, 0.812, 0.475)</td><td>Pro バッジ ゴールド</td></tr>
+      <tr><td>designsOnGold</td><td>（深い茶金系）</td><td>ゴールド地に乗せる濃色テキスト（Pro バッジ文字色・コントラスト比 約7:1・e216de7 追加）</td></tr>
     </tbody>
   </table>
 
@@ -193,12 +194,48 @@
     <li>「足すより止める」精神</li>
   </ol>
 
+  <h2>デザイン品質改善（e216de7, e012cc3, e3e6ca1）</h2>
+
+  <h3>Pro バッジのコントラスト是正（e216de7）</h3>
+  <p>ゴールド地（<code>designsProGold</code>）に白文字を乗せていた Pro バッジのコントラスト比が約 1.5:1 と WCAG AA（4.5:1）を大きく下回っていた。濃色テキストトークン <code>designsOnGold</code> を追加し、コントラスト比を約 7:1 に改善した。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">ゴールド地 × 白文字（コントラスト比 約1.5:1）</span></li>
+    <li><span class="k">変更後</span><span class="v">ゴールド地 × <code>designsOnGold</code>（深い茶金色・コントラスト比 約7:1）</span></li>
+    <li><span class="k">新規トークン</span><span class="v"><code>designsOnGold</code>: ゴールド地に乗せる濃色テキスト用カラートークン（DesignsColor.swift に追加）</span></li>
+  </ul>
+
+  <h3>AccentColor のブランド統一（e216de7）</h3>
+  <p>iOS のシステム UI（アラートボタン / 戻るボタン / ShareSheet リンク等）が既定の青を使用しており、アプリのブランドオレンジとの不統一が生じていた。AccentColor アセットをブランドオレンジ（<code>designsAccentOrange</code> 相当）に更新し、<code>.tint()</code> を RootView に付与することで全システム UI をブランドカラーに統一した。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更箇所</span><span class="v">Assets.xcassets / AccentColor（Light / Dark 両モード対応）</span></li>
+    <li><span class="k">付与箇所</span><span class="v">RootView に <code>.tint(Color.designsAccentOrange)</code>（全画面に継承）</span></li>
+    <li><span class="k">影響範囲</span><span class="v">アラートボタン / NavigationStack 戻るボタン / ShareSheet アクション / TextEditor カーソル / TextField カーソル</span></li>
+  </ul>
+
+  <h3>主役 CTA 意匠統一（e216de7）</h3>
+  <p>Paywall 購入ボタンに影が二重掛けされていた（<code>.designsShadow(.cta)</code> + 独自 shadow）問題と、角丸が <code>DesignsRadius.xxl</code> 逸脱の値だった問題をトークン準拠に是正した。あわせて SettingsView の閉じるボタンアイコンを統一し、未適用シートにシートスタイルを適用した。</p>
+  <ul class="kv-list">
+    <li><span class="k">Paywall 購入ボタン</span><span class="v">影の二重掛けを削除（<code>.designsShadow(.cta)</code> 1本のみに統一）。角丸を <code>DesignsRadius.xl (22pt)</code> に統一</span></li>
+    <li><span class="k">SettingsView 閉じるボタン</span><span class="v">アイコンを <code>chevron.down</code> → <code>xmark</code> に変更（明示的な「閉じる」意図に統一）</span></li>
+    <li><span class="k">未適用シート</span><span class="v"><code>designsSheetStyle()</code>（角丸 32pt・ドラッグインジケータ・warm white 背景）を未適用のシートに追加適用し、シート外観を統一</span></li>
+  </ul>
+
+  <h3>ルーティンサムネのテーマ別配色（e216de7）</h3>
+  <p>マイルーティンカードのサムネイル背景が全ルーティンで朝焼け（peach）固定だったため、ルーティンの識別性が低かった。アイコンからテーマ（朝 / 夜 / 運動 / 学習）を導出したグラデーションを適用し、視覚的な識別性を向上させた。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">全ルーティンが <code>morning</code> プリセットの朝焼け peach グラデーション固定</span></li>
+    <li><span class="k">変更後</span><span class="v">ルーティンの <code>iconName</code>（または <code>presetID</code>）からテーマを導出し、対応するプリセット色温度グラデーションを使用（morning / night / workout / study の4テーマ、デフォルトは morning）</span></li>
+    <li><span class="k">テーマ判定</span><span class="v">アイコン名から推定（例: sun 系 → morning、moon 系 → night、bolt 系 → workout、book 系 → study）</span></li>
+    <li><span class="k">効果</span><span class="v">ルーティン一覧でサムネ色による区別が可能になり、朝/夜/筋トレ/学習を一目で識別できる</span></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table>
     <thead>
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.3</td><td>2026-07-07</td><td>機能性・デザイン改善（e216de7, e012cc3, e3e6ca1）: Pro バッジのコントラスト是正（ゴールド地×白文字1.5:1 → designsOnGold 約7:1）。designsOnGold トークン追加。AccentColor アセットをブランドオレンジに更新し RootView に .tint() を付与（全システムUI統一）。Paywall 購入ボタンの影二重掛け解消・角丸 DesignsRadius.xl に統一。SettingsView 閉じるボタンを chevron.down → xmark に変更。未適用シートに designsSheetStyle() を追加適用。ルーティンサムネのアイコンからテーマ判定グラデーション（朝/夜/運動/学習）に変更（旧: 全ルーティン peach 固定）</td></tr>
       <tr><td>v1.2</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: HIG 準拠タップターゲット 44pt 化の対象を追加拡張（Pro バッジ / 保存メーター / 撮影チップ / コピーボタン）。Reduce Motion 対応: @Environment(\.accessibilityReduceMotion) 参照で「視差効果を減らす」ON 時に DesignsFloatModifier（浮遊）/ DesignsPulseModifier（脈動）/ DesignsRingPulseModifier（波紋）の永続アニメーションを停止</td></tr>
       <tr><td>v1.1</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: designsTertiaryText を 0.659→0.52 に暗く調整（WCAG コントラスト改善）。designsCTAGradient（Pink→Orange）を共通定数として追加し全 CTA ボタンのグラデを統一。主役 CTA 角丸を DesignsRadius.xl (22pt) に統一。designsSheetStyle() を設定 / プリセット選択 / ルーティン編集 / 作品一覧 / Paywall の各シートに適用（角丸32pt・ドラッグインジケータ・warm white 背景）。HIG 準拠タップターゲット 44pt 化: クリップ削除 ×（22pt→44pt）/ 各画面丸アイコンボタン（30〜36pt→44pt）</td></tr>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版作成。DesignSystem.swift / DesignsColor.swift / DesignsAnimations.swift を全画面で参照する基盤確立</td></tr>

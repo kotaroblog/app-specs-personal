@@ -213,9 +213,9 @@
   <h2>合成パイプライン</h2>
   <ol>
     <li>クリップURL検証（FileManager 存在チェック）</li>
-    <li>AVMutableComposition への各クリップ video/audio トラック挿入</li>
+    <li>AVMutableComposition への各クリップ video/audio トラック挿入（失敗クリップはスキップ）</li>
     <li>各クリップの時間範囲を記録（テロップ表示制御用）</li>
-    <li>renderSize 決定（最初のクリップから）</li>
+    <li>renderSize 決定（<strong>最初に挿入成功したクリップ</strong>から取得・e012cc3 修正）</li>
     <li>AVMutableVideoComposition + AVVideoCompositionInstruction で transform 適用</li>
     <li>parentLayer に各レイヤー追加: テロップ → 透かし → 冒頭カード → アウトロカード</li>
     <li>元音声ミュート設定（必要時）</li>
@@ -224,12 +224,21 @@
     <li>メモリ警告監視（書き出し中・OOM防止）</li>
   </ol>
 
+  <h2>先頭クリップ欠損時の transform 未設定バグ修正（e012cc3）</h2>
+  <p>先頭クリップのファイルが欠損（読み込み失敗）した場合、<code>renderSize</code> が取得できず <code>AVMutableVideoCompositionInstruction</code> の <code>layerInstructions</code> に正しい transform が設定されないまま書き出しが続行されていた。この場合、動画が横倒しになる（回転バグ）現象が発生していた。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">先頭クリップ（インデックス 0）固定で <code>renderSize</code> を取得。先頭が欠損すると <code>renderSize = .zero</code> のまま続行 → transform 未設定 → 横倒し動画</span></li>
+    <li><span class="k">変更後</span><span class="v">クリップを順に挿入し、<strong>最初に挿入が成功したクリップ</strong>から <code>renderSize</code> を取得する。先頭が欠損しても次のクリップから正常に取得できる</span></li>
+    <li><span class="k">全クリップ欠損時</span><span class="v">1件も挿入成功しなかった場合は合成処理を中断し、エラーを呼び出し元に返す</span></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table>
     <thead>
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.3</td><td>2026-07-07</td><td>機能性・デザイン改善（e012cc3）: 先頭クリップ欠損時の transform 未設定バグを修正（先頭固定 → 最初に挿入成功したクリップ基準で renderSize 取得、全欠損時はエラー返却）</td></tr>
       <tr><td>v1.2</td><td>2026-06-19</td><td><strong>ウォーターマーク y 座標バグを修正</strong>。AVFoundation の CALayer は左下原点のため、左上配置には <code>y = renderSize.height - marginY - brandHeight</code> が正しいが、修正前は <code>y = marginY</code>（左下配置）になっていた。修正により撮影時の SwiftUI オーバーレイ（左上）と完成動画内のブランド名位置（左上）が一致</td></tr>
       <tr><td>v1.1</td><td>2026-06-13</td><td><strong>冒頭タイトルカード（時刻 + ルーティン名）の焼き込みを削除</strong>（commit 5d82d0f）。動画再生開始 0.6 秒間、画面上部に「時刻 + ルーティン名」が大きく被さって本編映像を遮るというユーザー報告への対応。<code>VideoCompositionService.addLayers</code> から <code>makeIntroCardLayer(...)</code> 呼び出しを削除し、ログメッセージから「イントロ:」も削除。<code>makeIntroCardLayer</code> 関数本体は再有効化容易のためコメント付きで残置。維持される要素: 末尾アウトロカード（QR + #RoutineReel + ブランド名 + CTA）／本編 SceneLabel（時刻 + ステップ名・SceneLabelLayout で WYSIWYG 一致）／透かし。冒頭テキストを期待していたユーザーには「TikTok 冒頭視聴維持率対策」の意図が失われる影響あり、復活が必要なら 1 行戻すだけで対応可</td></tr>
       <tr><td>v1.0.6</td><td>2026-06-10</td><td>アウトロカードに QR コード（動画幅25%・白背景・角丸・<code>CIQRCodeGenerator</code> + nearest 拡大）と <code>#RoutineReel</code> を焼き込み追加（cta を「QR を読み取るか App Store で検索」へ変更・Pro 加入者は除外）／<code>SceneLabelLayout</code> enum で配置比率・サイズ比率・<code>lineHeightFactor</code>/<code>textHeightFactor</code>/<code>descentSlackFactor</code> を単一ソース化（SwiftUI 用 / CALayer 用ヘルパに分離・撮影プレビューと完成動画の WYSIWYG 達成）／descent slack 補正で CATextLayer の top-anchored グリフ下端浮きを是正／長文ステップ名の折り返しを <code>maxLines = 2</code> に統一（<code>NSAttributedString.boundingRect</code> で <code>actualStepNameLineCount</code> 測定・<code>isWrapped</code> + <code>truncationMode = .end</code>・時刻 y は <code>stepNameHeight</code> 追随）／<code>AppConstants.swift</code> 新設（<code>promotionalShortURL</code> / <code>promotionalHashtag</code>）</td></tr>
@@ -242,7 +251,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-19</footer>
+  <footer class="site-footer">最終更新: 2026-07-07</footer>
 </div>
 </body>
 </html>

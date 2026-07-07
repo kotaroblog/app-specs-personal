@@ -142,6 +142,30 @@
     <li><span class="k">変更前</span><span class="v">未保存変更があっても確認なしで閉じられ、変更が失われていた</span></li>
   </ul>
 
+  <h2>ClipPlayerView ファイル欠損対応（e216de7）</h2>
+  <p>動画ファイルが欠損していた場合、ClipPlayerView が無限スピナーを表示し続ける問題があった。ファイル欠損を明示的に検知して「見つかりません」表示に切り替え、操作できない状態を防ぐ。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">ファイル欠損時でも AVPlayer のロード待ちスピナーが無限に表示され、ユーザーが操作不能状態に陥っていた</span></li>
+    <li><span class="k">変更後</span><span class="v">ファイル URL の存在を起動時に検証し、欠損の場合は「動画が見つかりません」テキスト + 編集ボタン非表示の状態を表示。スピナーを表示しない</span></li>
+    <li><span class="k">編集ボタン</span><span class="v">ファイル欠損時は「編集」ボタンを非表示（存在しないファイルを操作させない）</span></li>
+  </ul>
+
+  <h2>保存の二重実行ガード（e216de7）</h2>
+  <p>カメラロール保存ボタンとアプリ内保存ボタンを連打した場合に、重複保存・無料上限すり抜けが発生する問題を修正した。フィルタ書き出し処理の開始前にボタンを即時 disabled 化（進行中状態へ遷移）することで二重実行を防止する。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">保存ボタンが非同期処理完了まで有効のままだった → 連打で同一動画が複数回保存されたり、無料ユーザーの保存上限カウントが二重加算されるケースがあった</span></li>
+    <li><span class="k">変更後</span><span class="v">保存ボタンタップ直後にフラグを進行中状態（<code>isSaving = true</code>）へ遷移させ、フィルタ書き出し完了まで両ボタンを disabled 化</span></li>
+    <li><span class="k">対象ボタン</span><span class="v">「カメラロールに保存」/ 「アプリ内に保存」の両方</span></li>
+  </ul>
+
+  <h2>プレビュー破棄アラート文言の修正（e216de7）</h2>
+  <p>動画プレビュー画面（CreateSessionView / ExportView）を保存前に閉じる際の確認アラートで、クリップが削除されると誤解させる文言を使用していた。クリップはすでにライブラリに永続化済みであり、破棄されるのは合成結果のみであることを明示した。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">「撮影した動画は保存されません。」（クリップが失われると誤解させる）</span></li>
+    <li><span class="k">変更後</span><span class="v">「クリップはライブラリに残ります。今回の合成結果は保存されません。」（クリップ永続化済みを明示）</span></li>
+    <li><span class="k">ボタン</span><span class="v">「閉じる」（role: .destructive）/ 「キャンセル」</span></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table>
     <thead>
@@ -149,6 +173,7 @@
     </thead>
     <tbody>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。warm white背景、撮影Capsuleボタン化、サムネ拡大、「動画を作る」CTA を Home CTA 統一スタイルへ</td></tr>
+      <tr><td>v1.6</td><td>2026-07-07</td><td>機能性・デザイン改善（e216de7, e012cc3, e3e6ca1）: ClipPlayerView のファイル欠損を検知し「見つかりません」表示＋編集ボタン非表示に（旧: 無限スピナー）。保存ボタン（カメラロール保存・アプリ内保存）の二重実行ガード: タップ直後に isSaving = true で disabled 化（無料上限すり抜け防止）。プレビュー破棄アラート文言を修正: 「撮影した動画は保存されません」→「クリップはライブラリに残ります。今回の合成結果は保存されません。」</td></tr>
       <tr><td>v1.5</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: ClipPlayerView トリムハンドルのヒット領域を視覚 28pt 維持・タップ領域 44pt に拡張（.contentShape 拡張）。トリム未保存変更がある状態での閉じる / 下スワイプ時に「変更を破棄しますか？」確認ダイアログを追加</td></tr>
       <tr><td>v1.4</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: ClipGenerateView に未撮影ステップの空状態「撮影する」ボタン追加（単発撮影を直接起動）。「動画を作成する」の二重タップ防止（押下後即時 disabled 化）。CreateSessionView: プレビュー準備失敗時の行き止まりテキストに「クリップ選択に戻る」ボタンを追加（回復経路を明示）</td></tr>
       <tr><td>v1.3</td><td>2026-06-30</td><td>v1.1.0 反映 (#3): ShootingStyleTip (TipKit) を画面冒頭に追加（最大3回表示）。オンボーディングから削除した撮影スタイル解説をクリップライブラリで文脈表示に移行</td></tr>

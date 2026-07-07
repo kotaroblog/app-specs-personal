@@ -84,7 +84,8 @@
     <li><span class="k">表示条件</span><span class="v"><code>isEditing == true</code> 時のみ</span></li>
     <li><span class="k">色</span><span class="v">.red opacity 0.75（純赤を避ける）</span></li>
     <li><span class="k">確認 alert</span><span class="v">「ルーティンを削除しますか？」+「この操作は取り消せません。」</span></li>
-    <li><span class="k">削除処理</span><span class="v">ReminderService.cancelReminder() → modelContext.delete(routine)</span></li>
+    <li><span class="k">削除処理（v1.1.0更新・完全クリーンアップ）</span><span class="v">① ClipStorageService で全クリップの物理ファイルを削除 → ② ReminderService.cancelReminder() で定期通知解除 → ③ 保留中の通知 ID を掃除（pendingNotification cleanup）→ ④ modelContext.delete(routine)</span></li>
+    <li><span class="k">2経路の対称化</span><span class="v">ルーティン編集シートの削除ボタンと Home 画面のスワイプ削除の両経路で同じクリーンアップ処理を実行するよう統一した（e216de7）</span></li>
   </ul>
 
   <h3>ステップ並び替えの VoiceOver 代替アクション（v1.1.0）</h3>
@@ -106,41 +107,53 @@
   </ul>
 
   <h2>保存ロジック</h2>
-  <p>保存ボタンタップで <code>handleSaveTapped()</code> → クリップ削除要否チェック（v1.1.0以降）→ <code>save()</code></p>
+  <p>保存ボタンタップで <code>handleSaveTapped()</code> → 削除ステップのクリップ確認 → <code>save()</code>（差分リコンサイル方式・e216de7）</p>
   <ol>
-    <li>name trimming + 空チェック</li>
+    <li>ルーティン名 trimming + 空チェック（保存ボタン無効化）</li>
+    <li>各ステップ名の空チェック（1件でも空ならば保存ボタン無効化・空テロップ動画の生成防止）</li>
     <li>reminderTime から hour/minute 抽出</li>
     <li>新規作成 or 既存編集の分岐</li>
-    <li>既存編集時: <code>stepsChanged</code> computed property で変更判定。<strong>ステップ構成が変わった場合のみ</strong>クリップを削除（スナップショット化してから削除）。名前・アイコン・フォント・リマインダー変更ではクリップを保持</li>
-    <li>各 EditableStep から Step エンティティ生成 + modelContext.insert</li>
+    <li>既存編集時: <strong>差分リコンサイル</strong>（詳細は下記セクション参照）</li>
+    <li>削除ステップのクリップが 1 件以上ある場合のみ警告 alert（他ステップのクリップ保持を明示）</li>
     <li>ReminderService.scheduleReminder() を Task で実行</li>
     <li>dismiss()</li>
   </ol>
 
-  <h3>stepsChanged computed property（v1.1.0追加）</h3>
-  <p>編集前スナップショット（<code>originalSteps</code>）と現在の <code>editableSteps</code> を比較し、クリップ削除が必要かどうかを判定する。</p>
+  <h3>差分リコンサイル（e216de7 で全面改訂）</h3>
+  <p>v1.1 以前は <code>stepsChanged</code> computed property でステップ構成の変化を一括検出し、変化があれば<strong>全クリップを削除</strong>していた。e216de7 で差分リコンサイル方式に変更し、ユーザーが削除したステップのクリップのみを削除するようにした。</p>
   <ul class="kv-list">
-    <li><span class="k">判定対象</span><span class="v">ステップ数・各ステップの名前・各ステップの秒数（順番込み）</span></li>
-    <li><span class="k">非判定（クリップ保持）</span><span class="v">ルーティン名・アイコン・フォント・リマインダー時刻の変更</span></li>
-    <li><span class="k">trueの場合</span><span class="v">クリップ削除警告 alert を表示してから save()</span></li>
-    <li><span class="k">falseの場合</span><span class="v">alert をスキップして save()（クリップはそのまま保持）</span></li>
+    <li><span class="k">既存ステップ（originalStepID 一致）</span><span class="v">in-place 更新。名前修正・秒数変更・並び替えが行われてもクリップは一切削除しない</span></li>
+    <li><span class="k">削除ステップ（originalStepID が editableSteps に存在しない）</span><span class="v">そのステップのクリップのみ物理削除</span></li>
+    <li><span class="k">新規追加ステップ（originalStepID == nil）</span><span class="v">新規 Step エンティティを insert（クリップはまだ存在しないため削除処理なし）</span></li>
+    <li><span class="k">クリップ保持操作</span><span class="v">ステップ名変更・秒数変更・並び替え・ステップ追加はすべてクリップを保持</span></li>
+    <li><span class="k">クリップ削除操作</span><span class="v">ステップ削除 ×（バツボタン）のみ。削除後に保存したときに初めてそのステップのクリップが物理削除される</span></li>
   </ul>
 
-  <h3>クリップ削除警告</h3>
-  <p><code>stepsChanged == true</code> かつ既存ルーティンが紐づくクリップを持っている場合のみ alert を挟む（v1.1.0以降・以前は常に alert）:</p>
+  <h3>クリップ削除警告（e216de7 で精緻化）</h3>
+  <p>削除するステップに紐づくクリップが 1 件以上ある場合のみ alert を表示する。全クリップ削除の旧文言を、削除されるクリップ数と「他は保持」の旨を明示した文言に更新した。</p>
   <ul class="kv-list">
-    <li><span class="k">文言</span><span class="v">「このルーティンには〇件のクリップが保存されています。ステップを更新するとクリップライブラリがすべて削除されます。続けますか？」</span></li>
-    <li><span class="k">ボタン</span><span class="v">「更新する」(destructive) / 「キャンセル」</span></li>
+    <li><span class="k">文言</span><span class="v">「削除するステップに紐づく〇件のクリップが削除されます。他のステップのクリップは保持されます。続けますか？」</span></li>
+    <li><span class="k">ボタン</span><span class="v">「削除して更新」(destructive) / 「キャンセル」</span></li>
+    <li><span class="k">表示条件</span><span class="v">削除対象ステップのクリップ数 ≥ 1。削除ステップがなければ alert なしで即時 save()</span></li>
   </ul>
 
   <h2>EditableStep（編集用一時データ）</h2>
   <pre><code>struct EditableStep: Identifiable {
-    let id = UUID()
+    let id = UUID()            // SwiftUI List 用識別子（UI 専用・永続化しない）
+    var originalStepID: UUID?  // 元 Step の PersistentIdentifier（既存ステップ編集時のみ設定・差分リコンサイルで使用）
     var name: String
     var durationSeconds: Int
     var order: Int
 }</code></pre>
-  <p>保存時に Step エンティティへ変換。並べ替え/削除中に SwiftData オブジェクトを触らないため安全。</p>
+  <p>保存時に Step エンティティへ変換。並べ替え/削除中に SwiftData オブジェクトを触らないため安全。<code>originalStepID</code> を参照して既存ステップの in-place 更新と削除ステップのクリップ削除を制御する（e216de7）。</p>
+
+  <h3>空ステップ名バリデーション（e216de7 追加）</h3>
+  <p>ステップ名が空（trimmingCharacters(.whitespaces) 後に空文字列）のステップが 1 件でも存在する場合、保存ボタンを無効化する。これにより空テロップが焼き込まれた動画の生成を防止する。</p>
+  <ul class="kv-list">
+    <li><span class="k">バリデーション対象</span><span class="v">各 EditableStep.name.trimmingCharacters(.whitespaces).isEmpty</span></li>
+    <li><span class="k">保存ボタン条件</span><span class="v">ルーティン名が非空 AND 全ステップ名が非空 の場合のみ有効</span></li>
+    <li><span class="k">ユーザー影響</span><span class="v">空のステップ名 TextField にフォーカス中はキーボード表示のため保存ボタンが自然に遠ざかる（ガードとして機能）</span></li>
+  </ul>
 
   <h2>v1.0 変更履歴</h2>
   <table>
@@ -148,6 +161,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.4</td><td>2026-07-07</td><td>機能性・デザイン改善（e216de7, e012cc3, e3e6ca1）: 差分リコンサイル方式に変更（EditableStep に originalStepID を追加、削除ステップのクリップのみ物理削除、名前変更・秒数変更・並び替え・ステップ追加ではクリップ保持）。クリップ削除警告を精緻化（「〇件のみ削除・他は保持」の文言に更新）。空ステップ名の保存を無効化（空テロップ動画の生成防止）。ルーティン削除時の完全クリーンアップ（クリップ物理削除・リマインダー解除・保留通知 ID 掃除）を2削除経路で対称化</td></tr>
       <tr><td>v1.3</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: ステップ削除ボタンのヒット領域を 32→44pt に拡張（.contentShape 拡張・視覚サイズ維持）。ドラッグ並び替えに VoiceOver 代替アクションを追加（「上へ移動」/「下へ移動」、先頭・末尾では非表示）。各ステップ行に accessibilityLabel で順番を読み上げ</td></tr>
       <tr><td>v1.2</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ: <code>designsSheetStyle()</code> を適用（角丸 32pt・ドラッグインジケータ・warm white 背景）。シート外観をアプリ全体で統一</td></tr>
       <tr><td>v1.1</td><td>2026-06-30</td><td>v1.1.0 反映 (#2): 編集保存でのクリップ削除を緩和。名前/アイコン/フォント/リマインダー変更ではクリップを保持し、ステップ構成（数・名前・秒数）が変わった場合のみクリップを削除。<code>stepsChanged</code> computed property で判定（originalSteps と editableSteps を比較）</td></tr>

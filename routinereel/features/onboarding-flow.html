@@ -47,7 +47,7 @@
       <tr>
         <td>2</td>
         <td>reminder</td>
-        <td>朝7:00 / 夜21:00 /「あとで」の3択。プリセット選択時のみ表示、「あとで」経路はバイパス</td>
+        <td>朝7:00 / 夜21:00 /「あとで」の3択。プリセット選択時のみ表示、「あとで」経路はバイパス。<strong>戻るボタンあり（e216de7）</strong>: 誤ったプリセット選択に気づいた場合に preset ページ（Page 1）へ戻り、選択をやり直せる</td>
       </tr>
     </tbody>
   </table>
@@ -149,19 +149,28 @@
     <li>ATT 拒否時は AdMob を non-personalized モードで初期化（広告は表示される）</li>
   </ul>
 
+  <h2>リマインダーページの戻る導線（e216de7）</h2>
+  <p>オンボーディング Page 2（reminder）でプリセットを誤って選択してしまったユーザーが、リマインダー設定前に戻って選択し直せるよう「← 戻る」ボタンを追加した。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">リマインダーページに戻る手段がなく、誤ったプリセットを選択してしまうとオンボーディングを完了させるしかなかった（後でルーティン編集が必要）</span></li>
+    <li><span class="k">変更後</span><span class="v">「← 戻る」ボタンを追加。タップすると Page 1（preset）に戻り、プリセットを選択し直せる</span></li>
+    <li><span class="k">TabView との整合</span><span class="v">TabView の swipe 無効化は継続。戻るボタンタップのみ Page 1 へ遷移（<code>currentPage = 1</code>）し、swipe による意図しない遷移は引き続き防止</span></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table>
     <thead>
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.3</td><td>2026-07-07</td><td>機能性・デザイン改善（e216de7）: リマインダーページ（Page 2）に「← 戻る」ボタンを追加。誤ったプリセット選択を修正できるよう Page 1（preset）への戻り経路を確保した。TabView swipe 無効化は継続</td></tr>
       <tr><td>v1.2</td><td>2026-06-30</td><td>v1.1.0 反映 (#3): オンボーディング 4→3 ページに圧縮。旧 Page 1「2つの撮影スタイル解説（features）」を削除。新フロー: Welcome(0) → プリセット選択(1) → リマインダー(2)。撮影スタイル解説は ClipLibraryView の TipKit（ShootingStyleTip、最大3回表示）に移行</td></tr>
       <tr><td>v1.1</td><td>2026-06-16</td><td>UIテキスト全面日本語化（596896d）: "get started"→「はじめる」/ "next"→「次へ」/ "skip for now"→「あとで」/ "continuous"→「連続撮影」/ "clip library"→「クリップライブラリ」/ "auto-edit"→「自動編集」。Quick Start プリセット title 日本語化: "morning"→「朝」/ "night"→「夜」/ "workout"→「運動」/ "study"→「学習」（id は URL scheme パスのため不変）</td></tr>
       <tr><td>v1.0</td><td>2026-06-10</td><td>初版作成。Page 3.5 reminder の追加・TabView swipe 無効化・ATT 遅延発火を文書化。</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-30</footer>
+  <footer class="site-footer">最終更新: 2026-07-07</footer>
 </div>
 </body>
 </html>

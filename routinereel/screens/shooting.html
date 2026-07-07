@@ -355,12 +355,47 @@
     <li><strong>撮影2系統の統合</strong> — ShootingView / SingleStepShootingView の録画ロジック統合（別タスク）</li>
   </ul>
 
+  <h2>テロップ・カメラ品質改善（e216de7, e012cc3, e3e6ca1）</h2>
+
+  <h3>テロップ時刻を録画開始時刻に統一（e012cc3）</h3>
+  <p>従来は録画<strong>完了</strong>時刻をテロップに焼き込んでいたため、ステップ撮影が分をまたぐと撮影プレビュー（開始時刻表示）と完成動画（完了時刻）が食い違っていた。録画<strong>開始</strong>時刻に統一することで WYSIWYG を回復した。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">録画完了（persistClip 呼び出し）時の <code>Date.now</code> をテロップ時刻として採用</span></li>
+    <li><span class="k">変更後</span><span class="v">録画開始時に <code>recordingStartedAt = Date.now</code> をキャプチャし、persistClip に渡してテロップ時刻として使用</span></li>
+    <li><span class="k">効果</span><span class="v">撮影プレビューの時刻表示（開始時刻）と完成動画のテロップ時刻（開始時刻）が一致。分またぎの食い違いを解消</span></li>
+  </ul>
+
+  <h3>撮影中テロップが選択フォントを反映（e216de7）</h3>
+  <p>Pro の「フォント全解放」で選択したフォントが、撮影プレビューの SceneLabel に反映されるようになった。以前は撮影プレビューが常にデフォルトフォントで表示されており、完成動画（選択フォント反映済み）と一致しなかった。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">SceneLabel が <code>HelveticaNeue-Light</code> 固定（ルーティンの選択フォントを参照していなかった）</span></li>
+    <li><span class="k">変更後</span><span class="v">ShootingViewModel が <code>routine.fontFamily</code> を参照し、SceneLabel の <code>fontName</code> を動的に設定</span></li>
+    <li><span class="k">非Premium時</span><span class="v">Pro 限定フォントが選択されていてもサブスクなし時はデフォルトフォント（HelveticaNeue-Light）にフォールバック</span></li>
+    <li><span class="k">効果</span><span class="v">撮影プレビューと完成動画でフォントが一致（WYSIWYG 完全一致）</span></li>
+  </ul>
+
+  <h3>フロントカメラのミラー録画（e216de7）</h3>
+  <p>自撮り（スキンケア / 朝活）撮影時に、撮影プレビューは鏡像（左右反転）で表示されるが録画ファイルは非反転で保存されるため、完成動画が反転して見える問題があった。録画側の <code>isVideoMirrored</code> を設定することでプレビューと録画ファイルの左右向きを統一した。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">フロントカメラでプレビューは鏡像・録画ファイルは非反転 → 完成動画が左右反転して見える</span></li>
+    <li><span class="k">変更後</span><span class="v"><code>AVCaptureConnection.isVideoMirrored = true</code>（フロントカメラ接続時）で録画ファイルも鏡像として保存 → プレビューと完成動画の左右向きが一致</span></li>
+    <li><span class="k">対象</span><span class="v">フロントカメラ使用時のみ。バックカメラは変更なし</span></li>
+  </ul>
+
+  <h3>クリップ生成の時刻フォーマット統一（e012cc3）</h3>
+  <p>連続撮影経路（ShootingView）とクリップ生成経路（SingleStepShootingView / ClipGenerateView）でクリップ保存時の時刻フォーマット（12時間制 / 24時間制）が食い違っていた問題を、<code>AppSettings.timestampFormat</code> を単一参照先として一本化した。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">各撮影経路が独自のフォーマットロジックを持っており、同一設定でも経路によって表記が異なった</span></li>
+    <li><span class="k">変更後</span><span class="v">全経路が <code>AppSettings.shared.timestampFormat</code> を参照。設定変更が即時に全経路へ反映される</span></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table>
     <thead>
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.7</td><td>2026-07-07</td><td>機能性・デザイン改善（e216de7, e012cc3, e3e6ca1）: テロップ時刻を録画完了時刻から録画開始時刻に変更（recordingStartedAt をキャプチャして persistClip に渡す）。撮影プレビューの SceneLabel が routine.fontFamily を参照して選択フォントを反映（Pro 未加入時はデフォルトフォントにフォールバック）。フロントカメラのミラー録画: AVCaptureConnection.isVideoMirrored = true でプレビューと録画ファイルの左右向きを統一。クリップ生成の時刻フォーマットを AppSettings.timestampFormat に一本化（全撮影経路での表記を統一）</td></tr>
       <tr><td>v1.6</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: 撮影ハプティクス追加（.sensoryFeedback: 録画開始 .start / 録画完了 .success / カウントダウン .selection）。連続撮影・単発撮影の両方に適用。録画音は動画音声トラック混入回避のため廃止。単発撮影（SingleStepShootingView）に録画中タップで早期停止・保存を追加（連続撮影と挙動統一、録画ボタンが停止四角に切替）。カメラ反転ボタン非表示時プレースホルダを 36→44pt に変更（タイトル横ズレ解消）</td></tr>
       <tr><td>v1.5</td><td>2026-07-03</td><td>SingleStepShootingView に機能パリティを実装（4471820）: カメラ反転ボタンをトップバー右に追加（撮影前のみ表示・従来この画面には反転機能自体が存在しなかった）。カウントダウン中に録画ボタンをタップすると skipCountdown() で即録画開始（従来はカウントダウン中に録画ボタンが完全に無効化されていた）。これにより連続撮影（ShootingView）と単発撮影（SingleStepShootingView）でカメラ反転・カウントダウンスキップの操作が統一された</td></tr>
       <tr><td>v1.4</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: カメラ反転ボタンをトップバー右に常設（.ready 状態のみ表示、下部コントロールからの排他表示を廃止）。カウントダウン秒数を2本目以降は1秒に短縮、カウントダウン中の録画ボタンタップで即録画開始（skipCountdown）。録画失敗時に「録画エラー」アラートを表示（旧: 無言 ready 復帰）。SingleStepShootingView: 保存失敗時アラート「クリップを保存できませんでした。空き容量を確認してください。」追加、録画中クローズで中断確認アラート（「録画中の映像は保存されません。」）追加。ClipPlayerView/プレビュー: エラーリカバリ種別（recompose / retrySave / openSettings）を導入、ミュートToggle に VoiceOver ラベル付与、動画タップに isButton トレイト付与</td></tr>
