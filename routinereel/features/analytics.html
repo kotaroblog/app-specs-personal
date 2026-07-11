@@ -74,6 +74,30 @@
     <li>Bundle ID は本番版（<code>com.happyboy1002.RoutineReel</code>）と一致</li>
   </ul>
 
+  <h2>v1.2 追加: 9 イベント（失敗系・ファネル計測）</h2>
+  <p>v1.0 の成功系 8 イベントだけでは「なぜ保存に至らないか」が見えないため、撮影中断・書き出し失敗・Paywall 離脱・購入失敗・ATT 結果を計測して離脱ポイントを特定する。9月末グロース判定の材料として活用する。</p>
+  <table>
+    <tr><th>イベント名</th><th>発火タイミング</th><th>パラメータ</th><th>用途</th></tr>
+    <tr><td><code>capture_started</code></td><td>セッション内の初回録画開始時（1セッション1回）</td><td><code>total_steps: Int</code></td><td>撮影完遂率算出の分母</td></tr>
+    <tr><td><code>capture_interrupted</code></td><td>中断ダイアログで「残して終了」または「破棄して終了」を選択</td><td><code>recorded_clips: Int</code>, <code>total_steps: Int</code></td><td>何ステップ目で離脱するかの可視化</td></tr>
+    <tr><td><code>capture_completed</code></td><td>全ステップの撮影セッションが正常完了</td><td><code>recorded_clips: Int</code>, <code>total_steps: Int</code></td><td>撮影完遂率算出の分子</td></tr>
+    <tr><td><code>compose_started</code></td><td>動画合成処理を開始したとき（ClipGenerateView から）</td><td><code>clip_count: Int</code></td><td>合成成功率算出の分母</td></tr>
+    <tr><td><code>compose_completed</code></td><td>動画合成処理が正常完了（保存完了とは別）</td><td><code>duration_sec: Int</code></td><td>端末別待ち時間の把握（長時間化は離脱要因）</td></tr>
+    <tr><td><code>export_failed</code></td><td>書き出し・保存フローでの失敗（キャンセルを含む）</td><td><code>stage</code>: compose/filter/save_app/save_photo<br><code>reason</code>: memory_pressure/file_missing/composition_error/filter_error/storage_error/save_failed/photo_permission_denied/incompatible_format/cancelled の直積</td><td>失敗カテゴリ別の発生率計測</td></tr>
+    <tr><td><code>paywall_dismissed</code></td><td>PaywallView を購入せず閉じたとき</td><td><code>trigger</code>（paywall_shown と同一列挙）</td><td>trigger 別の離脱率（paywall_shown - paywall_converted の差分と突合）</td></tr>
+    <tr><td><code>purchase_failed</code></td><td>購入フローが成功以外で終わったとき</td><td><code>reason</code>: cancelled/pending/verification_failed/store_error</td><td>キャンセル率が高い場合は価格・訴求の見直し材料</td></tr>
+    <tr><td><code>att_result</code></td><td>ATT プロンプト表示後（1回のみ）</td><td><code>authorized: Bool</code></td><td>広告収益予測と ATT 表示タイミング再検討の判断材料</td></tr>
+  </table>
+
+  <h3>ファネル定義</h3>
+  <table>
+    <tr><th>ファネル</th><th>イベント列</th><th>失敗の集約先</th></tr>
+    <tr><td>撮影完遂</td><td>capture_started → capture_completed</td><td>capture_interrupted</td></tr>
+    <tr><td>動画書き出し</td><td>compose_started → compose_completed → video_saved（既存）</td><td>export_failed（全ステージ共通）</td></tr>
+    <tr><td>Paywall 転換</td><td>paywall_shown → paywall_converted（既存）</td><td>paywall_dismissed</td></tr>
+    <tr><td>購入フロー</td><td>（ストア画面表示）→ paywall_converted</td><td>purchase_failed</td></tr>
+  </table>
+
   <h2>残課題（リリース後対応）</h2>
   <ul>
     <li><strong>PaywallView の trigger 引数化</strong>: 現状 <code>.manual</code> 固定。各起動箇所（routine 上限 / storage 上限 / Pro フィルタ・フォントタップ）で trigger を渡すように PaywallView.init を変更</li>
@@ -93,10 +117,11 @@
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.1</td><td>2026-07-11</td><td>v1.2 反映: 9 イベント追加（capture_started / capture_interrupted / capture_completed / compose_started / compose_completed / export_failed / paywall_dismissed / purchase_failed / att_result）。ファネル定義（撮影完遂・動画書き出し・Paywall 転換・購入フロー）を追記。ExportStage / ExportFailureReason / PurchaseFailureReason 列挙も仕様書に追記</td></tr>
     <tr><td>1.0</td><td>2026-06-12</td><td>初版作成。Firebase Analytics 11.x を SwiftPM 経由で統合、AnalyticsService 抽象化、必須 8 イベント埋め込み（commit 8d0d70b）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-12</footer>
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
 </div>
 </body>
 </html>

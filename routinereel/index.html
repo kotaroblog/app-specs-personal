@@ -23,8 +23,8 @@
     <li><span class="k">言語</span><span class="v">日本語</span></li>
     <li><span class="k">配信地域</span><span class="v">日本（初回）</span></li>
     <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（月¥480 / 年¥3,800）+ Google AdMob</span></li>
-    <li><span class="k">ステータス</span><span class="v">v1.1.0 UI/UX 改善フェーズ</span></li>
-    <li><span class="k">リリース時期</span><span class="v">v1.1.0 対応中（2026-06末）</span></li>
+    <li><span class="k">ステータス</span><span class="v">v1.2.0 (build67) リリース済み</span></li>
+    <li><span class="k">直近バージョン</span><span class="v">v1.2.0: 週次リマインダー（曜日指定）/ 続きから撮る導線 / 撮影ファネル計測 9 イベント / SaveOrLog による保存失敗ハンドリング改善</span></li>
   </ul>
 
   <h2>画面仕様書</h2>
@@ -109,6 +109,16 @@
       <div class="title">テスト基盤</div>
       <div class="desc">RoutineReelTests 21件（Streak / SavingPercentage / Pro Resolved）。テスト経由で yearlySavingPercentage の本番バグを発見・修正</div>
     </a>
+    <a class="card" href="features/weekly-reminder.html">
+      <div class="title">週次リマインダー（曜日指定）</div>
+      <div class="desc">v1.2 追加。ルーティンごとに通知曜日を選択。pending 通知上限 60 件の安全な設計・limitReached / partiallyScheduled の UI フィードバック</div>
+      <div class="meta"><span class="tag">v1.2</span></div>
+    </a>
+    <a class="card" href="features/resume-shooting.html">
+      <div class="title">続きから撮る導線</div>
+      <div class="desc">v1.2 追加。isPartiallyShot を判定ソースに集約。ホーム「撮影の続き」カード・ClipLibrary CTA 切り替え・skipStepsWithExistingClips モード</div>
+      <div class="meta"><span class="tag">v1.2</span></div>
+    </a>
   </div>
 
   <h2>更新履歴</h2>
@@ -117,6 +127,7 @@
       <tr><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>2026-07-11</td><td><strong>v1.2.0 (build67) 反映</strong>: 計測イベント 9 種追加（撮影ファネル 3 件 / 動画合成 2 件 / export_failed / paywall_dismissed / purchase_failed / att_result）を analytics.html に追記。週次リマインダー（曜日指定）機能仕様書（features/weekly-reminder.html）を新規作成。続きから撮る導線機能仕様書（features/resume-shooting.html）を新規作成。home.html / shooting.html / clip-library.html / routine-edit.html にそれぞれ v1.2 変更を反映</td></tr>
       <tr><td>2026-07-01</td><td><strong>v1.1.0 追加反映</strong>: 年額トライアル廃止（7日間無料→なし）に伴い paywall.html / subscription.html を更新（CTA文言・planSubtitle・trialNoticeSection をトライアルなし表記に統一）。P1-a バグ修正 <code>inFlightTempURLs</code> / <code>isCancelled</code> ガード / <code>removeItem(sourceURL)</code> 削除を paywall.html に記録。AdMob 本番 App ID 切り替え・SnapshotGallery→RoutineVideoPoster 刷新は仕様書補足として記載</td></tr>
       <tr><td>2026-06-30</td><td><strong>v1.1.0 UI/UX 改善 5 件</strong>: (#4) フリーミアム上限を <code>VideoStorageService.freeRoutineLimit = 3</code> に一元化（旧: <code>maxFreeRoutines = 2</code> 散在）、ルーティン上限 2→3 件・動画保存上限も 3 件で統一 / (#2) 編集保存でのクリップ削除を緩和 — <code>stepsChanged</code> computed property でステップ構成変更時のみ削除、名前/アイコン/フォント/リマインダー変更ではクリップ保持 / (#3) オンボーディング 4→3 ページ圧縮 — 旧 Page 1「撮影スタイル解説」削除、新フロー: Welcome→プリセット選択→リマインダー、撮影スタイル解説は ClipLibraryView の TipKit（ShootingStyleTip・最大3回）に移行 / (#1) 連続撮影の中断→クリップ保持 — 録画済みクリップをライブラリに保持、録画中ステップのみ <code>isCancelled</code> フラグで破棄、「保存して終了」アラート追加 / (#5) RootView に Dynamic Type クランプ <code>.dynamicTypeSize(.xSmall ... .accessibility2)</code> を設定（v1.2 でセマンティックフォント対応予定）</td></tr>
       <tr><td>2026-06-14</td><td><strong>Opus 4.8 UX レビュー対応 5 件</strong>: (γ-#1) スクショ03 から「音楽」訴求削除＋CTA見切れ修正（共通テンプレ <code>ios-apps/tools/store-screenshot-templates/*.html</code> の WorkoutDiary 直書きバグも併せて修正、commit df162dd） / (γ-#2) 「次に撮影」/マイルーティン/Quick Start/通知/URL スキーム 9 箇所を ShootingView 直起動に統一して撮影到達タップ数 3→2（commit 3b93040） / (γ-#3) 「すべて見る」空アクションボタン削除＋ prefix(4) 解除 / (W2) Quick Start を既存ユーザー時に非表示（マイルーティンと重複していた、commit 692882f） / (G2) ASO 課題コピーを「機能過多で挫折した層」から「『撮影→編集→投稿』が分かれて続かない、ステップを撮るだけで自動で1本にまとまる仕組みが欲しい」へ刷新 / (B3-2) プレビューのフィルタチップ右端にフェード overlay 追加 / (B5-1) Paywall 特典 4 個を「動画日記専用」訴求に並び替え＋コピー刷新（クリーンな投稿→シーン別の世界観→動画資産を貯め続ける→集中して撮れる） / (B5-2) 「7日間無料、以降は年額プランで自動継続（¥3,800/年・月換算 ¥316）」を <code>trialNoticeSection</code> で動的表示（App Store Review Guideline 3.1.2(a) 準拠）。動画冒頭の上部キャプションも削除（commit 5d82d0f）</td></tr>
@@ -131,7 +142,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-01</footer>
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
 </div>
 </body>
 </html>

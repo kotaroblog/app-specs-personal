@@ -114,6 +114,26 @@
     <li><span class="k">動作</span><span class="v">NavigationStack を pop して ClipLibraryView（クリップ選択）に戻る</span></li>
   </ul>
 
+  <h2>部分撮影中の CTA 切り替え（v1.2）</h2>
+  <p>ルーティンが部分撮影中（<code>routine.isPartiallyShot == true</code>）の場合、画面冒頭の撮影 CTA の優先順位を反転し、「続きから撮る」を主役に配置する。</p>
+  <table>
+    <thead>
+      <tr><th>条件</th><th>主役 CTA</th><th>副 CTA</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>部分撮影中（<code>isPartiallyShot == true</code>）</td><td>「残りの N ステップを続けて撮影」（accent orange）</td><td>「最初から撮り直す」（secondary tone）</td></tr>
+      <tr><td>全ステップ未撮影 / 全完了</td><td>「全ステップを連続で撮影」（従来どおり）</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <ul class="kv-list">
+    <li><span class="k">N の計算</span><span class="v"><code>routine.unshotSteps.count</code>（モデルの computed property）</span></li>
+    <li><span class="k">「残りのNステップを続けて撮影」タップ</span><span class="v"><code>startMode: .resumeShooting</code> で ShootingView（<code>skipStepsWithExistingClips</code> モード）を起動</span></li>
+    <li><span class="k">「最初から撮り直す」タップ</span><span class="v"><code>startMode: .shootingSequential</code> で全ステップ連続撮影を開始</span></li>
+    <li><span class="k">続き撮影完了後の遷移</span><span class="v">プレビュー画面直行ではなく ClipGenerateView（クリップ選択画面）に戻り、既存ステップ分のクリップも含めて最新クリップを自動選択済みの状態で表示</span></li>
+    <li><span class="k">判定ソース</span><span class="v"><code>Routine.isPartiallyShot</code> / <code>Routine.unshotSteps</code>（モデルに集約・複数画面で共有）</span></li>
+    <li><span class="k">関連</span><span class="v"><a href="../features/resume-shooting.html">続きから撮る導線</a>の機能仕様書</span></li>
+  </ul>
+
   <h2>作成セッション集約（CreateSessionView / 2026-06-06）</h2>
   <ul class="kv-list">
     <li><span class="k">実装ファイル</span><span class="v"><code>Views/Library/CreateSessionView.swift</code></span></li>
@@ -173,6 +193,7 @@
     </thead>
     <tbody>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。warm white背景、撮影Capsuleボタン化、サムネ拡大、「動画を作る」CTA を Home CTA 統一スタイルへ</td></tr>
+      <tr><td>v1.7</td><td>2026-07-11</td><td>v1.2 反映: 部分撮影中（isPartiallyShot == true）の場合、冒頭の撮影 CTA を「残りのNステップを続けて撮影」（主役）+「最初から撮り直す」（副 CTA）に切り替え（従来の「全ステップを連続で撮影」一択から変更）。続き撮影完了後はプレビュー直行ではなく ClipGenerateView（最新クリップ自動選択済み）に遷移し既存クリップ込みで動画生成できる設計に変更</td></tr>
       <tr><td>v1.6</td><td>2026-07-07</td><td>機能性・デザイン改善（e216de7, e012cc3, e3e6ca1）: ClipPlayerView のファイル欠損を検知し「見つかりません」表示＋編集ボタン非表示に（旧: 無限スピナー）。保存ボタン（カメラロール保存・アプリ内保存）の二重実行ガード: タップ直後に isSaving = true で disabled 化（無料上限すり抜け防止）。プレビュー破棄アラート文言を修正: 「撮影した動画は保存されません」→「クリップはライブラリに残ります。今回の合成結果は保存されません。」</td></tr>
       <tr><td>v1.5</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: ClipPlayerView トリムハンドルのヒット領域を視覚 28pt 維持・タップ領域 44pt に拡張（.contentShape 拡張）。トリム未保存変更がある状態での閉じる / 下スワイプ時に「変更を破棄しますか？」確認ダイアログを追加</td></tr>
       <tr><td>v1.4</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: ClipGenerateView に未撮影ステップの空状態「撮影する」ボタン追加（単発撮影を直接起動）。「動画を作成する」の二重タップ防止（押下後即時 disabled 化）。CreateSessionView: プレビュー準備失敗時の行き止まりテキストに「クリップ選択に戻る」ボタンを追加（回復経路を明示）</td></tr>
@@ -182,7 +203,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-07</footer>
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
 </div>
 </body>
 </html>

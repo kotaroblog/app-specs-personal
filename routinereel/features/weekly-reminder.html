@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>RoutineReel - 週次リマインダー（曜日指定）</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">RoutineReel</a> / 週次リマインダー（曜日指定）</div>
+
+  <header class="site-header">
+    <h1>週次リマインダー（曜日指定）</h1>
+    <p>リマインダーを鳴らす曜日をルーティンごとに指定できる機能。v1.2 で追加。iOS pending 通知上限（64件）を考慮した安全な登録設計が特徴。</p>
+    <div class="section-meta">
+      <span class="tag">機能ID: weekly-reminder</span>
+      <span class="tag">v1.2</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>v1.1.0 以前のリマインダーは「毎日特定時刻に通知」の固定仕様だった。v1.2 で <code>Routine.reminderWeekdays: [Int]</code>（1=日曜〜7=土曜）フィールドを追加し、ルーティンごとに通知曜日を自由に選択できるようにした。</p>
+  <p>ユーザー価値: 平日だけ撮影するルーティン（例: 筋トレ10分）や週末専用ルーティン（例: 夜の整いルーティン）など、曜日を限定した習慣化が可能になる。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/routine-edit.html">ルーティン編集（RoutineEditView）</a> — 曜日選択チップ UI の配置先</li>
+    <li><a href="../screens/home.html">ホーム画面</a> — 通知タップ → 撮影画面へのルーティング先</li>
+  </ul>
+
+  <h2>データモデル変更</h2>
+  <ul class="kv-list">
+    <li><span class="k">追加フィールド</span><span class="v"><code>Routine.reminderWeekdays: [Int]</code>（SwiftData <code>@Model</code> に追加）</span></li>
+    <li><span class="k">値の意味</span><span class="v">Calendar.weekday 準拠: 1=日曜, 2=月曜, 3=火曜, 4=水曜, 5=木曜, 6=金曜, 7=土曜</span></li>
+    <li><span class="k">デフォルト値</span><span class="v"><code>[1, 2, 3, 4, 5, 6, 7]</code>（全曜日 = 従来の「毎日」と同じ挙動。既存ユーザーのマイグレーション安全策）</span></li>
+    <li><span class="k">空配列の扱い</span><span class="v">UI では空にさせない（最後の1曜日はタップ不可）。ReminderService は空の場合を通知なし扱いにし、cancelReminder を実行してフォールバック</span></li>
+  </ul>
+
+  <h2>UI 仕様（RoutineEditReminderSection）</h2>
+  <ul class="kv-list">
+    <li><span class="k">表示位置</span><span class="v">リマインダー Toggle の下・DatePicker の下に曜日選択チップを配置（Toggle 有効時のみ展開）</span></li>
+    <li><span class="k">チップ並び順</span><span class="v">月・火・水・木・金・土・日（月曜始まり表示。内部の weekday 値は 2〜7,1 の順で管理）</span></li>
+    <li><span class="k">選択状態</span><span class="v">accent orange 背景 + 白テキスト</span></li>
+    <li><span class="k">未選択状態</span><span class="v">designsCard 背景 + charcoal テキスト</span></li>
+    <li><span class="k">最後の1曜日ガード</span><span class="v">チップタップ後、選択済みが0曜日になる操作を阻止。代わりに「最低 1 曜日は必要です」テキストを 2 秒間表示（Timer で非表示に戻す）。チップの選択状態は変化させない</span></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant V as RoutineEditView
+  participant RS as ReminderService
+  participant UN as UNUserNotificationCenter
+
+  U->>V: 曜日チップをタップ
+  V->>V: reminderWeekdays を更新（最後の1曜日ガード）
+  U->>V: 保存ボタンタップ
+  V->>RS: scheduleReminder(for: routine)
+  RS->>UN: pendingNotificationRequests() で現在の件数を確認
+  alt 上限超過（otherCount + needed > 60）
+    RS-->>V: .limitReached
+    V-->>U: 「通知の上限に達しました」アラート（前の設定を維持）
+  else 全曜日（weekdays.count == 7）
+    RS->>UN: 毎日繰り返しの単一トリガーを登録（1件）
+    RS-->>V: .scheduled
+  else 一部曜日（weekdays.count < 7）
+    loop 各選択曜日
+      RS->>UN: 曜日別 CalendarTrigger を登録（identifier: routine.reminder.UUID.wdN）
+    end
+    alt 全曜日登録成功
+      RS-->>V: .scheduled
+    else 一部だけ成功
+      RS-->>V: .partiallyScheduled(succeeded:total:)
+      V-->>U: 「一部の曜日（N/M 曜日）のみ登録できました」アラート
+    else 全曜日失敗
+      RS-->>V: .notScheduled
+    end
+  end
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li><strong>デフォルトは全曜日選択</strong> — 既存ユーザーがアップデートしても従来と同じ「毎日通知」として機能する</li>
+    <li><strong>全曜日選択時は pending 1 件に集約</strong> — Pro ユーザーが多数のルーティンを持つ場合に pending 上限を節約する最適化</li>
+    <li><strong>pending 予算は 60 件</strong> — iOS の pending 上限 64 件に対して、SNS シェア促進通知（1件）とのレースの余裕を見て 60 件を上限とする</li>
+    <li><strong>上限超過時は既存通知を維持</strong> — 新設定のために既存通知をキャンセルしてから失敗するという「最も気付きにくい失敗」を防ぐ。先に上限チェックを行い、超過する場合はキャンセルせず <code>.limitReached</code> を返す</li>
+    <li><strong>最後の1曜日は解除不可</strong> — 空配列を防ぐ UI ガード。解除しようとすると 2 秒間ヒントを表示して操作を無効にする</li>
+    <li><strong>部分失敗（partiallyScheduled）もユーザーに伝える</strong> — 設定画面上の表示と実際の通知挙動の乖離を避けるため、一部登録に失敗した場合もアラートで知らせる</li>
+    <li><strong>キャンセル時は旧・新両方の identifier を除去</strong> — 毎日用（ベース identifier）と曜日別（.wd1〜.wd7 suffix）の両方を <code>cancelReminder(for:)</code> で一括削除する</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>UserNotifications（UNUserNotificationCenter）</td><td>ローカル通知のスケジューリング・キャンセル</td><td>曜日別 identifier: <code>routine.reminder.&lt;UUID&gt;.wd&lt;N&gt;</code></td></tr>
+    <tr><td>SwiftData（ModelContext）</td><td><code>Routine.reminderWeekdays</code> の永続化</td><td>デフォルト <code>[1,2,3,4,5,6,7]</code> でマイグレーション安全</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>ScheduleOutcome</th><th>UI 対応</th></tr>
+    <tr><td>通知許可が拒否済み</td><td><code>.notScheduled</code></td><td>アラートなし（SettingsView の通知許可誘導に委ねる）</td></tr>
+    <tr><td>pending 上限（60件）超過</td><td><code>.limitReached</code></td><td>「通知の上限に達しました。以前の設定を維持します。」アラートを表示。ルーティン保存自体は成功させる</td></tr>
+    <tr><td>一部曜日の <code>center.add()</code> 失敗</td><td><code>.partiallyScheduled(succeeded:total:)</code></td><td>「一部の曜日（N/M 曜日）のみ登録できました。」アラートを表示</td></tr>
+    <tr><td>全曜日の <code>center.add()</code> 失敗</td><td><code>.notScheduled</code></td><td>アラートなし（センター側の一時エラーは次回 refreshAllReminders でリカバー）</td></tr>
+    <tr><td>曜日フィールドが空配列</td><td><code>.notScheduled</code></td><td>UI ガードで空は作らせない。万一空の場合は ReminderService が cancelReminder を実行してフォールバック</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="kv-list">
+    <li><span class="k">実装ファイル（サービス）</span><span class="v"><code>RoutineReel/Services/ReminderService.swift</code></span></li>
+    <li><span class="k">実装ファイル（モデル）</span><span class="v"><code>RoutineReel/Models/Routine.swift</code>（<code>reminderWeekdays: [Int]</code> 追加）</span></li>
+    <li><span class="k">実装ファイル（UI）</span><span class="v"><code>RoutineReel/Views/Home/RoutineEditView.swift</code>（RoutineEditReminderSection）</span></li>
+    <li><span class="k">上限チェックのタイミング</span><span class="v">キャンセル「前」に行う。先にキャンセルしてから上限で失敗すると、以前の設定が消えた状態になる（最も気付きにくい失敗パターン）</span></li>
+    <li><span class="k">起動時のリフレッシュ</span><span class="v"><code>ReminderService.refreshAllReminders(routines:)</code> でアプリ起動時に全ルーティンの通知を再登録。<code>updatedAt</code> 降順で優先順位をつけ、上限あふれ分はスキップ</span></li>
+    <li><span class="k">pending 件数の計算</span><span class="v">「このルーティン自身の既存分」は「キャンセル後に空く枠」として除外して計算する（まだキャンセルしていないので pending には含まれている）</span></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-11</td><td>初版作成。v1.2 での週次リマインダー（曜日指定）機能の仕様を記載</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
+</div>
+</body>
+</html>

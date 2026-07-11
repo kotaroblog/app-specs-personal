@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>RoutineReel - 続きから撮る導線</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">RoutineReel</a> / 続きから撮る導線</div>
+
+  <header class="site-header">
+    <h1>続きから撮る導線（Resume Shooting）</h1>
+    <p>撮影を途中でやめたルーティン（部分撮影中）を検知し、残りのステップだけを連続撮影できる導線。v1.2 で追加。撮影中断のコストを下げ、継続率向上を図る。</p>
+    <div class="section-meta">
+      <span class="tag">機能ID: resume-shooting</span>
+      <span class="tag">v1.2</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>v1.1.0 で中断時のクリップ保持が実現したが、「続きを撮りたい」ユーザーへの復帰導線が不明確だった。v1.2 では「部分撮影中」の状態を <code>Routine.isPartiallyShot</code> として明示的に定義し、ホーム画面・クリップライブラリ画面の両方から「残りのステップだけを続けて撮る」フローを1タップで起動できるようにした。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/home.html">ホーム画面（DesignsHomeView）</a> — 「撮影の続き」カードを Hero セクションに表示</li>
+    <li><a href="../screens/clip-library.html">クリップライブラリ（ClipLibraryView）</a> — 「残りのNステップを続けて撮影」主役 CTA に切り替え</li>
+    <li><a href="../screens/shooting.html">撮影画面（ShootingView）</a> — skipStepsWithExistingClips モードで未撮影ステップのみ巡回</li>
+  </ul>
+
+  <h2>モデル変更（判定ソースの集約）</h2>
+  <p>判定ロジックを複数画面で持つのを避けるため、<code>Routine</code> モデルに computed property として集約する（単一の判定ソース）。</p>
+  <table>
+    <tr><th>computed property</th><th>定義</th><th>用途</th></tr>
+    <tr><td><code>unshotSteps: [Step]</code></td><td>クリップが 0 件のステップ（表示順）。<code>sortedSteps.filter { clips(for: $0).isEmpty }</code></td><td>「続きから撮る」モードで撮影対象にするステップ一覧</td></tr>
+    <tr><td><code>isPartiallyShot: Bool</code></td><td><code>!unshotSteps.isEmpty &amp;&amp; unshotSteps.count &lt; sortedSteps.count</code>（一部撮影済み・一部未撮影）</td><td>「撮影の続き」カード表示 / CTA 切り替えの判定</td></tr>
+  </table>
+
+  <h2>各画面での表示変化</h2>
+
+  <h3>ホーム画面（Hero セクション）</h3>
+  <ul class="kv-list">
+    <li><span class="k">表示条件</span><span class="v">先頭ルーティン（<code>routines.first</code>）の <code>isPartiallyShot == true</code></span></li>
+    <li><span class="k">カード表示内容</span><span class="v">ルーティン名 + 「残り X ステップ」（<code>unshotSteps.count</code>）</span></li>
+    <li><span class="k">タップ</span><span class="v"><code>startMode: .resumeShooting</code> で ShootingView を起動</span></li>
+    <li><span class="k">排他表示</span><span class="v">「撮影の続き」カードが表示されている間は「次に撮影」CTA を非表示にし重複を避ける</span></li>
+  </ul>
+
+  <h3>クリップライブラリ画面（CTA セクション）</h3>
+  <ul class="kv-list">
+    <li><span class="k">表示条件</span><span class="v">当該ルーティンの <code>isPartiallyShot == true</code></span></li>
+    <li><span class="k">主役 CTA</span><span class="v">「残りの N ステップを続けて撮影」（accent orange・大型ボタン）→ <code>startMode: .resumeShooting</code></span></li>
+    <li><span class="k">副 CTA</span><span class="v">「最初から撮り直す」（secondary tone・小型テキストボタン）→ <code>startMode: .shootingSequential</code></span></li>
+    <li><span class="k">変更前</span><span class="v">「全ステップを連続で撮影」CTA のみ（一択）</span></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant H as ホーム/ClipLibrary
+  participant VM as ShootingViewModel
+  participant SV as ShootingView
+  participant CLV as ClipLibraryView
+
+  U->>H: 「撮影の続き」カード or 「残りのNステップを続けて撮影」タップ
+  H->>VM: SessionPayload(routine, startMode: .resumeShooting)
+  VM->>VM: skipStepsWithExistingClips = true
+  VM->>VM: targetSteps = routine.unshotSteps（未撮影ステップのみ）
+  VM->>SV: 起動（未撮影ステップを順に表示）
+
+  loop 各未撮影ステップ
+    U->>SV: 録画・保存
+    SV->>VM: persistClip(step:)
+  end
+
+  alt 全ステップ撮影完了
+    VM->>CLV: ClipGenerateView に遷移（最新クリップを自動選択済み）
+    note right of CLV: 既存ステップ分クリップ込みで動画生成可能
+  else 途中で中断（クリップを残して終了）
+    VM->>VM: 撮影済みクリップをライブラリに保持
+    SV-->>U: 撮影画面を閉じる
+  else 途中で中断（破棄して終了）
+    VM->>VM: セッション内の全クリップを削除（DB→ファイルの順）
+    SV-->>U: 撮影画面を閉じる
+  end
+  </div>
+
+  <h2>撮影完了後の遷移変更</h2>
+  <p>v1.1.0 まで: 撮影完了 → PreviewView（プレビュー画面）に直接 push</p>
+  <p>v1.2 変更: 続きから撮るモードの完了 → <strong>ClipGenerateView（クリップ選択画面）に遷移</strong>し、最新クリップを自動選択済みの状態で表示。既存ステップ分のクリップも含めて動画生成できる。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更理由</span><span class="v">続き撮影では既存ステップのクリップも動画に含めたい。プレビュー直行では既存クリップが自動で含まれない</span></li>
+    <li><span class="k">自動選択</span><span class="v">今回の続き撮影で追加されたクリップが ClipGenerateView で自動選択済み状態になる（全ステップ完了扱いで全クリップが揃う場合は全件自動選択）</span></li>
+  </ul>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li><strong>部分撮影中の判定は常に最新</strong> — <code>Routine.isPartiallyShot</code> は computed property のためスナップショットを持たない。クリップの削除・追加が即時反映される</li>
+    <li><strong>「最初から撮り直す」は既存クリップを削除しない</strong> — 新たな連続撮影を開始するが、既存クリップは明示的に削除しない（ユーザーがクリップライブラリで確認・削除できる）</li>
+    <li><strong>全ステップ未撮影 or 全完了の場合は従来どおり</strong> — <code>isPartiallyShot == false</code> の場合、「続きから撮る」UI は表示されず従来の「全ステップを連続で撮影」CTA を表示する</li>
+    <li><strong>判定対象はホームでは先頭ルーティンのみ</strong> — ホームの「撮影の続き」カードは先頭ルーティン（<code>routines.first</code>）に限定する。複数の部分撮影中ルーティンへの対応は今後の課題</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>SwiftData（Routine / Step / Clip モデル）</td><td>unshotSteps の計算・クリップの削除</td><td>削除は DB 確定後にファイル削除の順序で参照整合性を保証</td></tr>
+    <tr><td>ClipStorageService</td><td>破棄時のクリップファイル削除</td><td>DB delete → save → fileDelete の順序</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>続き撮影中に破棄を選択</td><td>DB 確定後にファイル削除（参照整合性保証）。ClipStorageService.deleteClip を DB save 完了後に実行</td></tr>
+    <tr><td><code>unshotSteps</code> が空（全ステップ撮影済み）での resumeShooting 起動</td><td>起動元でガード済み（isPartiallyShot == false なら「続きから撮る」UI が非表示）。万一到達した場合は ShootingViewModel 側で graceful に全ステップ撮影モードにフォールバック</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="kv-list">
+    <li><span class="k">StartMode 追加</span><span class="v"><code>CreateSessionView.StartMode</code> 列挙に <code>.resumeShooting</code> を追加</span></li>
+    <li><span class="k">ShootingViewModel フラグ</span><span class="v"><code>skipStepsWithExistingClips: Bool</code> を追加。<code>true</code> のとき <code>targetSteps</code> を <code>routine.unshotSteps</code> に変更</span></li>
+    <li><span class="k">判定ソースのルール</span><span class="v"><code>Routine.unshotSteps</code> / <code>Routine.isPartiallyShot</code> のみを使用。各画面が独自の判定ロジックを持たない</span></li>
+    <li><span class="k">capture_interrupted / capture_completed 計測</span><span class="v">resumeShooting モードでも同じ Analytics イベントを送信する（total_steps は unshotSteps.count ではなく sortedSteps.count で統一）</span></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-11</td><td>初版作成。v1.2 での続きから撮る導線の仕様を記載</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
+</div>
+</body>
+</html>

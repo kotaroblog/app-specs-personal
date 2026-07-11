@@ -273,9 +273,15 @@
     <li><span class="k">影響</span><span class="v">仕様書内の旧 HomeView への言及はすべて DesignsHomeView に統一済み</span></li>
   </ul>
 
-  <h2>v1.2 以降で予定される改善</h2>
-  <ul>
-    <li><strong>マイルーティン「すべて見る」展開画面</strong> — v1.0 では全件表示（prefix 廃止済み）、v1.2 でさらに洗練予定</li>
+  <h2 id="partial-shot-card">部分撮影中カード（v1.2）</h2>
+  <p>先頭ルーティンが部分撮影中（<code>isPartiallyShot == true</code>）の場合、通常の「次に撮影」Hero CTA と排他表示にし、代わりに「撮影の続き」カードを Hero セクション内に表示する。</p>
+  <ul class="kv-list">
+    <li><span class="k">表示条件</span><span class="v"><code>routines.first?.isPartiallyShot == true</code>（先頭ルーティンが部分撮影中の場合のみ）</span></li>
+    <li><span class="k">カード内容</span><span class="v">ルーティン名 + 「残り X ステップ」を表示</span></li>
+    <li><span class="k">タップ動作</span><span class="v"><code>startMode: .resumeShooting</code> で ShootingView を起動。<code>skipStepsWithExistingClips</code> モードで未撮影ステップのみを連続撮影</span></li>
+    <li><span class="k">排他表示</span><span class="v">このカードが表示されている間は「次に撮影」CTA は非表示（重複を避ける）</span></li>
+    <li><span class="k">判定ソース</span><span class="v"><code>Routine.isPartiallyShot</code>（モデルに集約された computed property）</span></li>
+    <li><span class="k">関連</span><span class="v"><a href="../features/resume-shooting.html">続きから撮る導線</a>の機能仕様書</span></li>
   </ul>
 
   <h2>バナー広告と中央＋ボタンの離隔（v1.1.0）</h2>
@@ -300,6 +306,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.7</td><td>2026-07-11</td><td>v1.2 反映: 部分撮影中の先頭ルーティンを「撮影の続き」カードとして Hero セクションに表示（isPartiallyShot 判定）。タップで続きから撮る（startMode: .resumeShooting）を起動し、通常の「次に撮影」CTA と排他表示。SwiftData 保存失敗時に挿入をロールバックしてアラート表示する saveOrLog() ヘルパー導入（ルーティン作成・複製で幽霊データを残さない設計に変更）</td></tr>
       <tr><td>v1.6</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: バナー広告直下に 24pt 非インタラクティブ離隔スペーサーを挿入（中央＋ボタンの offset 重なりによる AdMob 誤タップリスクを解消）。マイルーティン行末に ellipsis（⋯）ボタンを常設化（長押し contextMenu と同一メニューを表示。操作の発見性を改善）</td></tr>
       <tr><td>v1.5</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: マイルーティン行・クリップサムネを Button 化（VoiceOver ボタントレイト付与）。colorScheme 是正: RootView を .light に固定（warm white ホームでのステータスバー不可視バグ修正）、ClipPlayerView / RecentVideoPlayerSheet / VideoPlayerSheet は個別 .dark を維持。デッドコード削除: HomeView.swift / DesignsRecordPreviewView.swift / DesignsRecentProjectCard.swift（計約850行）を削除。仕様書内の旧 HomeView 言及を DesignsHomeView に統一</td></tr>
       <tr><td>v1.4</td><td>2026-06-19</td><td>FeatureFlag 廃止: <code>FeatureFlags.swift</code> 削除・<code>DesignsHomeView</code> を唯一のホーム画面として固定（RootView / SettingsView / SnapshotSeeder の <code>@AppStorage(FeatureFlags.useDesignHomeKey)</code> 参照をすべて削除）。Quick Start タップ動線を <code>.shootingSequential</code>（即撮影）→ <code>.clipLibrary</code>（クリップライブラリ起動）に変更（ルーティン作成＋ライブラリ誘導に整理）。長押しメニューを <code>confirmationDialog</code>（画面下部シート）→ iOS 標準 <code>.contextMenu</code>（フローティングメニュー）に変更。<code>DesignsMyRoutineCard</code> の <code>onLongPressGesture</code> / <code>onMenuTap</code> を削除し全メニュー項目を <code>DesignsHomeView.myRoutinesListSection</code> の <code>.contextMenu</code> に集約</td></tr>
@@ -314,7 +321,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-07</footer>
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
 </div>
 </body>
 </html>
