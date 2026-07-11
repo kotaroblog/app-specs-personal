@@ -11,67 +11,46 @@
   <header class="site-header"><h1>オンボーディング（OnboardingView）</h1><p>初回起動時のセットアップウィザード</p>
   <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-ONB-01</span></div></header>
 
-  <h2>ステップ構成（UI/UX改善版）</h2>
+  <h2>必須フロー（最大4画面）</h2>
   <div class="callout info">
-    v1.2.1 でステップ負荷軽減。不要な入力を省略し最短13ステップ→GoalType分岐で枝刈り。ページ名は Firebase Analytics で計測（<code>OnboardingPage.analyticsName</code>）。
+    v1.2.2 でフローを大幅圧縮。無料利用開始を既定とし、オンボーディング内にペイウォールを置かない。
+    ページ名は Firebase Analytics で計測（<code>OnboardingPage.analyticsName</code>）。
+    互換性維持のため <code>OnboardingPage</code> enum の定義・Analyticsイベント（<code>onboarding_page_view</code> / <code>onboarding_complete</code>）・UserSettings/Subject 保存ロジックは維持（moved-out ページの構造体も残置）。
   </div>
   <ol>
     <li><strong>welcome</strong> — アプリ紹介（歓迎メッセージ）</li>
     <li><strong>goalSelection</strong> — 目標タイプ選択: 定期テスト / 高校受験 / 大学受験</li>
-    <li><strong>schoolName</strong> — 志望校名入力（受験のみ。定期テストはスキップ）</li>
     <li><strong>subjectSelection</strong> — 科目選択（プリセット科目から複数選択）</li>
-    <li><strong>scoreGoals</strong> — 科目別 現在点/目標点 入力（定期テストのみ。受験はスキップ）</li>
-    <li><strong>motivation</strong> — 動機入力（任意テキスト）</li>
-    <li><strong>examDate</strong> — 試験日設定（受験のみ）</li>
-    <li><strong>studyHours</strong> — 1日の学習目標時間設定</li>
-    <li><strong>planCreation</strong> — 学習計画自動生成中（ローディング演出）</li>
-    <li><strong>planResult</strong> — 生成結果プレビュー</li>
-    <li><strong>commit</strong> — 「始める」確認画面</li>
-    <li><strong>notification</strong> — 通知許可リクエスト</li>
-    <li><strong>paywall</strong> — サブスク提示（年額・月額2プラン）</li>
+    <li><strong>examDate</strong> — 試験日設定（必須フローの最終ページ）<br>
+        「この日で始める」→ examDate を保存して完了 / 「試験日は未定（あとで設定）」→ examDate 未保存のまま完了</li>
   </ol>
 
-  <h2>フロー分岐</h2>
-  <table>
-    <tr><th>目標タイプ</th><th>表示されるステップ</th><th>スキップされるステップ</th></tr>
-    <tr><td>定期テスト</td><td>scoreGoals（科目別点数）</td><td>schoolName, examDate</td></tr>
-    <tr><td>高校受験 / 大学受験</td><td>schoolName, examDate</td><td>scoreGoals</td></tr>
-  </table>
-
-  <h2>文言整理（v1.2.1）</h2>
-  <ul>
-    <li>各ステップのタイトル・説明文を短縮（読み飛ばし前提のデザインへ）</li>
-    <li>プリセット科目にアイコン（<code>SubjectPreset.iconName</code>）を追加して選択肢を視認しやすく改善</li>
-  </ul>
-
-  <h2>Paywallステップ詳細（v1.2.1）</h2>
-  <div class="callout info">
-    オンボーディング最終ページのペイウォールは設定画面の PremiumView と<strong>同じ特典・順序・文言</strong>を共有する（<code>PremiumBenefit</code> 単一ソース）。
+  <h2>必須フローから除外した項目と移設先</h2>
+  <div class="callout">
+    以下はオンボーディング必須フローから外し、ホーム遷移後の任意導線に移設。
   </div>
   <table>
-    <tr><th>要素</th><th>内容</th></tr>
-    <tr><td>特典リスト</td><td>PremiumBenefit の5特典をアイコン付きで表示（成績無制限→週次レポート→詳細統計→限定テーマ→広告なし の順）</td></tr>
-    <tr><td>プラン表示</td><td>年額（上位・「お得」バッジ）→ 月額 の順に <code>SubscriptionPlanButton</code> で表示。無料体験が設定されている場合は年額ボタンに表記</td></tr>
-    <tr><td>購入ボタン</td><td>選択中プランで購入実行</td></tr>
-    <tr><td>スキップリンク</td><td>「あとで」でペイウォールをスキップして ContentView へ</td></tr>
+    <tr><th>旧ステップ</th><th>移設先</th></tr>
+    <tr><td>motivation（動機入力）</td><td>設定タブ → ユーザー設定</td></tr>
+    <tr><td>scoreGoals（科目別点数目標）</td><td>科目編集画面（SubjectEditView）→ 点数目標セクション</td></tr>
+    <tr><td>schoolName（志望校名）</td><td>設定タブ → ユーザー設定</td></tr>
+    <tr><td>studyHours（1日の目標時間）</td><td>設定タブ → 1日の目標設定</td></tr>
+    <tr><td>planCreation / planResult（学習計画）</td><td>カレンダータブ → 学習計画シート</td></tr>
+    <tr><td>commit（誓約確認）</td><td>廃止（ホーム到達で自然に開始）</td></tr>
+    <tr><td>notification（通知許可）</td><td>設定タブ → 通知設定 or ホーム初回表示タイミング</td></tr>
+    <tr><td>paywall（課金）</td><td>設定タブ / 各種Premiumロック機能からの導線</td></tr>
   </table>
 
-  <h3>購入挙動（v1.2.1）</h3>
-  <table>
-    <tr><th>結果</th><th>挙動</th></tr>
-    <tr><td>購入成功</td><td>ペイウォール（オンボ）を完了して ContentView へ進む（<code>onboardingCompleted = true</code>）</td></tr>
-    <tr><td>キャンセル</td><td>ペイウォールに留まる（エラー表示なし）</td></tr>
-    <tr><td>失敗</td><td>ペイウォールに留まる + エラー文言をインライン表示</td></tr>
-    <tr><td>保留（pending）</td><td>ペイウォールに留まる + 保留メッセージ表示</td></tr>
-    <tr><td>スキップ</td><td>購入なしで ContentView へ進む（<code>onboardingCompleted = true</code>）</td></tr>
-  </table>
+  <h2>完了後の遷移</h2>
+  <p><code>onboardingCompleted = true</code> → ContentView（試験日設定あり・なし問わず同一パス）</p>
 
-  <h2>遷移</h2>
-  <p>完了時に <code>onboardingCompleted = true</code> → ContentView（購入成功・スキップいずれでも同一パス）</p>
+  <h2>試験日未設定時の補完導線</h2>
+  <p>ホーム画面の文脈カードに「試験日をカレンダータブから登録」リンクを表示。</p>
 
   <h2>関連</h2>
   <ul>
     <li><a href="premium.html">プレミアム画面（設定から遷移）</a></li>
+    <li><a href="subject-edit.html">科目編集（点数目標設定）</a></li>
     <li><a href="../features/subscription.html">サブスク課金機能仕様書</a></li>
   </ul>
 
@@ -81,7 +60,8 @@
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-15</td><td>v1.2.1対応: Paywallステップに年額・月額2プラン表示・無料体験表記・PremiumBenefit単一ソース方針・購入挙動（成功のみ進む）を追記</td></tr>
     <tr><td>1.2</td><td>2026-06-20</td><td>UI/UX改善反映: ステップ構成を13ステップ詳細化（planCreation/planResult追加）・GoalType分岐表をテーブル化・文言整理・プリセット科目アイコン追加を記載</td></tr>
+    <tr><td>1.3</td><td>2026-07-11</td><td>フロー圧縮: 必須フローを最大4画面（welcome/goalSelection/subjectSelection/examDate）に縮小。paywall/notification/planCreation/motivation等を任意導線に移設。無料利用開始を既定に変更。互換性維持方針を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-20</footer>
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
 </div></body></html>

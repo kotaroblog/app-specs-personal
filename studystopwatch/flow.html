@@ -23,7 +23,14 @@ flowchart TD
   Launch([起動]) --> Root[RootView]
   Root -- onboardingCompleted=false --> Onb[OnboardingView]
   Root -- onboardingCompleted=true --> Tabs[ContentView TabView]
-  Onb -- 完了 --> Tabs
+
+  subgraph OnbFlow[オンボーディング必須フロー（最大4画面）]
+    direction LR
+    W[welcome] --> G[goalSelection] --> S[subjectSelection] --> E[examDate\n任意スキップ可]
+  end
+  Onb --> OnbFlow
+  E -- 完了 --> Tabs
+
   Tabs --> THome[Tab: ホーム]
   Tabs --> TToday[Tab: 今日]
   Tabs --> TCal[Tab: カレンダー]
@@ -96,6 +103,7 @@ flowchart TD
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成（ソースコードからリバース）</td></tr>
+    <tr><td>1.1</td><td>2026-07-11</td><td>オンボーディング必須フローを4画面（welcome/goalSelection/subjectSelection/examDate）に圧縮した遷移図を追記</td></tr>
   </table>
 
   <script>
@@ -106,7 +114,7 @@ flowchart TD
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
 </div>
 </body>
 </html>

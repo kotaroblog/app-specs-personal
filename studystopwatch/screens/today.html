@@ -14,30 +14,32 @@
   <h2>目的・役割</h2>
   <p>本日の学習時間・達成率・科目別内訳を一目で確認できるダッシュボード画面。</p>
 
-  <h2>UI 構成（UI/UX改善版）</h2>
+  <h2>UI 構成（v1.2.2）</h2>
   <div class="callout info">
-    v1.2.1 でやることセクションを追加し、タスク追加・完了の導線を Today 画面単独で完結できるよう強化。
+    v1.2.2 で表示優先順位を再設計。「今日やること → 今日の実績（合計時間＋目標残り）→ 科目別内訳」の順に並べ替え。
+    グラフ・タイムライン・セッション履歴は詳細折りたたみセクションへ移動。前日比に増減時間を追加。
+    実績カードは重要カードスタイル（太い枠線＋底面シャドウ）を適用。
   </div>
   <table>
-    <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>達成率リング</td><td>dailyGoalMinutes に対する当日達成率をリング形式で表示</td></tr>
-    <tr><td>本日の合計時間</td><td>大きく中央表示</td></tr>
-    <tr><td>科目別サマリ</td><td>教科ごとの時間内訳（Subject.colorHex の色バー）</td></tr>
-    <tr><td>前日比</td><td>「前日より N% UP/DOWN」</td></tr>
-    <tr><td>平均セッション時間</td><td>本日のセッション平均</td></tr>
-    <tr><td>やることセクション（追加）</td><td>本日期限（dueDate == 今日）の StudyTask をチェックボックスリストで表示。タスク追加フィールドとタスク作成シートへの導線付き</td></tr>
-    <tr><td>タスク追加フィールド</td><td>インライン TextField + 送信で即時 StudyTask 生成（期限日 = 今日）</td></tr>
-    <tr><td>「期限付きで追加」ボタン</td><td>TaskCreationSheet を表示（日付ピッカーで期限日を変更可）</td></tr>
-    <tr><td>シェアボタン</td><td>StudyShareSheet 起動（ツールバー trailing または画面下部）</td></tr>
+    <tr><th>順序</th><th>要素</th><th>説明</th></tr>
+    <tr><td>1</td><td>今日やることセクション（todayTasksCard）</td><td>重要カードスタイル。本日期限（dueDate == 今日）の StudyTask をチェックボックスリストで表示。タスク追加フィールドとタスク作成シートへの導線付き</td></tr>
+    <tr><td>2</td><td>今日の実績カード（todayAchievementCard）</td><td>重要カードスタイル。合計時間を大きく中央表示 + 目標残り時間。達成率リング（effectiveDailyGoalMinutes 基準）</td></tr>
+    <tr><td>3</td><td>前日比</td><td>「前日より N% UP/DOWN」に加えて増減時間も併記（例: +31% / 前日比 +25分）</td></tr>
+    <tr><td>4</td><td>科目ごとの内訳</td><td>教科ごとの時間内訳（Subject.colorHex の色バー）</td></tr>
+    <tr><td>5</td><td>「詳細を見る」折りたたみセクション</td><td>グラフ・タイムライン・セッション履歴・平均セッション時間を格納。デフォルト折りたたみ</td></tr>
+    <tr><td>—</td><td>タスク追加フィールド</td><td>インライン TextField + 送信で即時 StudyTask 生成（期限日 = 今日）</td></tr>
+    <tr><td>—</td><td>「期限付きで追加」ボタン</td><td>TaskCreationSheet を表示（日付ピッカーで期限日を変更可）</td></tr>
+    <tr><td>—</td><td>シェアボタン</td><td>StudyShareSheet 起動（ツールバー trailing）</td></tr>
   </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示</th></tr>
-    <tr><td>記録あり</td><td>達成率 + 科目別内訳 + やることリスト</td></tr>
-    <tr><td>記録なし</td><td>達成率リング 0% + 「記録を始めよう」CTA（ホームタブへ誘導）</td></tr>
-    <tr><td>目標達成</td><td>達成バッジ表示</td></tr>
-    <tr><td>今日のタスクなし</td><td>やることセクションに「今日やることを追加しましょう」プレースホルダー + 追加フィールド</td></tr>
+    <tr><td>記録あり</td><td>今日やること → 今日の実績 → 前日比 → 科目別内訳 → 詳細折りたたみ</td></tr>
+    <tr><td>記録なし</td><td>今日の実績カード（合計0分）+ 「記録を始めよう」CTA（ホームタブへ誘導）</td></tr>
+    <tr><td>目標達成</td><td>達成バッジ表示（実績カード内）</td></tr>
+    <tr><td>今日のタスクなし</td><td>「今日やることを追加しましょう」プレースホルダー + 追加フィールド</td></tr>
+    <tr><td>詳細展開</td><td>「詳細を見る」セクションをタップでグラフ・タイムライン・履歴を展開</td></tr>
   </table>
 
   <h2>遷移</h2>
@@ -60,7 +62,8 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-20</td><td>UI/UX改善反映: やることセクション追加・タスク追加インラインフィールド・TaskCreationSheet導線・空状態CTAを記載</td></tr>
+    <tr><td>1.2</td><td>2026-07-11</td><td>表示優先順位を再設計: 今日やること→今日の実績→科目別内訳の順に変更。グラフ/タイムライン/履歴を詳細折りたたみセクションへ移動。前日比に増減時間（例: +31% / 前日比 +25分）を追記。重要カードスタイル適用対象を明記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-20</footer>
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
 </div></body></html>

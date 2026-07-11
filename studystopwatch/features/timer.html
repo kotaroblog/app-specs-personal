@@ -78,8 +78,34 @@
     <tr><td>SwiftData</td><td>StudySession として保存</td></tr>
   </table>
 
-  <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr><tr><td>1.1</td><td>2026-07-03</td><td>セッション完了フローの排他制御・ポモドーロのバックグラウンド対応・計測時間消失バグ修正</td></tr></table>
+  <h2>計測中UI（v1.2）</h2>
+  <div class="callout info">
+    v1.2.2 でボタン優先度とキャンセル取り消し挙動を見直し。
+  </div>
+  <table>
+    <tr><th>要素</th><th>スタイル</th><th>説明</th></tr>
+    <tr><td>完了ボタン</td><td>主ボタン（filled・目立つ色）</td><td>セッションを保存して終了</td></tr>
+    <tr><td>一時停止 / 再開ボタン</td><td>弱いスタイル（アウトラインのカプセル）</td><td>タイマーを一時停止 / 再開</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-07-03</footer>
+  <h2>完了・破棄後の取り消しトースト（v1.2）</h2>
+  <div class="callout info">
+    完了直後・破棄直後（1分未満のキャンセル含む）に「取り消し可能なトースト」を表示。約5秒間有効。
+  </div>
+  <table>
+    <tr><th>トリガー</th><th>トースト内容</th><th>取り消し操作の効果</th></tr>
+    <tr><td>完了（記録保存）</td><td>「記録を削除しますか？」+ 取り消しボタン</td><td>保存済み StudySession を削除</td></tr>
+    <tr><td>破棄（記録なし終了）</td><td>「記録として保存しますか？」+ 取り消しボタン</td><td>破棄した計測を復元して StudySession として保存。endTime = 開始時刻 + 計測分 に整合</td></tr>
+    <tr><td>1分未満キャンセル</td><td>「記録として保存しますか？」+ 取り消しボタン</td><td>1分未満セッションを復元して保存（従来は無音で破棄していたが取り消し可能に変更）</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-07-03</td><td>セッション完了フローの排他制御・ポモドーロのバックグラウンド対応・計測時間消失バグ修正</td></tr>
+    <tr><td>1.2</td><td>2026-07-11</td><td>計測中UIのボタン優先度変更（完了=主・一時停止=弱いアウトライン）。完了直後・破棄直後・1分未満キャンセルの取り消し可能トースト（約5秒）を追記</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
 </div></body></html>

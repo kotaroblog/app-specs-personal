@@ -11,22 +11,37 @@
   <header class="site-header"><h1>科目編集（SubjectEditView）</h1><p>科目の追加・編集</p>
   <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-SUBJ-01</span></div></header>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（v1.1）</h2>
+  <div class="callout info">
+    v1.2.2 で点数目標セクションを追加。オンボーディング必須フローからの移設により、既存ユーザーを含む全ユーザーがこの画面から点数目標を設定・更新できるようになった。
+  </div>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
     <tr><td>名前入力</td><td>TextField（必須）</td></tr>
     <tr><td>カラー選択</td><td>カラーピッカー</td></tr>
     <tr><td>アイコン選択</td><td>SF Symbol一覧</td></tr>
     <tr><td>並び順</td><td>Stepper or Drag&Drop</td></tr>
-    <tr><td>定期テスト用フィールド</td><td>currentScore / targetScore（goalType=regularExamのみ）</td></tr>
+    <tr><td>点数目標セクション（追加）</td><td>前回点（currentScore）・目標点（targetScore）の2フィールド（いずれも任意・0〜100）。goalType 問わず全ユーザーに表示</td></tr>
     <tr><td>削除ボタン</td><td>確認後 cascade で関連 StudySession も削除</td></tr>
   </table>
 
+  <h2>点数目標の表示・保存ルール</h2>
+  <ul>
+    <li>currentScore / targetScore ともに任意（空のまま保存可能）</li>
+    <li>入力範囲: 0〜100（整数）。範囲外入力時はバリデーションエラー表示</li>
+    <li>保存したスコアはレポートタブの成績グラフ（SS-GRADES-01）で参照される</li>
+    <li>v1.2.2 以前にオンボーディングで入力済みのスコアはそのまま引き継がれる</li>
+  </ul>
+
   <h2>使用するデータモデル</h2>
-  <pre><code>Subject { id, name, colorHex, iconName, sortOrder, currentScore?, targetScore? }</code></pre>
+  <pre><code>Subject { id, name, colorHex, iconName, sortOrder, currentScore?: Int?, targetScore?: Int? }</code></pre>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-07-11</td><td>点数目標セクション（currentScore/targetScore・任意・0〜100）を追加。オンボーディング必須フロー圧縮に伴う移設対応</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
 </div></body></html>

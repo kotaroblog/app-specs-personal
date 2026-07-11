@@ -14,45 +14,62 @@
   <h2>目的・役割</h2>
   <p>科目を選んでタイマーを開始・停止する画面。タイマー実行中はLive Activityとも連動。</p>
 
-  <h2>UI 構成（UI/UX改善版）</h2>
+  <h2>UI 構成（v1.2.2）</h2>
   <div class="callout info">
-    v1.2.1 で学習開始導線を画面上部に集約し、視認性・タップ到達性を改善。
-    フォーカス科目モード（ピン留め科目を強調）と全科目表示モードを自動切り替え。
+    v1.2.2 でカード順序を再設計。「大型開始CTA → 今日目標リング（主表示）→ 今週・今月（補助）→ ポモドーロ → 文脈カード」に整理。
+    科目一覧の各行を主導線（計測ボタン）と副導線（…メニュー）に整理し視認負荷を低減。
   </div>
   <table>
-    <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>primaryStudySection（上部）</td><td>フォーカス科目モード有効かつピン留め科目ありなら focusSubjectSection を表示、それ以外は全科目リスト（fullSubjectList）を表示。科目未登録時は ContentUnavailableView「設定タブから科目を追加してください」</td></tr>
-    <tr><td>ポモドーロトグル</td><td>primaryStudySection の直下に配置。集中25分/休憩5分の自動切替</td></tr>
-    <tr><td>dashboardCard</td><td>本日合計・週合計・月合計の時間サマリ。視覚的に目立つカード形式</td></tr>
-    <tr><td>goalsRow</td><td>日/週/月の目標達成率インジケーター（StudyGoal ベース）。タップで GoalEditSheet</td></tr>
-    <tr><td>タイマー実行中表示（timerRunningView）</td><td>タイマー実行中のみ全面切替。HH:MM:SS 大字 + 一時停止/停止ボタン</td></tr>
-    <tr><td>完了トースト</td><td>STOP 後に上部から「お疲れ様でした！ + 経過時間」のトーストをアニメーション表示</td></tr>
-    <tr><td>目標達成オーバーレイ</td><td>日次目標達成時に「目標達成！」フルスクリーンオーバーレイ（タップで閉じる）</td></tr>
-    <tr><td>ツールバー（右上）</td><td>共有ボタン（<code>accessibilityLabel: "学習記録を共有"</code>）</td></tr>
+    <tr><th>順序</th><th>要素</th><th>説明</th></tr>
+    <tr><td>1</td><td>大型計測開始CTA（startCTACard）</td><td>重要カードスタイル（太い枠線＋底面シャドウ）。前回続き（直近セッションの科目）がある場合は「前回の続き: [科目名]」、フォーカス科目モード時は「今日の1科目: [科目名]」を表示。大きな「計測スタート」ボタン＋弱い「計測せず手動で記録」テキストリンク</td></tr>
+    <tr><td>2</td><td>今日目標カード（todayGoalCard）</td><td>重要カードスタイル。大リングで当日達成率を主表示。基準は <code>effectiveDailyGoalMinutes</code>（日次StudyGoal優先→設定の1日の目標にフォールバック）。計測中リング・達成演出・ホーム表示すべて同一基準を使用</td></tr>
+    <tr><td>3</td><td>今週・今月カード（2枚）</td><td>通常カードスタイル（影なし・軽い境界線のみ）。compact 表示で横並び</td></tr>
+    <tr><td>4</td><td>ポモドーロ設定トグル</td><td>集中25分/休憩5分の自動切替。通常カードスタイル</td></tr>
+    <tr><td>5</td><td>文脈カード群（contextCards）</td><td>連続日数・試験カウントダウン・モチベーション。今日進捗ブロックは撤去（今日目標カードへ集約済み）。試験日未設定時は「カレンダータブから試験日を登録」リンク表示</td></tr>
+    <tr><td>—</td><td>科目一覧（subjectList）</td><td>主導線は「計測」ボタン。「手動で記録」・「編集」・「削除」は各行末の「…」メニューへ集約。科目未登録時は ContentUnavailableView「設定タブから科目を追加してください」</td></tr>
+    <tr><td>—</td><td>タイマー実行中表示（timerRunningView）</td><td>タイマー実行中のみ全面切替。HH:MM:SS 大字 + 一時停止/停止ボタン（スタイルはタイマー機能仕様参照）</td></tr>
+    <tr><td>—</td><td>目標達成オーバーレイ</td><td>日次目標達成時に「目標達成！」フルスクリーンオーバーレイ（タップで閉じる）</td></tr>
+    <tr><td>—</td><td>ツールバー（右上）</td><td>共有ボタン（<code>accessibilityLabel: "学習記録を共有"</code>）</td></tr>
+  </table>
+
+  <h2>ビジュアル階層方針（v1.2.2）</h2>
+  <div class="callout info">
+    「重要カードスタイル」（太い枠線＋底面シャドウ）は主役カードにのみ適用し、画面全体の情報階層を明確化。
+    通常カードは軽い境界線のみ（影なし）。Dynamic Type 上限の不必要な制限は設けない。
+  </div>
+  <table>
+    <tr><th>スタイル</th><th>適用対象</th></tr>
+    <tr><td>重要カードスタイル</td><td>開始CTA・今日目標カード</td></tr>
+    <tr><td>通常カードスタイル</td><td>今週・今月・ポモドーロ・文脈カード群</td></tr>
   </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示</th></tr>
-    <tr><td>停止中（科目あり）</td><td>primaryStudySection + ポモドーロトグル + dashboardCard + goalsRow</td></tr>
+    <tr><td>停止中（科目あり）</td><td>startCTACard + todayGoalCard + 今週/今月 compact + ポモドーロ + contextCards + subjectList</td></tr>
     <tr><td>停止中（科目なし）</td><td>ContentUnavailableView「科目が登録されていません」</td></tr>
-    <tr><td>実行中</td><td>timerRunningView（経過時間大字 + 一時停止/停止）に全面切替</td></tr>
+    <tr><td>実行中</td><td>timerRunningView に全面切替（経過時間大字 + 完了ボタン（主）+ 一時停止/再開（弱））</td></tr>
     <tr><td>一時停止中</td><td>timerRunningView 内に再開ボタン</td></tr>
     <tr><td>ポモドーロ集中中</td><td>「集中タイム N分」表示</td></tr>
     <tr><td>ポモドーロ休憩中</td><td>「休憩タイム N分」表示</td></tr>
-    <tr><td>フォーカス科目モード ON</td><td>ピン留め科目カードを上部に強調表示。他科目は折りたたみ（showOtherSubjects トグルで展開）</td></tr>
+    <tr><td>フォーカス科目モード ON</td><td>startCTACard に「今日の1科目: [科目名]」を表示。ピン留め科目カードを上部強調。他科目は折りたたみ（showOtherSubjects トグルで展開）</td></tr>
     <tr><td>学習日変更検出</td><td>scenePhase.active 復帰時に todayKey を更新し @Query を再構築</td></tr>
+    <tr><td>試験日未設定</td><td>contextCards に「カレンダータブから試験日を登録」リンク表示</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>先</th></tr>
-    <tr><td>STOP</td><td>StudySession保存 → 同画面</td></tr>
+    <tr><td>計測スタートボタン</td><td>タイマー開始 → timerRunningView</td></tr>
+    <tr><td>「計測せず手動で記録」リンク</td><td>手動記録シート（sheet）</td></tr>
+    <tr><td>完了ボタン（実行中）</td><td>StudySession保存 → 同画面 + 完了トースト</td></tr>
+    <tr><td>「…」メニュー → 手動で記録</td><td>手動記録シート（sheet）</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
   <pre><code>StudySession（保存対象）+ Subject（科目選択）
-TimerViewModel { isRunning, isPaused, elapsedSeconds, currentSubject, isPomodoroMode, pomodoroPhase }</code></pre>
+TimerViewModel { isRunning, isPaused, elapsedSeconds, currentSubject, isPomodoroMode, pomodoroPhase }
+effectiveDailyGoalMinutes: StudyGoal（日次）?.targetMinutes ?? settings.dailyGoalMinutes</code></pre>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
@@ -64,17 +81,24 @@ TimerViewModel { isRunning, isPaused, elapsedSeconds, currentSubject, isPomodoro
     <li class="done">goalsRow は activeGoals（isClosedでフィルタ）から日/週/月の StudyGoal を取得</li>
     <li class="done">共有ボタンに <code>.accessibilityLabel("学習記録を共有")</code> を付与（HIG準拠）</li>
     <li class="done">完了セッション数 <code>completedSessionCount</code>（AppStorage）をインクリメントし、閾値でレビューリクエスト（requestReview）</li>
+    <li class="done">effectiveDailyGoalMinutes: 日次StudyGoal優先→設定の dailyGoalMinutes にフォールバック（計測中リング・達成演出・カード表示で統一）</li>
+    <li class="done">科目一覧の「…」メニューに「手動で記録」・「編集」・「削除」を集約（主ボタンを「計測」のみに絞る）</li>
   </ul>
 
   <h2>関連</h2>
-  <ul><li><a href="../features/timer.html">タイマー機能仕様書</a></li><li><a href="../features/live-activity.html">Live Activity機能</a></li></ul>
+  <ul>
+    <li><a href="../features/timer.html">タイマー機能仕様書</a></li>
+    <li><a href="../features/live-activity.html">Live Activity機能</a></li>
+    <li><a href="focus-subject-mode.html">フォーカス科目モード</a></li>
+  </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-20</td><td>UI/UX改善反映: 学習開始導線を上部集約・フォーカス科目モード追加・dashboardCard/goalsRow構成・完了トースト・目標達成オーバーレイ・accessibilityLabel追加・空状態ContentUnavailableView対応を記載</td></tr>
+    <tr><td>1.2</td><td>2026-07-11</td><td>カード構成再設計: 大型開始CTA追加・今日目標を主表示・今週/今月をcompact補助に変更。effectiveDailyGoalMinutes基準統一。科目行を計測（主）+「…」メニュー（副）に整理。重要カード/通常カードのビジュアル階層方針を追記。試験日未設定時の文脈カード対応を記載</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-20</footer>
+  <footer class="site-footer">最終更新: 2026-07-11</footer>
 </div></body></html>
