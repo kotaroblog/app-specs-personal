@@ -33,7 +33,7 @@
   <h2>画面構成</h2>
   <ul class="kv-list">
     <li><span class="k">①閉じるボタン</span><span class="v">右上 30pt 円・opacity 0.6・存在感弱め</span></li>
-    <li><span class="k">②Hero</span><span class="v">メインコピー「毎日の記録を、もっと心地よく。」+ サブコピー「透かしなし・無制限保存・広告非表示」</span></li>
+    <li><span class="k">②Hero</span><span class="v">メインコピー「週2本のルーティン動画を、透かしなしで投稿する。」（d59a710。旧: 「毎日の記録を、もっと心地よく。」）+ 無料枠とPro差分説明「無料では 3ルーティン・3動画・透かしあり。Proではこれらの制限がすべてなくなります。」（d59a710 で追加）</span></li>
     <li><span class="k">③特典リスト</span><span class="v">4項目・SF Symbols（infinity / sparkles / wand.and.stars / square.and.arrow.up）+ soft warm gradient 円背景</span></li>
     <li><span class="k">④プラン選択</span><span class="v">年額（「X% お得」動的バッジ・pink→orange グラデ）+ 月額。Card セレクトUI</span></li>
     <li><span class="k">⑤購入CTA</span><span class="v">「プレミアムにアップグレード」/「月額プランで始める」 + 補足「いつでもキャンセル可能」（v1.1.0: 年額のCTA文言をトライアルなし表記「プレミアムにアップグレード」に変更）</span></li>
@@ -98,6 +98,14 @@
     <li>あとで / 購入を復元: それぞれ専用ラベル</li>
   </ul>
 
+  <h2>Hero コピー統一（d59a710）</h2>
+  <p>プロダクトポジショニングを「週2本つくる制作ツール」に統一するため、Paywall の Hero コピーと無料枠説明を変更した。</p>
+  <ul class="kv-list">
+    <li><span class="k">旧メインコピー</span><span class="v">「毎日の記録を、もっと心地よく。」（「習慣アプリ」文脈）</span></li>
+    <li><span class="k">新メインコピー</span><span class="v">「週2本のルーティン動画を、透かしなしで投稿する。」（「制作ツール」文脈。Pro購入の直接的メリット〈透かしなし投稿〉を前面に出す）</span></li>
+    <li><span class="k">追加テキスト</span><span class="v">Hero 下部に無料枠（3ルーティン・3動画・透かしあり）と Pro の差分を明示する一文を追加。「無料で何ができて何ができないか」を明確にし、転換動機を強化</span></li>
+  </ul>
+
   <h2>Home UI 統一原則の遵守</h2>
   <ul>
     <li>✅ 純黒禁止 → warm white</li>
@@ -114,6 +122,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.4</td><td>2026-07-13</td><td>d59a710 反映: Hero メインコピーを「毎日の記録を、もっと心地よく。」から「週2本のルーティン動画を、透かしなしで投稿する。」に変更（「習慣アプリ」→「制作ツール」ポジショニング統一）。無料枠（3ルーティン・3動画・透かしあり）と Pro の差分を明示する一文を Hero 下部に追加</td></tr>
       <tr><td>v1.3</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ: <code>designsSheetStyle()</code> を適用（角丸 32pt・ドラッグインジケータ・warm white 背景）。シート外観をアプリ全体で統一</td></tr>
       <tr><td>v1.2</td><td>2026-07-01</td><td>v1.1.0 反映: 年額の7日間無料トライアルを廃止。プラン設計・planSubtitle・trialNoticeSection・CTA文言（「7日間無料で試す」→「プレミアムにアップグレード」）をトライアルなし表記に一括更新。P1-a バグ修正（temp削除/Preview入力消失）: <code>inFlightTempURLs: Set&lt;URL&gt;</code> を追加し、persistClip 実行中の temp URL を cleanupTempFiles() がスキップするよう保護。<code>persistClip</code> 内での <code>removeItem(sourceURL)</code> を削除（PreviewView が temp URL を参照するため）。Task 完了後の <code>MainActor.run</code> に <code>guard !self.isCancelled</code> ガードを追加（ShootingViewModel 変更のため paywall 仕様への影響なし、記録として追記）。SnapshotGalleryポスターを RoutineVideoPoster に刷新（既存の Snapshot → 合成動画の縦型ポスター表示に変更）</td></tr>
       <tr><td>v1.1</td><td>2026-06-14</td><td>Opus 4.8 UX レビュー対応 2件: (B5-1) 特典 4 項目を「動画日記専用」訴求に刷新。順序を「SNS発信→蓄積→ユーティリティ」へ並び替え（クリーンな投稿 → シーン別の世界観 → 動画資産を貯め続ける → 集中して撮れる）。コピーも各特典で動画日記文脈に統一。(B5-2) <code>trialNoticeSection</code> 新規追加で「7日間無料、以降は年額プランで自動継続（¥3,800/年・月換算 ¥316）。いつでもキャンセル可能。」を StoreKit <code>displayPrice</code> 経由で動的表示。Product 未取得時は短縮版にフォールバック。スクショ撮影モード（<code>AppEnvironment.isUISnapshot</code>）では非表示で価格非掲載方針を維持。App Store Review Guideline 3.1.2(a) 推奨に準拠（commit 692882f）</td></tr>
@@ -124,7 +133,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-03</footer>
+  <footer class="site-footer">最終更新: 2026-07-13</footer>
 </div>
 </body>
 </html>

@@ -134,6 +134,16 @@
     <li><span class="k">関連</span><span class="v"><a href="../features/resume-shooting.html">続きから撮る導線</a>の機能仕様書</span></li>
   </ul>
 
+  <h2>スキップ発生時の着地点としての ClipGenerateView（52c8a94）</h2>
+  <p>連続撮影中に「後で撮る」（旧「次へ」）でステップをスキップした場合、撮影完了後の遷移先が ClipGenerateView（クリップ選択画面）に変更された。これにより「続きから撮る」モード完了後と同じ着地点に統一される。</p>
+  <ul class="kv-list">
+    <li><span class="k">着地条件</span><span class="v">連続撮影（ShootingView）セッション内で「後で撮る」を1回以上使用（<code>hasSkippedSteps == true</code>）</span></li>
+    <li><span class="k">着地先</span><span class="v">ClipGenerateView。最新クリップが自動選択済みの状態で表示されるため、スキップしたステップのクリップを後から追加選択して動画生成できる</span></li>
+    <li><span class="k">全ステップ撮影済みの場合</span><span class="v">従来通りプレビュー直行（ClipGenerateView は経由しない）</span></li>
+    <li><span class="k">既存との統一</span><span class="v">続きから撮る（<code>startMode: .resumeShooting</code>）完了後もClipGenerateViewが着地点。スキップ発生時もこれと同じ動線に合わせることで、部分撮影→ClipGenerateView→動画生成のフローが一本化された</span></li>
+    <li><span class="k">関連</span><span class="v"><a href="shooting.html">撮影画面</a>（hasSkippedSteps フラグ仕様）/ <a href="../features/resume-shooting.html">続きから撮る導線</a></span></li>
+  </ul>
+
   <h2>作成セッション集約（CreateSessionView / 2026-06-06）</h2>
   <ul class="kv-list">
     <li><span class="k">実装ファイル</span><span class="v"><code>Views/Library/CreateSessionView.swift</code></span></li>
@@ -193,6 +203,7 @@
     </thead>
     <tbody>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。warm white背景、撮影Capsuleボタン化、サムネ拡大、「動画を作る」CTA を Home CTA 統一スタイルへ</td></tr>
+      <tr><td>v1.8</td><td>2026-07-13</td><td>52c8a94 反映: 連続撮影中にスキップ（「後で撮る」）が発生した場合（hasSkippedSteps == true）の着地点が ClipGenerateView になることを明文化。続きから撮る（resumeShooting）完了後と同じ動線に統一。ClipGenerateView スキップ着地時も最新クリップが自動選択済みで表示される</td></tr>
       <tr><td>v1.7</td><td>2026-07-11</td><td>v1.2 反映: 部分撮影中（isPartiallyShot == true）の場合、冒頭の撮影 CTA を「残りのNステップを続けて撮影」（主役）+「最初から撮り直す」（副 CTA）に切り替え（従来の「全ステップを連続で撮影」一択から変更）。続き撮影完了後はプレビュー直行ではなく ClipGenerateView（最新クリップ自動選択済み）に遷移し既存クリップ込みで動画生成できる設計に変更</td></tr>
       <tr><td>v1.6</td><td>2026-07-07</td><td>機能性・デザイン改善（e216de7, e012cc3, e3e6ca1）: ClipPlayerView のファイル欠損を検知し「見つかりません」表示＋編集ボタン非表示に（旧: 無限スピナー）。保存ボタン（カメラロール保存・アプリ内保存）の二重実行ガード: タップ直後に isSaving = true で disabled 化（無料上限すり抜け防止）。プレビュー破棄アラート文言を修正: 「撮影した動画は保存されません」→「クリップはライブラリに残ります。今回の合成結果は保存されません。」</td></tr>
       <tr><td>v1.5</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: ClipPlayerView トリムハンドルのヒット領域を視覚 28pt 維持・タップ領域 44pt に拡張（.contentShape 拡張）。トリム未保存変更がある状態での閉じる / 下スワイプ時に「変更を破棄しますか？」確認ダイアログを追加</td></tr>
@@ -203,7 +214,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-11</footer>
+  <footer class="site-footer">最終更新: 2026-07-13</footer>
 </div>
 </body>
 </html>

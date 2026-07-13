@@ -217,7 +217,7 @@
     </thead>
     <tbody>
       <tr><td>ready</td><td>左</td><td>flip</td><td><strong>反転</strong>（カメラ反転）</td></tr>
-      <tr><td>ready</td><td>右</td><td>skip</td><td><strong>次へ</strong>（このステップを撮らずに次へ）</td></tr>
+      <tr><td>ready</td><td>右</td><td>skip</td><td><strong>後で撮る</strong>（このステップを撮らずに次へ。スキップ発生時は完了後に ClipGenerateView へ遷移・52c8a94）</td></tr>
       <tr><td>recording/countdown</td><td>中央</td><td>next step (forward.fill)</td><td><strong>完了 →</strong>（checkmark）</td></tr>
     </tbody>
   </table>
@@ -229,7 +229,7 @@
   <ul>
     <li><strong>左</strong>: 撮り直しボタン（前ステップが撮影済みなら）または 反転ボタン</li>
     <li><strong>中央</strong>: 録画ボタン（赤 56pt + stroke 68pt）</li>
-    <li><strong>右</strong>: 次へボタン（このステップを撮らずに次へ）</li>
+    <li><strong>右</strong>: 後で撮るボタン（このステップを撮らずに次へ。スキップが1回でも発生すると <code>hasSkippedSteps = true</code>）</li>
   </ul>
 
   <h3>recording / countdown 状態（撮影中）</h3>
@@ -306,7 +306,7 @@
   <h2>保存失敗アラートと録画中クローズ確認（v1.1.0・UI/UX改善バッチ）</h2>
   <p>単発ステップ撮影（<code>SingleStepShootingView</code>）に追加されたエラーハンドリング。</p>
   <ul class="kv-list">
-    <li><span class="k">保存失敗時アラート</span><span class="v">「クリップを保存できませんでした。空き容量を確認してください。」</span></li>
+    <li><span class="k">保存失敗時アラート</span><span class="v">「クリップをライブラリに保存できませんでした。今回の撮影を続けられますが、この素材は後から選び直せません。空き容量を確認してください。」（52c8a94 で文言改訂。旧: 「クリップを保存できませんでした。空き容量を確認してください。」）</span></li>
     <li><span class="k">録画中クローズ確認</span><span class="v">録画中に閉じるボタンをタップした場合、「録画中の映像は保存されません。」という中断確認アラートを表示</span></li>
   </ul>
 
@@ -419,12 +419,32 @@
     <li><span class="k">変更後</span><span class="v">全経路が <code>AppSettings.shared.timestampFormat</code> を参照。設定変更が即時に全経路へ反映される</span></li>
   </ul>
 
+  <h2>「後で撮る」スキップ発生時の撮影完了後ルーティング（52c8a94）</h2>
+  <p>連続撮影中に「後で撮る」（旧「次へ」）を使ってステップをスキップした場合、撮影完了後の遷移先を変更する。</p>
+  <ul class="kv-list">
+    <li><span class="k"><code>hasSkippedSteps</code> フラグ</span><span class="v"><code>ShootingViewModel</code> に追加。「後で撮る」操作が1回でも発生すると true に設定。セッション内でリセットしない</span></li>
+    <li><span class="k">スキップあり（hasSkippedSteps == true）</span><span class="v">撮影完了後は ClipGenerateView（クリップ選択画面）に遷移。続きから撮る（<code>resumeShooting</code>）モード完了後と同じ着地点に統一</span></li>
+    <li><span class="k">スキップなし（全ステップ撮影済み）</span><span class="v">従来通りプレビュー画面直行</span></li>
+    <li><span class="k">設計意図</span><span class="v">スキップで未撮影ステップが残った状態でプレビューに直行すると、未撮影ステップのクリップが欠落した状態で動画生成が行われてしまう。ClipGenerateView 経由にすることで、ユーザーが選択状態を確認・調整してから動画生成できる</span></li>
+    <li><span class="k">関連</span><span class="v"><a href="clip-library.html">クリップライブラリ</a>（スキップ着地点としての ClipGenerateView 仕様）/ <a href="../features/resume-shooting.html">続きから撮る導線</a></span></li>
+  </ul>
+
+  <h2>SingleStepShootingView 計測パリティ（52c8a94）</h2>
+  <p>単発撮影（SingleStepShootingView）の保存成功時に、連続撮影と同じ <code>firstRecording</code> / <code>streakUpdated</code> イベントに加え、新規イベント <code>singleStepCaptureCompleted</code> を発火するよう変更した。</p>
+  <ul class="kv-list">
+    <li><span class="k">新規イベント</span><span class="v"><code>singleStepCaptureCompleted</code>（保存成功時に発火）</span></li>
+    <li><span class="k">既存イベント（連続撮影と共通）</span><span class="v"><code>firstRecording</code>（初回のみ）/ <code>streakUpdated</code>（撮影都度）。これらは単発撮影でも以前から発火済み</span></li>
+    <li><span class="k">目的</span><span class="v">クリップライブラリ経由の単発撮影を Analytics で独立して追跡可能にする。連続撮影の <code>capture_started</code> / <code>capture_completed</code> との対比で計測カバレッジを確保</span></li>
+    <li><span class="k">詳細</span><span class="v"><a href="../features/analytics.html">Analytics 計測基盤</a> 参照</span></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table>
     <thead>
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.9</td><td>2026-07-13</td><td>52c8a94 反映: 「次へ」ボタンを「後で撮る」に改名。ShootingViewModel に hasSkippedSteps フラグを追加し、スキップが1回でも発生した場合は撮影完了後を ClipGenerateView へ遷移（全ステップ撮影済みの場合は従来通りプレビュー直行）。SingleStepShootingView 保存成功時に singleStepCaptureCompleted イベントを新規追加（firstRecording / streakUpdated は継続）。保存失敗時アラート文言を「クリップをライブラリに保存できませんでした。今回の撮影を続けられますが、この素材は後から選び直せません。空き容量を確認してください。」に変更</td></tr>
       <tr><td>v1.8</td><td>2026-07-11</td><td>v1.2 反映: 中断ダイアログを 2択（保存して終了/キャンセル）から 3択（クリップを残して終了/破棄して終了/続ける）に変更。破棄時は DB 確定後にファイル削除する順序で参照整合性を保証。ShootingViewModel に skipStepsWithExistingClips モードを追加（Routine.unshotSteps を使って未撮影ステップのみを連続撮影）。続き撮影完了後はクリップ選択画面（最新クリップ自動選択済み）に遷移。撮影ファネル計測 3 イベント追加（capture_started / capture_interrupted / capture_completed）</td></tr>
       <tr><td>v1.7</td><td>2026-07-07</td><td>機能性・デザイン改善（e216de7, e012cc3, e3e6ca1）: テロップ時刻を録画完了時刻から録画開始時刻に変更（recordingStartedAt をキャプチャして persistClip に渡す）。撮影プレビューの SceneLabel が routine.fontFamily を参照して選択フォントを反映（Pro 未加入時はデフォルトフォントにフォールバック）。フロントカメラのミラー録画: AVCaptureConnection.isVideoMirrored = true でプレビューと録画ファイルの左右向きを統一。クリップ生成の時刻フォーマットを AppSettings.timestampFormat に一本化（全撮影経路での表記を統一）</td></tr>
       <tr><td>v1.6</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: 撮影ハプティクス追加（.sensoryFeedback: 録画開始 .start / 録画完了 .success / カウントダウン .selection）。連続撮影・単発撮影の両方に適用。録画音は動画音声トラック混入回避のため廃止。単発撮影（SingleStepShootingView）に録画中タップで早期停止・保存を追加（連続撮影と挙動統一、録画ボタンが停止四角に切替）。カメラ反転ボタン非表示時プレースホルダを 36→44pt に変更（タイトル横ズレ解消）</td></tr>
@@ -442,7 +462,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-11</footer>
+  <footer class="site-footer">最終更新: 2026-07-13</footer>
 </div>
 </body>
 </html>

@@ -37,7 +37,7 @@
       <tr>
         <td>0</td>
         <td>welcome</td>
-        <td>アプリ名・キャッチコピー・「はじめる」ボタン（旧: "get started"・596896d で日本語化）</td>
+        <td>アプリ名・キャッチコピー・「はじめる」ボタン（旧: "get started"・596896d で日本語化）。d59a710 でウェルカム説明文を「週2本つくる制作ツール」表現に刷新し「選ぶ→撮る→完成」の3ステップ表示を新規追加</td>
       </tr>
       <tr>
         <td>1</td>
@@ -47,7 +47,7 @@
       <tr>
         <td>2</td>
         <td>reminder</td>
-        <td>朝7:00 / 夜21:00 /「あとで」の3択。プリセット選択時のみ表示、「あとで」経路はバイパス。<strong>戻るボタンあり（e216de7）</strong>: 誤ったプリセット選択に気づいた場合に preset ページ（Page 1）へ戻り、選択をやり直せる</td>
+        <td>朝7:00 / 夜21:00 /「あとで」の3択。プリセット選択時のみ表示、「あとで」経路はバイパス。<strong>戻るボタンあり（e216de7）</strong>: 誤ったプリセット選択に気づいた場合に preset ページ（Page 1）へ戻り、選択をやり直せる。d59a710 でリマインダー見出しを "daily reminder"/"habit." から "set a"/"filming reminder." に変更（英語見出し+日本語説明のデザインパターンは維持）</td>
       </tr>
     </tbody>
   </table>
@@ -157,12 +157,21 @@
     <li><span class="k">TabView との整合</span><span class="v">TabView の swipe 無効化は継続。戻るボタンタップのみ Page 1 へ遷移（<code>currentPage = 1</code>）し、swipe による意図しない遷移は引き続き防止</span></li>
   </ul>
 
+  <h2>UIコピー「週2本制作ツール」表現への統一（d59a710）</h2>
+  <p>プロダクトポジショニングをオンボーディング全体で「毎日続ける習慣アプリ」から「週2本つくる制作ツール」に統一した。</p>
+  <ul class="kv-list">
+    <li><span class="k">ウェルカム説明文（Page 0）</span><span class="v">「週2本の動画制作を習慣にする」方向性を打ち出す文言に変更。初見ユーザーがアプリの用途（ルーティン動画を制作するツール）を即座に理解できるよう刷新</span></li>
+    <li><span class="k">「選ぶ→撮る→完成」3ステップ表示（Page 0）</span><span class="v">ウェルカムページにアプリ使用の基本フローを3ステップで視覚的に示すセクションを新規追加。制作ツールとしての具体的な使い方を初回接触時に伝える</span></li>
+    <li><span class="k">リマインダー見出し（Page 2）</span><span class="v">英語見出しを "daily reminder"/"habit." から "set a"/"filming reminder." に変更。「毎日の習慣」ではなく「撮影のリマインダー」として位置づけ直す。英語見出し+日本語説明という既存デザインパターンは維持</span></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table>
     <thead>
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.4</td><td>2026-07-13</td><td>d59a710 反映: UIコピーをポジショニング統一（「週2本つくる制作ツール」）で刷新。ウェルカム説明文を変更し「選ぶ→撮る→完成」3ステップ表示を新規追加（Page 0）。リマインダー英語見出しを "daily reminder"/"habit." から "set a"/"filming reminder." に変更（英語見出し+日本語説明のデザインパターンは維持）（Page 2）</td></tr>
       <tr><td>v1.3</td><td>2026-07-07</td><td>機能性・デザイン改善（e216de7）: リマインダーページ（Page 2）に「← 戻る」ボタンを追加。誤ったプリセット選択を修正できるよう Page 1（preset）への戻り経路を確保した。TabView swipe 無効化は継続</td></tr>
       <tr><td>v1.2</td><td>2026-06-30</td><td>v1.1.0 反映 (#3): オンボーディング 4→3 ページに圧縮。旧 Page 1「2つの撮影スタイル解説（features）」を削除。新フロー: Welcome(0) → プリセット選択(1) → リマインダー(2)。撮影スタイル解説は ClipLibraryView の TipKit（ShootingStyleTip、最大3回表示）に移行</td></tr>
       <tr><td>v1.1</td><td>2026-06-16</td><td>UIテキスト全面日本語化（596896d）: "get started"→「はじめる」/ "next"→「次へ」/ "skip for now"→「あとで」/ "continuous"→「連続撮影」/ "clip library"→「クリップライブラリ」/ "auto-edit"→「自動編集」。Quick Start プリセット title 日本語化: "morning"→「朝」/ "night"→「夜」/ "workout"→「運動」/ "study"→「学習」（id は URL scheme パスのため不変）</td></tr>
@@ -170,7 +179,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-07</footer>
+  <footer class="site-footer">最終更新: 2026-07-13</footer>
 </div>
 </body>
 </html>
