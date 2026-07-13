@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>MudaLog - データモデル</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← App Specs</a> / <a href="./">MudaLog</a> / データモデル</div>
+
+  <header class="site-header">
+    <h1>データモデル</h1>
+    <p>SwiftData @Model の構造とリレーション</p>
+  </header>
+
+  <h2>ER 図</h2>
+  <div class="mermaid">
+erDiagram
+  WasteLog {
+    UUID id PK
+    String title
+    Date createdAt
+    String memo
+    Bool isArchived
+    String interestLevelRaw
+    String feelingRaw
+    String tagsRaw
+  }
+  FocusPlan {
+    UUID id PK
+    String themeTitle
+    Date createdAt
+    Bool isActive
+    Date completedAt
+  }
+  FocusPlanItem {
+    UUID id PK
+    Int day
+    String title
+    String statusRawValue
+    Date createdAt
+    Date completedAt
+  }
+  FocusPlan ||--o{ FocusPlanItem : "cascade / inverse"
+  </div>
+
+  <div class="callout info">
+    WasteLog と FocusPlan は直接リレーションを持たない。テーマ（themeTitle）の文字列マッチングによって <code>MudaInsightEngine</code> が関連付けを行う。
+  </div>
+
+  <h2>WasteLog</h2>
+  <p>ユーザーが記録する「ムダ行動」1件を表すメインエンティティ。</p>
+  <pre><code>@Model
+final class WasteLog {
+    @Attribute(.unique) var id: UUID = UUID()
+    var title: String = ""
+    var createdAt: Date = Date.now
+    var memo: String = ""
+    var isArchived: Bool = false
+    // 以下3フィールドはCSV文字列またはrawValueとして永続化し、
+    // computedプロパティ経由で型変換する（SwiftDataマイグレーション対策）
+    private var interestLevelRaw: String = InterestLevel.undecided.rawValue
+    private var feelingRaw: String = ""
+    private var tagsRaw: String = ""
+}</code></pre>
+
+  <h3>InterestLevel（興味レベル）</h3>
+  <table>
+    <tr><th>rawValue</th><th>表示文字列</th><th>説明</th></tr>
+    <tr><td>まだわからない</td><td>まだわからない</td><td>初期値。判断保留</td></tr>
+    <tr><td>もういい</td><td>もういい</td><td>熱が冷めた</td></tr>
+    <tr><td>ちょっと気になる</td><td>やりたいかも</td><td>軽い関心</td></tr>
+    <tr><td>またやりたい</td><td>またやりたい</td><td>積極的に再訪したい</td></tr>
+    <tr><td>なぜか忘れられない</td><td>忘れられない</td><td>最高熱中度</td></tr>
+  </table>
+
+  <h3>Feeling（そのときの気分）</h3>
+  <table>
+    <tr><th>rawValue</th><th>説明</th></tr>
+    <tr><td>気楽</td><td>リラックスして行った</td></tr>
+    <tr><td>夢中</td><td>没頭した</td></tr>
+    <tr><td>衝動</td><td>衝動的にやった</td></tr>
+    <tr><td>すぐ飽きた</td><td>すぐ飽きた</td></tr>
+  </table>
+
+  <h3>tags（タグ）</h3>
+  <p>
+    <code>tagsRaw</code> にカンマ区切りCSVで保存。取得時は <code>decodeTags()</code> で <code>[String]</code> に変換。
+    空文字列フィルタリング済み。最大タグ数に上限なし（UX上は3〜5個を想定）。
+  </p>
+
+  <h2>FocusPlan</h2>
+  <p>7日プランの単位。ユーザー1人につき同時に isActive = true のプランは1件のみ許可。</p>
+  <pre><code>@Model
+final class FocusPlan {
+    @Attribute(.unique) var id: UUID = UUID()
+    var themeTitle: String = ""
+    var createdAt: Date = Date.now
+    var isActive: Bool = true
+    var completedAt: Date? = nil
+    @Relationship(deleteRule: .cascade, inverse: \FocusPlanItem.plan)
+    var items: [FocusPlanItem] = []
+}</code></pre>
+
+  <h2>FocusPlanItem</h2>
+  <p>7日プランの各日アクション（Day 1〜7）を表す。</p>
+  <pre><code>@Model
+final class FocusPlanItem {
+    @Attribute(.unique) var id: UUID = UUID()
+    var day: Int = 0
+    var title: String = ""
+    var statusRawValue: String = PlanItemStatus.notStarted.rawValue
+    var createdAt: Date = Date.now
+    var completedAt: Date? = nil
+    var plan: FocusPlan? = nil
+}</code></pre>
+
+  <h3>PlanItemStatus</h3>
+  <table>
+    <tr><th>rawValue</th><th>意味</th></tr>
+    <tr><td>notStarted</td><td>未着手</td></tr>
+    <tr><td>today</td><td>今日のアクション（1件のみ存在）</td></tr>
+    <tr><td>completed</td><td>完了済み</td></tr>
+  </table>
+
+  <h2>MudaInsightEngine（ロジック層）</h2>
+  <p>SwiftData エンティティではなく純粋関数群。WasteLog 配列を入力として以下を算出する。</p>
+  <table>
+    <tr><th>メソッド</th><th>出力</th></tr>
+    <tr><td>themeInsights(from:)</td><td>タグ出現頻度 → [ThemeInsight]</td></tr>
+    <tr><td>hotThemes(from:)</td><td>上位3テーマ（2回以上登場）</td></tr>
+    <tr><td>recentThemeTitles(from:)</td><td>直近7日のテーマ名一覧</td></tr>
+    <tr><td>branches(for:logs:limit:)</td><td>テーマに関連するサブログタイトル群（伏線マップ用）</td></tr>
+  </table>
+
+  <h2>マイグレーション方針</h2>
+  <div class="callout warn">
+    SwiftDataの <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する。
+    interestLevelRaw / feelingRaw / tagsRaw は private String で永続化する設計を維持し、Enum型を直接 @Model に持たせない。
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。WasteLog / FocusPlan / FocusPlanItem の構造・Enum・MudaInsightEngine を記載</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-07-14</footer>
+</div>
+</body>
+</html>

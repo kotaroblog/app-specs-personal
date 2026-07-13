@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>MudaLog - 集中（7日プラン）画面</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">App Specs</a> / <a href="../">MudaLog</a> / 集中（7日プラン）画面</div>
+
+  <header class="site-header">
+    <h1>集中（7日プラン）画面</h1>
+    <p>発見したテーマを7日間の小さなアクションに分けて実行する画面</p>
+    <div style="margin-top:8px;">
+      <span class="tag">ML-FOCUS-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    発見タブで選んだ「熱中の芽テーマ」を7日間の具体的アクションに分解し、
+    毎日1アクションずつチェックしながら進められる実行画面。
+    「完璧にやらなくていい、1つ触れればOK」という哲学のもと、
+    低摩擦でアクションを完了できるUXを提供する。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>セクション</th><th>構成要素</th><th>表示条件</th></tr>
+    <tr><td>タイトルブロック</td><td>「集中」見出し・「これは、ただの無駄ではないかもしれません。」</td><td>常時</td></tr>
+    <tr><td>テーマカード</td><td>テーマアイコン円・テーマ名・日付・マスコット（focus variant）</td><td>プランあり</td></tr>
+    <tr><td>次のアクションカード</td><td>「今できること」緑ソフトカード・今日のアクション文</td><td>進行中プランあり・非スクショ時</td></tr>
+    <tr><td>プランカード（7日リスト）</td><td>FocusPlanRow × 7行（チェックボックス型UI）</td><td>プランあり</td></tr>
+    <tr><td>今日のひとことカード</td><td>完了件数に応じた励ましコピー・ラベンダーカード</td><td>進行中プランあり・非スクショ時</td></tr>
+    <tr><td>今までの伏線カード</td><td>テーマ関連ログのタイトル群（ThemeChip 横スクロール）</td><td>プランあり・非スクショ時</td></tr>
+    <tr><td>完了メッセージ</td><td>「7日間おつかれさま」</td><td>完了プランあり</td></tr>
+    <tr><td>ボタンエリア</td><td>進行中→「今日の1つを完了にする」PrimaryButton＋「探索に戻る」リンク / 完了→「月のふりかえりを見る」PrimaryButton＋「探索に戻る」リンク</td><td>プランあり・非スクショ時</td></tr>
+    <tr><td>空状態</td><td>EmptyStateView（focus variant）＋「発見を見る」ボタン</td><td>プランなし</td></tr>
+  </table>
+
+  <h2>FocusPlanRow（チェックボックス型UI）</h2>
+  <div class="callout info">
+    7日プランの各行は「チェックボックス型UI」として設計し、タップで完了・未完了を切り替えられることを視覚的に明示する。
+    単なるリスト行ではなくボタンとして実装することで、操作可能性を伝える。
+  </div>
+  <table>
+    <tr><th>状態</th><th>見た目</th></tr>
+    <tr><td>completed（完了）</td><td>チェックマーク付きアイコン・テキストに取消線</td></tr>
+    <tr><td>today（今日）</td><td>ハイライト背景・未チェックアイコン</td></tr>
+    <tr><td>notStarted（未着手）</td><td>グレー調・未チェックアイコン</td></tr>
+  </table>
+  <p>行のタップは <code>toggleCompletion(for:in:)</code> を呼び出す。完了済みをタップすると notStarted に戻る（再試行可能設計）。</p>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示</th></tr>
+    <tr><td>プランなし</td><td>空状態 EmptyStateView（focus）＋「発見を見る」ボタン</td></tr>
+    <tr><td>進行中プランあり</td><td>テーマカード・次のアクション・プランカード・今日のひとこと・伏線・「今日の1つを完了にする」ボタン</td></tr>
+    <tr><td>全7アクション完了</td><td>テーマカード・「7日間おつかれさま」・完了プランカード・伏線・「月のふりかえりを見る」ボタン</td></tr>
+    <tr><td>保存エラー</td><td>statusMessage テキスト（destructiveText 色）＋ VoiceOver アナウンス。ロールバック済み</td></tr>
+  </table>
+
+  <h2>toggleCompletion ロジック</h2>
+  <pre><code>// 完了 ↔ 未完了のトグル（ロールバックつき）
+func toggleCompletion(for item: FocusPlanItem, in plan: FocusPlan) {
+    // 1. スナップショット保存
+    // 2. ステータス更新
+    // 3. refreshStatuses() で today を再割り当て
+    // 4. modelContext.save()
+    // 5. 失敗時 → スナップショットで全アイテムをロールバック
+    //           → statusMessage + AccessibilityAnnouncer.announce()
+}</code></pre>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「今日の1つを完了にする」ボタン</td><td>currentItem を toggle（同一画面更新）</td></tr>
+    <tr><td>FocusPlanRow タップ</td><td>当該行の toggle（同一画面更新）</td></tr>
+    <tr><td>「探索に戻る」リンク</td><td>発見タブ（selectedTab = .discovery）</td></tr>
+    <tr><td>「月のふりかえりを見る」ボタン</td><td>ReportView（navigationDestination push）</td></tr>
+    <tr><td>「発見を見る」ボタン（空状態）</td><td>発見タブ</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Query(sort: \FocusPlan.createdAt, order: .reverse) private var plans: [FocusPlan]
+
+var activePlan: FocusPlan? { plans.first { $0.isActive } }
+var completedPlan: FocusPlan? { plans.first { !$0.isActive && $0.completedAt != nil } }
+
+// アクセシビリティ: 各行に accessibilityLabel / Value / Hint を付与
+.accessibilityLabel("Day\(item.day) \(item.title)")
+.accessibilityValue(item.status.displayTitle)
+.accessibilityHint(plan.isActive ? "タップで完了と未完了を切り替えます" : "")</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>プランカードの行説明文（「行をタップすると…」）は非スクショ時のみ表示</li>
+    <li>スクショ時は items を prefix(4) に制限してコンパクト表示</li>
+    <li>FocusPlanRow の disabled 状態は !plan.isActive（完了プランは行タップ不可）</li>
+    <li>今日のひとことは completedCount に基づき4段階で切り替わる（0件・1〜2件・3〜5件・6件以上）</li>
+    <li>refreshStatuses() は保存成功後のみ呼ぶ（失敗時はロールバック対象）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="discovery.html">発見画面（ML-DISCOVERY-01）</a></li>
+    <li><a href="../features/focus-plan-conflict.html">7日プランのテーマ不一致対応（ML-FEAT-PLAN-CONFLICT）</a></li>
+    <li><a href="../features/accessibility.html">アクセシビリティ設計（ML-FEAT-A11Y）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。FocusPlanRow のチェックボックス型UI・toggleCompletion のロールバック設計・アクセシビリティラベル付与を反映</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-14</footer>
+</div>
+</body>
+</html>

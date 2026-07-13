@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>MudaLog - 7日プランのテーマ不一致対応</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">App Specs</a> / <a href="../">MudaLog</a> / 7日プランのテーマ不一致対応</div>
+
+  <header class="site-header">
+    <h1>7日プランのテーマ不一致対応</h1>
+    <p>進行中プランと異なるテーマを選択した際の確認ダイアログ設計</p>
+    <div style="margin-top:8px;">
+      <span class="tag">ML-FEAT-PLAN-CONFLICT</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    7日プランは同時に1件しか進行できない仕組み（isActive = true が1件のみ）。
+    発見画面でユーザーが進行中プランと異なるテーマのカードをタップした場合、
+    旧設計では無言で遷移していたため、ユーザーが「誤って進行中プランを消してしまったか」
+    と混乱するリスクがあった。
+    本機能ではアラートで現状を説明し、ユーザーが明示的に選択できるようにする。
+    <strong>既存データの削除・終了は一切行わない。</strong>
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/discovery.html">発見画面（ML-DISCOVERY-01）</a></li>
+    <li><a href="../screens/focus.html">集中（7日プラン）画面（ML-FOCUS-01）</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant D as DiscoveryView
+  participant A as Alert
+  participant F as FocusView
+
+  U->>D: テーマカードをタップ
+  D->>D: openFocusPlan(preferredTheme:) 呼び出し
+  D->>D: activePlan を確認
+  alt 進行中プランなし
+    D->>D: createPlan() でプラン作成
+    D->>F: selectedTab = .focus に切替
+  else 同一テーマ
+    D->>F: openActivePlan() で集中タブへ
+  else 別テーマ
+    D->>A: PlanConflictPrompt をセット
+    A-->>U: 確認ダイアログ表示
+    alt 「進行中のプランを見る」選択
+      A->>D: openActivePlan()
+      D->>F: 集中タブへ切替
+    else 「キャンセル」選択
+      A-->>D: ダイアログを閉じるだけ（状態変更なし）
+    end
+  end
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>7日プランは同時に isActive = true が1件のみ（FocusPlan の整合性制約）</li>
+    <li>別テーマのカードをタップしても、進行中プランは自動で終了・削除されない</li>
+    <li>「キャンセル」を選んでも記録・プランのデータに一切変更なし</li>
+    <li>「進行中のプランを見る」を選ぶと集中タブへ遷移（新規プランは作られない）</li>
+    <li>新規プランを作りたい場合は現在のプランを7日完了させる必要がある（強制終了機能なし）</li>
+  </ul>
+
+  <h2>アラート仕様</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>タイトル</td><td>「進行中のプランがあります」</td></tr>
+    <tr><td>メッセージ</td><td>「現在『{activeThemeTitle}』の7日プランが進行中です。7日プランは1つずつ進める仕組みです。『{requestedThemeTitle}』は、今のプランを終えてから始められます。」</td></tr>
+    <tr><td>ボタン1</td><td>「進行中のプランを見る」（default role）</td></tr>
+    <tr><td>ボタン2</td><td>「キャンセル」（.cancel role）</td></tr>
+  </table>
+
+  <h2>PlanConflictPrompt 構造体</h2>
+  <pre><code>private struct PlanConflictPrompt: Identifiable {
+    let id = UUID()
+    let activeThemeTitle: String   // 進行中プランのテーマ名
+    let requestedThemeTitle: String // ユーザーが選択したテーマ名
+}</code></pre>
+  <p>
+    <code>@State private var planConflict: PlanConflictPrompt?</code> として保持し、
+    <code>alert(isPresented:presenting:)</code> バインディングで表示する。
+    キャンセル時は <code>planConflict = nil</code> にするだけで状態がリセットされる。
+  </p>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>新規プラン作成時の modelContext.save() 失敗</td><td>planMessage（destructiveText）表示 + AccessibilityAnnouncer.announce()。プランは作成されていないため追加のロールバック不要</td></tr>
+    <tr><td>activePlan が nil なのに openActivePlan() を呼ぶ</td><td>guard let で早期 return。UI 上このケースは発生しない設計</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>openFocusPlan(preferredTheme:)</code> の最初で <code>planMessage = nil</code> にリセット（前回エラー表示を消す）</li>
+    <li>同テーマ判定は <code>preferredTheme != activePlan.themeTitle</code> の文字列比較（大文字小文字区別あり）</li>
+    <li>アラート内の themeTitle はユーザー入力文字列のため、XSS 等のリスクなし（クライアントローカル表示のみ）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。テーマ不一致時のアラート設計・PlanConflictPrompt 構造体・処理フローを記載</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-07-14</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>MudaLog - オンボーディング画面</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">App Specs</a> / <a href="../">MudaLog</a> / オンボーディング画面</div>
+
+  <header class="site-header">
+    <h1>オンボーディング画面</h1>
+    <p>初回起動時にアプリの世界観・コンセプトを4ページで伝えるウィザード</p>
+    <div style="margin-top:8px;">
+      <span class="tag">ML-ONBOARDING-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    「ムダを責めない」「飽きてもいい」「戻ってくることに意味がある」というアプリの核心哲学を
+    マスコットのイラストと短いコピーで直感的に伝える。
+    操作説明よりも「世界観への共感」を優先したデザイン。
+  </p>
+
+  <h2>ページ構成（4ページ）</h2>
+  <table>
+    <tr><th>ページ</th><th>タイトル</th><th>本文要旨</th><th>イラストシーン</th></tr>
+    <tr><td>1</td><td>無駄は、伏線になる。</td><td>役立たなそうな寄り道もあとから熱中につながる</td><td>foreshadowing（伏線）</td></tr>
+    <tr><td>2</td><td>飽きても大丈夫。</td><td>続かなかったことも探索の一部。失敗ではない</td><td>kindness（優しさ）</td></tr>
+    <tr><td>3</td><td>何度も戻るものを見つけよう。</td><td>記録が増えると自然に戻っているテーマが見える</td><td>discovery（発見）</td></tr>
+    <tr><td>4</td><td>7日だけ、軽く極めてみる。</td><td>完璧を目指さず7日だけ小さく進める</td><td>focus（集中）</td></tr>
+  </table>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>トップバー</td><td>HStack</td><td>「スキップ」テキストボタン（右端）。最終ページでは非表示</td></tr>
+    <tr><td>ページコンテンツ（TabView）</td><td>TabView (.page)</td><td>各ページは OnboardingPageView。水平スワイプで切替</td></tr>
+    <tr><td>OnboardingPageView</td><td>ScrollView + VStack</td><td>イラスト → 見出し → 本文。ScrollView 化により Dynamic Type 大サイズでも本文が読める</td></tr>
+    <tr><td>イラストエリア</td><td>OnboardingIllustrationView</td><td>画面高さに応じて illustrationHeight を動的算出。内部の装飾テキストは Dynamic Type 固定サイズ</td></tr>
+    <tr><td>ページインジケーター</td><td>HStack dots</td><td>カスタム実装（indexDisplayMode: .never）</td></tr>
+    <tr><td>フッターボタン</td><td>PrimaryButton / 次へボタン</td><td>最終ページ以外は「次へ」、最終ページは「はじめる」</td></tr>
+  </table>
+
+  <h2>スクリーンショットモード対応</h2>
+  <div class="callout info">
+    撮影時にイラスト上部が切れる不具合を修正済み。screenshotContent と standardContent で別レイアウトを使い分ける。
+  </div>
+  <table>
+    <tr><th>項目</th><th>通常モード</th><th>スクリーンショットモード</th></tr>
+    <tr><td>ページ切替</td><td>TabView スワイプ</td><td>現在の selection ページを1枚固定表示</td></tr>
+    <tr><td>レイアウト</td><td>ScrollView 内 VStack</td><td>VStack（ScrollView なし）でイラスト→タイトル→本文を縦並び固定</td></tr>
+    <tr><td>イラスト高さ</td><td>screenshotIllustrationHeight(for:) で動的算出</td><td>同上（ステータスバー合成方式変更後）</td></tr>
+    <tr><td>本文 lineLimit</td><td>なし（Dynamic Type 追従）</td><td>4行固定</td></tr>
+    <tr><td>見出し lineLimitの固定</td><td>なし（ScrollView 化で対応）</td><td>なし</td></tr>
+  </table>
+
+  <h2>OnboardingPageView の Dynamic Type 対応</h2>
+  <p>
+    旧実装では見出しに <code>lineLimit</code> を固定していたため、
+    Dynamic Type の大サイズ設定時に本文が画面外にはみ出す問題があった。
+    ScrollView 化により、本文テキストが常に読める状態を保証する。
+  </p>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>初回起動（.initial モード）</td><td>ページ0から開始・「スキップ」あり</td></tr>
+    <tr><td>設定からの再表示（.manual モード）</td><td>ページ0から開始・スキップボタンなし（任意閉じ可）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「はじめる」ボタン（最終ページ）</td><td>onboardingStore.complete() → ホーム画面</td></tr>
+    <tr><td>「スキップ」ボタン</td><td>onboardingStore.skip() → ホーム画面</td></tr>
+    <tr><td>設定画面からの再表示</td><td>sheet で本画面を表示 → 任意に閉じる</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>OnboardingIllustrationView 内部の装飾テキストは <code>.font(.system(size: 固定値))</code> で Dynamic Type 固定（イラストの一部として扱うため）</li>
+    <li>screenshotIllustrationHeight(for:) はステータスバー領域を除いた画面高さから算出。合成時のクリッピングを防ぐ</li>
+    <li>OnboardingPageView は ScrollView(.vertical) で囲み、lineLimitや高さ固定を行わない</li>
+    <li>TabView の .page スタイルで indexDisplayMode を .never にし、カスタムドットインジケーターを下部に配置</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/accessibility.html">アクセシビリティ設計（ML-FEAT-A11Y）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。ScrollView 化による Dynamic Type 対応・スクリーンショットモードのイラスト上部クリッピング修正を反映</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-14</footer>
+</div>
+</body>
+</html>

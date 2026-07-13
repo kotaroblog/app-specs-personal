@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>MudaLog - ホーム画面</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">App Specs</a> / <a href="../">MudaLog</a> / ホーム画面</div>
+
+  <header class="site-header">
+    <h1>ホーム画面</h1>
+    <p>記録CTAを最上位に置き、日常の利用習慣をホームから形成するメイン画面</p>
+    <div style="margin-top:8px;">
+      <span class="tag">ML-HOME-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    起動直後に「ムダを記録する」導線を最上位に提示し、記録習慣の形成を促す。
+    最近の記録・頻出テーマを可視化し、発見タブへの自然な誘導も行う。
+    ヒーローカードでブランドコピーとマスコットを維持しつつ、コンパクトに表示して記録CTAと共存させる。
+  </p>
+
+  <h2>UI 構成（セクション順）</h2>
+  <div class="callout info">
+    v1.0 でセクション順を「情報優先度」に基づき再構成。旧順序は「ヒーロー → 今日の探索 → 月次レポート → 最近のムダ → 最近のテーマ」だったが、
+    日常利用で最重要な「記録CTA」と「最近の記録」を上位に移動した。
+  </div>
+  <table>
+    <tr><th>#</th><th>セクション</th><th>構成要素</th><th>備考</th></tr>
+    <tr><td>1</td><td>ヘッダー</td><td>アプリ名「ムダログ」・キャッチコピー・設定ボタン</td><td>設定ボタンは44×44pt Circle</td></tr>
+    <tr><td>2</td><td>ヒーローカード（記録CTA）</td><td>ブランドコピー・マスコット（writing variant）・「ムダを記録する」PrimaryButton</td><td>コピーは Dynamic Type 追従で自然折返し（スクショ用は固定3行）</td></tr>
+    <tr><td>3</td><td>最近のムダ</td><td>最新3件のログ行・「すべて見る」ナビリンク</td><td>空状態は EmptyStateView（idle variant）。CTAは直上ヒーローに委譲し重複させない</td></tr>
+    <tr><td>4</td><td>最近よく戻っているテーマ</td><td>横スクロール ThemeChip 群・「発見へ」ショートカット</td><td>ログが少ない間は空文を表示</td></tr>
+    <tr><td>5</td><td>今日の探索</td><td>当日件数に応じた見出し文・進捗バッジ（Lavender Circle）</td><td>スクリーンショットモード時は非表示</td></tr>
+    <tr><td>6</td><td>月次レポート</td><td>「今月のふりかえり」テキスト・レポートへのナビリンク</td><td>スクリーンショットモード時は非表示</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>ログなし（初回）</td><td>ヒーローカード + EmptyStateView（idle：励ましコピー・マスコット）。「ムダを記録する」ボタンは EmptyStateView には出さない（ヒーローカードの PrimaryButton と重複回避）</td></tr>
+    <tr><td>ログあり</td><td>全セクション表示。最近のムダに最新3件</td></tr>
+    <tr><td>スクリーンショットモード</td><td>探索カード・レポートカードを非表示。マスコット・コピーは従来の3行固定レイアウト</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「ムダを記録する」ボタンタップ</td><td>記録タブ（LogEntryView）</td></tr>
+    <tr><td>ログ行タップ</td><td>LogDetailView（NavigationStack push）</td></tr>
+    <tr><td>「すべて見る」タップ</td><td>AllLogsView（NavigationLink）</td></tr>
+    <tr><td>「発見へ」タップ</td><td>発見タブ（DiscoveryView）</td></tr>
+    <tr><td>「今月のふりかえりを見る」タップ</td><td>ReportView（NavigationLink）</td></tr>
+    <tr><td>月次レポートへのプッシュ通知タップ</td><td>appState.pendingMonthlyReportPush = true → ReportView</td></tr>
+    <tr><td>設定ボタンタップ</td><td>SettingsView（NavigationLink）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// @Query で取得
+@Query(sort: \WasteLog.createdAt, order: .reverse)
+private var logs: [WasteLog]
+
+// isArchived = false のものだけ表示（visibleLogs）
+var visibleLogs: [WasteLog] { logs.filter { !$0.isArchived } }
+
+// テーマ表示は MudaInsightEngine.recentThemeTitles(from:) で算出</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>LogRowView の tint/background は index % 3 の 3色ローテーション（緑・紫・琥珀の <em>濃色テキスト</em> トークンを使用）</li>
+    <li>「すべて見る」NavigationLink の minHeight を 44 pt 確保（アクセシビリティ対応）</li>
+    <li>ヒーローカードは ViewThatFits で横幅に応じて水平／垂直レイアウトを自動切替</li>
+    <li>isScreenshotMode は #if DEBUG / ScreenshotMode.isActive で判定。本番ビルドでは常に false</li>
+    <li>ブランドコピー「無駄を人生の伏線に。」「今日も、無駄をひとつ増やそう。」は変更禁止（ブランドの核）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="discovery.html">発見画面（ML-DISCOVERY-01）</a></li>
+    <li><a href="../features/accessibility.html">アクセシビリティ設計（ML-FEAT-A11Y）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。セクション順再構成（記録CTA最上位化）・空状態のCTA重複解消・ヒーローカードコンパクト化を反映</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-14</footer>
+</div>
+</body>
+</html>

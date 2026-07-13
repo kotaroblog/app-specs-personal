@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>MudaLog - Specs</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← App Specs</a></div>
+
+  <header class="site-header">
+    <h1>ムダログ（MudaLog）</h1>
+    <p>一見ムダな行動を記録し、興味の芽・熱中の芽を発見する自己発見アプリ · Bundle ID: <code>com.happyboy1002.MudaLog</code></p>
+  </header>
+
+  <h2>概要</h2>
+  <ul class="kv-list">
+    <li><span class="k">カテゴリ</span><span class="v">ライフスタイル / 自己改善</span></li>
+    <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
+    <li><span class="k">言語</span><span class="v">日本語</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">未定（個人開発・未リリース）</span></li>
+    <li><span class="k">ステータス</span><span class="v">開発中</span></li>
+    <li><span class="k">リリース予定</span><span class="v">未定</span></li>
+    <li><span class="k">コンセプト</span><span class="v">「ムダ」を責めず記録し、繰り返すテーマを「熱中の芽」として可視化。7日プランで小さく試せる</span></li>
+  </ul>
+
+  <h2>タブ構成</h2>
+  <table>
+    <tr><th>タブ</th><th>画面名</th><th>役割</th></tr>
+    <tr><td>ホーム</td><td>HomeView</td><td>記録CTA・最近のムダ・テーマ一覧・探索／レポート誘導</td></tr>
+    <tr><td>記録</td><td>LogEntryView</td><td>ムダ行動の新規記録フォーム</td></tr>
+    <tr><td>発見</td><td>DiscoveryView</td><td>テーマ分析・熱中の芽カード・7日プラン作成</td></tr>
+    <tr><td>集中</td><td>FocusView</td><td>進行中の7日プラン管理・デイリーアクション</td></tr>
+  </table>
+
+  <h2>デザインシステム</h2>
+  <div class="callout info">
+    <strong>MudaTheme.swift</strong> がデザイントークンの単一ソース。クリーム系配色（background: #F7F1E8）を基調とし、温かみのある世界観を統一。
+    WCAG AA（コントラスト比 4.5:1 以上）を満たすテキスト専用トークンと、装飾専用トークンを明確に分離している。
+  </div>
+  <table>
+    <tr><th>トークン名</th><th>HEX</th><th>用途</th></tr>
+    <tr><td>accentGreenText</td><td>#3F6B4C</td><td>リンク・ラベルなど読ませる緑テキスト（AA達成）</td></tr>
+    <tr><td>accentInkText</td><td>#655389</td><td>読ませる紫テキスト（AA達成）</td></tr>
+    <tr><td>accentAmberText</td><td>#866312</td><td>読ませる琥珀テキスト（AA達成）</td></tr>
+    <tr><td>destructiveText</td><td>#875650</td><td>エラーメッセージ用（AA達成）</td></tr>
+    <tr><td>buttonGradientTop</td><td>#4F7D5D</td><td>PrimaryButton グラデーション上端（白文字でAA達成）</td></tr>
+    <tr><td>buttonGradientBottom</td><td>#3F6B4C</td><td>PrimaryButton グラデーション下端（白文字でAA達成）</td></tr>
+    <tr><td>accentGreen / accentInk / accentYellow</td><td>（明色）</td><td>装飾専用（バー・チップ背景・イラスト）。本文テキストに使用禁止</td></tr>
+  </table>
+
+  <h2>全体仕様書</h2>
+  <div class="card-grid">
+    <a class="card" href="data-model.html">
+      <div class="title">データモデル</div>
+      <div class="desc">SwiftData @Model 構造とER図（WasteLog / FocusPlan / FocusPlanItem）</div>
+    </a>
+  </div>
+
+  <h2>画面仕様書</h2>
+  <div class="card-grid">
+    <a class="card" href="screens/home.html">
+      <div class="title">ホーム画面</div>
+      <div class="desc">記録CTA・最近のムダ・テーマ・探索カード。情報優先度再構成済み</div>
+      <div class="meta"><span class="tag">ML-HOME-01</span></div>
+    </a>
+    <a class="card" href="screens/discovery.html">
+      <div class="title">発見画面</div>
+      <div class="desc">テーマ分析・熱中の芽・7日プラン作成。テーマ不一致確認ダイアログ実装済み</div>
+      <div class="meta"><span class="tag">ML-DISCOVERY-01</span></div>
+    </a>
+    <a class="card" href="screens/focus.html">
+      <div class="title">集中（7日プラン）画面</div>
+      <div class="desc">進行中プランのデイリーアクション管理。チェックボックス型行UI実装済み</div>
+      <div class="meta"><span class="tag">ML-FOCUS-01</span></div>
+    </a>
+    <a class="card" href="screens/onboarding.html">
+      <div class="title">オンボーディング画面</div>
+      <div class="desc">初回起動時の世界観説明とコンセプト導入</div>
+      <div class="meta"><span class="tag">ML-ONBOARDING-01</span></div>
+    </a>
+  </div>
+
+  <h2>機能仕様書</h2>
+  <div class="card-grid">
+    <a class="card" href="features/focus-plan-conflict.html">
+      <div class="title">7日プランのテーマ不一致対応</div>
+      <div class="desc">進行中プランと異なるテーマを選択した際のconfirmダイアログ設計</div>
+      <div class="meta"><span class="tag">ML-FEAT-PLAN-CONFLICT</span></div>
+    </a>
+    <a class="card" href="features/accessibility.html">
+      <div class="title">アクセシビリティ設計</div>
+      <div class="desc">タップ領域44pt・VoiceOver対応・AccessibilityAnnouncer・Dynamic Type対応</div>
+      <div class="meta"><span class="tag">ML-FEAT-A11Y</span></div>
+    </a>
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。コミット a3dd609「操作明確さ・アクセシビリティ・情報優先度のUI/UX改善」をベースに、アプリトップ・データモデル・画面4枚・機能2件を作成</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-14</footer>
+</div>
+</body>
+</html>

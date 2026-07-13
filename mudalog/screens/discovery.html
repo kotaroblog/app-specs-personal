@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>MudaLog - 発見画面</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">App Specs</a> / <a href="../">MudaLog</a> / 発見画面</div>
+
+  <header class="site-header">
+    <h1>発見画面</h1>
+    <p>蓄積されたムダ記録からテーマを分析し、7日プランの入口となる画面</p>
+    <div style="margin-top:8px;">
+      <span class="tag">ML-DISCOVERY-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    ユーザーが繰り返し行ってしまうムダ行動のパターンを「熱中の芽」として可視化する。
+    テーマカードをタップすると7日プランを作成でき、集中タブへ遷移する。
+    進行中のプランと異なるテーマを選んだ場合は確認ダイアログを表示し、
+    ユーザーの意図しないプラン上書き・削除が起きないよう設計されている。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>セクション</th><th>構成要素</th><th>表示条件</th></tr>
+    <tr><td>タイトルブロック</td><td>「発見」見出し・サブコピー・説明文</td><td>常時</td></tr>
+    <tr><td>インサイトヒーロー</td><td>「最近、あなたは〜に何度も戻っています」・マスコット（holdingSprout variant）</td><td>テーマあり</td></tr>
+    <tr><td>次のアクションカード</td><td>「今できること」緑ソフトカード</td><td>テーマあり・非スクショ時</td></tr>
+    <tr><td>熱中の芽カード</td><td>横スクロール テーマカード（上位3件）。各カードに「このテーマで試す」または「進行中のプランを見る」＋矢印アイコン</td><td>テーマあり</td></tr>
+    <tr><td>戻ってきた回数グラフ</td><td>ProgressDotChart（過去30日）</td><td>テーマあり・非スクショ時</td></tr>
+    <tr><td>月次レポートリンクカード</td><td>「月のふりかえりで伏線を見る」NavigationLink</td><td>テーマあり・非スクショ時</td></tr>
+    <tr><td>サポートカード</td><td>「似た寄り道は…」マスコット（holdingHeart）</td><td>テーマあり・非スクショ時</td></tr>
+    <tr><td>7日プランボタン</td><td>進行中あり→「進行中を見る」／なし→「7日プランを作る」PrimaryButton</td><td>テーマあり・非スクショ時</td></tr>
+    <tr><td>空状態</td><td>EmptyStateView（holdingSprout variant）＋「ムダを記録する」ボタン</td><td>テーマなし</td></tr>
+  </table>
+
+  <h2>テーマカードのアフォーダンス設計</h2>
+  <div class="callout info">
+    テーマカードが「操作可能」であることを視覚的に明示するため、カード下部にアクションラベル＋矢印アイコンを常時表示する。
+  </div>
+  <table>
+    <tr><th>状態</th><th>アクションラベル</th><th>動作</th></tr>
+    <tr><td>当テーマのプランが進行中</td><td>「進行中を見る」＋矢印</td><td>集中タブへ直接遷移</td></tr>
+    <tr><td>それ以外のテーマ</td><td>「このテーマで試す」＋矢印</td><td>プラン作成フロー（conflict判定あり）</td></tr>
+  </table>
+
+  <h2>テーマ不一致ダイアログ仕様</h2>
+  <div class="callout warn">
+    進行中プランと異なるテーマを選択した場合、無言で遷移せず <strong>Alert</strong> を表示する。
+    既存データの削除・終了は一切行わない。
+  </div>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>タイトル</td><td>「進行中のプランがあります」</td></tr>
+    <tr><td>メッセージ</td><td>「現在『{activeThemeTitle}』の7日プランが進行中です。7日プランは1つずつ進める仕組みです。『{requestedThemeTitle}』は、今のプランを終えてから始められます。」</td></tr>
+    <tr><td>ボタン1</td><td>「進行中のプランを見る」→ openActivePlan() して集中タブへ</td></tr>
+    <tr><td>ボタン2</td><td>「キャンセル」（.cancel role）→ ダイアログを閉じるだけ</td></tr>
+  </table>
+  <p>詳細設計は <a href="../features/focus-plan-conflict.html">機能仕様書（ML-FEAT-PLAN-CONFLICT）</a> を参照。</p>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>ログなし / テーマ抽出不可</td><td>空状態 EmptyStateView</td></tr>
+    <tr><td>テーマあり・プランなし</td><td>全セクション表示。ボタンは「7日プランを作る」</td></tr>
+    <tr><td>テーマあり・プラン進行中</td><td>全セクション表示。進行中テーマカードのラベルは「進行中を見る」。ボタンは「進行中の7日プランを見る」</td></tr>
+    <tr><td>テーマ不一致選択</td><td>PlanConflictPrompt alert を表示</td></tr>
+    <tr><td>プラン作成エラー</td><td>planMessage テキスト（destructiveText 色）＋ VoiceOver アナウンス</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「このテーマで試す」テーマカードタップ（新規プラン）</td><td>プラン作成 → 集中タブ（selectedTab = .focus）</td></tr>
+    <tr><td>「進行中のプランを見る」テーマカードタップ</td><td>集中タブ（selectedTab = .focus）</td></tr>
+    <tr><td>「7日プランを作る」ボタン</td><td>プラン作成 → 集中タブ</td></tr>
+    <tr><td>「進行中の7日プランを見る」ボタン</td><td>集中タブ</td></tr>
+    <tr><td>「月のふりかえりで伏線を見る」カード</td><td>ReportView（NavigationLink）</td></tr>
+    <tr><td>「ムダを記録する」（空状態ボタン）</td><td>記録タブ（selectedTab = .log）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Query(sort: \WasteLog.createdAt, order: .reverse) private var logs: [WasteLog]
+@Query(sort: \FocusPlan.createdAt, order: .reverse) private var plans: [FocusPlan]
+
+var activePlan: FocusPlan? { plans.first { $0.isActive } }
+var allInsights: [ThemeInsight] { MudaInsightEngine.themeInsights(from: activeLogs) }
+var hotThemes: [ThemeInsight] { MudaInsightEngine.hotThemes(from: activeLogs) }</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>PlanConflictPrompt は Identifiable な private struct。alert(presenting:) で安全にバインド</li>
+    <li>テーマカードの accessibilityHint でアクション内容を VoiceOver ユーザーに伝える（「進行中の7日プランを開きます」等）</li>
+    <li>プラン作成失敗時は planMessage + AccessibilityAnnouncer.announce() で両方に伝達</li>
+    <li>テーマカード幅は 184pt 固定（横スクロール）。カード内テキストは lineLimit(2) でオーバーフロー防止</li>
+    <li>色ローテーションは「装飾色（accentGreen/accentInk/paleYellow）」と「テキスト用濃色」を明確に分離して使う</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="focus.html">集中画面（ML-FOCUS-01）</a></li>
+    <li><a href="../features/focus-plan-conflict.html">7日プランのテーマ不一致対応（ML-FEAT-PLAN-CONFLICT）</a></li>
+    <li><a href="../features/accessibility.html">アクセシビリティ設計（ML-FEAT-A11Y）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。テーマ不一致確認ダイアログ・テーマカードアフォーダンス改善（「このテーマで試す」/矢印アイコン）を反映</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-14</footer>
+</div>
+</body>
+</html>

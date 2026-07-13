@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>MudaLog - アクセシビリティ設計</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">App Specs</a> / <a href="../">MudaLog</a> / アクセシビリティ設計</div>
+
+  <header class="site-header">
+    <h1>アクセシビリティ設計</h1>
+    <p>タップ領域・VoiceOver・Dynamic Type・色コントラストの全体方針</p>
+    <div style="margin-top:8px;">
+      <span class="tag">ML-FEAT-A11Y</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    ムダログのアクセシビリティ改善は、操作の明確さ・色の読みやすさ・スクリーンリーダー対応・文字サイズ変更対応の4軸で実施する。
+    WCAGガイドライン（AA基準）をターゲットとし、視覚・操作両面での障壁を下げることを目指す。
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/home.html">ホーム画面（ML-HOME-01）</a></li>
+    <li><a href="../screens/discovery.html">発見画面（ML-DISCOVERY-01）</a></li>
+    <li><a href="../screens/focus.html">集中画面（ML-FOCUS-01）</a></li>
+    <li><a href="../screens/onboarding.html">オンボーディング画面（ML-ONBOARDING-01）</a></li>
+  </ul>
+
+  <h2>1. タップ領域（44×44 pt 以上）</h2>
+  <div class="callout info">
+    Apple HIG 準拠。全操作要素のタップ領域を 44×44 pt 以上に統一する。
+  </div>
+  <table>
+    <tr><th>要素</th><th>対応方法</th></tr>
+    <tr><td>設定ボタン（HomeView）</td><td>Circle フレームを 48×48 pt に設定</td></tr>
+    <tr><td>曜日ピッカー</td><td>各セル .frame(minWidth: 44, minHeight: 44)</td></tr>
+    <tr><td>フィルターチップ</td><td>padding + frame で 44 pt 以上確保</td></tr>
+    <tr><td>「すべて見る」リンク（HomeView）</td><td>.frame(minHeight: 44) を付与</td></tr>
+    <tr><td>FocusPlanRow（集中画面の各行）</td><td>Button として実装し、行全体がタップ領域</td></tr>
+    <tr><td>月移動ボタン（ReportView 等）</td><td>frame 44×44 以上</td></tr>
+  </table>
+
+  <h2>2. VoiceOver ラベル</h2>
+  <table>
+    <tr><th>要素</th><th>accessibilityLabel</th><th>accessibilityValue / Hint</th></tr>
+    <tr><td>設定ボタン</td><td>「設定」</td><td>—</td></tr>
+    <tr><td>通知トグル</td><td>「通知を使う」</td><td>on/off</td></tr>
+    <tr><td>月の前月移動ボタン</td><td>「前の月」</td><td>—</td></tr>
+    <tr><td>月の次月移動ボタン</td><td>「次の月」</td><td>—</td></tr>
+    <tr><td>テーマカード（発見画面）</td><td>.accessibilityElement(children: .combine)</td><td>「進行中の7日プランを開きます」等の hint</td></tr>
+    <tr><td>FocusPlanRow（各行）</td><td>「Day{N} {タイトル}」</td><td>value: status.displayTitle / hint: 「タップで完了と未完了を切り替えます」</td></tr>
+  </table>
+
+  <h2>3. AccessibilityAnnouncer（UIAccessibility.post）</h2>
+  <p>
+    操作結果・エラーを VoiceOver で即時読み上げるため <code>AccessibilityAnnouncer</code> ユーティリティを新設。
+    <code>UIAccessibility.post(notification: .announcement, argument:)</code> をラップしたシンプルな構造体。
+  </p>
+  <table>
+    <tr><th>発生タイミング</th><th>読み上げ内容</th></tr>
+    <tr><td>保存成功トースト表示時</td><td>Microcopy.Success.* の文字列</td></tr>
+    <tr><td>保存・更新エラー発生時</td><td>Microcopy.Error.* の文字列</td></tr>
+    <tr><td>プラン作成失敗時</td><td>Microcopy.Error.planFailed</td></tr>
+    <tr><td>プラン進捗更新失敗時</td><td>Microcopy.Error.progressFailed</td></tr>
+    <tr><td>記録数不足でプラン候補なし時</td><td>「まずはムダをいくつか記録すると…」</td></tr>
+  </table>
+
+  <h2>4. 色コントラスト（WCAG AA 基準）</h2>
+  <p>コントラスト比 4.5:1 以上を満たすテキスト専用トークンと、装飾専用トークンを明確に分離する。</p>
+  <table>
+    <tr><th>トークン</th><th>HEX</th><th>用途</th><th>背景</th><th>備考</th></tr>
+    <tr><td>textPrimary</td><td>#2F2925</td><td>主要本文テキスト</td><td>background (#F7F1E8)</td><td>AA 達成</td></tr>
+    <tr><td>textSecondary</td><td>#726A63</td><td>副テキスト</td><td>background</td><td>AA 達成</td></tr>
+    <tr><td>textTertiary</td><td>#746B64</td><td>補足テキスト（旧 #8D847C は AA 未達のため改定）</td><td>background</td><td>AA 達成</td></tr>
+    <tr><td>accentGreenText</td><td>#3F6B4C</td><td>読ませる緑テキスト・リンク</td><td>background</td><td>AA 達成</td></tr>
+    <tr><td>accentInkText</td><td>#655389</td><td>読ませる紫テキスト</td><td>background</td><td>AA 達成</td></tr>
+    <tr><td>accentAmberText</td><td>#866312</td><td>読ませる琥珀テキスト</td><td>background</td><td>AA 達成</td></tr>
+    <tr><td>destructiveText</td><td>#875650</td><td>エラーメッセージ</td><td>background / destructiveSoft</td><td>AA 達成</td></tr>
+    <tr><td>buttonGradientTop</td><td>#4F7D5D</td><td>PrimaryButton グラデーション（白文字）</td><td>ボタン背景</td><td>白文字で AA 達成</td></tr>
+    <tr><td>buttonGradientBottom</td><td>#3F6B4C</td><td>PrimaryButton グラデーション（白文字）</td><td>ボタン背景</td><td>白文字で AA 達成</td></tr>
+  </table>
+  <div class="callout warn">
+    <strong>装飾専用トークン（accentGreen #79AE86 / accentInk #8A78B1 / accentYellow #E8C970）は本文テキストに使用禁止。</strong>
+    バー・チップ背景・イラストの装飾のみに使用すること。
+  </div>
+
+  <h2>5. Dynamic Type 対応</h2>
+  <table>
+    <tr><th>対象</th><th>対応方法</th></tr>
+    <tr><td>全画面の本文テキスト</td><td>MudaTypography トークンを使用し fixed サイズを避ける</td></tr>
+    <tr><td>オンボーディング見出し</td><td>lineLimit 固定を廃止。OnboardingPageView を ScrollView 化</td></tr>
+    <tr><td>OnboardingIllustrationView 内装飾テキスト</td><td>イラストの一部なので .system(size: 固定値) 維持</td></tr>
+    <tr><td>スクリーンショット専用テキスト</td><td>isScreenshotMode 時は固定サイズ（撮影品質確保のため例外）</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>UIAccessibility.post が無効環境で呼ばれる</td><td>OS が無視するため特別なガードは不要</td></tr>
+    <tr><td>AccessibilityAnnouncer を空文字で呼ぶ</td><td>announce("") は呼ばない（各呼び出し元でガード）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>新規 UI コンポーネントを追加する際、操作要素には必ず .frame(minWidth:minHeight:) で 44 pt を確保する</li>
+    <li>テキスト色を決める際、装飾色（明るい緑・紫・黄）は使わず <code>*Text</code> サフィックスのトークンを選ぶ</li>
+    <li>エラーメッセージ・成功トーストは必ず AccessibilityAnnouncer.announce() をセットで呼ぶ</li>
+    <li>画面レビュー時は Accessibility Inspector（Xcode）でラベル抜けを確認する</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。タップ領域44pt統一・VoiceOverラベル設計・AccessibilityAnnouncer新設・WCAG AAカラートークン整理・Dynamic Type対応を記載</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-14</footer>
+</div>
+</body>
+</html>
