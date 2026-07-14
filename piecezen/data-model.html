@@ -72,7 +72,7 @@ enum GameState {
   <p>red, blue, green, yellow, orange, purple, cyan, pink, mint, indigo, teal, brown</p>
 
   <h2>ColorTheme 6種類</h2>
-  <p>classic / ocean / sakura / neon / monochrome / seniorContrast（★ v1.3.0 追加: WCAG AA基準準拠・色覚多様性配慮）</p>
+  <p>classic / ocean / sakura / neon / monochrome / seniorContrast（★ v1.3.0 追加: 高コントラスト・色覚多様性配慮。v1.4.0 にて indigo/blue の明度を調整し空セル背景との WCAG コントラスト比 3:1 以上を確保）</p>
 
   <h2>UndoSnapshot</h2>
   <pre><code>struct UndoSnapshot {
@@ -90,7 +90,7 @@ enum GameState {
     <tr><td><code>hapticEnabled</code></td><td>ハプティクス有効</td></tr>
     <tr><td><code>lastPlayedDate</code></td><td>ストリーク管理</td></tr>
     <tr><td><code>streakCount</code></td><td>連続プレイ日数</td></tr>
-    <tr><td><code>fontSizeLevel</code></td><td>文字サイズ段階（0=標準 / 1=大きい / 2=特大）★ v1.3.0 追加</td></tr>
+    <tr><td><code>fontSizeLevel</code></td><td>文字サイズ段階（0=標準 / 1=大きい / 2=特大）★ v1.3.0 追加。OS の Dynamic Type 設定がアプリ内設定より大きい場合は OS 側を優先して適用（★ v1.4.0 変更）</td></tr>
   </table>
 
   <h2>変更履歴</h2>
@@ -98,7 +98,8 @@ enum GameState {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-19</td><td>v1.3.0 対応: StatRecord に maxCombo フィールド追加。ColorTheme を6種類に更新（seniorContrast 追加）。AppStorage fontSizeLevel キーを追加</td></tr>
+    <tr><td>1.2</td><td>2026-07-14</td><td>v1.4.0 対応: seniorContrast テーマの説明に WCAG 3:1 是正（indigo/blue 明度調整）を追記。fontSizeLevel に OS Dynamic Type 優先ロジックを追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-19（v1.1）</footer>
+  <footer class="site-footer">最終更新: 2026-07-14（v1.2）</footer>
 </div></body></html>

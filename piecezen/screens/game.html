@@ -26,11 +26,22 @@
     <tr><td>GridView</td><td>8×8グリッド描画（消去アニメ含む）</td></tr>
     <tr><td>BlockTrayView</td><td>3スロットのドラッグ可能ピース</td></tr>
     <tr><td>プレビュー表示</td><td>ドラッグ中の配置先ハイライト</td></tr>
-    <tr><td>回転ボタン</td><td>ピースを4回転</td></tr>
-    <tr><td>アンドゥボタン</td><td>1手戻す（最大3回、2回目以降は広告）</td></tr>
+    <tr><td>回転ボタン</td><td>ピースを4回転。タッチターゲット 48pt（→アクセシビリティ基準参照）</td></tr>
+    <tr><td>アンドゥボタン（戻すボタン）</td><td>1手戻す（最大3回、2回目以降は広告）。タッチターゲット 48pt</td></tr>
     <tr><td>PlayFeedbackOverlay</td><td>スコアポップアップ・賞賛テキスト・クロス爆発</td></tr>
     <tr><td>BannerAdView</td><td>下部固定（広告除去未済時）</td></tr>
   </table>
+
+  <h2>アクセシビリティ基準</h2>
+  <h3>タッチターゲットサイズ</h3>
+  <table>
+    <tr><th>ボタン</th><th>タッチターゲット</th><th>採用基準</th></tr>
+    <tr><td>回転ボタン</td><td>48 × 48 pt</td><td>Material Design 3（Apple HIG 44pt より厳しい側）</td></tr>
+    <tr><td>アンドゥボタン（戻す）</td><td>48 × 48 pt</td><td>同上</td></tr>
+  </table>
+
+  <h3>Dynamic Type（文字サイズ）の優先順位</h3>
+  <p>OS の「文字サイズ」設定（アクセシビリティ設定含む）がアプリ内の文字サイズ設定（fontSizeLevel）より大きい場合は、OS 側の設定を優先して適用する。これにより、アプリ内設定を「標準」のまま使っているユーザーでも、OS でアクセシビリティ目的の大文字設定をしていれば正しく反映される。</p>
 
   <h2>状態遷移（GameState）</h2>
   <table>
@@ -56,7 +67,8 @@
 
   <h2>変更履歴</h2>
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
-  <tr><td>1.1</td><td>2026-06-10</td><td>画面イメージ（fastlane snapshot 自動撮影）を追加</td></tr></table>
+  <tr><td>1.1</td><td>2026-06-10</td><td>画面イメージ（fastlane snapshot 自動撮影）を追加</td></tr>
+  <tr><td>1.2</td><td>2026-07-14</td><td>回転・アンドゥボタンのタッチターゲットを 48pt（MD3 基準）に拡大。OS Dynamic Type 優先ロジックを反映。アクセシビリティ基準セクション新設</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-06-10</footer>
+  <footer class="site-footer">最終更新: 2026-07-14</footer>
 </div></body></html>
