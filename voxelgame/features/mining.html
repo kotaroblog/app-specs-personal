@@ -87,6 +87,17 @@ sequenceDiagram
     <tr><td>クラフト（VG-FEAT-CRAFTING）</td><td>採掘進行度を決めるツール別採掘速度</td><td>progress の進み方を規定</td></tr>
   </table>
 
+  <h2>アクセシビリティ（VoiceOver）</h2>
+  <p>VoiceOver が有効な場合、「壊す」ボタンの操作方式は長押しからトグル式に切り替わる。</p>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>1 回目の操作</td><td>採掘を開始する（以降、採掘中の progress が 0 から 1 へ進む）</td></tr>
+    <tr><td>2 回目の操作</td><td>採掘を停止する（progress のリセット・ひび割れ表示のクリアを含む）</td></tr>
+    <tr><td>採掘完了</td><td>progress が 1.0 に達した時点でブロックが破壊される。追加操作は不要</td></tr>
+    <tr><td>変更の背景</td><td>従来は固定 0.6 秒だけ採掘状態にしていたが、ブロック・ツールの組み合わせによる実所要時間（石 5 秒、鉄鉱石/金鉱石 8 秒、非対応ツールでのダイヤモンド鉱石 12 秒など）を超えるブロックが採掘完了できない欠陥があった。トグル式に変更することで、所要時間に依存せず採掘を最後まで完了できる</td></tr>
+  </table>
+  <p>ひび割れ演出（breakOverlayNode）と破片パーティクルの動作はVoiceOver有効時も同様に機能する。</p>
+
   <h2>エラー処理</h2>
   <table>
     <tr><th>発生条件</th><th>対応</th></tr>
@@ -114,6 +125,7 @@ sequenceDiagram
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-05</td><td>初版作成（採掘中のひび割れ表示・破壊完了時の破片パーティクルを追加）</td></tr>
+    <tr><td>1.1</td><td>2026-07-15</td><td>VoiceOver 有効時の「壊す」操作をトグル式（開始/停止 2 タップ）に変更（042f27a）。アクセシビリティセクションを新設</td></tr>
   </table>
 
   <script>
@@ -123,7 +135,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-07-05</footer>
+  <footer class="site-footer">最終更新: 2026-07-15</footer>
 </div>
 </body>
 </html>
