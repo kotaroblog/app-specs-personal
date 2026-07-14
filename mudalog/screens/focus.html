@@ -54,6 +54,16 @@
   </table>
   <p>行のタップは <code>toggleCompletion(for:in:)</code> を呼び出す。完了済みをタップすると notStarted に戻る（再試行可能設計）。</p>
 
+  <h2>FocusPlanRow の Dynamic Type アクセシビリティサイズ対応</h2>
+  <div class="callout info">
+    <code>dynamicTypeSize.isAccessibilitySize</code> が <code>true</code> の場合、通常の横並びレイアウトを縦積みに切り替える。
+  </div>
+  <table>
+    <tr><th>項目</th><th>通常時</th><th>アクセシビリティサイズ時</th></tr>
+    <tr><td>行レイアウト</td><td>HStack（タイムラインマーカー＋Day 番号＋タイトル＋ステータスバッジを横並び）</td><td>VStack（Day 番号・タイトルを縦積み、ステータスバッジを下段に配置）</td></tr>
+    <tr><td>テキストサイズ</td><td>MudaTypography トークンに準拠</td><td>同上（Dynamic Type が自動拡大）</td></tr>
+  </table>
+
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示</th></tr>
@@ -102,6 +112,7 @@ var completedPlan: FocusPlan? { plans.first { !$0.isActive && $0.completedAt != 
     <li>FocusPlanRow の disabled 状態は !plan.isActive（完了プランは行タップ不可）</li>
     <li>今日のひとことは completedCount に基づき4段階で切り替わる（0件・1〜2件・3〜5件・6件以上）</li>
     <li>refreshStatuses() は保存成功後のみ呼ぶ（失敗時はロールバック対象）</li>
+    <li>FocusPlanRow のアクセシビリティサイズ分岐は <code>@Environment(\.dynamicTypeSize) private var typeSize</code> を参照し <code>typeSize.isAccessibilitySize</code> で判定する</li>
   </ul>
 
   <h2>関連</h2>
@@ -116,6 +127,7 @@ var completedPlan: FocusPlan? { plans.first { !$0.isActive && $0.completedAt != 
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。FocusPlanRow のチェックボックス型UI・toggleCompletion のロールバック設計・アクセシビリティラベル付与を反映</td></tr>
+    <tr><td>1.1</td><td>2026-07-14</td><td>FocusPlanRow の Dynamic Type アクセシビリティサイズ対応（横並び→縦積みレイアウト切り替え）を追記</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-07-14</footer>

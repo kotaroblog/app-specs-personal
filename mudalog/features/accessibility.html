@@ -100,6 +100,51 @@
     <tr><td>スクリーンショット専用テキスト</td><td>isScreenshotMode 時は固定サイズ（撮影品質確保のため例外）</td></tr>
   </table>
 
+  <h2>6. アクセシビリティサイズ（isAccessibilitySize）への4画面対応</h2>
+  <p>
+    <code>dynamicTypeSize.isAccessibilitySize</code> を判定条件として使用し、
+    横並び／横スクロールレイアウトを縦積みに切り替える対応を4箇所に実施した。
+    この分岐により、極端な文字拡大時でも各 UI コンポーネントが重ならず読める状態を保証する。
+  </p>
+  <table>
+    <tr><th>対象コンポーネント</th><th>画面</th><th>通常時レイアウト</th><th>アクセシビリティサイズ時レイアウト</th></tr>
+    <tr><td>FocusPlanRow（7日プランの各行）</td><td>集中（ML-FOCUS-01）</td><td>HStack（タイムラインマーカー＋Day 番号＋タイトル＋ステータスバッジ 横並び）</td><td>VStack（Day 番号・タイトル縦積み、ステータスバッジを下段）</td></tr>
+    <tr><td>発見テーマカード（熱中の芽セクション）</td><td>発見（ML-DISCOVERY-01）</td><td>横スクロールカードリスト（1枚 184 pt 固定幅）</td><td>縦積みリスト（幅フル活用、横スクロールなし）</td></tr>
+    <tr><td>SectionHeader（セクション見出し）</td><td>発見（ML-DISCOVERY-01）</td><td>HStack（タイトル＋操作リンク 横一列）</td><td>VStack（タイトル行と操作リンクを縦に分離）</td></tr>
+    <tr><td>月ピッカー（ReportView）</td><td>レポート（月次ふりかえり）</td><td>HStack（◀ 2026年6月 ▶ の横一列）</td><td>VStack（年月を上段、前月・次月ボタンを下段に縦積み）</td></tr>
+  </table>
+  <div class="callout info">
+    <strong>実装パターン:</strong> 各コンポーネントで <code>@Environment(\.dynamicTypeSize) private var typeSize</code> を取得し、
+    <code>if typeSize.isAccessibilitySize { ... } else { ... }</code> で分岐する。
+    共通の ViewBuilder ヘルパーには切り出さず、各コンポーネントが独立して判定することで、
+    将来の個別調整をしやすい状態を保つ。
+  </div>
+
+  <h2>7. Launch Screen 欠落によるウィンドウサイズ異常（修正済み知見）</h2>
+  <div class="callout warn">
+    <strong>根本原因:</strong> <code>project.yml</code> の <code>info.properties</code> に <code>UILaunchScreen</code> キーが存在しない場合、
+    iOS はアプリを「レガシー互換モード」で起動する。この状態ではシミュレーター上のウィンドウサイズが
+    実際の画面サイズ（例: iPhone 15 Pro Max で 402×778 pt）ではなく
+    <strong>異常な固定値（320×384 pt）</strong>で報告され、レイアウト計算がすべてこの誤値を元に行われる。
+  </div>
+  <p>
+    この異常は通常の端末ではアプリが正常に見えているように見えるが、
+    シミュレーター上でのイラスト高さ計算・ScrollView コンテンツサイズ・コンポーネントの配置オフセット
+    などすべての px ベース計算に影響する。オンボーディング画面での以下の現象はすべてこれが真因だった：
+  </p>
+  <ul>
+    <li>タイトル・本文テキストが画面に表示されない</li>
+    <li>イラストが途中で切れる</li>
+    <li>スクロール不能な領域に要素が配置される</li>
+  </ul>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>修正方法</td><td><code>project.yml</code> の <code>info.properties</code> に <code>UILaunchScreen: {}</code> を追加</td></tr>
+    <tr><td>注意点</td><td>空辞書 <code>{}</code> で明示することで iOS が「モダン起動シーケンス」を使用する。値を省略したり別キー名を使うと効果がない</td></tr>
+    <tr><td>恒久化</td><td><code>xcodegen generate</code> を再実行してもこの設定が失われないよう <code>project.yml</code> に明示する。削除禁止</td></tr>
+    <tr><td>副次修正</td><td>ウィンドウサイズ正常化後に可視化されたイラスト内コンテンツ量超過（3シーン）は個別に修正済み（詳細は <a href="../screens/onboarding.html">オンボーディング仕様書</a> を参照）</td></tr>
+  </table>
+
   <h2>エラー処理</h2>
   <table>
     <tr><th>発生条件</th><th>対応</th></tr>
@@ -119,6 +164,7 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。タップ領域44pt統一・VoiceOverラベル設計・AccessibilityAnnouncer新設・WCAG AAカラートークン整理・Dynamic Type対応を記載</td></tr>
+    <tr><td>1.1</td><td>2026-07-14</td><td>アクセシビリティサイズ（isAccessibilitySize）への4画面対応（FocusPlanRow縦積み・熱中の芽カード縦積み・SectionHeader縦積み・月ピッカー縦積み）と、Launch Screen欠落によるウィンドウサイズ異常の知見を追記</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-07-14</footer>

@@ -65,6 +65,32 @@
     Dynamic Type の大サイズ設定時に本文が画面外にはみ出す問題があった。
     ScrollView 化により、本文テキストが常に読める状態を保証する。
   </p>
+  <p>
+    アクセシビリティサイズ（<code>dynamicTypeSize.isAccessibilitySize</code> が <code>true</code>）の場合、
+    各ページのイラストエリアはマスコットのみのシンプル表示に簡略化する。
+    イラスト内の装飾テキストやコンポーネント（SproutCard・MiniTimelineCard 等）は
+    Dynamic Type と連動しないため、アクセシビリティサイズ設定時にコンテンツと重なる恐れがある。
+    マスコットのみの表示に切り替えることで重なりを根本的に回避する。
+  </p>
+
+  <h2>Launch Screen 欠落バグとイラスト表示崩れの経緯</h2>
+  <div class="callout warn">
+    <strong>重大バグ（修正済み）:</strong> <code>project.yml</code> に <code>UILaunchScreen</code> 設定が欠けていたため、
+    iOS がアプリを「レガシー互換モード」で起動し、シミュレーター上のウィンドウサイズが
+    実際の画面サイズ（402×778 pt）ではなく異常な固定値（320×384 pt）となっていた。
+    これがオンボーディング画面でタイトル・本文が見えない、イラストが途中で切れる
+    などの重大な表示崩れの真因だった。
+    <code>project.yml</code> の <code>info.properties</code> に <code>UILaunchScreen: {}</code> を追加して修正・恒久化済み。
+  </div>
+  <p>
+    ウィンドウサイズが正常化（402×778 pt）したことで、以下3シーンのイラスト内コンテンツ量の問題が可視化され、追加修正を行った。
+  </p>
+  <table>
+    <tr><th>ページ</th><th>問題</th><th>修正内容</th></tr>
+    <tr><td>2ページ目（優しさシーン）</td><td>PillChip タップ領域拡大（38→44 pt）の副作用でマスコットの装飾バッジとチップが重なっていた</td><td>配置オフセット調整で解消</td></tr>
+    <tr><td>3ページ目（発見シーン）</td><td>SproutCard×3枚＋ThemeChip×2個の合計高さがイラスト枠（318 pt）を超え、上下が中央基準で切り取られていた</td><td>カードを padding・フォントサイズ縮小でコンパクト化</td></tr>
+    <tr><td>4ページ目（集中シーン）</td><td>MiniTimelineCard（Day1〜4 のタイムライン）がタイトル文字と重なっていた</td><td>カードをコンパクト化し、マスコットサイズを大→中に変更</td></tr>
+  </table>
 
   <h2>状態</h2>
   <table>
@@ -87,6 +113,8 @@
     <li>screenshotIllustrationHeight(for:) はステータスバー領域を除いた画面高さから算出。合成時のクリッピングを防ぐ</li>
     <li>OnboardingPageView は ScrollView(.vertical) で囲み、lineLimitや高さ固定を行わない</li>
     <li>TabView の .page スタイルで indexDisplayMode を .never にし、カスタムドットインジケーターを下部に配置</li>
+    <li>アクセシビリティサイズ時のイラスト簡略化は <code>dynamicTypeSize.isAccessibilitySize</code> で分岐し、装飾コンポーネントをすべて非表示にしてマスコットのみを表示する</li>
+    <li><code>project.yml</code> の <code>UILaunchScreen: {}</code> は xcodegen generate のたびに失われないよう <code>info.properties</code> に明示する（削除禁止）</li>
   </ul>
 
   <h2>関連</h2>
@@ -98,6 +126,7 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。ScrollView 化による Dynamic Type 対応・スクリーンショットモードのイラスト上部クリッピング修正を反映</td></tr>
+    <tr><td>1.1</td><td>2026-07-14</td><td>Launch Screen 欠落バグ（UILaunchScreen 未設定によるウィンドウサイズ異常）の修正経緯・3シーンのイラスト崩れ修正内容・アクセシビリティサイズ時のイラスト簡略化対応を追記</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-07-14</footer>

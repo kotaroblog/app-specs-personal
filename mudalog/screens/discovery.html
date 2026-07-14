@@ -41,6 +41,16 @@
     <tr><td>空状態</td><td>EmptyStateView（holdingSprout variant）＋「ムダを記録する」ボタン</td><td>テーマなし</td></tr>
   </table>
 
+  <h2>Dynamic Type アクセシビリティサイズ対応</h2>
+  <div class="callout info">
+    <code>dynamicTypeSize.isAccessibilitySize</code> が <code>true</code> の場合、横スクロールや横並び構成を縦積みに切り替える。
+  </div>
+  <table>
+    <tr><th>対象</th><th>通常時</th><th>アクセシビリティサイズ時</th></tr>
+    <tr><td>熱中の芽テーマカード（上位3件）</td><td>横スクロールカードリスト（1枚 184 pt 固定幅）</td><td>縦積みリスト（幅フル活用・横スクロールなし）</td></tr>
+    <tr><td>SectionHeader（各セクション見出し）</td><td>横一列（見出しテキストと「すべて見る」リンクを HStack）</td><td>縦積み（タイトル行・操作リンクを VStack で分離）</td></tr>
+  </table>
+
   <h2>テーマカードのアフォーダンス設計</h2>
   <div class="callout info">
     テーマカードが「操作可能」であることを視覚的に明示するため、カード下部にアクションラベル＋矢印アイコンを常時表示する。
@@ -99,7 +109,9 @@ var hotThemes: [ThemeInsight] { MudaInsightEngine.hotThemes(from: activeLogs) }<
     <li>PlanConflictPrompt は Identifiable な private struct。alert(presenting:) で安全にバインド</li>
     <li>テーマカードの accessibilityHint でアクション内容を VoiceOver ユーザーに伝える（「進行中の7日プランを開きます」等）</li>
     <li>プラン作成失敗時は planMessage + AccessibilityAnnouncer.announce() で両方に伝達</li>
-    <li>テーマカード幅は 184pt 固定（横スクロール）。カード内テキストは lineLimit(2) でオーバーフロー防止</li>
+    <li>テーマカード幅は通常時 184 pt 固定（横スクロール）。カード内テキストは lineLimit(2) でオーバーフロー防止</li>
+    <li>アクセシビリティサイズ時は横スクロールを縦積みリストに切り替えるため、カードの固定幅指定を解除してフル幅で表示する</li>
+    <li>SectionHeader のアクセシビリティサイズ分岐は <code>@Environment(\.dynamicTypeSize) private var typeSize</code> で判定する</li>
     <li>色ローテーションは「装飾色（accentGreen/accentInk/paleYellow）」と「テキスト用濃色」を明確に分離して使う</li>
   </ul>
 
@@ -115,6 +127,7 @@ var hotThemes: [ThemeInsight] { MudaInsightEngine.hotThemes(from: activeLogs) }<
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-14</td><td>初版作成。テーマ不一致確認ダイアログ・テーマカードアフォーダンス改善（「このテーマで試す」/矢印アイコン）を反映</td></tr>
+    <tr><td>1.1</td><td>2026-07-14</td><td>Dynamic Type アクセシビリティサイズ対応を追記（熱中の芽カードの横スクロール→縦積み切り替え・SectionHeader の縦積みレイアウト）</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-07-14</footer>
