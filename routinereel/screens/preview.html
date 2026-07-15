@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>プレビュー・書き出し - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>プレビュー・書き出し（PreviewView）</h1>
+    <p>動画合成後のプレビューと2種類の保存ボタンを提供する画面。ClipGenerateView から NavigationStack に push される。</p>
+  </header>
+
+  <h2>基本情報</h2>
+  <ul class="kv-list">
+    <li><span class="k">画面ID</span><span class="v">preview</span></li>
+    <li><span class="k">実装ファイル</span><span class="v"><code>Views/Preview/PreviewView.swift</code></span></li>
+    <li><span class="k">表示方式</span><span class="v">NavigationStack push（CreateSessionView 管理下。自前 NavigationStack を持たない）</span></li>
+    <li><span class="k">起動経路</span><span class="v">ClipGenerateView（「動画を作成する」ボタン）→ 動画合成完了後に自動 push</span></li>
+    <li><span class="k">背景色</span><span class="v">#FAF9F7（warm white）</span></li>
+    <li><span class="k">colorScheme</span><span class="v">.light 固定（warm white 背景のステータスバー文字色対応）</span></li>
+  </ul>
+
+  <h2>画面構成</h2>
+  <ol>
+    <li><strong>トップバー</strong>: 「← 戻る」ボタン（左）+ 「プレビュー」タイトル（中央）</li>
+    <li><strong>動画プレビュー領域</strong>: 9:16 縦型・黒背景・warm white 上に黒カードとして浮かせる。build69 より上詰め配置（余白を下側に集約）</li>
+    <li><strong>元音声ミュートトグル</strong>: Toggle + speaker アイコン</li>
+    <li><strong>フィルタセクション</strong>: 横スクロールチップ（無料フィルタ + Pro フィルタ）</li>
+    <li><strong>書き出しボタン</strong>: カメラロール保存（主役・グラデ）+ アプリ内保存（脇役・アウトライン）</li>
+  </ol>
+
+  <h2>動画プレビュー領域（build69 更新）</h2>
+  <ul class="kv-list">
+    <li><span class="k">アスペクト比</span><span class="v">9:16 固定（縦型動画専用）</span></li>
+    <li><span class="k">配置（build69）</span><span class="v">上詰め（<code>.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)</code>）。以前は上下中央寄せで動画が小さく浮いて見えていたため、上部余白を削減して動画をトップバー直下まで引き上げ、余白を下側（ミュートトグル・フィルタ・ボタン間）に集約</span></li>
+    <li><span class="k">cornerRadius</span><span class="v">16pt（.continuous）</span></li>
+    <li><span class="k">全画面表示</span><span class="v">動画右上の拡大ボタンタップで <code>FullScreenVideoView</code>（fullScreenCover）を起動。同一 AVPlayer インスタンスを共有し再生位置を維持</span></li>
+  </ul>
+
+  <h2>動画プレビュー領域の状態分岐</h2>
+  <table>
+    <thead>
+      <tr><th>状態</th><th>表示内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>.composing</code></td><td>動画作成中プログレス（%表示 + バー + キャンセルボタン）</td></tr>
+      <tr><td><code>.ready</code></td><td>AVPlayer 動画再生・タップで再生/一時停止・全画面ボタン</td></tr>
+      <tr><td><code>.exported</code></td><td>同上（保存済み状態。戻るボタンでアラートなしで閉じる）</td></tr>
+      <tr><td><code>.exporting</code></td><td>カメラロール保存中プログレス（動画 opacity 0.3 の上にオーバーレイ。キャンセル不可）</td></tr>
+      <tr><td><code>.error(message, recovery)</code></td><td>エラーメッセージ + リカバリボタン（recompose / retrySave / openSettings の 3 種）</td></tr>
+      <tr><td><code>.idle</code></td><td>EmptyView（遷移直後の一瞬）</td></tr>
+    </tbody>
+  </table>
+
+  <h2>書き出しボタン（build69 更新）</h2>
+  <p>build69 より各ボタンに用途の副説明を追加し、2種類の保存の違いを初見でも理解できるよう改善した。</p>
+  <table>
+    <thead>
+      <tr><th>ボタン</th><th>スタイル</th><th>副説明（build69 追加）</th><th>無料枠消費</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>カメラロールに保存（主役）</td><td>pink→orange グラデ・58pt</td><td>「TikTokやInstagramへの投稿用」</td><td>消費しない</td></tr>
+      <tr><td>アプリに保存（脇役）</td><td>アウトライン・55pt</td><td>「RoutineReel内であとから再生できます」</td><td>消費する（無料3本まで）</td></tr>
+    </tbody>
+  </table>
+  <ul class="kv-list">
+    <li><span class="k">無効化条件</span><span class="v">state が .composing / .exporting / .idle / .error 時（isReadyToSave = false）は両ボタン無効化・opacity 0.45</span></li>
+    <li><span class="k">アプリ内保存ボタンのラベル</span><span class="v">Pro 時は「アプリに保存」、無料かつ残量あり時は「アプリに保存（残り N 件）」、無料かつ上限到達時は「アプリに保存（Proで無制限）」→ タップで Paywall 起動</span></li>
+    <li><span class="k">アプリ内保存完了アラート</span><span class="v">「アプリに保存しました」タイトル + 「動画はホーム画面の『アプリ内の動画』から確認できます。」メッセージ（build69 より「最近の動画」→「アプリ内の動画」に更新）</span></li>
+    <li><span class="k">二重保存ガード</span><span class="v">PreviewViewModel 内で保存済み (sessionId, destination) ペアを Set で保持し、同一セッション・同一 destination での重複実行を防止（Analytics の重複送信防止も兼ねる）</span></li>
+    <li><span class="k">カメラロール保存完了後</span><span class="v">親（CreateSessionView）の <code>onSavedToPhotos</code> コールバック経由で ExportCompleteView を push</span></li>
+  </ul>
+
+  <h2>VideoCompletion 記録</h2>
+  <p>カメラロール保存・アプリ内保存のどちらが先に成功しても <code>VideoCompletionRecorder.recordIfNeeded</code> により1件のみ記録される。</p>
+  <ul class="kv-list">
+    <li><span class="k">記録タイミング</span><span class="v">各保存処理の成功直後（saveToPhotoLibrary / saveToApp 内部）</span></li>
+    <li><span class="k">二重計上防止</span><span class="v">同一 <code>creationSessionId</code> の VideoCompletion が既にあれば挿入をスキップ</span></li>
+    <li><span class="k">影響範囲</span><span class="v">Hero「今日はもう1本つくれています」（overallHasCompletedVideoToday）/ 累計完成本数（completedVideoCount）が VideoCompletion を参照するため、カメラロールのみ保存のユーザーも達成と判定される</span></li>
+  </ul>
+
+  <h2>プレビュー破棄確認アラート</h2>
+  <ul class="kv-list">
+    <li><span class="k">発火条件</span><span class="v">「← 戻る」タップ時に state が .exported 以外の場合</span></li>
+    <li><span class="k">タイトル</span><span class="v">「プレビューを破棄しますか？」</span></li>
+    <li><span class="k">メッセージ</span><span class="v">「作成中の動画は破棄されますが、撮影したクリップはライブラリに残っています。あとから同じクリップで作り直せます。」（クリップが永続化済みであることを明示）</span></li>
+    <li><span class="k">ボタン</span><span class="v">「クリップ選択に戻る」（role: .destructive）/ 「キャンセル」</span></li>
+    <li><span class="k">state が .exported の場合</span><span class="v">アラートなしで即閉じる</span></li>
+  </ul>
+
+  <h2>フィルタセクション</h2>
+  <ul class="kv-list">
+    <li><span class="k">無料フィルタ</span><span class="v">全ユーザーが選択可能</span></li>
+    <li><span class="k">Pro フィルタ</span><span class="v">lock アイコン表示。タップで PaywallView 起動（trigger: .proFilter）</span></li>
+    <li><span class="k">選択中の effectiveFilter</span><span class="v">Pro 解約後は Pro フィルタが .none に resolved されるため「locked かつ isSelected」の矛盾 UI が構造的に発生しない</span></li>
+    <li><span class="k">右端フェード</span><span class="v">続きありを暗示する LinearGradient overlay（タップを邪魔しないよう allowsHitTesting: false）</span></li>
+  </ul>
+
+  <h2>アクセシビリティ</h2>
+  <ul>
+    <li>カメラロール保存ボタン: <code>.accessibilityLabel("カメラロールに保存。TikTokやInstagramへの投稿用")</code></li>
+    <li>アプリ内保存ボタン: <code>.accessibilityLabel("\(appSaveButtonLabel)。RoutineReel内であとから再生できます")</code></li>
+    <li>動画タップ再生切替: <code>.accessibilityAddTraits(.isButton)</code> + <code>.accessibilityLabel("動画を再生・一時停止")</code></li>
+    <li>全画面ボタン: <code>.accessibilityLabel("動画を全画面で表示")</code></li>
+    <li>戻るボタン: <code>.accessibilityLabel("プレビューを閉じる")</code></li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="clip-library.html">クリップライブラリ（ClipLibraryView）</a></li>
+    <li><a href="video-list.html">アプリ内の動画（VideoListView）</a></li>
+    <li><a href="../features/video-completion.html">VideoCompletion 完成実績モデル</a></li>
+    <li><a href="../features/analytics.html">Analytics 計測基盤</a>（video_saved / export_failed）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-15</td><td>build69 相当の実装をベースに初版作成。2 種類の保存ボタンに用途副説明（カメラロール「TikTokやInstagramへの投稿用」/ アプリ内「RoutineReel内であとから再生できます」）を追加。動画プレビュー領域を上詰め配置に変更（上部余白削減）。アプリ内保存完了アラートの参照先「最近の動画」→「アプリ内の動画」に更新。VideoCompletion 記録と Analytics 重複防止設計を明文化</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-15</footer>
+</div>
+</body>
+</html>

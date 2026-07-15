@@ -47,10 +47,10 @@
   <h2>必須 8 イベント定義</h2>
   <table>
     <tr><th>イベント名</th><th>発火タイミング</th><th>パラメータ</th><th>用途</th></tr>
-    <tr><td><code>onboarding_completed</code></td><td>OnboardingView の skip / あとで / リマインダー選択時</td><td>—</td><td>新規ユーザー流入 funnel の起点</td></tr>
+    <tr><td><code>onboarding_completed</code></td><td>OnboardingView の skip / あとで / リマインダー選択時</td><td><code>preset_selected: Bool</code>（プリセット選択して撮影直行したか / スキップしたか）</td><td>新規ユーザー流入 funnel の起点・プリセット選択率の計測</td></tr>
     <tr><td><code>notification_authorized</code></td><td>OnboardingView Page 3.5 の selectReminder で iOS 通知ダイアログ確定時</td><td>granted: Bool</td><td>通知許可率モニタリング（リテンション施策の前提）</td></tr>
     <tr><td><code>first_recording</code></td><td>ShootingViewModel.persistClip 成功時で初回のみ</td><td>—</td><td>オンボ完了→初回撮影 funnel の歩留まり</td></tr>
-    <tr><td><code>video_saved</code></td><td>PreviewViewModel.saveToApp / saveToPhotoLibrary 成功時</td><td>routine_id: String (UUID)</td><td>Pro 転換主要トリガー、ルーティン別 LTV</td></tr>
+    <tr><td><code>video_saved</code></td><td>PreviewViewModel.saveToApp / saveToPhotoLibrary 成功時</td><td><code>routine_id: String (UUID)</code>, <code>creation_session_id: String (UUID)</code>, <code>destination: photo_library / app_storage</code></td><td>Pro 転換主要トリガー、保存先別の行動分析。同一セッション・同一 destination の重複送信は PreviewViewModel でガード（9月末 KPI のファネル精度担保）</td></tr>
     <tr><td><code>share_button_tapped</code></td><td>ExportCompleteView.notifyShareTriggered（open success / ShareSheet completed=true 時のみ）</td><td>destination: tiktok / reels / share_sheet</td><td>バイラル流入上流指標</td></tr>
     <tr><td><code>paywall_shown</code></td><td>PaywallView.onAppear</td><td>trigger: manual（将来 routine_limit / storage_limit / pro_filter / pro_font 拡張）</td><td>Paywall 到達経路別の到達率</td></tr>
     <tr><td><code>paywall_converted</code></td><td>SubscriptionManager.purchase 成功時</td><td>plan: monthly / yearly</td><td>転換率と年額比率（v1.1 値上げ判定の根拠）</td></tr>
@@ -78,12 +78,12 @@
   <p>v1.0 の成功系 8 イベントだけでは「なぜ保存に至らないか」が見えないため、撮影中断・書き出し失敗・Paywall 離脱・購入失敗・ATT 結果を計測して離脱ポイントを特定する。9月末グロース判定の材料として活用する。</p>
   <table>
     <tr><th>イベント名</th><th>発火タイミング</th><th>パラメータ</th><th>用途</th></tr>
-    <tr><td><code>capture_started</code></td><td>セッション内の初回録画開始時（1セッション1回）</td><td><code>total_steps: Int</code></td><td>撮影完遂率算出の分母</td></tr>
-    <tr><td><code>capture_interrupted</code></td><td>中断ダイアログで「残して終了」または「破棄して終了」を選択</td><td><code>recorded_clips: Int</code>, <code>total_steps: Int</code></td><td>何ステップ目で離脱するかの可視化</td></tr>
-    <tr><td><code>capture_completed</code></td><td>全ステップの撮影セッションが正常完了</td><td><code>recorded_clips: Int</code>, <code>total_steps: Int</code></td><td>撮影完遂率算出の分子</td></tr>
-    <tr><td><code>compose_started</code></td><td>動画合成処理を開始したとき（ClipGenerateView から）</td><td><code>clip_count: Int</code></td><td>合成成功率算出の分母</td></tr>
-    <tr><td><code>compose_completed</code></td><td>動画合成処理が正常完了（保存完了とは別）</td><td><code>duration_sec: Int</code></td><td>端末別待ち時間の把握（長時間化は離脱要因）</td></tr>
-    <tr><td><code>export_failed</code></td><td>書き出し・保存フローでの失敗（キャンセルを含む）</td><td><code>stage</code>: compose/filter/save_app/save_photo<br><code>reason</code>: memory_pressure/file_missing/composition_error/filter_error/storage_error/save_failed/photo_permission_denied/incompatible_format/cancelled の直積</td><td>失敗カテゴリ別の発生率計測</td></tr>
+    <tr><td><code>capture_started</code></td><td>セッション内の初回録画開始時（1セッション1回）</td><td><code>total_steps: Int</code>, <code>creation_session_id: String (UUID)</code>, <code>entry_source: String</code>（onboarding / quick_start / hero_next / notification / resume / routine_menu / clip_library のいずれか）</td><td>撮影完遂率算出の分母・撮影開始経路別の分析</td></tr>
+    <tr><td><code>capture_interrupted</code></td><td>中断ダイアログで「残して終了」または「破棄して終了」を選択</td><td><code>recorded_clips: Int</code>, <code>total_steps: Int</code>, <code>creation_session_id: String (UUID)</code></td><td>何ステップ目で離脱するかの可視化</td></tr>
+    <tr><td><code>capture_completed</code></td><td>全ステップの撮影セッションが正常完了</td><td><code>recorded_clips: Int</code>, <code>total_steps: Int</code>, <code>creation_session_id: String (UUID)</code></td><td>撮影完遂率算出の分子</td></tr>
+    <tr><td><code>compose_started</code></td><td>動画合成処理を開始したとき（ClipGenerateView から）</td><td><code>clip_count: Int</code>, <code>creation_session_id: String (UUID)</code></td><td>合成成功率算出の分母</td></tr>
+    <tr><td><code>compose_completed</code></td><td>動画合成処理が正常完了（保存完了とは別）</td><td><code>duration_sec: Int</code>, <code>creation_session_id: String (UUID)</code></td><td>端末別待ち時間の把握（長時間化は離脱要因）</td></tr>
+    <tr><td><code>export_failed</code></td><td>書き出し・保存フローでの失敗（キャンセルを含む）</td><td><code>stage</code>: compose/filter/save_app/save_photo<br><code>reason</code>: memory_pressure/file_missing/composition_error/filter_error/storage_error/save_failed/photo_permission_denied/incompatible_format/cancelled の直積<br><code>creation_session_id: String (UUID)</code></td><td>失敗カテゴリ別の発生率計測</td></tr>
     <tr><td><code>paywall_dismissed</code></td><td>PaywallView を購入せず閉じたとき</td><td><code>trigger</code>（paywall_shown と同一列挙）</td><td>trigger 別の離脱率（paywall_shown - paywall_converted の差分と突合）</td></tr>
     <tr><td><code>purchase_failed</code></td><td>購入フローが成功以外で終わったとき</td><td><code>reason</code>: cancelled/pending/verification_failed/store_error</td><td>キャンセル率が高い場合は価格・訴求の見直し材料</td></tr>
     <tr><td><code>att_result</code></td><td>ATT プロンプト表示後（1回のみ）</td><td><code>authorized: Bool</code></td><td>広告収益予測と ATT 表示タイミング再検討の判断材料</td></tr>
@@ -97,6 +97,14 @@
     <tr><td>Paywall 転換</td><td>paywall_shown → paywall_converted（既存）</td><td>paywall_dismissed</td></tr>
     <tr><td>購入フロー</td><td>（ストア画面表示）→ paywall_converted</td><td>purchase_failed</td></tr>
   </table>
+
+  <h3>9月末 KPI と重複防止設計（build69 追加）</h3>
+  <p><strong>9月末 KPI = 週次 video_saved ユニークユーザー数</strong>。1ユーザーが1週間に動画を複数保存しても、KPI は「週次で保存した人の数」であるため重複計上は発生しない。</p>
+  <p>ただし同一セッション内で「カメラロール保存→アプリ内保存」の両方を成功させた場合、<code>video_saved</code> が同一 <code>creation_session_id</code> かつ異なる <code>destination</code> で2回発火する仕様であり、これは正常動作。<strong>同一セッション・同一 destination での重複送信のみを PreviewViewModel でガード</strong>している。</p>
+  <ul class="kv-list">
+    <li><span class="k">ガード実装</span><span class="v">PreviewViewModel が保存済み (sessionId, destination) ペアを Set で保持し、同一ペアでの重複発火を防止</span></li>
+    <li><span class="k">VideoCompletion との関係</span><span class="v">完成本数の内部カウント（Hero 表示・<code>hasCompletedVideoToday</code>）は <code>VideoCompletion</code> モデルが担当し、Analytics は別系統。<code>VideoCompletion</code> は <code>creationSessionId</code> で二重計上防止済み（<a href="video-completion.html">VideoCompletion 仕様書</a>参照）</span></li>
+  </ul>
 
   <h2>残課題（リリース後対応）</h2>
   <ul>
@@ -117,11 +125,12 @@
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.2</td><td>2026-07-15</td><td>build69 反映: 全撮影〜書き出しイベントに <code>creation_session_id</code> パラメータを追加（capture_started / capture_interrupted / capture_completed / compose_started / compose_completed / export_failed / video_saved）。<code>capture_started</code> に <code>entry_source</code>（onboarding / quick_start / hero_next / notification / resume / routine_menu / clip_library）を追加。<code>video_saved</code> に <code>destination</code>（photo_library / app_storage）を追加し重複ガード仕様を明記。<code>onboarding_completed</code> に <code>preset_selected: Bool</code> を追加。9月末 KPI（週次 video_saved ユニークユーザー）とファネル重複防止設計のセクションを追加</td></tr>
     <tr><td>1.1</td><td>2026-07-11</td><td>v1.2 反映: 9 イベント追加（capture_started / capture_interrupted / capture_completed / compose_started / compose_completed / export_failed / paywall_dismissed / purchase_failed / att_result）。ファネル定義（撮影完遂・動画書き出し・Paywall 転換・購入フロー）を追記。ExportStage / ExportFailureReason / PurchaseFailureReason 列挙も仕様書に追記</td></tr>
     <tr><td>1.0</td><td>2026-06-12</td><td>初版作成。Firebase Analytics 11.x を SwiftPM 経由で統合、AnalyticsService 抽象化、必須 8 イベント埋め込み（commit 8d0d70b）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-11</footer>
+  <footer class="site-footer">最終更新: 2026-07-15</footer>
 </div>
 </body>
 </html>

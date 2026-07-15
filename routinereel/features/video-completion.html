@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>RoutineReel - VideoCompletion 完成実績モデル</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">App Specs</a> / <a href="../">RoutineReel</a> / VideoCompletion 完成実績モデル</div>
+
+  <header class="site-header">
+    <h1>VideoCompletion 完成実績モデル</h1>
+    <p>「動画を1本つくり終えた」という完成実績の単一情報源（build69 追加）</p>
+    <div class="section-meta">
+      <span class="tag">build69</span>
+      <span class="tag">SwiftData @Model</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    build69 より、完成本数・「今日完成したか」の判定を <code>Video</code>（アプリ内保存レコード）から
+    <code>VideoCompletion</code> に分離した。カメラロール保存・アプリ内保存のどちらで完成させても
+    1件記録され、無料枠3本（Video）とは独立している。
+  </p>
+  <p>
+    これにより「カメラロールのみ保存するユーザー」が Hero「今日はもう1本つくれています」の達成条件を
+    満たせなかった問題（Video ベース判定の限界）を解消した。
+  </p>
+
+  <h2>SwiftData モデル定義</h2>
+  <pre><code>@Model
+final class VideoCompletion {
+    var id: UUID = UUID()
+    var createdAt: Date = Date()
+    var creationSessionId: UUID = UUID()   // 二重計上防止キー
+
+    var routine: Routine?   // リレーション（@Relationship デフォルト cascade）
+}</code></pre>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>カメラロール保存が成功しても、アプリ内保存が成功しても、どちらも1件の VideoCompletion が作成される</li>
+    <li>同一 <code>creationSessionId</code>（PreviewViewModel の1インスタンス = 1回の作成セッション）につき1件のみ挿入。カメラロール＋アプリ内の両方を保存しても完成本数は 1 本</li>
+    <li>カメラロールのみ保存は <code>Video</code>（アプリ内保存カウント）の無料3本枠を消費しない。消費するのは <code>VideoStorageService.saveToApp</code> 経由のみ</li>
+    <li><code>VideoCompletion</code> はルーティン削除時に cascade delete される（<code>Routine.completions: [VideoCompletion]</code> リレーション経由）</li>
+  </ul>
+
+  <h2>関連画面とモデルの影響範囲</h2>
+  <table>
+    <thead>
+      <tr><th>参照箇所</th><th>変更前（build68 以前）</th><th>変更後（build69 以降）</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Hero「今日はもう1本つくれています」判定<br>（<code>overallHasCompletedVideoToday</code>）</td><td><code>Video.createdAt</code> が今日か</td><td><code>VideoCompletion.createdAt</code> が今日か</td></tr>
+      <tr><td>マイルーティン累計完成本数<br>（<code>Routine.completedVideoCount</code>）</td><td><code>routine.videos.count</code></td><td><code>routine.completions.count</code></td></tr>
+      <tr><td>Hero 累計バッジ表示</td><td>アプリ内保存本数</td><td>作成本数（カメラロール保存含む）</td></tr>
+    </tbody>
+  </table>
+
+  <h2>VideoCompletionRecorder</h2>
+  <p><code>@MainActor enum VideoCompletionRecorder</code>。AVFoundation/UIKit 非依存の純粋ロジックとして実装し、SwiftData の in-memory コンテナのみでユニットテスト可能。</p>
+  <ul class="kv-list">
+    <li><span class="k"><code>insertIfNeeded</code></span><span class="v">同一 creationSessionId が context 内に存在しない場合のみ insert し、作成した VideoCompletion を返す。既存なら nil（呼び出し側は戻り値を保持し、save 失敗時に delete でロールバック可能）</span></li>
+    <li><span class="k"><code>recordIfNeeded</code></span><span class="v">insertIfNeeded を呼び出し、新規記録なら true・既存スキップなら false を返す（@discardableResult）</span></li>
+  </ul>
+
+  <h2>VideoCompletionMigration（既存データ補完）</h2>
+  <p>build69 導入前にアプリ内保存（Video）が既に存在するユーザーへの対応。</p>
+  <ul class="kv-list">
+    <li><span class="k">戦略</span><span class="v">既存の <code>Video</code> レコードを <code>video.id</code> キー（<code>creationSessionId</code> として代用）で VideoCompletion として補完挿入。冪等（何度実行しても同じ結果になる）</span></li>
+    <li><span class="k">マイグレーションフラグ</span><span class="v">UserDefaults フラグ非依存（データ単位で挿入済みか判断するため）。同一 UUID の VideoCompletion が存在すれば挿入をスキップ</span></li>
+    <li><span class="k">実行タイミング</span><span class="v">RootView.onAppear / アプリ起動時に一度だけ実行</span></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant PV as PreviewView
+  participant VM as PreviewViewModel
+  participant VCR as VideoCompletionRecorder
+  participant CTX as ModelContext
+
+  U->>PV: カメラロールに保存 / アプリに保存
+  PV->>VM: saveToPhotoLibrary() / saveToApp()
+  VM->>VCR: recordIfNeeded(sessionId, routine, ctx)
+  VCR->>CTX: fetch VideoCompletion where sessionId==?
+  alt 既存なし（初回保存）
+    CTX-->>VCR: []（0件）
+    VCR->>CTX: insert VideoCompletion
+    VCR-->>VM: true（新規記録）
+  else 既存あり（2回目の保存）
+    CTX-->>VCR: [existing]（1件以上）
+    VCR-->>VM: false（スキップ）
+  end
+  VM-->>PV: 保存完了
+  PV-->>U: アラート表示
+  </div>
+
+  <h2>テスト</h2>
+  <p>build69 で追加したユニットテスト（<code>VideoCompletionTests</code>）でカバーする主な観点:</p>
+  <ul>
+    <li>同一 sessionId で2回 recordIfNeeded を呼んでも VideoCompletion が1件のみ挿入されること</li>
+    <li>異なる sessionId で呼ぶと別々に挿入されること</li>
+    <li>insertIfNeeded の戻り値（新規: 非nil, 既存: nil）が正しいこと</li>
+    <li>in-memory ModelContainer + ModelContext のみで依存なくテストできること</li>
+  </ul>
+
+  <h2>関連ファイル</h2>
+  <ul>
+    <li><code>RoutineReel/Models/VideoCompletion.swift</code> — @Model クラス + VideoCompletionRecorder</li>
+    <li><code>RoutineReel/Services/VideoCompletionMigration.swift</code> — 既存データ補完</li>
+    <li><code>RoutineReel/Views/Preview/PreviewViewModel.swift</code> — recordIfNeeded 呼び出し元</li>
+    <li><code>RoutineReelTests/VideoCompletionTests.swift</code> — ユニットテスト</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-15</td><td>初版作成（build69）。VideoCompletion @Model / VideoCompletionRecorder / VideoCompletionMigration の設計を文書化。Hero 判定・累計表示の切り替えとその影響範囲を記載</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-07-15</footer>
+</div>
+</body>
+</html>

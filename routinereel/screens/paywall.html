@@ -80,6 +80,33 @@
     <li><span class="k">月額</span><span class="v">「月額プラン」</span></li>
   </ul>
 
+  <h2>ProductLoadState（build69 追加）</h2>
+  <p>build69 より商品情報のロード状態を <code>ProductLoadState</code> enum で明示的に管理する。</p>
+  <table>
+    <thead>
+      <tr><th>状態</th><th>条件</th><th>UI</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>.loading</code></td><td>StoreKit から商品情報取得中</td><td>スケルトンのプランカード表示・購入 CTA はスピナー＋無効化</td></tr>
+      <tr><td><code>.loaded</code></td><td>年額または月額の少なくとも一方を取得（0件は .failed 扱い）</td><td>通常表示</td></tr>
+      <tr><td><code>.failed(.fetchError)</code></td><td>取得リクエスト自体がエラー</td><td>「プラン情報を取得できませんでした」＋「再読み込み」ボタン表示</td></tr>
+      <tr><td><code>.failed(.noProducts)</code></td><td>取得成功したが商品が 0 件</td><td>同上</td></tr>
+    </tbody>
+  </table>
+  <ul class="kv-list">
+    <li><span class="k">取得失敗時の UI</span><span class="v">購入 CTA を無効化。「再読み込み」ボタンタップで .loading に戻り再取得。「あとで」「購入を復元」「利用規約」「プライバシーポリシー」は失敗時も操作可能を維持</span></li>
+    <li><span class="k">取得失敗時の VoiceOver</span><span class="v">エラーテキストと「再読み込み」ボタンに適切な <code>accessibilityLabel</code> を付与</span></li>
+    <li><span class="k">ロード中のスケルトン</span><span class="v">プランカード領域にスケルトン（灰色の丸角矩形）を表示し、レイアウトシフトなしで遷移</span></li>
+    <li><span class="k">Snapshot モード</span><span class="v"><code>AppEnvironment.isUISnapshot == true</code> 時は従来の価格非表示ダミーカードを維持（App Store 提出スクショの見た目不変）</span></li>
+  </ul>
+
+  <h2>無料枠表記の更新（build69）</h2>
+  <p>Hero の無料枠説明を「3動画」→「アプリ内保存3本」に変更し、他画面（プレビュー・VideoList）の用語と統一した。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">「無料では 3ルーティン・3動画・透かしあり。」</span></li>
+    <li><span class="k">変更後</span><span class="v">「無料では 3ルーティン・アプリ内保存3本・透かしあり。」（カメラロール保存は制限外、アプリ内保存のみ3本まで、という仕様を明確化）</span></li>
+  </ul>
+
   <h2>CTA仕様（Home CTA と統一）</h2>
   <ul class="kv-list">
     <li><span class="k">高さ</span><span class="v">58pt</span></li>
@@ -87,7 +114,7 @@
     <li><span class="k">背景</span><span class="v">LinearGradient（pink → orange）+ 右上 RadialGradient 白30%（生活感）</span></li>
     <li><span class="k">shadow</span><span class="v">accent pink 35%・radius 14・y 6</span></li>
     <li><span class="k">押下</span><span class="v">scale 0.97 spring（DesignsPressableButtonStyle）</span></li>
-    <li><span class="k">無効化</span><span class="v">subscription.isLoading || productToPurchase == nil</span></li>
+    <li><span class="k">無効化</span><span class="v">ProductLoadState が .loading / .failed（build69 以降） || productToPurchase == nil</span></li>
   </ul>
 
   <h2>アクセシビリティ</h2>
@@ -122,6 +149,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.5</td><td>2026-07-15</td><td>build69 反映: ProductLoadState（loading / loaded / failed）による 3 状態管理を追加。取得失敗時に「プラン情報を取得できませんでした」+「再読み込み」ボタンを表示し購入 CTA を無効化。ロード中はスケルトンのプランカードを表示。Snapshot モードは価格非表示ダミーカードを維持（変更なし）。Hero の無料枠表記「3動画」→「アプリ内保存3本」に変更（カメラロール保存は制限外であることを明確化）</td></tr>
       <tr><td>v1.4</td><td>2026-07-13</td><td>d59a710 反映: Hero メインコピーを「毎日の記録を、もっと心地よく。」から「週2本のルーティン動画を、透かしなしで投稿する。」に変更（「習慣アプリ」→「制作ツール」ポジショニング統一）。無料枠（3ルーティン・3動画・透かしあり）と Pro の差分を明示する一文を Hero 下部に追加</td></tr>
       <tr><td>v1.3</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ: <code>designsSheetStyle()</code> を適用（角丸 32pt・ドラッグインジケータ・warm white 背景）。シート外観をアプリ全体で統一</td></tr>
       <tr><td>v1.2</td><td>2026-07-01</td><td>v1.1.0 反映: 年額の7日間無料トライアルを廃止。プラン設計・planSubtitle・trialNoticeSection・CTA文言（「7日間無料で試す」→「プレミアムにアップグレード」）をトライアルなし表記に一括更新。P1-a バグ修正（temp削除/Preview入力消失）: <code>inFlightTempURLs: Set&lt;URL&gt;</code> を追加し、persistClip 実行中の temp URL を cleanupTempFiles() がスキップするよう保護。<code>persistClip</code> 内での <code>removeItem(sourceURL)</code> を削除（PreviewView が temp URL を参照するため）。Task 完了後の <code>MainActor.run</code> に <code>guard !self.isCancelled</code> ガードを追加（ShootingViewModel 変更のため paywall 仕様への影響なし、記録として追記）。SnapshotGalleryポスターを RoutineVideoPoster に刷新（既存の Snapshot → 合成動画の縦型ポスター表示に変更）</td></tr>
@@ -133,7 +161,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-13</footer>
+  <footer class="site-footer">最終更新: 2026-07-15</footer>
 </div>
 </body>
 </html>

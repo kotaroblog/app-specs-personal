@@ -23,8 +23,8 @@
     <li><span class="k">言語</span><span class="v">日本語</span></li>
     <li><span class="k">配信地域</span><span class="v">日本（初回）</span></li>
     <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（月¥480 / 年¥3,800）+ Google AdMob</span></li>
-    <li><span class="k">ステータス</span><span class="v">v1.2.0 (build67) リリース済み</span></li>
-    <li><span class="k">直近バージョン</span><span class="v">v1.2.0: 週次リマインダー（曜日指定）/ 続きから撮る導線 / 撮影ファネル計測 9 イベント / SaveOrLog による保存失敗ハンドリング改善</span></li>
+    <li><span class="k">ステータス</span><span class="v">v1.2.0 (build69) 機能凍結中・未提出（build67 リリース済み）</span></li>
+    <li><span class="k">直近バージョン</span><span class="v">v1.2.0 (build69): VideoCompletion 完成実績モデル / NextRecordingSelector / ClipLibraryCTA 3状態分岐 / オンボ完了後撮影直行 / ATT 遅延延伸 / Analytics creation_session_id 追加 / ProductLoadState 3状態管理 / テスト 92 件</span></li>
   </ul>
 
   <h2>画面仕様書</h2>
@@ -54,12 +54,17 @@
       <div class="desc">v1.0軽い見た目寄せ・テロップ下部セーフゾーン・ボタン名統一</div>
     </a>
     <a class="card" href="screens/video-list.html">
-      <div class="title">私の記録（VideoListView）</div>
-      <div class="desc">2列グリッド・サムネ大型化・記録感を強める</div>
+      <div class="title">アプリ内の動画（VideoListView）</div>
+      <div class="desc">2列グリッド・サムネ大型化・アプリ内保存動画の一覧（build69で「私の記録」から改称）</div>
     </a>
     <a class="card" href="screens/clip-library.html">
       <div class="title">クリップライブラリ（ClipLibraryView）</div>
-      <div class="desc">ステップ別クリップ管理・動画を作るCTA統一</div>
+      <div class="desc">ステップ別クリップ管理・状況別主CTA 1択集約（ClipLibraryCTA.resolvePrimary）</div>
+    </a>
+    <a class="card" href="screens/preview.html">
+      <div class="title">プレビュー・書き出し（PreviewView）</div>
+      <div class="desc">動画合成後プレビュー・カメラロール/アプリ内の2種保存・VideoCompletion記録</div>
+      <div class="meta"><span class="tag">build69</span></div>
     </a>
   </div>
 
@@ -107,7 +112,12 @@
     </a>
     <a class="card" href="features/testing.html">
       <div class="title">テスト基盤</div>
-      <div class="desc">RoutineReelTests 21件（Streak / SavingPercentage / Pro Resolved）。テスト経由で yearlySavingPercentage の本番バグを発見・修正</div>
+      <div class="desc">RoutineReelTests 92件（build69）。NextRecordingSelector / VideoCompletion / ClipLibraryCTA 等の純粋関数を Product/SwiftUI 非依存でユニットテスト化</div>
+    </a>
+    <a class="card" href="features/video-completion.html">
+      <div class="title">VideoCompletion 完成実績モデル</div>
+      <div class="desc">build69 追加。「動画を1本つくり終えた」の単一情報源。カメラロール/アプリ内保存どちらでも1件記録。creationSessionId で二重計上防止</div>
+      <div class="meta"><span class="tag">build69</span></div>
     </a>
     <a class="card" href="features/weekly-reminder.html">
       <div class="title">週次リマインダー（曜日指定）</div>
@@ -127,6 +137,7 @@
       <tr><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>2026-07-15</td><td><strong>build69 反映</strong>（機能凍結中・未提出）: 新規2ファイル（screens/preview.html・features/video-completion.html）作成。既存9ファイル更新（home / clip-library / routine-edit / paywall / video-list / onboarding-flow / analytics / testing / index）。主な変更: VideoCompletion @Model 追加（完成実績の単一情報源・creationSessionId 二重計上防止）/ NextRecordingSelector（「次に撮影」CTA 対象選定の安定ソート）/ ClipLibraryCTA.resolvePrimary（状況別主CTA 1択集約）/ ScheduleOutcome.notAuthorized（通知拒否 UI フィードバック）/ ProductLoadState 3状態管理（loading/loaded/failed）/ オンボ完了後撮影直行（F5）/ ATT 遅延を hasSeenFirstValueMoment まで延伸 / Analytics に creation_session_id・entry_source・destination を追加 / VideoListView 文言統一（「アプリ内の動画」）/ テスト 21→92 件（純粋関数化で Product/SwiftUI 非依存）</td></tr>
       <tr><td>2026-07-11</td><td><strong>v1.2.0 (build67) 反映</strong>: 計測イベント 9 種追加（撮影ファネル 3 件 / 動画合成 2 件 / export_failed / paywall_dismissed / purchase_failed / att_result）を analytics.html に追記。週次リマインダー（曜日指定）機能仕様書（features/weekly-reminder.html）を新規作成。続きから撮る導線機能仕様書（features/resume-shooting.html）を新規作成。home.html / shooting.html / clip-library.html / routine-edit.html にそれぞれ v1.2 変更を反映</td></tr>
       <tr><td>2026-07-01</td><td><strong>v1.1.0 追加反映</strong>: 年額トライアル廃止（7日間無料→なし）に伴い paywall.html / subscription.html を更新（CTA文言・planSubtitle・trialNoticeSection をトライアルなし表記に統一）。P1-a バグ修正 <code>inFlightTempURLs</code> / <code>isCancelled</code> ガード / <code>removeItem(sourceURL)</code> 削除を paywall.html に記録。AdMob 本番 App ID 切り替え・SnapshotGallery→RoutineVideoPoster 刷新は仕様書補足として記載</td></tr>
       <tr><td>2026-06-30</td><td><strong>v1.1.0 UI/UX 改善 5 件</strong>: (#4) フリーミアム上限を <code>VideoStorageService.freeRoutineLimit = 3</code> に一元化（旧: <code>maxFreeRoutines = 2</code> 散在）、ルーティン上限 2→3 件・動画保存上限も 3 件で統一 / (#2) 編集保存でのクリップ削除を緩和 — <code>stepsChanged</code> computed property でステップ構成変更時のみ削除、名前/アイコン/フォント/リマインダー変更ではクリップ保持 / (#3) オンボーディング 4→3 ページ圧縮 — 旧 Page 1「撮影スタイル解説」削除、新フロー: Welcome→プリセット選択→リマインダー、撮影スタイル解説は ClipLibraryView の TipKit（ShootingStyleTip・最大3回）に移行 / (#1) 連続撮影の中断→クリップ保持 — 録画済みクリップをライブラリに保持、録画中ステップのみ <code>isCancelled</code> フラグで破棄、「保存して終了」アラート追加 / (#5) RootView に Dynamic Type クランプ <code>.dynamicTypeSize(.xSmall ... .accessibility2)</code> を設定（v1.2 でセマンティックフォント対応予定）</td></tr>
@@ -142,7 +153,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-11</footer>
+  <footer class="site-footer">最終更新: 2026-07-15</footer>
 </div>
 </body>
 </html>

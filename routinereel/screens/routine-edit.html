@@ -65,6 +65,7 @@
     <li><span class="k">保存時</span><span class="v"><code>ReminderService.shared.scheduleReminder(for:)</code> を Task で実行し <code>ScheduleOutcome</code> を受け取る</span></li>
     <li><span class="k">limitReached 時</span><span class="v">「通知の上限に達しました。以前の設定を維持します。」アラートを表示（前の設定は変更されない）</span></li>
     <li><span class="k">partiallyScheduled 時</span><span class="v">「一部の曜日（N/M 曜日）のみ登録できました。」アラートを表示（設定画面と実際の通知挙動の乖離をユーザーに知らせる）</span></li>
+    <li><span class="k">notAuthorized 時（build69 追加・F7）</span><span class="v"><code>ScheduleOutcome.notAuthorized</code>（denied および notDetermined での拒否を識別）の場合、「iOS設定で通知を許可すると有効になります」アラートを表示。<code>reminderEnabled = true</code> は保持し、後日 iOS 設定で許可された際に RootView.refreshAllReminders による自動回復経路を維持。従来は denied / notDetermined いずれも <code>notScheduled</code> として同一扱いだったが、build69 より <code>notAuthorized</code> を別枚挙として分離し UI フィードバックに差異を設けた</span></li>
   </ul>
 
   <h3>ステップセクション</h3>
@@ -174,6 +175,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.6</td><td>2026-07-15</td><td>build69 反映 (F7): ReminderService.ScheduleOutcome に .notAuthorized を追加（denied および notDetermined での拒否を通常の notScheduled と区別）。RoutineEditView で .notAuthorized 時に「iOS設定で通知を許可すると有効になります」アラートを表示。reminderEnabled=true は保持し RootView.refreshAllReminders による自動回復経路を維持</td></tr>
       <tr><td>v1.5</td><td>2026-07-11</td><td>v1.2 反映: リマインダーセクションに曜日選択チップ（月〜日、月曜始まり）を追加。Routine.reminderWeekdays: [Int]（デフォルト全曜日）をモデルに追加し、曜日ごとに個別トリガーを登録（全曜日の場合は単一の毎日繰り返しトリガーで pending 数を節約）。最後の 1 曜日はタップ不可（2秒間ヒント表示）。ScheduleOutcome.limitReached / partiallyScheduled 時のアラートを追加。ModelContext.saveOrLog() ヘルパー導入によりルーティン作成・複製の保存失敗時にロールバック+アラートに変更（幽霊データ防止）</td></tr>
       <tr><td>v1.4</td><td>2026-07-07</td><td>機能性・デザイン改善（e216de7, e012cc3, e3e6ca1）: 差分リコンサイル方式に変更（EditableStep に originalStepID を追加、削除ステップのクリップのみ物理削除、名前変更・秒数変更・並び替え・ステップ追加ではクリップ保持）。クリップ削除警告を精緻化（「〇件のみ削除・他は保持」の文言に更新）。空ステップ名の保存を無効化（空テロップ動画の生成防止）。ルーティン削除時の完全クリーンアップ（クリップ物理削除・リマインダー解除・保留通知 ID 掃除）を2削除経路で対称化</td></tr>
       <tr><td>v1.3</td><td>2026-07-07</td><td>操作性・アクセシビリティ改善バッチ（7c014ad / cff03e9）: ステップ削除ボタンのヒット領域を 32→44pt に拡張（.contentShape 拡張・視覚サイズ維持）。ドラッグ並び替えに VoiceOver 代替アクションを追加（「上へ移動」/「下へ移動」、先頭・末尾では非表示）。各ステップ行に accessibilityLabel で順番を読み上げ</td></tr>
@@ -186,7 +188,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-11</footer>
+  <footer class="site-footer">最終更新: 2026-07-15</footer>
 </div>
 </body>
 </html>

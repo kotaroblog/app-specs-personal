@@ -12,8 +12,8 @@
   <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
 
   <header class="site-header">
-    <h1>私の記録（VideoListView）</h1>
-    <p>「保存した動画」から「私の記録」へ。utility app 感を消し、ユーザー個人の記録感を強める。</p>
+    <h1>アプリ内の動画（VideoListView）</h1>
+    <p>build69 より「私の記録」→「アプリ内の動画」に変更。アプリ内に保存した動画のみを表示する画面であることを明示（カメラロール保存のみの動画はここに表示されない）。</p>
   </header>
 
   <h2>基本情報</h2>
@@ -22,14 +22,14 @@
     <li><span class="k">実装ファイル</span><span class="v"><code>Views/Library/VideoListView.swift</code></span></li>
     <li><span class="k">表示方式</span><span class="v">sheet（NavigationStack内）</span></li>
     <li><span class="k">起動経路</span><span class="v">ホーム「最近の動画 → すべて見る」/ サムネタップ / 作品タブ</span></li>
-    <li><span class="k">ナビタイトル</span><span class="v">私の記録</span></li>
+    <li><span class="k">ナビタイトル</span><span class="v">アプリ内の動画（build69 より「私の記録」→「アプリ内の動画」に変更）</span></li>
     <li><span class="k">背景色</span><span class="v">#FAF9F7</span></li>
   </ul>
 
   <h2>画面構成</h2>
   <ul class="kv-list">
     <li><span class="k">動画一覧</span><span class="v">2列グリッド（旧3列から変更）・縦並び LazyVGrid</span></li>
-    <li><span class="k">空状態</span><span class="v">film.stack アイコン + 「まだ記録がありません」</span></li>
+    <li><span class="k">空状態</span><span class="v">film.stack アイコン + 「アプリ内に保存した動画はありません」（build69 より「まだ記録がありません」→変更）+ 説明「プレビュー画面で『アプリに保存』すると、ここからあとで再生できます。」</span></li>
     <li><span class="k">サムネタップ</span><span class="v">VideoPlayerSheet（黒地・没入再生）</span></li>
     <li><span class="k">contextMenu</span><span class="v">シェア / 削除</span></li>
   </ul>
@@ -81,12 +81,13 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.2</td><td>2026-07-15</td><td>build69 反映: 保存範囲を明示する文言統一（挙動は変更なし）。ナビタイトル「私の記録」→「アプリ内の動画」。空状態タイトル「まだ記録がありません」→「アプリ内に保存した動画はありません」。空状態説明文「プレビュー画面で『アプリに保存』すると、ここからあとで再生できます。」を追加。Paywall・プレビュー画面の「アプリ内保存」用語と統一。下部タブ「作品」は据え置き（NavigationBar 非表示のため混乱なし）</td></tr>
       <tr><td>v1.1</td><td>2026-07-03</td><td>v1.1.0 UI/UX改善バッチ反映: VideoPlayerSheet に .preferredColorScheme(.dark) を個別付与（RootView .light 化に伴う例外対応）。ミュートToggle に VoiceOver ラベル付与、動画タップ再生切替に isButton トレイト付与。動画ファイル欠損時に「動画ファイルが見つかりません」を表示（旧: 無限スピナー / 黒画面）</td></tr>
       <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。3列→2列、サムネ大型化、ナビタイトルを「保存した動画」→「私の記録」、空状態コピー刷新、accent orange は black背景に維持</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-03</footer>
+  <footer class="site-footer">最終更新: 2026-07-15</footer>
 </div>
 </body>
 </html>
