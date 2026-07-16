@@ -36,7 +36,7 @@ flowchart TD
   Tabs --> Settings[設定タブ]
 
   Home --> RecBtn(今夜を記録・主ボタン)
-  RecBtn --> RecSheet[収支セッション記録シート<br/>店名サジェスト・バイイン・キャッシュアウト]
+  RecBtn --> RecSheet[収支セッション記録シート<br/>リング／トナメ2モード・店名サジェスト・チップIN／OUT→BB自動換算]
   RecSheet --> RecDone[記録完了画面]
   RecDone -->|気になった1手を残す| HandSheet[ハンド簡易記録シート<br/>52セルグリッド・ボード・弱点タグ3タップ・任意1行]
   RecDone -->|閉じる| Home
@@ -61,7 +61,7 @@ flowchart TD
   ShareCard --> SharePreview[プレビュー]
   SharePreview --> OSShare[OS共有シート]
 
-  Analysis --> Dashboard[収支ダッシュボード<br/>累計損益・月別・店別3グラフ・弱点タグ集計]
+  Analysis --> Dashboard[収支ダッシュボード<br/>リングBB収支・トナメ成績・月間支出・店別・弱点タグ集計]
   Dashboard --> VenueDetail[店別成績詳細]
 
   Settings --> Paywall[Paywall]
@@ -117,6 +117,7 @@ flowchart TD
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
+    <tr><td>1.1</td><td>2026-07-16</td><td>収支2レイヤー化に伴う記録シート・ダッシュボード表記の更新</td></tr>
   </table>
 
   <script>

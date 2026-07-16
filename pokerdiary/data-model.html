@@ -21,6 +21,10 @@
     ステータス: <strong>企画確定・実装未着手</strong>（2027-Q1リリース目標）。本書は設計方針であり、以下は「〜する設計とする」前提で読むこと。新規4モデル＋旧PokerLesson流用2モデルの計6モデルを <code>Schema([Session, Venue, Hand, WeeklyReview, Question, AnswerRecord])</code> で構成する設計とする。
   </div>
 
+  <div class="callout warn">
+    <strong>収支設計の改訂（2026-07-16ユーザー確定）:</strong> アミューズメントポーカーには換金が存在しないため「円のプラマイ収支」を廃止した。実力は<strong>リング=BB収支</strong>・<strong>トナメ=ITM率／入賞内容</strong>で測り、円は<strong>支出のみ</strong>を娯楽費として記録する<strong>2レイヤー収支</strong>に変更する。これに伴い <code>Session</code> / <code>WeeklyReview</code> を改訂した。
+  </div>
+
   <h2>ER 図</h2>
   <div class="mermaid">
 erDiagram
@@ -36,11 +40,16 @@ erDiagram
   Session {
     UUID id
     Date date
-    Int buyIn
-    Int cashOut
-    Int durationMinutes
     String gameTypeRaw
-    String stakes
+    Int spentYen
+    Int chipIn
+    Int chipOut
+    Int sbChips
+    Int bbChips
+    Int durationMinutes
+    Int buyInCount
+    String resultRaw
+    String prizeNote
     String note
     Date createdAt
   }
@@ -61,7 +70,10 @@ erDiagram
   WeeklyReview {
     UUID id
     Date weekStartDate
-    Int profitSnapshot
+    Double ringBBSnapshot
+    Int tourEntryCount
+    Int tourITMCount
+    Int spentYenSnapshot
     Int sessionCount
     Int handCount
     StringArray topWeaknessTagsRaw
@@ -96,20 +108,33 @@ erDiagram
   <pre><code>@Model
 final class Session {
     var id: UUID = UUID()
-    var date: Date = Date()              // プレイ日
-    var buyIn: Int = 0                   // 円
-    var cashOut: Int = 0                 // 円
-    var durationMinutes: Int? = nil      // 任意（Pro時給分析用）
-    var gameTypeRaw: String = "tournament" // tournament / ring
-    var stakes: String = ""              // リング用ブラインド表記（任意）
+    var date: Date = Date()                  // プレイ日
+    var gameTypeRaw: String = "ring"         // ring / tournament
     var note: String = ""
     var createdAt: Date = Date()
+
+    // レイヤー2: 円支出（娯楽費管理・任意）
+    var spentYen: Int = 0                    // エントリー費・参加費・リバイ等の合計
+
+    // リング用（レイヤー1: 実力）
+    var chipIn: Int = 0                      // 持ち込みチップ
+    var chipOut: Int = 0                     // 終了時チップ
+    var sbChips: Int = 0                     // ステークスSB（例: 2, 100）
+    var bbChips: Int = 0                     // ステークスBB（例: 5, 200）
+    var durationMinutes: Int? = nil          // 任意（Pro: BB/時 分析用）
+
+    // トナメ用（レイヤー1: 実力）
+    var buyInCount: Int = 1                  // エントリー+リエントリー数
+    var resultRaw: String = ""               // busted / itm / won
+    var prizeNote: String = ""               // プライズ内容テキスト（例: JOPTパッケージ）
 
     var venue: Venue? = nil
     @Relationship(deleteRule: .nullify, inverse: \Hand.session)
     var hands: [Hand] = []
 
-    var profit: Int { cashOut - buyIn }  // computed
+    // computed
+    var chipProfit: Int { chipOut - chipIn }
+    var bbProfit: Double? { bbChips > 0 ? Double(chipProfit) / Double(bbChips) : nil }
 }</code></pre>
 
   <h3>Venue</h3>
@@ -147,7 +172,10 @@ final class Hand {
 final class WeeklyReview {
     var id: UUID = UUID()
     var weekStartDate: Date = Date()     // 週の月曜0時
-    var profitSnapshot: Int = 0          // 完了時点の週間収支
+    var ringBBSnapshot: Double = 0       // 今週のリングBB収支
+    var tourEntryCount: Int = 0          // 今週のトナメエントリー数
+    var tourITMCount: Int = 0            // 今週のITM数
+    var spentYenSnapshot: Int = 0        // 今週の支出
     var sessionCount: Int = 0
     var handCount: Int = 0
     var topWeaknessTagsRaw: [String] = [] // 頻出タグ上位3
@@ -196,7 +224,7 @@ final class WeeklyReview {
     <li><strong>MTT照合結果（HeroPreflopResult）は保存しない</strong> — <code>positionRaw</code> ＋ ホールカード ＋ <code>scenarioRaw</code> から流用 <code>RangeDataService</code> で都度再計算する（正規化・データ最小主義）。</li>
     <li><strong>旧 UserProgress（ストリーク）は持ち込まない</strong> — why_return 設計でストリーク・ノルマ型は不採用のため。答え合わせの成績は <code>AnswerRecord</code> から都度算出する。</li>
     <li><strong>VersionedSchema を初回から整備する</strong> — 旧PokerLesson には無かった。<code>PokerDiarySchemaV1</code> ＋ <code>SchemaMigrationPlan</code> を v1.0 で導入する（MVP #14）。</li>
-    <li><strong>金額は Int（円）</strong> — <code>profit</code> は computed。4+維持のため画面文言は「収支」で統一し、賭博表現を使わない。</li>
+    <li><strong>円のプラマイ収支を持たない（2レイヤー収支）</strong> — アミュには換金が存在しないため、円収支はフィクションになる。実力はリング=BB収支（<code>chipProfit / bbChips</code>）・トナメ=ITM率で測り、円は支出（<code>spentYen</code>）のみを娯楽費として記録する2レイヤー設計とする。プライズを金銭換算しない構造はレーティング4+（賭博性の否定）とも整合する。</li>
   </ol>
 
   <h2>マイグレーション方針</h2>
@@ -210,6 +238,7 @@ final class WeeklyReview {
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
+    <tr><td>1.1</td><td>2026-07-16</td><td>収支設計を2レイヤー化（リングBB収支・トナメITM・円は支出のみ）。Session/WeeklyReviewを改訂</td></tr>
   </table>
 
   <script>
