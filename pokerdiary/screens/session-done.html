@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- 記録完了</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / 記録完了</div>
+
+  <header class="site-header">
+    <h1>記録完了</h1>
+    <p>収支保存後に「気になった1手」記録へ誘う最重要ファネル</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-03</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>収支セッション保存の完了を伝える画面。だがこの画面の本質は<strong>本アプリ最重要ファネル</strong>＝「収支記録 → ハンド記録」への橋渡しにある。「気になった1手、残しますか？」を主誘導に据え、差別化行動（ハンド記録・弱点タグ言語化）へ最大確率で接続する。同時に「今夜はこのまま終える」も罰的にせず同等の軽さで並置し、記録継続の心理的ハードルを上げない。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>完了アイコン＋見出し</td><td>Icon + Title</td><td>チェックマーク＋「記録しました」</td></tr>
+    <tr><td>保存サマリ</td><td>Caption</td><td>店・形式・BB収支（リング）またはトナメ結果を1行表示（例: アキバギルド・リング2/5・+200 BB）</td></tr>
+    <tr><td>ハンド記録 主誘導カード</td><td>Highlight Card</td><td>「気になった1手、残しますか？」＋「30秒で記録。続けるほど、負け筋が言葉になる。」＋「ハンドを記録する」主ボタン</td></tr>
+    <tr><td>終了ボタン</td><td>Plain Button（軽量）</td><td>「今夜はこのまま終える」。罰的な表現・色を使わずホームへ戻す</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>リング保存後</td><td>サマリにBB収支（勝ち＝緑／負け＝テラコッタ）を表示</td></tr>
+    <tr><td>トナメ保存後</td><td>サマリにトナメ結果（バスト／ITM／優勝）を表示</td></tr>
+    <tr><td>共通</td><td>ハンド記録主誘導カードを中心に配置し、終了ボタンを軽く並置</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「ハンドを記録する」タップ</td><td>ハンド簡易記録（PD-04）</td></tr>
+    <tr><td>「今夜はこのまま終える」タップ</td><td>ホーム（PD-01）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Session   // 直前に保存したセッション（サマリ表示用: venue / gameTypeRaw / bbProfit / resultRaw）
+// この画面自体は新規保存を行わない。ハンド記録へ進んだ場合、生成される Hand.session に本 Session を紐づける</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>hand_prompt_shown</code></td><td>なし</td><td>完了画面「1手残す?」の表示数（ファネル分母）</td></tr>
+    <tr><td><code>hand_prompt_accepted</code></td><td>なし</td><td>承諾数（収支→ハンドの最重要ファネル分子）。shown との突合で承諾率を算出</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>本画面は<strong>収支→ハンドの最重要ファネル</strong>。主誘導と終了を心理的に対等に見せ、承諾率を計測しながら文言・レイアウトを改善する</li>
+    <li>「今夜はこのまま終える」は否定色・小さすぎる文字にせず、罰を感じさせない軽さで置く</li>
+    <li>ハンド記録へ進んだ場合、生成する Hand に本 Session を <code>session</code> として紐づける（has_session=true）</li>
+    <li>離脱は直接イベント化せず、shown と accepted の差分で算出（ファネル設計思想）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="session-entry.html">収支記録シート（PD-02）</a></li>
+    <li><a href="hand-entry.html">ハンド簡易記録（PD-04）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv2+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

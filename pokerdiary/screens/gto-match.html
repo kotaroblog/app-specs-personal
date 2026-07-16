@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- MTTレンジ照合バナー</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / MTTレンジ照合バナー</div>
+
+  <header class="site-header">
+    <h1>MTTレンジ照合バナー</h1>
+    <p>ハンド保存後に受動表示。あなたのアクション vs GTO推奨</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-07</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>ハンド保存直後、登録レンジに該当するスポットのみ受動的に表示する照合画面。自分のアクションとGTO推奨を対比し、1文の解説で気づきを与える。従（受動）機能であるレンジ逆引き・130問答え合わせへの導線をここから提供し、単体タブ・単体メニューは持たせない。照合結果は保存せず、position＋ホールカード＋scenarioから都度再計算する。</p>
+
+  <h2>表示条件</h2>
+  <div class="callout">
+    ハンド保存時、次の<strong>すべて</strong>を満たす場合のみ表示する:<br>
+    ① <code>scenarioRaw</code> が rfi / vs_open / cold_call_vs_squeeze のいずれか<br>
+    ② ホールカード・ポジションが入力済み<br>
+    ③ 該当するレンジ表が存在する
+  </div>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>保存済みハンド概要</td><td>Card（淡色）</td><td>ホールカード・ポジション・状況・あなたのアクションを再掲</td></tr>
+    <tr><td>照合見出し</td><td>Label + Badge</td><td>「MTT レンジ照合」。リング由来ハンドには<strong>「参考」バッジ</strong>を付与</td></tr>
+    <tr><td>対比カード</td><td>Card × 2</td><td>「あなた」（例: コール／テラコッタ）↔「GTO推奨」（例: レイズ／アクセント）</td></tr>
+    <tr><td>解説</td><td>Caption 1文</td><td>推奨理由の1文（例: このスポットはAKsで3ベットに回す頻度が高い。コールだけだとレンジが受け身になる）</td></tr>
+    <tr><td>「レンジを見る」</td><td>Ghost Button</td><td>レンジ逆引きビューアへ</td></tr>
+    <tr><td>「似た問題を解く」</td><td>Primary Button</td><td>130問答え合わせへ</td></tr>
+    <tr><td>注記</td><td>Caption</td><td>「照合は登録レンジに該当するスポットのみ」「リングのハンドへの照合はMTT用レンジによる参考値」</td></tr>
+    <tr><td>「記録を続ける」</td><td>Plain Button</td><td>照合せずホーム等へ戻る</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>MTT由来ハンド</td><td>通常の照合カードを表示（参考バッジなし）</td></tr>
+    <tr><td>リング由来ハンド</td><td>「参考」バッジ付き。MTT用レンジによる参考値である旨を注記（v1.1でリング用レンジ整備予定）</td></tr>
+    <tr><td>非該当スポット</td><td>そもそも本バナーを表示せず、記録だけ残す</td></tr>
+    <tr><td>照合・答え合わせ 合算1日3回超（無料）</td><td>導線タップ時に Paywall（source=matchLimit）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「レンジを見る」タップ</td><td>レンジ逆引きビューア</td></tr>
+    <tr><td>「似た問題を解く」タップ</td><td>答え合わせ（130問）</td></tr>
+    <tr><td>照合・答え合わせ 1日3回超</td><td>Paywall（source=matchLimit）</td></tr>
+    <tr><td>「記録を続ける」／完了 タップ</td><td>ホーム（PD-01）へ戻る</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Hand // 照合の入力: holeCard1/2 / positionRaw / scenarioRaw / actionRaw / gameTypeRaw由来（参考バッジ判定）
+// 照合結果（HeroPreflopResult相当）は保存しない。position + ホール + scenario から流用 RangeDataService で都度再計算
+Question / AnswerRecord // 「似た問題を解く」（130問答え合わせ）で参照</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>preflop_match_shown</code></td><td>matched</td><td>照合バナー表示・GTO一致率</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>照合結果は<strong>保存しない</strong> — position＋ホールカード＋scenarioRaw から都度再計算（正規化・データ最小主義）</li>
+    <li>リング由来ハンドへの照合は<strong>「参考」扱い</strong> — v1.0のレンジ資産はMTT用のみ。参考バッジで誤学習を防ぐ（リング用レンジはv1.1）</li>
+    <li>従機能（レンジ逆引き・答え合わせ）は単体タブ・単体メニューを持たず、この受動導線からのみ呼び出す</li>
+    <li>無料は照合・答え合わせ合算で1日3回。超過時 Paywall（source=matchLimit）</li>
+    <li>レンジ表・130問データのロードは range カテゴリでログ（流用系）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="hand-entry.html">ハンド簡易記録（PD-04）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv2+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

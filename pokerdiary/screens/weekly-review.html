@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- 週次レビュー</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / 週次レビュー</div>
+
+  <header class="site-header">
+    <h1>週次レビュー</h1>
+    <p>5ステップで今週を振り返り、次回の課題を1つ決める</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-06</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>1週間の記録を振り返り、「なぜ負けたか」を言語化して次回の課題を1つに絞る、週次リテンションの核となるフロー。今週の実力サマリ・自分のメモ・頻出弱点タグを順に見せ、行動変容につながる「次回の課題」をホームへ橋渡しする。達成感のピークをつくり、レビュー完了直後をレビュー依頼の好機とする。</p>
+
+  <h2>UI 構成（5ステップ）</h2>
+  <table>
+    <tr><th>#</th><th>ステップ</th><th>種類</th><th>説明</th></tr>
+    <tr><td>1</td><td>今週のサマリ</td><td>Card × 3</td><td>リングBB収支／トナメ エントリー・ITM／支出円。加えて今週のセッション数の総括文</td></tr>
+    <tr><td>2</td><td>自分のメモを読み返す</td><td>List（Card行）</td><td>今週の Hand.note 一覧（ハンド見出し＋メモ本文）を再掲</td></tr>
+    <tr><td>3</td><td>今週の頻出タグ</td><td>Bar List</td><td>弱点タグを回数付きバーで表示（例: コール過多 4回）。降順</td></tr>
+    <tr><td>4</td><td>次回の課題を決める</td><td>Text Field + Chip候補</td><td>来週意識する1つを入力。頻出タグから候補チップを提示</td></tr>
+    <tr><td>5</td><td>完了</td><td>Celebration</td><td>星が灯り「今週の振り返り、完了」。累積表現「これで○回目の振り返り」</td></tr>
+    <tr><td>—</td><td>ステップインジケーター</td><td>Dots</td><td>5ステップの進行を表示。「次へ」で進行</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>着手（通知経由）</td><td>source=notification で開始。日曜夜ローカル通知から遷移</td></tr>
+    <tr><td>着手（ホーム経由）</td><td>source=home で開始。ホームの週次レビュー誘導カードから遷移</td></tr>
+    <tr><td>ステップ進行中</td><td>Dotsで現在位置を表示。戻る／次へで移動</td></tr>
+    <tr><td>完了</td><td>WeeklyReview のスナップショット4項目＋次回の課題を保存し、completedAt を記録</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>日曜夜ローカル通知 タップ</td><td>週次レビュー（本画面・source=notification）</td></tr>
+    <tr><td>ホーム誘導カード タップ</td><td>週次レビュー（本画面・source=home）</td></tr>
+    <tr><td>各ステップ「次へ」</td><td>次ステップへ</td></tr>
+    <tr><td>完了「ホームへ戻る」</td><td>ホーム（PD-01・次回の課題を反映）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>WeeklyReview // weekStartDate（週の月曜0時）
+             // スナップショット4項目: ringBBSnapshot / tourEntryCount / tourITMCount / spentYenSnapshot
+             // sessionCount / handCount / topWeaknessTagsRaw（頻出上位3）
+             // nextFocus（次回の課題・ホーム表示の核）/ completedAt
+Session      // 今週分の集計元
+Hand         // 今週の note 一覧・弱点タグ集計元</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>weekly_review_started</code></td><td>source（notification/home）</td><td>レビュー着手（導線別）</td></tr>
+    <tr><td><code>weekly_review_completed</code></td><td>tag_count, has_next_focus</td><td>レビュー完遂（週次リテンションの核）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><strong>完了画面は累積表現のみ</strong> — 「これで○回目の振り返り」。<strong>連続週数などストリーク表現は禁止</strong>（why_return設計思想: ストリーク・ノルマ型は不採用。休んでも罰しない）</li>
+    <li>完了時に WeeklyReview のスナップショット4項目（ringBBSnapshot / tourEntryCount / tourITMCount / spentYenSnapshot）を確定保存する</li>
+    <li>次回の課題は頻出タグから候補チップを提示しつつ、自由入力も許容。ホーム（PD-01）の「次回の課題」カードに反映</li>
+    <li>レビュー完了直後はレビュー依頼（SKStoreReviewController）の好機。収支記録直後には出さない</li>
+    <li>頻出タグ集計は今週分 Hand の weaknessTagsRaw を in-memory 集計</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="home.html">ホーム（PD-01）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv2+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

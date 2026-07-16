@@ -225,6 +225,8 @@ final class WeeklyReview {
     <li><strong>旧 UserProgress（ストリーク）は持ち込まない</strong> — why_return 設計でストリーク・ノルマ型は不採用のため。答え合わせの成績は <code>AnswerRecord</code> から都度算出する。</li>
     <li><strong>VersionedSchema を初回から整備する</strong> — 旧PokerLesson には無かった。<code>PokerDiarySchemaV1</code> ＋ <code>SchemaMigrationPlan</code> を v1.0 で導入する（MVP #14）。</li>
     <li><strong>円のプラマイ収支を持たない（2レイヤー収支）</strong> — アミュには換金が存在しないため、円収支はフィクションになる。実力はリング=BB収支（<code>chipProfit / bbChips</code>）・トナメ=ITM率で測り、円は支出（<code>spentYen</code>）のみを娯楽費として記録する2レイヤー設計とする。プライズを金銭換算しない構造はレーティング4+（賭博性の否定）とも整合する。</li>
+    <li><strong>店の前回値は非正規化しない</strong> — 記録シートの「店に紐づく前回ステークス・前回チップIN」は、<code>Venue</code> にフィールドを持たせず、その店の最新 <code>Session</code> からのクエリ導出で実現する（SSoTの一元化）。</li>
+    <li><strong>リング由来ハンドへのMTT照合は参考扱い</strong> — v1.0のレンジ資産はMTT用のみのため、リングセッション由来のハンドへの照合は「参考」バッジを表示して誤学習を防ぐ（リング用レンジはv1.1）。</li>
   </ol>
 
   <h2>マイグレーション方針</h2>
@@ -239,6 +241,7 @@ final class WeeklyReview {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
     <tr><td>1.1</td><td>2026-07-16</td><td>収支設計を2レイヤー化（リングBB収支・トナメITM・円は支出のみ）。Session/WeeklyReviewを改訂</td></tr>
+    <tr><td>1.2</td><td>2026-07-16</td><td>前回値のクエリ導出方針・リング参考照合の設計判断を追加</td></tr>
   </table>
 
   <script>

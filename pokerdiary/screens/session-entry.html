@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- 収支記録シート</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / 収支記録シート</div>
+
+  <header class="site-header">
+    <h1>収支記録シート</h1>
+    <p>リング／トナメ2モードの10秒収支入力（習慣の錨）</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-02</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>アミュ帰りの10秒で「今夜の収支」を残すための中核入力シート。リング＝チップIN／OUTからBB収支をライブ換算、トナメ＝結果とプライズ内容を記録する。円は「支出（娯楽費）」のみを扱い、プラマイ収支・円換算・ROIは記録しない（2レイヤー収支・4+整合）。このシートは<strong>習慣の錨</strong>であり、どの経路でも永久無料でPaywallに阻まれない。</p>
+
+  <h2>UI 構成</h2>
+  <h3>共通</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ナビバー</td><td>Navigation</td><td>「今夜を記録」タイトル・キャンセル・日付ピッカー</td></tr>
+    <tr><td>モードセグメント</td><td>Segmented Control</td><td>リング／トナメの切替。前回使用モードを記憶して初期選択する</td></tr>
+    <tr><td>店選択チップ</td><td>Chip（横スクロール）</td><td>店名サジェスト（使用頻度順）＋「＋新規」。選択済みはアクセント塗り</td></tr>
+    <tr><td>保存ボタン</td><td>Primary Button</td><td>Session を保存し記録完了画面（PD-03）へ</td></tr>
+  </table>
+  <h3>リングモード</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ステークスチップ</td><td>Chip</td><td>その店の最新Sessionから前回値をクエリ導出して先頭表示（例: 2/5）。他候補も併置</td></tr>
+    <tr><td>チップIN</td><td>Field + Keypad</td><td>持ち込みチップ（点）。店の前回値をデフォルト</td></tr>
+    <tr><td>チップOUT</td><td>Field + Keypad</td><td>終了時チップ（点）。アクティブ入力対象</td></tr>
+    <tr><td>BB収支ライブ換算</td><td>Result Card（緑/テラコッタ）</td><td>chipProfit / bbChips を即時換算表示（例: +200 BB）。補助表記「+1,000点 @2/5（1BB=5点）」</td></tr>
+    <tr><td>参加費（円）</td><td>Field（任意）</td><td>娯楽費として任意入力（例: ¥3,000）→ spentYen</td></tr>
+  </table>
+  <h3>トナメモード</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>エントリー費（円）</td><td>Field</td><td>1エントリーあたりの費用（娯楽費）</td></tr>
+    <tr><td>エントリー数</td><td>Stepper</td><td>リエントリーを含むエントリー数（buyInCount）</td></tr>
+    <tr><td>結果</td><td>Segmented Control</td><td>バスト／ITM／優勝の3択（resultRaw = busted / itm / won）</td></tr>
+    <tr><td>プライズ内容</td><td>Text Field</td><td>入賞時のみ表示。テキスト記録（例: リングチップ50,000点）→ prizeNote</td></tr>
+    <tr><td>支出合計</td><td>Auto Field（上書き可）</td><td>エントリー費×エントリー数を自動計算。手動上書き可 → spentYen</td></tr>
+    <tr><td>注記</td><td>Caption</td><td>「アミューズメントのため賞金は出ません。円換算・ROIは記録しません」</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>リング初期</td><td>前回使用モードがリングなら初期表示。店・ステークス・チップINは前回値をプリセット</td></tr>
+    <tr><td>トナメ初期</td><td>前回使用モードがトナメなら初期表示。結果未選択・プライズ欄は非表示</td></tr>
+    <tr><td>入賞（ITM/優勝）選択時</td><td>プライズ内容テキスト欄を表示する</td></tr>
+    <tr><td>BB収支換算中（リング）</td><td>チップIN/OUTとステークスが揃った時点で緑（勝ち）／テラコッタ（負け）カードにライブ換算を表示</td></tr>
+    <tr><td>新規店</td><td>「＋新規」から店名を追加し Venue を作成</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>保存する タップ</td><td>記録完了画面（PD-03）</td></tr>
+    <tr><td>キャンセル タップ</td><td>ホーム（PD-01）へ戻る</td></tr>
+    <tr><td>リング／トナメ セグメント切替</td><td>同一シート内でモード切替</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Session   // gameTypeRaw（ring/tournament）
+          // リング: chipIn / chipOut / sbChips / bbChips / durationMinutes(任意)
+          //         computed chipProfit = chipOut - chipIn / bbProfit = chipProfit / bbChips
+          // トナメ: buyInCount / resultRaw(busted/itm/won) / prizeNote
+          // 共通: spentYen（娯楽費）/ venue / date
+Venue     // name（店選択・前回値クエリの起点）</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>session_logged</code></td><td>game_type, has_duration, venue_is_new</td><td>錨行動の頻度（最重要リテンション指標）。金額・店名は含めない</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><strong>10秒入力が守るべき錨</strong> — 入力ステップ数・タップ数を最小化し、前回値プリセットで実質「確認＋OUT入力」で完結させる</li>
+    <li><strong>収支入力はPaywallに阻まれない</strong> — このシートは永久無料。課金導線をこの画面のコア入力に挟まない</li>
+    <li>店の「前回ステークス・前回チップIN」はその店の最新Sessionからクエリ導出（Venueに非正規化しない）</li>
+    <li>BB収支換算は <code>bbChips &gt; 0</code> のときのみ算出（0除算回避、bbProfitはOptional）</li>
+    <li>トナメの円換算・ROIは意図的に非実装。プライズは金銭換算せずテキストのみ（4+・賭博性の否定）</li>
+    <li>KPIのパラメータに金額・店名・自由記述を含めない（件数・真偽値・enum値のみ）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="home.html">ホーム（PD-01）</a></li>
+    <li><a href="session-done.html">記録完了（PD-03）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv2+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

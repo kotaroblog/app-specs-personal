@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- クイックメモ</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / クイックメモ</div>
+
+  <header class="site-header">
+    <h1>クイックメモ</h1>
+    <p>席を外す前の5秒。ホールカード2枚＋任意ひとこと</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-05</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>プレイ中に席を外す前の5秒で「今の1手」を取りこぼさないための最小入力。卓上スマホNGの制約下で唯一許容する即時記録であり、ホールカード2枚だけで保存できる軽さを最優先する。保存後は下書き（entryModeRaw="quick"）として履歴に入り、帰宅後にセッション紐づけ・詳細化（PD-04の項目追記）ができる。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>案内バナー</td><td>Banner</td><td>「席を外す前に5秒で。詳細はあとで足せます。」</td></tr>
+    <tr><td>ホールカード</td><td>52セルグリッドピッカー</td><td>2枚選択（PD-04と同じピッカー）。プレビューにカード表示</td></tr>
+    <tr><td>ひとこと</td><td>Text Field（完全任意）</td><td>1行メモ（例: BTNからの3betにAKsでオールイン、相手QQ）</td></tr>
+    <tr><td>保存ボタン</td><td>Primary Button</td><td>「保存（あとで詳しく）」。<strong>カード2枚だけで保存可能</strong>なことをUI上で明示</td></tr>
+    <tr><td>補足</td><td>Caption</td><td>「保存後、履歴の『下書き』に入ります」</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>カード2枚選択済み</td><td>保存可能。ひとことは空でよい（完全任意を明示）</td></tr>
+    <tr><td>保存後</td><td>entryModeRaw="quick" の下書きとして履歴に格納。セッション未紐づけ（session=nil）</td></tr>
+    <tr><td>後日詳細化</td><td>履歴の下書きから PD-04 の項目（ボード・ポジション・状況・タグ等）を追記し、セッションに紐づけ可能</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>保存 タップ</td><td>ホーム（PD-01）へ戻る（下書きとして履歴に格納）</td></tr>
+    <tr><td>キャンセル タップ</td><td>呼び出し元へ戻る</td></tr>
+    <tr><td>（後日）履歴の下書きを開く</td><td>ハンド簡易記録（PD-04）で詳細化</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Hand // entryModeRaw = "quick"（5秒メモ）
+     // holeCard1 / holeCard2（"Ah" 形式・必須）
+     // note（1行・任意）
+     // session? = nil（後からセッション紐づけ可）
+     // boardCards / positionRaw / scenarioRaw 等は後日 PD-04 で追記</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>hand_logged</code></td><td>entry_mode=quick, tag_count, has_session</td><td>プレイ中の即時記録量。カード内容・メモ本文は含めない</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><strong>カード2枚だけで保存可能</strong>であることをボタン文言・補足でUI上明示し、5秒完結を担保する</li>
+    <li>ひとことは完全任意（プレースホルダーで任意と分かるようにする）</li>
+    <li>保存レコードは entryModeRaw="quick" の下書き。履歴で「下書き」として区別表示し、詳細化・セッション紐づけ導線を用意</li>
+    <li>クイックメモとハンド簡易記録は同一 Hand モデルに統合（独立モデルにしない）。詳細化は同一レコードの編集で実現</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="hand-entry.html">ハンド簡易記録（PD-04）</a></li>
+    <li><a href="home.html">ホーム（PD-01）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv2+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

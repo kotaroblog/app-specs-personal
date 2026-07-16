@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- ホーム</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / ホーム</div>
+
+  <header class="site-header">
+    <h1>ホーム</h1>
+    <p>今月の成績ダッシュボードと記録への最短導線</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>アプリ起動直後の起点画面。今月の成績を2レイヤー収支（実力＝リングBB／トナメ結果、お金＝娯楽費）で一望させつつ、最頻動線である「今夜を記録」へ最短で誘導する。加えて、前週レビューで決めた「次回の課題」を常に目に入る位置に置き、行動変容のループを閉じる。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>今月ヘッダ</td><td>Title + Chip</td><td>「今月の成績」見出し＋月セレクトチップ（例: 7月）</td></tr>
+    <tr><td>今月サマリ3点セット</td><td>Card × 3（横並び）</td><td>①リング（実力）＝BB収支（例: +240 BB）／②トナメ＝エントリー数＋ITM数（例: 5エントリー・2 ITM）／③支出（娯楽費）＝円（例: ¥18,000）。円のプラマイ収支は表示しない</td></tr>
+    <tr><td>「今夜を記録」主CTA</td><td>Primary Button</td><td>収支記録シート（PD-02）を開く最頻動線。アクセントカラーの主ボタン</td></tr>
+    <tr><td>「次回の課題」カード</td><td>Card（左アクセントボーダー）</td><td>最新 <code>WeeklyReview.nextFocus</code> を表示（例: 「COからの3betに、KJs以下は降りる」）。未設定時は非表示</td></tr>
+    <tr><td>店別（今月）成績リスト</td><td>List（Card行）</td><td>店ごとの今月成績。頭文字アイコン・店名・内訳（リング/トナメ戦数）・BB収支・ITMバッジ。行タップで店別成績詳細へ</td></tr>
+    <tr><td>週次レビュー誘導カード</td><td>Card + Chevron</td><td>「日曜の週次レビュー」。日曜〜週次レビュー未完了時に強調表示、タップでPD-06へ</td></tr>
+    <tr><td>タブバー</td><td>Tab Bar</td><td>ホーム／履歴／分析／設定の4本</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>初回起動（記録0件）</td><td>エンプティステート。サマリ3点セットは出さず、「今夜を記録」CTAと価値説明のみを表示する</td></tr>
+    <tr><td>通常</td><td>今月サマリ・次回の課題（あれば）・店別リスト・週次レビュー誘導カードを表示</td></tr>
+    <tr><td>日曜（レビュー誘導活性）</td><td>週次レビューが未完了なら誘導カードを強調表示し、レビューへの着手を促す</td></tr>
+    <tr><td>次回の課題 未設定</td><td>「次回の課題」カードを非表示にする（存在しないものを空欄で見せない）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「今夜を記録」タップ</td><td>収支記録シート（PD-02）</td></tr>
+    <tr><td>週次レビュー誘導カード タップ</td><td>週次レビュー（PD-06）</td></tr>
+    <tr><td>店別成績行 タップ</td><td>店別成績詳細</td></tr>
+    <tr><td>タブバー各アイコン</td><td>履歴／分析／設定タブ</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// 今月サマリ・店別成績は Session を月・店で集計（クエリ／computed で算出、非正規化しない）
+Session   // date / gameTypeRaw / chipProfit / bbProfit / resultRaw / spentYen / venue
+Venue     // name（店別リストの見出し）
+WeeklyReview // nextFocus（「次回の課題」）/ completedAt（当週レビュー完了判定）</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>サマリ3点セット・店別成績は Session を月／店でクエリ集計する。Venue に成績を非正規化して持たせない（SSoT一元化）</li>
+    <li>リング＝BB収支の合算、トナメ＝エントリー数・ITM数のカウント、支出＝spentYen 合算で構成</li>
+    <li>「次回の課題」は <code>completedAt != nil</code> の最新 WeeklyReview の <code>nextFocus</code>。空文字なら非表示</li>
+    <li>週次レビュー誘導の強調は「曜日が日曜以降 かつ 当週 WeeklyReview 未完了」で判定</li>
+    <li>負け表示色はテラコッタ（#D0876B）、勝ち表示色はグリーン（#3FB950）でBB収支の正負を表現</li>
+  </ul>
+
+  <h2>未決事項</h2>
+  <div class="callout warn">
+    <strong>主CTA「今夜を記録」の配置</strong>は、サマリ直下（画面上部）に置く案と、タブバー中央＋ボタン（親指圏固定）に置く案の2案がある。片手到達性（親指リーチ）が判断基準となるため、実装時に実機で両案を検証して決定する。
+  </div>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="session-entry.html">収支記録シート（PD-02）</a></li>
+    <li><a href="weekly-review.html">週次レビュー（PD-06）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv2+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

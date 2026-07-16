@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- ハンド簡易記録</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / ハンド簡易記録</div>
+
+  <header class="site-header">
+    <h1>ハンド簡易記録</h1>
+    <p>52セルグリッドピッカーで30秒。負け筋を言葉にする差別化の中核</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-04</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>「気になった1手」を30秒で構造化記録する、本アプリの差別化中核画面。上から順にタップするだけの7ステップで、ホールカード・ボード・ポジション・状況・アクション・弱点タグ・メモを残す。弱点タグの言語化と状況（シナリオ）記録により、後の週次レビューとMTTレンジ照合（PD-07）を成立させる。</p>
+
+  <h2>UI 構成（7ステップ）</h2>
+  <table>
+    <tr><th>#</th><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>1</td><td>ホールカード</td><td>52セルグリッドピッカー</td><td>4スート行×13ランク列。スート色分け（赤=♥♦／黒=♠♣）。選択トグル。3枚目を選ぶと古い方を押し出す（常に最大2枚）。プレビューにカード表示＋「あと○枚」</td></tr>
+    <tr><td>2</td><td>ボード</td><td>52セルグリッドピッカー（任意）</td><td>0〜5枚。同じピッカーで追加。プレビューに最大5枠</td></tr>
+    <tr><td>3</td><td>ポジション</td><td>Chip 9択</td><td>UTG／UTG+1／UTG+2／LJ／HJ／CO／BTN／SB／BB（9max）</td></tr>
+    <tr><td>4</td><td>状況（シナリオ）</td><td>Chip 4択</td><td>自分が最初に参加=rfi／オープンに対して=vs_open／スクイーズに対して=cold_call_vs_squeeze／その他=other。「その他」は<strong>レンジ照合の対象外</strong>である旨を注記表示</td></tr>
+    <tr><td>5</td><td>自分のアクション</td><td>Segmented 3択</td><td>フォールド／コール／レイズ</td></tr>
+    <tr><td>6</td><td>弱点タグ</td><td>Chip（複数選択）</td><td>プリセット10種から<strong>最大3つ</strong>。選択数カウンタ（○/3）付き。負け色テラコッタで表現</td></tr>
+    <tr><td>7</td><td>ひとことメモ</td><td>Text Field（任意）</td><td>1行メモ（例: リバーのオーバーベットにコール、バリュー濃かった）</td></tr>
+    <tr><td>—</td><td>保存ボタン</td><td>Primary Button</td><td>「このハンドを保存」</td></tr>
+  </table>
+  <p style="color: var(--color-text-soft); font-size: 0.9rem;">弱点タグ プリセット10種: レンジ外参加／ポジション軽視／コール過多／オーバーブラフ／バリュー逃し／ベットサイズ不適切／ティルト／スタック管理ミス／相手レンジ決め打ち／ドロー追いすぎ。</p>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>ホールカード未完（0〜1枚）</td><td>プレビューに「あと○枚」を表示。空枠はダッシュ枠</td></tr>
+    <tr><td>状況=その他 選択時</td><td>「『その他』はレンジ照合の対象外です。記録だけ残します」を注記表示</td></tr>
+    <tr><td>状況=照合可能3種 選択時</td><td>「レンジ照合に使う局面です」を表示</td></tr>
+    <tr><td>弱点タグ3つ選択済み</td><td>それ以上の選択を受け付けない（カウンタ 3/3）</td></tr>
+    <tr><td>記録完了（PD-03）経由</td><td>Hand.session に直前 Session を紐づけ（has_session=true）</td></tr>
+    <tr><td>月10件超（無料）</td><td>保存時に Paywall（source=handLimit）を提示</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>保存（scenarioRaw が照合可能3種 かつ ホール・ポジション入力済み）</td><td>MTTレンジ照合バナー（PD-07）</td></tr>
+    <tr><td>保存（上記以外・その他・入力不足）</td><td>そのまま完了（ホームまたは呼び出し元へ）</td></tr>
+    <tr><td>ハンド記録 月10件超</td><td>Paywall（source=handLimit）</td></tr>
+    <tr><td>戻る／スキップ</td><td>呼び出し元へ戻る</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Hand // entryModeRaw = "simple"（30秒簡易記録）
+     // holeCard1 / holeCard2（"Ah" 形式）/ boardCards[0〜5]
+     // positionRaw（9max）/ scenarioRaw（rfi/vs_open/cold_call_vs_squeeze/other）
+     // actionRaw（fold/call/raise）/ weaknessTagsRaw[最大3]（enum rawValue）
+     // note（1行）/ session?（PD-03経由なら紐づく）</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>hand_logged</code></td><td>entry_mode, tag_count, has_session</td><td>差別化行動の量と質。カード内容・メモ本文は含めない</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>ホールカードは常に最大2枚。3枚目タップで最古の1枚を押し出すトグル挙動とする</li>
+    <li>保存時の照合判定: <code>scenarioRaw ∈ {rfi, vs_open, cold_call_vs_squeeze}</code> かつ ホールカード2枚・ポジション入力済み かつ 該当レンジ表が存在 → PD-07 へ</li>
+    <li>状況=other は照合対象外。誤って照合しないようガードする</li>
+    <li>カードは "Ah" 形式（Rank+Suit rawValue）で保存。旧PokerLesson の PokerCard / HandNotation と相互変換</li>
+    <li>無料はハンド記録 月10件。11件目の保存操作で Paywall（source=handLimit）</li>
+  </ul>
+
+  <h2>未決事項</h2>
+  <div class="callout warn">
+    <strong>カード入力方式</strong>は2案ある。<br>
+    ① 52セルグリッドピッカー（一望性重視・セル幅約25pt）… 全カードを一画面で見渡せるが、タップターゲットが小さい。<br>
+    ② 「ランク→スート」2タップ方式（タップターゲット大・タップ数+2）… 押しやすいが手数が増える。<br>
+    ボード入力を含む<strong>最大7枚選択時の誤タップ率</strong>を判断基準に、実機TestFlightで両方式を検証して決定する。
+  </div>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="session-done.html">記録完了（PD-03）</a></li>
+    <li><a href="gto-match.html">MTTレンジ照合バナー（PD-07）</a></li>
+    <li><a href="quick-memo.html">クイックメモ（PD-05）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv2+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

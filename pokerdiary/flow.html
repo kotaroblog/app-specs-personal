@@ -38,7 +38,7 @@ flowchart TD
   Home --> RecBtn(今夜を記録・主ボタン)
   RecBtn --> RecSheet[収支セッション記録シート<br/>リング／トナメ2モード・店名サジェスト・チップIN／OUT→BB自動換算]
   RecSheet --> RecDone[記録完了画面]
-  RecDone -->|気になった1手を残す| HandSheet[ハンド簡易記録シート<br/>52セルグリッド・ボード・弱点タグ3タップ・任意1行]
+  RecDone -->|気になった1手を残す| HandSheet[ハンド簡易記録シート<br/>52セルグリッド・状況選択・弱点タグ3タップ・任意1行]
   RecDone -->|閉じる| Home
   HandSheet --> MatchChk{MTTレンジ表に該当？}
   MatchChk -->|該当| Banner[プリフロップ照合バナー]
@@ -118,6 +118,7 @@ flowchart TD
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
     <tr><td>1.1</td><td>2026-07-16</td><td>収支2レイヤー化に伴う記録シート・ダッシュボード表記の更新</td></tr>
+    <tr><td>1.2</td><td>2026-07-16</td><td>ハンド記録に状況（シナリオ）選択ステップを追加</td></tr>
   </table>
 
   <script>
