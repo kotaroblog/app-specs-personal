@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- シェアカード生成</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / シェアカード生成</div>
+
+  <header class="site-header">
+    <h1>シェアカード生成</h1>
+    <p>1080×1080のハンドカードを生成して共有</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-13</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>ハンドを1080×1080の画像カードにして共有するための画面。金額・BB収支を載せず「議論のための1手」を共有する設計とし、ストア外流入（GTM）の主導線とする。無料版はウォーターマーク付き、Proで除去できる。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>フォーマット表記</td><td>Caption</td><td>「1080×1080 ・ ハンドカード」。v1.0はこの1フォーマットのみ</td></tr>
+    <tr><td>カードプレビュー</td><td>Share Card</td><td>ポジション＋状況・ホールカード大・ボード・メモ・右下ウォーターマーク「ポーカー手帳」</td></tr>
+    <tr><td>WM除去導線</td><td>Text Link（Pro）</td><td>「ウォーターマークを外す（Pro）」（source=shareWatermark）</td></tr>
+    <tr><td>共有ボタン</td><td>Primary Button</td><td>OS共有シートを開く</td></tr>
+    <tr><td>設計注記</td><td>Caption</td><td>「金額・BB収支は載せません。誇示ではなく議論のための1手を共有する設計」</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>無料</td><td>ウォーターマーク「ポーカー手帳」を右下に表示</td></tr>
+    <tr><td>Pro</td><td>ウォーターマークなしで生成</td></tr>
+    <tr><td>共有</td><td>ImageRendererで画像化しOS共有シートへ</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「共有する」タップ</td><td>OS共有シート</td></tr>
+    <tr><td>「ウォーターマークを外す（Pro）」タップ</td><td>Paywall（source=shareWatermark）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Hand // holeCard1,2 / boardCards / positionRaw / scenarioRaw / note（カード描画用）
+// 金額・BB収支（Session.spentYen / bbProfit）はカードに含めない</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>share_card_created</code></td><td>なし</td><td>GTM素材の生成数</td></tr>
+    <tr><td><code>share_card_shared</code></td><td>なし</td><td>実共有数（ストア外流入の種）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>v1.0は<strong>ハンドカード1080×1080の1フォーマットのみ</strong>（週次サマリ等はv1.1）</li>
+    <li><strong>金額・BB収支は載せない</strong>（4+品位・誇示でなく議論のための共有）</li>
+    <li>メモは問いかけ形式が映える（例: 「この状況、3ベットに回すべき？」）。プレースホルダー等で誘導</li>
+    <li>WM除去はPro（source=shareWatermark）</li>
+    <li>ImageRenderer（WorkoutDiaryのシェアカード実装を流用）で生成 → OS共有シート</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="hand-detail.html">ハンド詳細（PD-10）</a></li>
+    <li><a href="paywall.html">Paywall（PD-14）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

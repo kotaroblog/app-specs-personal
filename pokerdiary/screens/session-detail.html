@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- セッション詳細</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / セッション詳細</div>
+
+  <header class="site-header">
+    <h1>セッション詳細</h1>
+    <p>1セッションの成績・ハンド一覧と下書き紐づけ動線</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-09</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>1回のセッションの成績（BB収支／トナメ結果・支出・メモ）と、そのセッションに紐づくハンドを一覧する画面。加えて、プレイ中にクイックメモで残した未紐づけの下書きを、このセッションに一括で紐づける「下書き紐づけ提案」を提供し、記録の取りこぼしをサルベージする。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ヘッダカード</td><td>Card</td><td>店名・形式バッジ・日付＋プレイ時間・BB収支またはトナメ結果・支出・メモ</td></tr>
+    <tr><td>下書き紐づけ提案カード</td><td>Highlight Card</td><td>「この日の下書きが N件 あります」＋「紐づける」ボタン。候補が無ければ非表示</td></tr>
+    <tr><td>ハンド一覧</td><td>List（Card行）</td><td>このセッションに紐づくハンド行。行タップでハンド詳細（PD-10）</td></tr>
+    <tr><td>「ハンドを追加」</td><td>Plain Button</td><td>ハンド簡易記録（PD-04）を開き、本セッションを自動紐づけ</td></tr>
+    <tr><td>編集</td><td>Nav Action</td><td>セッション内容の編集</td></tr>
+  </table>
+
+  <h2>下書き紐づけ提案の判定</h2>
+  <div class="callout">
+    候補=「セッションの <code>date</code> の<strong>前後24時間以内</strong>に作成された、未紐づけ（<code>session == nil</code>）の <code>entryModeRaw == "quick"</code> ハンド」。深夜0時跨ぎ対策として「同日」ではなく<strong>±24時間</strong>で判定する。承諾（「紐づける」）で候補を一括紐づけする。
+  </div>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>リングセッション</td><td>ヘッダにBB収支（勝ち緑／負けテラコッタ）・支出・プレイ時間を表示</td></tr>
+    <tr><td>トナメセッション</td><td>ヘッダにトナメ結果（バスト／ITM／優勝）・支出を表示</td></tr>
+    <tr><td>下書き候補あり</td><td>紐づけ提案カードを表示（件数付き）</td></tr>
+    <tr><td>下書き候補なし</td><td>紐づけ提案カードを非表示</td></tr>
+    <tr><td>紐づけ承諾後</td><td>候補ハンドを本セッションに紐づけ、ハンド一覧へ反映</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>ハンド行 タップ</td><td>ハンド詳細（PD-10）</td></tr>
+    <tr><td>「ハンドを追加」タップ</td><td>ハンド簡易記録（PD-04・session自動紐づけ）</td></tr>
+    <tr><td>「紐づける」タップ</td><td>同一画面内で下書きを一括紐づけ</td></tr>
+    <tr><td>編集 タップ</td><td>セッション編集</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Session // venue / gameTypeRaw / date / durationMinutes / bbProfit / resultRaw / spentYen / note
+        // プレイ時間は date + durationMinutes から表示（開始終了時刻は保持しない）
+Hand    // hands（紐づくハンド）/ session==nil & entryModeRaw=="quick" が下書き紐づけ候補
+Venue   // 店名表示</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>draft_link_prompt_shown</code></td><td>なし</td><td>下書き紐づけ提案の表示数（サルベージのファネル分母）</td></tr>
+    <tr><td><code>draft_link_accepted</code></td><td>なし</td><td>紐づけ承諾数（クイックメモ→セッション接続のファネル分子）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>プレイ時間は <code>date</code> ＋ <code>durationMinutes</code> から算出表示する。<strong>開始／終了時刻は保持しない</strong></li>
+    <li>下書き候補は ±24時間・session==nil・entryMode=quick で抽出（0時跨ぎ対策）</li>
+    <li>「ハンドを追加」から生成する Hand には本 Session を自動紐づけ（has_session=true）</li>
+    <li>KPIのパラメータに金額・店名・自由記述を含めない</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="history.html">履歴（PD-08）</a></li>
+    <li><a href="hand-detail.html">ハンド詳細（PD-10）</a></li>
+    <li><a href="hand-entry.html">ハンド簡易記録（PD-04）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

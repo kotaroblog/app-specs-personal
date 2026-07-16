@@ -77,6 +77,8 @@ Logger.data.info("収支: \(session.profit)円 @\(venue.name)")</code></pre>
     <tr><td><code>hand_prompt_shown</code></td><td>なし</td><td>完了画面「1手残す?」表示数</td></tr>
     <tr><td><code>hand_prompt_accepted</code></td><td>なし</td><td>同・承諾数（収支→ハンドの最重要ファネル）</td></tr>
     <tr><td><code>hand_logged</code></td><td>entry_mode, tag_count, has_session</td><td>差別化行動の量と質</td></tr>
+    <tr><td><code>draft_link_prompt_shown</code></td><td>なし</td><td>下書き紐づけ提案の表示</td></tr>
+    <tr><td><code>draft_link_accepted</code></td><td>なし</td><td>同・承諾。クイックメモ→セッション接続のファネル</td></tr>
     <tr><td><code>preflop_match_shown</code></td><td>matched</td><td>照合バナー表示・GTO一致率</td></tr>
     <tr><td><code>range_viewer_opened</code></td><td>source</td><td>従機能の受動利用</td></tr>
     <tr><td><code>drill_answered</code></td><td>correct</td><td>答え合わせ利用</td></tr>
@@ -108,6 +110,7 @@ Logger.data.info("収支: \(session.profit)円 @\(venue.name)")</code></pre>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
+    <tr><td>1.1</td><td>2026-07-16</td><td>下書き紐づけ動線のKPIイベント2種を追加</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-07-16</footer>

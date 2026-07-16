@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- 設定</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / 設定</div>
+
+  <header class="site-header">
+    <h1>設定</h1>
+    <p>記録・プラン・アプリの3グループ</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-16</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>店マスタ・通知・プラン・法務情報を集約する設定画面。記録／プラン／アプリの3グループに整理し、Proアップグレード（source=settings）や店マスタ管理・週次レビュー通知の設定を提供する。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>グループ</th><th>項目</th><th>説明</th></tr>
+    <tr><td>記録</td><td>店マスタを管理</td><td>Venueの追加・編集・削除</td></tr>
+    <tr><td>記録</td><td>週次レビュー通知</td><td>曜日／時刻の設定（既定: 日 21:00）</td></tr>
+    <tr><td>プラン</td><td>現在のプラン</td><td>無料／Proの表示</td></tr>
+    <tr><td>プラン</td><td>Proにアップグレード</td><td>Paywall（source=settings）へ</td></tr>
+    <tr><td>プラン</td><td>購入を復元</td><td>過去購入の復元</td></tr>
+    <tr><td>アプリ</td><td>利用規約</td><td>app-policies の規約ページ</td></tr>
+    <tr><td>アプリ</td><td>プライバシーポリシー</td><td>app-policies のプライバシーページ</td></tr>
+    <tr><td>アプリ</td><td>特定商取引法に基づく表記</td><td>app-policies の特商法ページ</td></tr>
+    <tr><td>アプリ</td><td>バージョン</td><td>アプリバージョン表示</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>無料ユーザー</td><td>現在のプラン=無料。「Proにアップグレード」を表示</td></tr>
+    <tr><td>Proユーザー</td><td>現在のプラン=Pro</td></tr>
+    <tr><td>DEBUGビルド</td><td>アプリグループ末尾に EventLogDebugView を追加表示</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>店マスタを管理 タップ</td><td>店マスタ管理</td></tr>
+    <tr><td>週次レビュー通知 タップ</td><td>通知設定（曜日・時刻）</td></tr>
+    <tr><td>Proにアップグレード タップ</td><td>Paywall（source=settings）</td></tr>
+    <tr><td>各法務リンク タップ</td><td>app-policies の各ページ</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Venue // 店マスタ管理の対象
+// 通知設定・プラン状態は UserDefaults / SubscriptionManager で管理（SwiftDataモデルは持たない）</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>3グループ（記録／プラン／アプリ）で構成</li>
+    <li>Proアップグレードは source=settings でPaywall（PD-14）へ</li>
+    <li>法務リンクは特定商取引法を含む（審査要件）</li>
+    <li><strong>DEBUGビルドのみ</strong>、アプリグループ末尾に EventLogDebugView（旧PokerLesson流用）を表示</li>
+    <li>週次レビュー通知の既定は日曜21:00。曜日・時刻を変更可能</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="../logging.html">ロギング方針</a></li>
+    <li><a href="paywall.html">Paywall（PD-14）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

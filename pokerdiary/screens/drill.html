@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- 答え合わせ</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / 答え合わせ</div>
+
+  <header class="site-header">
+    <h1>答え合わせ</h1>
+    <p>遷移元ハンドに一致する130問から出題・正誤と解説</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-18</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>記録したハンドのポジション＋状況に一致する問題を130問（流用questions JSON）から出題し、3択回答→正誤＋解説で学習を促す。従（受動）機能であり、照合と合算で無料1日3回の制限を持つ。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>出題ヘッダ</td><td>Label + Chip</td><td>「CO ・ オープンに対して の問題（130問）」＋残り回数（例: 残り 2/3）</td></tr>
+    <tr><td>問題カード</td><td>Card</td><td>状況説明＋ハンド（ホールカード）</td></tr>
+    <tr><td>回答3択</td><td>Button × 3</td><td>フォールド／コール／レイズ</td></tr>
+    <tr><td>結果表示</td><td>Card</td><td>正解／不正解＋推奨アクション＋解説文</td></tr>
+    <tr><td>次の問題へ</td><td>Primary Button</td><td>残り回数を消費して次へ。0回で本画面ロック</td></tr>
+    <tr><td>ロック画面</td><td>Lock View</td><td>回数使い切り時。「Proで無制限に」でPaywall（source=matchLimit）</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>出題中（quiz）</td><td>問題カード＋3択。残り回数を表示</td></tr>
+    <tr><td>結果表示（result）</td><td><strong>不正解の自分の選択はテラコッタ、正解は青／緑で区別</strong>。推奨アクション＋解説を表示</td></tr>
+    <tr><td>ロック（locked）</td><td>回数使い切り。ロック画面→Paywall（source=matchLimit）誘導</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>ハンド詳細／照合バナーの「似た問題を解く」から</td><td>本画面へ流入</td></tr>
+    <tr><td>3択タップ</td><td>結果表示（result）</td></tr>
+    <tr><td>「次の問題へ」タップ</td><td>次問（残0でロック）</td></tr>
+    <tr><td>回数使い切り→「Proで無制限に」</td><td>Paywall（source=matchLimit）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Question     // 130問マスタ（流用）。positionRaw × scenarioRaw 一致で抽選
+AnswerRecord // 回答履歴を保存: question / selectedActionRaw / isCorrect / answeredAt / durationSeconds
+// 照合・答え合わせの合算回数は日付ベースで管理（無料1日3回）</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>drill_answered</code></td><td>correct</td><td>答え合わせ利用と正答率</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>出題は遷移元ハンドの <code>positionRaw</code> ＋ 状況に一致する問題を130問（流用questions JSON）からランダム抽選</li>
+    <li>回答は AnswerRecord（流用モデル）に保存</li>
+    <li>残り回数は照合と合算（無料1日3回）。0回時はロック画面→Paywall（source=matchLimit）</li>
+    <li>結果表示は不正解=テラコッタ／正解=青（緑）で明確に区別</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="hand-detail.html">ハンド詳細（PD-10）</a></li>
+    <li><a href="gto-match.html">MTTレンジ照合バナー（PD-07）</a></li>
+    <li><a href="range-viewer.html">レンジ逆引きビューア（PD-17）</a></li>
+    <li><a href="paywall.html">Paywall（PD-14）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

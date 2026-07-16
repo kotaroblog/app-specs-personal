@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- Paywall</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / Paywall</div>
+
+  <header class="site-header">
+    <h1>Paywall</h1>
+    <p>source別コピー・プラン選択・機能比較でProへ誘導</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-14</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>ポーカー手帳 Pro への課金導線。導線元（source）に応じてヘッダコピーを出し分け、年／月プランの選択と機能比較表で価値を提示する。「収支記録はずっと無料」の安心文言を必ず添え、錨（収支入力）を守りながら差別化機能・広告非表示で課金を促す。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>Proバッジ＋ヘッダコピー</td><td>Header</td><td>source別のタイトル＋サブコピー（下表）</td></tr>
+    <tr><td>プラン選択</td><td>Plan Row × 2</td><td>年間¥3,600（既定選択・おすすめバッジ・「月あたり¥300」）／月間¥480</td></tr>
+    <tr><td>「Proを始める」</td><td>Primary Button</td><td>選択プランで購入</td></tr>
+    <tr><td>機能比較表</td><td>Comparison Table</td><td>無料↔Pro の8行（下表）</td></tr>
+    <tr><td>安心文言</td><td>Caption</td><td>「収支記録はずっと無料です」（必須）</td></tr>
+    <tr><td>フッターリンク</td><td>Links × 4</td><td>購入を復元・利用規約・プライバシーポリシー・特定商取引法</td></tr>
+  </table>
+
+  <h2>source 7種とヘッダコピー</h2>
+  <table>
+    <tr><th>source</th><th>タイトル</th><th>サブコピー</th></tr>
+    <tr><td><code>onboarding</code></td><td>すべての記録を、ずっと手元に</td><td>成績もハンドも、期間の制限なく振り返る</td></tr>
+    <tr><td><code>handLimit</code></td><td>今月のハンド記録が10件に達しました</td><td>Proならハンドは無制限。負け筋の分析を止めない</td></tr>
+    <tr><td><code>statsLocked</code></td><td>全期間の成績を振り返る</td><td>90日より前のデータも、すべて残っています</td></tr>
+    <tr><td><code>reviewLocked</code></td><td>週次レビューの全機能を使う</td><td>頻出タグの分析と課題の履歴をフルに</td></tr>
+    <tr><td><code>matchLimit</code></td><td>今日の答え合わせを使い切りました</td><td>Proなら照合・ドリルが1日無制限</td></tr>
+    <tr><td><code>shareWatermark</code></td><td>ウォーターマークなしでシェア</td><td>あなたのハンドカードを、すっきり共有</td></tr>
+    <tr><td><code>settings</code></td><td>ポーカー手帳 Pro</td><td>記録をもっと深く、振り返りをもっと自由に</td></tr>
+  </table>
+
+  <h2>機能比較表（8行）</h2>
+  <table>
+    <tr><th>機能</th><th>無料</th><th>Pro</th></tr>
+    <tr><td>収支入力（BB/トナメ）</td><td>無制限</td><td>無制限</td></tr>
+    <tr><td>ハンド記録</td><td>月10件</td><td>無制限</td></tr>
+    <tr><td>成績の閲覧期間</td><td>直近90日</td><td>全期間</td></tr>
+    <tr><td>照合・答え合わせ</td><td>1日3回</td><td>無制限</td></tr>
+    <tr><td>弱点タグ</td><td>1ハンド1個</td><td>1ハンド3個</td></tr>
+    <tr><td>週次レビュー</td><td>簡易版</td><td>フル版（頻出タグ分析）</td></tr>
+    <tr><td>シェアのWM</td><td>あり</td><td>なし</td></tr>
+    <tr><td>広告</td><td>バナー表示</td><td>非表示</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>年間プラン選択（既定）</td><td>年¥3,600・おすすめバッジ・月あたり¥300訴求</td></tr>
+    <tr><td>月間プラン選択</td><td>月¥480</td></tr>
+    <tr><td>購入完了</td><td>Proを有効化しロック機能を開放</td></tr>
+    <tr><td>復元</td><td>過去購入を復元</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>各ロック機能から</td><td>本Paywall（source付き）で流入</td></tr>
+    <tr><td>「Proを始める」タップ</td><td>StoreKit購入フロー</td></tr>
+    <tr><td>フッターリンク タップ</td><td>各法務ページ（app-policies）</td></tr>
+    <tr><td>閉じる</td><td>呼び出し元へ戻る</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// 本画面はSwiftDataモデルを直接持たない。課金状態は SubscriptionManager（StoreKit 2）で管理
+// Product ID（予定）: com.happyboy1002.PokerDiary.premium.monthly / .yearly</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>paywall_shown</code></td><td>source（7種）</td><td>課金ファネル入口</td></tr>
+    <tr><td><code>subscribe_completed</code></td><td>plan</td><td>課金成立</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><strong>「収支記録はずっと無料です」の安心文言は必須</strong>（錨を守る）</li>
+    <li>フッター4リンクに<strong>特定商取引法</strong>を含める（審査要件）</li>
+    <li>SubscriptionManager（旧PokerLesson流用）でStoreKit 2の購入・復元を管理</li>
+    <li>Product ID命名: <code>com.happyboy1002.PokerDiary.premium.monthly</code> / <code>.yearly</code>（予定）</li>
+    <li>年間プランを既定選択とし「月あたり¥300」で割安感を訴求</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="settings.html">設定（PD-16）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

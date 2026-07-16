@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- 店詳細</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / 店詳細</div>
+
+  <header class="site-header">
+    <h1>店詳細</h1>
+    <p>1店舗の通算成績と「いつものステークス」</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-12</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>特定の店舗における通算成績を4指標で俯瞰し、その店でのセッション履歴をたどる画面。「いつものステークス」を最新セッションからクエリ導出し、店ごとの傾向把握を助ける。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>店名ヘッダ</td><td>Title</td><td>店名</td></tr>
+    <tr><td>いつものステークス</td><td>Caption</td><td>最新セッションから導出（例: 2/5）</td></tr>
+    <tr><td>通算4指標</td><td>Stat群</td><td>リングBB通算・トナメE/ITM・支出・訪問数</td></tr>
+    <tr><td>セッション履歴</td><td>List（Card行）</td><td>この店のセッション行。タップでセッション詳細（PD-09）</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>通常</td><td>通算4指標＋いつものステークス＋セッション履歴</td></tr>
+    <tr><td>リング未プレイ</td><td>リングBBは0/空。トナメ・支出・訪問数のみ意味を持つ</td></tr>
+    <tr><td>セッションなし</td><td>履歴なし（店マスタのみ存在）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>セッション行 タップ</td><td>セッション詳細（PD-09）</td></tr>
+    <tr><td>分析（店別成績）から</td><td>本画面へ流入</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Venue   // name / sessions
+Session // その店の全セッション。通算集計（bbProfit合算 / buyInCount・ITM / spentYen / 件数=訪問数）
+        // 「いつものステークス」は最新Sessionの sbChips,bbChips からクエリ導出（非正規化しない）</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>通算4指標・訪問数はその店のSessionをクエリ集計する（Venueに非正規化して持たせない）</li>
+    <li>「いつものステークス」は最新Sessionから導出（data-model 設計判断「店の前回値は非正規化しない」に準拠）</li>
+    <li>リングBB＝bbProfitの合算、トナメ＝エントリー数・ITM数、支出＝spentYenの合算、訪問数＝セッション件数</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="analysis.html">分析ダッシュボード（PD-11）</a></li>
+    <li><a href="session-detail.html">セッション詳細（PD-09）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

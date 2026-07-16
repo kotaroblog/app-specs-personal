@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- オンボーディング</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / オンボーディング</div>
+
+  <header class="site-header">
+    <h1>オンボーディング</h1>
+    <p>3頁で価値を伝え、通知許可とPaywallへ橋渡し</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-15</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>初回起動時の3頁ウォークスルー。BB収支・弱点タグ・週次レビュー通知という3つの核となる価値を順に伝え、最終頁で通知許可（ソフトアスク→システムダイアログの2段構え）を得る。完了後、初回のみ source=onboarding のPaywallをモーダル提示（スキップ可）してホームへ送る。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>頁</th><th>テーマ</th><th>内容</th></tr>
+    <tr><td>①</td><td>BB収支の価値訴求</td><td>「アミュ帰りの10秒で、今夜の収支を」。チップIN/OUTからBB収支を自動換算・円のプラマイに縛られない</td></tr>
+    <tr><td>②</td><td>弱点タグ＝負け筋の言語化</td><td>「気になった1手が、負け筋の言葉になる」。弱点タグで記録するほど負けパターンが見える</td></tr>
+    <tr><td>③</td><td>週次レビュー通知</td><td>「日曜夜、5分の振り返り」。ソフトアスク→「通知を許可する」でシステムダイアログ。「あとで」を並置</td></tr>
+    <tr><td>—</td><td>共通</td><td>ステップドット・スキップ（最終頁は非表示）</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>頁①②</td><td>「次へ」で進行。スキップ常設</td></tr>
+    <tr><td>頁③（最終）</td><td>「通知を許可する」主CTA＋「あとで（ホームへ）」。スキップは非表示</td></tr>
+    <tr><td>通知許可タップ</td><td>ソフトアスク後にシステムダイアログを表示（2段構え）</td></tr>
+    <tr><td>完了（初回のみ）</td><td>source=onboarding のPaywallをモーダル提示（スキップ可）→ ホーム</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「次へ」タップ</td><td>次頁</td></tr>
+    <tr><td>スキップ タップ</td><td>オンボーディング完了処理へ</td></tr>
+    <tr><td>「通知を許可する」タップ</td><td>システム通知ダイアログ</td></tr>
+    <tr><td>完了</td><td>Paywall（source=onboarding・スキップ可）→ ホーム（PD-01）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// SwiftDataモデルは持たない。初回起動フラグは UserDefaults（AppStorage）で管理
+// 通知許可は UNUserNotificationCenter</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>onboarding_completed</code></td><td>なし</td><td>初回体験の到達率</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>通知許可は<strong>ソフトアスク→システムダイアログの2段構え</strong>（拒否率を下げる）。「あとで」を並置し強制しない</li>
+    <li>スキップは常設。最終頁のみ非表示</li>
+    <li>完了後の source=onboarding Paywall は初回のみ・スキップ可</li>
+    <li>週次レビュー通知の既定は日曜21:00（設定で変更可）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="paywall.html">Paywall（PD-14）</a></li>
+    <li><a href="home.html">ホーム（PD-01）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

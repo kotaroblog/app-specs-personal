@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- レンジ逆引きビューア</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / レンジ逆引きビューア</div>
+
+  <header class="site-header">
+    <h1>レンジ逆引きビューア</h1>
+    <p>ポジション×状況→13×13マトリクスで推奨レンジを参照</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-17</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>ポジションと状況を選ぶと、そのスポットの推奨レンジを13×13マトリクスで表示する参照ビュー。記録ハンドからの遷移時は該当セルをハイライトし「あなたの◯◯はここ」を示す。従（受動）機能だが、レンジ参照は無料・回数制限なしで提供する。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ポジションチップ</td><td>Chip 9択</td><td>UTG／UTG+1／UTG+2／LJ／HJ／CO／BTN／SB／BB</td></tr>
+    <tr><td>状況チップ</td><td>Chip 3択</td><td>RFI（自分が最初に）／オープンに対して／スクイーズに対して</td></tr>
+    <tr><td>13×13マトリクス</td><td>Grid</td><td>169ハンドをアクション色で塗り分け（旧HandRangeMatrixView流用）</td></tr>
+    <tr><td>凡例</td><td>Legend</td><td>レイズ／コール／ミックス／フォールドの4色</td></tr>
+    <tr><td>ハイライトカード</td><td>Card（遷移時のみ）</td><td>「あなたのAKsはここ」＋スポット・推奨アクション</td></tr>
+    <tr><td>無料訴求</td><td>Caption</td><td>「レンジ逆引きは回数制限なし・無料で使えます」</td></tr>
+  </table>
+
+  <h3>アクション4色（RangeAction）</h3>
+  <table>
+    <tr><th>アクション</th><th>表現</th></tr>
+    <tr><td>レイズ</td><td>テラコッタ系（濃）</td></tr>
+    <tr><td>コール</td><td>グリーン系</td></tr>
+    <tr><td>ミックス</td><td>レイズ／コールの2色グラデーション</td></tr>
+    <tr><td>フォールド</td><td>ニュートラル（暗）</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>通常参照</td><td>選択したポジション×状況のマトリクスを表示</td></tr>
+    <tr><td>記録ハンド由来の遷移</td><td>該当セルをハイライト＋「あなたの◯◯はここ」カード</td></tr>
+    <tr><td>データ無し組み合わせ</td><td>レンジデータが存在しない組み合わせ（例: BBのRFI）は選択不可表示</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>ハンド詳細／照合バナーの「レンジを見る」から</td><td>本画面（該当セルハイライト付き）へ流入</td></tr>
+    <tr><td>ポジション／状況チップ タップ</td><td>同一画面内でマトリクス更新</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// レンジ表は旧PokerLesson由来のレンジデータ（RangeDataService）を流用。SwiftData @Model は持たない
+// 入力: positionRaw × scenarioRaw（RFI/vs_open/vs_squeeze）→ 169ハンドの RangeAction（raise/call/mixed/fold）
+Hand // 記録ハンド由来の遷移時、holeCard から該当セルを特定してハイライト</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>range_viewer_opened</code></td><td>source</td><td>従機能（レンジ参照）の受動利用</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>13×13マトリクスは旧PokerLesson の HandRangeMatrixView を流用</li>
+    <li>アクションは RangeAction 4種（レイズ／コール／ミックス／フォールド）</li>
+    <li>組み合わせはレンジデータの存在に依存。<strong>データ無しの組み合わせ（例: BBのRFI）は選択不可表示</strong>にする</li>
+    <li>記録ハンド由来の遷移時は該当セルをハイライト＋説明カード</li>
+    <li><strong>無料・回数制限なし</strong>（照合・答え合わせの1日3回とは別枠。レンジ参照は制限しない）</li>
+    <li>レンジデータのロードは range カテゴリでログ</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="hand-detail.html">ハンド詳細（PD-10）</a></li>
+    <li><a href="gto-match.html">MTTレンジ照合バナー（PD-07）</a></li>
+    <li><a href="drill.html">答え合わせ（PD-18）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

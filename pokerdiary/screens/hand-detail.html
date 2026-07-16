@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- ハンド詳細</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / ハンド詳細</div>
+
+  <header class="site-header">
+    <h1>ハンド詳細</h1>
+    <p>1ハンドの全容。シェア・レンジ逆引き・答え合わせの起点</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-10</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>1ハンドの内容を詳細表示し、シェアカード生成・レンジ逆引き・答え合わせといった従機能への起点となる画面。通常ハンドは全情報＋照合結果を集約し、クイックメモ由来の下書きハンドは「詳細を追加する」「セッションに紐づける」で完成へ導く。</p>
+
+  <h2>UI 構成（2状態）</h2>
+  <h3>通常状態</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ホールカード（大）＋ボード</td><td>Card</td><td>ホール2枚を大表示、ボードをミニカードで表示</td></tr>
+    <tr><td>ポジション／状況／アクション</td><td>Label</td><td>例: CO ・ オープンに対して ・ コール</td></tr>
+    <tr><td>セッションリンク</td><td>Field Row</td><td>紐づくセッション（店・日付・ステークス）へ遷移</td></tr>
+    <tr><td>メモ全文</td><td>Card</td><td>ひとことメモを全文表示</td></tr>
+    <tr><td>弱点タグ</td><td>Chip + 編集</td><td>タグ表示＋編集チップ</td></tr>
+    <tr><td>照合結果ブロック</td><td>Card（該当時のみ）</td><td>あなた vs GTO推奨の対比。PD-07と同型。都度再計算・保存しない</td></tr>
+    <tr><td>シェアカードを作る</td><td>Primary Button</td><td>シェアカード生成（PD-13）へ</td></tr>
+    <tr><td>削除</td><td>Destructive Button</td><td>このハンドを削除（確認ダイアログ必須）</td></tr>
+  </table>
+  <h3>下書き状態</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>下書きバッジ</td><td>Badge</td><td>「下書き ・ クイックメモから作成」</td></tr>
+    <tr><td>ホールカード（大）＋メモ</td><td>Card</td><td>入力済みのホール2枚とメモのみ表示</td></tr>
+    <tr><td>「詳細を追加する」</td><td>Primary Button</td><td>PD-04の続き入力（ボード・ポジション・状況・タグを後から足す）</td></tr>
+    <tr><td>「セッションに紐づける」</td><td>Highlight Row</td><td>候補セッション（例: 7/14 アキバギルド）へ紐づけ</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>通常（照合該当）</td><td>全情報＋照合結果ブロックを表示。シェア・削除ボタンあり</td></tr>
+    <tr><td>通常（照合非該当）</td><td>照合結果ブロックを非表示。その他は通常表示</td></tr>
+    <tr><td>下書き</td><td>下書きバッジ・「詳細を追加する」主CTA・「セッションに紐づける」行を表示。シェアボタンは出さない</td></tr>
+    <tr><td>削除操作</td><td>確認ダイアログを経て削除</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「レンジを見る」タップ（照合ブロック）</td><td>レンジ逆引きビューア（PD-17・該当セルハイライト付き）</td></tr>
+    <tr><td>「似た問題を解く」タップ</td><td>答え合わせ（PD-18）</td></tr>
+    <tr><td>「シェアカードを作る」タップ</td><td>シェアカード生成（PD-13）</td></tr>
+    <tr><td>セッションリンク タップ</td><td>セッション詳細（PD-09）</td></tr>
+    <tr><td>「詳細を追加する」タップ（下書き）</td><td>ハンド簡易記録（PD-04）の続き入力</td></tr>
+    <tr><td>削除 タップ</td><td>確認ダイアログ → 削除</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Hand // entryModeRaw（simple/quick）/ holeCard1,2 / boardCards / positionRaw / scenarioRaw
+     // actionRaw / weaknessTagsRaw / note / session?
+// 照合結果（HeroPreflopResult相当）は保存しない。position+ホール+scenario から都度再計算
+Session // セッションリンク・下書き紐づけ先</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>照合結果ブロックはPD-07と同型。都度再計算・保存しない</li>
+    <li><strong>削除は確認ダイアログ必須</strong>（誤削除防止）</li>
+    <li>下書き状態はシェアボタンを出さない（情報不足のカードを共有させない）</li>
+    <li>「レンジを見る」からPD-17へ遷移時は、該当セルのハイライト情報を渡す</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="gto-match.html">MTTレンジ照合バナー（PD-07）</a></li>
+    <li><a href="share-card.html">シェアカード生成（PD-13）</a></li>
+    <li><a href="range-viewer.html">レンジ逆引きビューア（PD-17）</a></li>
+    <li><a href="drill.html">答え合わせ（PD-18）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

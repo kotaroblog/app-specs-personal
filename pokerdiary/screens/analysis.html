@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- 分析ダッシュボード</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / 分析ダッシュボード</div>
+
+  <header class="site-header">
+    <h1>分析ダッシュボード</h1>
+    <p>リング／トナメ／支出の3ビューと課金境界</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-11</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>2レイヤー収支を軸に、実力（リングBB・トナメ成績）と娯楽費（支出）を可視化するダッシュボード。3ビューセグメントで切り替え、弱点タグ集計と店別成績を共通下部に置く。無料の閲覧範囲を「直近90日＋今月」に限定しつつ、その先のデータが消えていないことを見せて Pro へ誘導する。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>3ビューセグメント</td><td>Segmented Control</td><td>リング／トナメ／支出</td></tr>
+    <tr><td>リングビュー</td><td>Chart群</td><td>BB収支の推移（直近90日・折れ線）・月別BB収支バー・ステークス別／BB per 時（Proロック）</td></tr>
+    <tr><td>トナメビュー</td><td>Chart群</td><td>総エントリー・ITM率・月別エントリーバー・入賞履歴</td></tr>
+    <tr><td>支出ビュー</td><td>Chart群</td><td>今月の支出・月間支出バー・店別</td></tr>
+    <tr><td>全期間オーバーレイ</td><td>Blur + Overlay</td><td>90日より前はブラー＋「全期間を見る（Pro）」（source=statsLocked）</td></tr>
+    <tr><td>弱点タグ集計</td><td>Bar List</td><td>回数バー（共通下部）</td></tr>
+    <tr><td>店別成績</td><td>List</td><td>店別行（→PD-12）。指標はビューに連動</td></tr>
+    <tr><td>タブバー</td><td>Tab Bar</td><td>ホーム／履歴／分析／設定</td></tr>
+  </table>
+
+  <h2>課金境界</h2>
+  <div class="callout">
+    <strong>無料＝直近90日＋今月は3ビュー共通。</strong> それ以前の期間はブラー表示＋「全期間を見る（Pro）」オーバーレイ（source=statsLocked）とする。加えてリングの「ステークス別／BB per 時」もProロック。<strong>データが消えていないことを見せる</strong>設計とし、「90日より前のデータも残っています」と明記して安心感を担保する（錠前で威圧しない）。
+  </div>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>リングビュー</td><td>BB収支推移・月別バー。ステークス別/BB per 時はProロック</td></tr>
+    <tr><td>トナメビュー</td><td>総エントリー・ITM率・月別・入賞履歴。店別成績はE/ITM表示に連動</td></tr>
+    <tr><td>支出ビュー</td><td>今月・月間バー・店別</td></tr>
+    <tr><td>無料・90日超過分</td><td>ブラー＋全期間オーバーレイ（statsLocked）</td></tr>
+    <tr><td>Pro</td><td>全期間・ステークス別分析を開放</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>「全期間を見る」タップ</td><td>Paywall（source=statsLocked）</td></tr>
+    <tr><td>店別成績行 タップ</td><td>店詳細（PD-12）</td></tr>
+    <tr><td>3ビューセグメント切替</td><td>同一画面内でビュー切替</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Session // リング: bbProfit（推移・月別）/ sbChips,bbChips（ステークス別）/ durationMinutes（BB per 時）
+        // トナメ: buyInCount / resultRaw（総E・ITM率・入賞履歴）
+        // 支出: spentYen（今月・月間・店別）
+Hand    // weaknessTagsRaw（弱点タグ集計）
+Venue   // 店別成績の見出し</code></pre>
+
+  <h2>KPI イベント</h2>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>目的</th></tr>
+    <tr><td><code>paywall_shown</code></td><td>source=statsLocked</td><td>全期間・ステークス別分析ロックからの課金ファネル</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>無料の閲覧範囲は3ビュー共通で「直近90日＋今月」。90日より前はブラー＋オーバーレイ（データは削除しない）</li>
+    <li>店別成績の指標は<strong>ビューに連動して切替</strong>（リング＝BB収支／トナメ＝E・ITM／支出＝円）</li>
+    <li>ステークス別・BB per 時はProロック（勝てるステークスの見極め訴求）</li>
+    <li>集計はSessionのクエリで算出。弱点タグ集計はHandのweaknessTagsRawをin-memory集計</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="venue-detail.html">店詳細（PD-12）</a></li>
+    <li><a href="paywall.html">Paywall（PD-14）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

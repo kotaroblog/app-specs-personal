@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- 履歴</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">ポーカー手帳（PokerDiary）</a> / 履歴</div>
+
+  <header class="site-header">
+    <h1>履歴</h1>
+    <p>セッション／ハンドを月区切りで一覧する</p>
+    <div style="margin-top:8px;">
+      <span class="tag todo">設計確定・実装未着手</span>
+      <span class="tag">画面ID: PD-08</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>記録したセッションとハンドを時系列でたどる一覧画面。セグメントで「セッション／ハンド」を切り替え、月区切りヘッダとフィルタチップで目的の記録に素早く到達する。クイックメモ由来の下書きハンドもここに現れ、後から詳細化・セッション紐づけへ導く。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>セグメント</td><td>Segmented Control</td><td>セッション／ハンドの切替</td></tr>
+    <tr><td>フィルタチップ</td><td>Chip（横並び）</td><td>すべて／店／タグ。ハンドセグメント時のみ「下書きのみ」を追加</td></tr>
+    <tr><td>月区切りヘッダ</td><td>Section Header</td><td>「2026年 7月」等。月ごとに行をグルーピング</td></tr>
+    <tr><td>セッション行</td><td>List Row（Card）</td><td>後述の行仕様①</td></tr>
+    <tr><td>ハンド行／下書き行</td><td>List Row（Card）</td><td>後述の行仕様②③</td></tr>
+    <tr><td>タブバー</td><td>Tab Bar</td><td>ホーム／履歴／分析／設定</td></tr>
+  </table>
+
+  <h3>行仕様3種</h3>
+  <table>
+    <tr><th>行</th><th>構成要素</th></tr>
+    <tr><td>① セッション行</td><td>店名・形式バッジ（リング／トナメ）・日付・右端にBB収支（リング／勝ち緑・負けテラコッタ）またはトナメ結果（例: 2E ITM・アンバー色）</td></tr>
+    <tr><td>② ハンド行</td><td>ミニカード2枚・ポジション＋状況（例: CO ・ vs open）・弱点タグチップ・メモ先頭1行（省略記号付き）</td></tr>
+    <tr><td>③ 下書き行</td><td>ミニカード2枚＋下書きバッジ＋メモのみ。<strong>ポジション／状況は未入力のため表示しない</strong></td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>セッションセグメント</td><td>月区切りでセッション行を一覧。フィルタは すべて／店／タグ</td></tr>
+    <tr><td>ハンドセグメント</td><td>月区切りでハンド行・下書き行を一覧。フィルタに「下書きのみ」を追加</td></tr>
+    <tr><td>下書き混在</td><td>下書き行は下書きバッジで区別し、ポジション／状況を出さずメモのみ表示</td></tr>
+    <tr><td>データなし</td><td>エンプティステート（記録の開始を促す）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>セッション行 タップ</td><td>セッション詳細（PD-09）</td></tr>
+    <tr><td>ハンド行 タップ</td><td>ハンド詳細（PD-10・通常）</td></tr>
+    <tr><td>下書き行 タップ</td><td>ハンド詳細（PD-10・下書き）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Session // 店・形式・日付・BB収支/トナメ結果（行仕様①）
+Hand    // entryModeRaw（simple/quick=下書き判定）/ holeCard1,2 / positionRaw / scenarioRaw
+        // weaknessTagsRaw / note（行仕様②③）
+Venue   // 店フィルタ・店名表示</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>閲覧に制限を設けない。ハンドの無料制限は<strong>記録数（月10件）のみ</strong>で、既存記録の閲覧は無制限</li>
+    <li>下書き判定は <code>entryModeRaw == "quick"</code>。下書き行はポジション／状況を描画しない（未入力を空欄で見せない）</li>
+    <li>月区切りは Session.date / Hand.createdAt を月単位でグルーピング</li>
+    <li>「下書きのみ」フィルタはハンドセグメント時のみ表示</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="session-detail.html">セッション詳細（PD-09）</a></li>
+    <li><a href="hand-detail.html">ハンド詳細（PD-10）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>
