@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- ASOキーワード戦略</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">ポーカー手帳（PokerDiary）</a> / ASO戦略</div>
+
+  <header class="site-header">
+    <h1>ASOキーワード戦略</h1>
+    <p>App Store Optimization の方針とキーワード設計</p>
+  </header>
+
+  <div class="callout">
+    ステータス: <strong>企画確定・実装未着手</strong>（2027-Q1リリース目標）。本書は設計方針であり、以下の設定値・文言はリリース時の第一候補として採用する設計とする。プロモテキスト・What's New の運用は <code>@release-manager</code> の領分。
+  </div>
+
+  <h2>ターゲットユーザー</h2>
+  <ul class="kv-list">
+    <li><span class="k">ペルソナ</span><span class="v">田中蓮（26歳・IT会社員）— 週1〜2回アミューズメントポーカー通い・ポーカー歴3〜12ヶ月</span></li>
+    <li><span class="k">課題</span><span class="v">「なぜ負けたか言語化できない」。収支もハンドもLINE自分宛メモ等の非構造メモ止まり</span></li>
+    <li><span class="k">利用シーン</span><span class="v">アミュからの帰りの電車・帰宅後のソファ（10秒〜数分）・日曜夜の週次レビュー</span></li>
+  </ul>
+
+  <h2>App Store Connect 設定（確定値）</h2>
+  <ul class="kv-list">
+    <li><span class="k">アプリ名（30字）</span><span class="v">ポーカー手帳｜収支・ハンド記録</span></li>
+    <li><span class="k">サブタイトル（30字）</span><span class="v">負け筋がわかる振り返りノート</span></li>
+    <li><span class="k">カテゴリ</span><span class="v">プライマリ=ファイナンス／セカンダリ=ユーティリティ（案）</span></li>
+    <li><span class="k">キーワードフィールド（100字）</span><span class="v"><code>テキサスホールデム,アミューズメント,アミュ,トーナメント,MTT,レンジ,プリフロップ,GTO,成績,管理,日記,帳簿,メモ,初心者,練習,勉強</code></span></li>
+    <li><span class="k">プロモテキスト（170字）</span><span class="v">リリース時に作成（What's New運用は @release-manager の領分）</span></li>
+  </ul>
+  <div class="callout">
+    キーワードフィールドには、タイトル・サブタイトル既出語（ポーカー／手帳／収支／ハンド／記録／振り返り／ノート）を<strong>入れない</strong>。App Store 側でインデックス重複となり枠が無駄になるため。
+  </div>
+
+  <h2>主要キーワード</h2>
+  <table>
+    <tr><th>優先度</th><th>キーワード</th><th>想定ボリューム</th><th>競合強度</th><th>狙い</th></tr>
+    <tr><td>1</td><td>ポーカー 収支</td><td>低〜中</td><td>低</td><td>ど本命。専用アプリ不在の空白地帯</td></tr>
+    <tr><td>2</td><td>ポーカー 記録／ポーカー メモ</td><td>低</td><td>低</td><td>本命補完</td></tr>
+    <tr><td>3</td><td>アミューズメントポーカー</td><td>低</td><td>低</td><td>日本アミュ特化の看板</td></tr>
+    <tr><td>4</td><td>ポーカー アプリ</td><td>中</td><td>中</td><td>汎用流入</td></tr>
+    <tr><td>5</td><td>テキサスホールデム</td><td>中</td><td>中</td><td>ジャンル語</td></tr>
+    <tr><td>6</td><td>ポーカー 初心者</td><td>中</td><td>中</td><td>学習系流入（答え合わせ・レンジ訴求）</td></tr>
+    <tr><td>7</td><td>プリフロップ／ハンドレンジ</td><td>低</td><td>低</td><td>従機能の専門語流入</td></tr>
+    <tr><td>8</td><td>ポーカー 日記／手帳</td><td>低</td><td>低</td><td>世界観一致</td></tr>
+  </table>
+
+  <h2>レーティング4+維持のNGワード</h2>
+  <div class="callout warn">
+    <strong>説明文・キーワード・スクショで使用禁止:</strong> ギャンブル／賭け／賭博／カジノ／換金／現金。<br><br>
+    表現は「アミューズメントポーカー」「チップ収支」「成績」で統一し、実マネーギャンブルを想起させない（App Review ガイドライン 5.3系 対策）。<br><br>
+    シミュレーテッドギャンブル要素（CPU対戦）は v1.0 非搭載 — これが 4+ の根拠。
+  </div>
+
+  <h2>説明文の構造</h2>
+  <p style="color: var(--color-text-soft); font-size: 0.9rem;">1行目（最重要）: <strong>「アミュ帰りの10秒で、今夜の収支と気になった1手を記録。」</strong></p>
+  <ol>
+    <li><strong>主要価値の提示</strong>: 収支×振り返りで「なぜ負けたか」を言葉にする</li>
+    <li><strong>機能リスト（5〜7項目）</strong>: 10秒収支記録・店別成績・ハンド30秒記録・弱点タグ・週次レビュー・レンジ逆引き・シェアカード</li>
+    <li><strong>使い方</strong>: 帰りの電車で収支入力→気になった1手を残す→日曜夜に週次レビュー</li>
+    <li><strong>差別化ポイント</strong>: 負け筋の言語化（弱点タグ＋週次レビュー）は既存トラッカーにない</li>
+    <li><strong>CTA</strong>: 「今夜の1戦から、記録をはじめよう」</li>
+  </ol>
+
+  <h2>競合分析</h2>
+  <table>
+    <tr><th>競合</th><th>強み</th><th>弱み</th><th>差別化ポイント</th></tr>
+    <tr><td>PokerNote（国産トラッカー）</td><td>更新が速い（3.5ヶ月で4版）・国産</td><td>振り返り（負け筋の言語化）機能なし</td><td>弱点タグ言語化＋週次レビューのUXは絶対に妥協しない</td></tr>
+    <tr><td>Poker Analytics 6（海外定番）</td><td>高機能・実績</td><td>英語UI・日本アミュ文化非対応・高価格</td><td>日本アミュ特化・店マスタ・日本語</td></tr>
+    <tr><td>LINE自分宛メモ・メモ帳</td><td>導入コストゼロ</td><td>構造化されず振り返れない・集計不能</td><td>10秒の構造化入力＋自動集計</td></tr>
+    <tr><td>MAXBET（パチンコ収支・100万DL・¥480/月）／雀ログ（麻雀）</td><td>「収支記録」フォーマットの市場実証</td><td>ポーカー非対応</td><td>同フォーマットのポーカー空白地帯を先取</td></tr>
+  </table>
+
+  <h2>スクリーンショット戦略</h2>
+  <table>
+    <tr><th>順序</th><th>テーマ</th><th>キャッチコピー</th></tr>
+    <tr><td>1</td><td>収支ダッシュボード（第一印象）</td><td>「今月、いくら勝ってる？」</td></tr>
+    <tr><td>2</td><td>10秒記録</td><td>「アミュ帰りの10秒で、収支メモ」</td></tr>
+    <tr><td>3</td><td>ハンド記録＋弱点タグ</td><td>「負け筋が、言葉になる」</td></tr>
+    <tr><td>4</td><td>週次レビュー</td><td>「日曜5分。次の課題が決まる」</td></tr>
+    <tr><td>5</td><td>レンジ逆引き</td><td>「気になった1手を、答え合わせ」</td></tr>
+  </table>
+
+  <h2>レビュー対策</h2>
+  <ul>
+    <li><strong>依頼タイミング</strong>: 週次レビュー完了直後（達成感のピーク）。<code>SKStoreReviewController</code>・OS上限は年3回。</li>
+    <li class="warn"><strong>収支記録直後には絶対に出さない</strong> — 負け収支入力直後は心理状態が最悪で低評価リスク。</li>
+    <li>週間収支プラスのユーザーに限定する条件も実装時に検討する。</li>
+    <li>低評価返信: 24時間以内・改善予定を具体的に。</li>
+  </ul>
+
+  <h2>GTM連携</h2>
+  <ul>
+    <li>ポーカー専用Xアカウント（ローンチ3ヶ月前開設）で開発者自身の収支グラフ・振り返りカードを発信する。</li>
+    <li>シェアカード（1080×1080・無料版WM付き）がストア外流入の主導線となる設計とする。</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- データモデル</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">ポーカー手帳（PokerDiary）</a> / データモデル</div>
+
+  <header class="site-header">
+    <h1>データモデル</h1>
+    <p>SwiftData @Model の構造とリレーション</p>
+  </header>
+
+  <div class="callout">
+    ステータス: <strong>企画確定・実装未着手</strong>（2027-Q1リリース目標）。本書は設計方針であり、以下は「〜する設計とする」前提で読むこと。新規4モデル＋旧PokerLesson流用2モデルの計6モデルを <code>Schema([Session, Venue, Hand, WeeklyReview, Question, AnswerRecord])</code> で構成する設計とする。
+  </div>
+
+  <h2>ER 図</h2>
+  <div class="mermaid">
+erDiagram
+  Venue ||--o{ Session : has
+  Session ||--o{ Hand : has
+  Question ||--o{ AnswerRecord : has
+
+  Venue {
+    UUID id
+    String name
+    Date createdAt
+  }
+  Session {
+    UUID id
+    Date date
+    Int buyIn
+    Int cashOut
+    Int durationMinutes
+    String gameTypeRaw
+    String stakes
+    String note
+    Date createdAt
+  }
+  Hand {
+    UUID id
+    String entryModeRaw
+    String holeCard1
+    String holeCard2
+    StringArray boardCards
+    String positionRaw
+    String scenarioRaw
+    String actionRaw
+    String resultRaw
+    StringArray weaknessTagsRaw
+    String note
+    Date createdAt
+  }
+  WeeklyReview {
+    UUID id
+    Date weekStartDate
+    Int profitSnapshot
+    Int sessionCount
+    Int handCount
+    StringArray topWeaknessTagsRaw
+    String nextFocus
+    Date completedAt
+    Date createdAt
+  }
+  Question {
+    UUID id
+    String positionRaw
+    String scenarioRaw
+    String handStr
+    Int heroStack
+    String correctActionRaw
+    Bool isFreeTrial
+  }
+  AnswerRecord {
+    UUID id
+    String selectedActionRaw
+    Bool isCorrect
+    Date answeredAt
+  }
+  </div>
+  <div class="callout warn">
+    ER図中の <code>StringArray</code> は mermaid のパース制約回避のための表記であり、実際の型は <code>[String]</code>（<code>boardCards</code> / <code>weaknessTagsRaw</code> / <code>topWeaknessTagsRaw</code>）。<code>durationMinutes</code> / <code>completedAt</code> は実際には Optional（<code>Int?</code> / <code>Date?</code>）。<br>
+    リレーション補足: <code>Hand.session</code> は<strong>任意</strong>（クイックメモは未紐づけで作成可）。<code>WeeklyReview</code> はスタンドアロン（他モデルと直接のリレーションを持たない）。
+  </div>
+
+  <h2>新規モデル</h2>
+
+  <h3>Session</h3>
+  <pre><code>@Model
+final class Session {
+    var id: UUID = UUID()
+    var date: Date = Date()              // プレイ日
+    var buyIn: Int = 0                   // 円
+    var cashOut: Int = 0                 // 円
+    var durationMinutes: Int? = nil      // 任意（Pro時給分析用）
+    var gameTypeRaw: String = "tournament" // tournament / ring
+    var stakes: String = ""              // リング用ブラインド表記（任意）
+    var note: String = ""
+    var createdAt: Date = Date()
+
+    var venue: Venue? = nil
+    @Relationship(deleteRule: .nullify, inverse: \Hand.session)
+    var hands: [Hand] = []
+
+    var profit: Int { cashOut - buyIn }  // computed
+}</code></pre>
+
+  <h3>Venue</h3>
+  <pre><code>@Model
+final class Venue {
+    var id: UUID = UUID()
+    var name: String = ""
+    var createdAt: Date = Date()
+    @Relationship(deleteRule: .nullify, inverse: \Session.venue)
+    var sessions: [Session] = []
+    // 店別通算成績（訪問数・累計損益）はクエリ／computedで算出。非正規化しない
+}</code></pre>
+
+  <h3>Hand</h3>
+  <pre><code>@Model
+final class Hand {
+    var id: UUID = UUID()
+    var entryModeRaw: String = "quick"   // quick（5秒メモ）/ simple（30秒簡易記録）
+    var holeCard1: String = ""           // "Ah" 形式（Rank+Suit rawValue）
+    var holeCard2: String = ""
+    var boardCards: [String] = []        // 0〜5枚
+    var positionRaw: String = ""         // PokerPosition rawValue（9max）
+    var scenarioRaw: String = ""         // rfi / vs_open / cold_call_vs_squeeze / other
+    var actionRaw: String = ""           // fold / call / raise（自分のプリフロップ選択）
+    var resultRaw: String = ""           // won / lost / chopped / unknown
+    var weaknessTagsRaw: [String] = []   // WeaknessTag rawValue配列
+    var note: String = ""                // 1行メモ
+    var createdAt: Date = Date()
+
+    var session: Session? = nil          // 任意。クイックメモは後からセッションに紐づけ可
+}</code></pre>
+
+  <h3>WeeklyReview</h3>
+  <pre><code>@Model
+final class WeeklyReview {
+    var id: UUID = UUID()
+    var weekStartDate: Date = Date()     // 週の月曜0時
+    var profitSnapshot: Int = 0          // 完了時点の週間収支
+    var sessionCount: Int = 0
+    var handCount: Int = 0
+    var topWeaknessTagsRaw: [String] = [] // 頻出タグ上位3
+    var nextFocus: String = ""           // 「次回の課題」（ホームに表示する核）
+    var completedAt: Date? = nil         // nil=未完了
+    var createdAt: Date = Date()
+}</code></pre>
+
+  <h2>流用モデル（旧PokerLessonから流用・答え合わせ機能用）</h2>
+  <p style="color: var(--color-text-soft); font-size: 0.9rem;">130問クイズの答え合わせ機能に用いる。旧PokerLesson（GitHub: kotaroblog/PokerLesson）からほぼそのまま流用する設計とする。</p>
+
+  <h3>Question（130問マスタ）</h3>
+  <table>
+    <tr><th>プロパティ</th><th>型</th><th>説明</th></tr>
+    <tr><td>id</td><td>UUID</td><td>設問ID</td></tr>
+    <tr><td>positionRaw</td><td>String</td><td>ポジション rawValue</td></tr>
+    <tr><td>scenarioRaw</td><td>String</td><td>シナリオ（rfi / vs_open 等）</td></tr>
+    <tr><td>handStr</td><td>String</td><td>ハンド表記（例: AKs）</td></tr>
+    <tr><td>heroStack</td><td>Int</td><td>ヒーローの有効スタック（BB）</td></tr>
+    <tr><td>preActionsText</td><td>String</td><td>前アクションの説明文</td></tr>
+    <tr><td>correctActionRaw</td><td>String</td><td>正解アクション</td></tr>
+    <tr><td>correctRaiseSize</td><td>Double?</td><td>正解レイズサイズ（任意）</td></tr>
+    <tr><td>explanation</td><td>String</td><td>解説文</td></tr>
+    <tr><td>difficulty</td><td>Int</td><td>難易度</td></tr>
+    <tr><td>isFreeTrial</td><td>Bool</td><td>無料開放設問か</td></tr>
+    <tr><td>answers</td><td>[AnswerRecord]</td><td>cascade リレーション</td></tr>
+  </table>
+
+  <h3>AnswerRecord（回答履歴）</h3>
+  <table>
+    <tr><th>プロパティ</th><th>型</th><th>説明</th></tr>
+    <tr><td>id</td><td>UUID</td><td>回答ID</td></tr>
+    <tr><td>question</td><td>Question?</td><td>設問への参照</td></tr>
+    <tr><td>selectedActionRaw</td><td>String</td><td>選択アクション</td></tr>
+    <tr><td>selectedRaiseSize</td><td>Double?</td><td>選択レイズサイズ（任意）</td></tr>
+    <tr><td>isCorrect</td><td>Bool</td><td>正誤</td></tr>
+    <tr><td>answeredAt</td><td>Date</td><td>回答日時</td></tr>
+    <tr><td>durationSeconds</td><td>Double</td><td>回答所要秒数</td></tr>
+  </table>
+
+  <h2>設計判断</h2>
+  <ol>
+    <li><strong>クイックメモは独立モデルにしない</strong> — <code>Hand</code> に <code>entryModeRaw</code>（<code>quick</code> / <code>simple</code>）で統合する。「後から詳細化」は同一レコードの編集で実現し、履歴一覧・セッション紐づけを一本化する。</li>
+    <li><strong>カードは "Ah" 形式の String 2フィールド</strong> — 旧PokerLesson の <code>PokerCard</code>（Rank/Suit enum）・<code>HandNotation</code> と相互変換する。ボードのみ <code>[String]</code>（0〜5枚可変）とする。</li>
+    <li><strong>弱点タグは enum rawValue 配列</strong> — マスタ @Model 化しない。v1.0 はプリセット固定・集計は取得後に in-memory で実施する（個人記録の規模で十分）。プリセット案10種: レンジ外参加／ポジション軽視／コール過多（降りられない）／オーバーブラフ／バリュー逃し／ベットサイズ不適切／ティルト／スタック管理ミス／相手レンジ決め打ち／ドロー追いすぎ（実装時に確定）。</li>
+    <li><strong>MTT照合結果（HeroPreflopResult）は保存しない</strong> — <code>positionRaw</code> ＋ ホールカード ＋ <code>scenarioRaw</code> から流用 <code>RangeDataService</code> で都度再計算する（正規化・データ最小主義）。</li>
+    <li><strong>旧 UserProgress（ストリーク）は持ち込まない</strong> — why_return 設計でストリーク・ノルマ型は不採用のため。答え合わせの成績は <code>AnswerRecord</code> から都度算出する。</li>
+    <li><strong>VersionedSchema を初回から整備する</strong> — 旧PokerLesson には無かった。<code>PokerDiarySchemaV1</code> ＋ <code>SchemaMigrationPlan</code> を v1.0 で導入する（MVP #14）。</li>
+    <li><strong>金額は Int（円）</strong> — <code>profit</code> は computed。4+維持のため画面文言は「収支」で統一し、賭博表現を使わない。</li>
+  </ol>
+
+  <h2>マイグレーション方針</h2>
+  <div class="callout warn">
+    SwiftData の <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>（CLAUDE.md準拠）。上記6モデルはすべてデフォルト値を設定済み。新規プロパティ追加時も必ずデフォルト値を設定する。<br><br>
+    <code>ModelContainer</code> 生成失敗時は in-memory フォールバック ＋ <code>Logger.error</code> で継続する設計とする（旧PokerLesson の方式踏襲）。<br><br>
+    スキーマ: <code>Schema([Session, Venue, Hand, WeeklyReview, Question, AnswerRecord])</code>
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- ロギング方針</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">ポーカー手帳（PokerDiary）</a> / ロギング方針</div>
+
+  <header class="site-header">
+    <h1>ロギング方針</h1>
+    <p>os.log / Logger を用いたログ出力ルール</p>
+  </header>
+
+  <div class="callout">
+    ステータス: <strong>企画確定・実装未着手</strong>（2027-Q1リリース目標）。本書は設計方針であり、以下は「〜する設計とする」前提で読むこと。
+  </div>
+
+  <h2>基本方針</h2>
+  <div class="callout">
+    <strong><code>print()</code> は禁止</strong>。<code>Logger</code>（os.log）を使用する（CLAUDE.md準拠）。<br><br>
+    subsystem は <code>Bundle.main.bundleIdentifier</code>（＝ <code>com.happyboy1002.PokerDiary</code>）を用いる。<br>
+    段階1は os.log 出力のみとし、リリース後に Firebase Analytics 等のラッパーへ差し替え可能な設計とする（旧PokerLesson <code>EventLogger</code> の方式踏襲）。
+  </div>
+
+  <h2>Logger カテゴリの定義</h2>
+  <p style="color: var(--color-text-soft); font-size: 0.9rem;">旧PokerLesson の「ファイル単位カテゴリ」から「役割単位カテゴリ」に整理する方針とし、8カテゴリを定義する。</p>
+  <pre><code>import OSLog
+
+extension Logger {
+    private static let subsystem = Bundle.main.bundleIdentifier ?? "com.happyboy1002.PokerDiary"
+
+    static let app = Logger(subsystem: subsystem, category: "app")               // 起動・ライフサイクル・コンテナ生成
+    static let data = Logger(subsystem: subsystem, category: "data")             // SwiftData保存・取得・マイグレーション
+    static let kpi = Logger(subsystem: subsystem, category: "kpi")               // EventLogger（KPI専用）
+    static let purchase = Logger(subsystem: subsystem, category: "purchase")     // SubscriptionManager（StoreKit 2）
+    static let ad = Logger(subsystem: subsystem, category: "ad")                 // AdMobバナー
+    static let notification = Logger(subsystem: subsystem, category: "notification") // 週次レビュー通知
+    static let range = Logger(subsystem: subsystem, category: "range")           // レンジ表・130問データロード（流用系）
+    static let share = Logger(subsystem: subsystem, category: "share")           // シェアカードImageRenderer
+}</code></pre>
+
+  <h2>ログレベルの使い分け</h2>
+  <table>
+    <tr><th>レベル</th><th>用途</th><th>PokerDiary での例</th></tr>
+    <tr><td><code>.debug</code></td><td>開発時のみ確認したい情報</td><td>画面遷移・VM初期化</td></tr>
+    <tr><td><code>.info</code></td><td>通常のイベント</td><td>セッション保存完了・照合実行</td></tr>
+    <tr><td><code>.notice</code></td><td>注目すべきイベント</td><td>初回起動・サブスク状態変化</td></tr>
+    <tr><td><code>.warning</code></td><td>異常だが継続可能</td><td>通知許可拒否・広告ロード失敗</td></tr>
+    <tr><td><code>.error</code></td><td>エラー、機能継続不可</td><td>SwiftData保存失敗・レンジJSONロード失敗</td></tr>
+    <tr><td><code>.critical</code></td><td>アプリ継続不可</td><td>ModelContainer生成失敗（in-memoryフォールバック発動）</td></tr>
+  </table>
+
+  <h2>プライバシー対応（ファイナンスアプリとして最重要）</h2>
+  <div class="callout warn">
+    <strong>収支金額（buyIn / cashOut / profit）・店名・メモ本文・次回の課題テキストはログに出さない。</strong> やむを得ない場合は <code>privacy: .private</code> を必須とする。<br><br>
+    KPIイベントのパラメータに<strong>金額・店名・自由記述を絶対に含めない</strong>（件数・真偽値・enum値のみ）。
+  </div>
+  <pre><code>// OK（ID を .public で出力。金額・店名を含まない）
+Logger.data.info("セッション保存完了 id=\(session.id, privacy: .public)")
+
+// NG（収支金額と店名を公開ログに出している）
+Logger.data.info("収支: \(session.profit)円 @\(venue.name)")</code></pre>
+
+  <h2>KPIイベント設計（EventLogger）</h2>
+  <p style="color: var(--color-text-soft); font-size: 0.9rem;">
+    旧PokerLesson の <code>EventLogger</code>（os.log出力・DEBUGビルドのみメモリ内リングバッファ最大100件＋設定画面の <code>EventLogDebugView</code>）を流用し、<code>AppEvent</code> enum を PokerDiary 用に新設計する。
+  </p>
+  <table>
+    <tr><th>イベント名</th><th>パラメータ</th><th>計測目的</th></tr>
+    <tr><td><code>onboarding_completed</code></td><td>なし</td><td>初回体験の到達率</td></tr>
+    <tr><td><code>session_logged</code></td><td>game_type, has_duration, venue_is_new</td><td>錨行動の頻度（最重要リテンション指標）</td></tr>
+    <tr><td><code>hand_prompt_shown</code></td><td>なし</td><td>完了画面「1手残す?」表示数</td></tr>
+    <tr><td><code>hand_prompt_accepted</code></td><td>なし</td><td>同・承諾数（収支→ハンドの最重要ファネル）</td></tr>
+    <tr><td><code>hand_logged</code></td><td>entry_mode, tag_count, has_session</td><td>差別化行動の量と質</td></tr>
+    <tr><td><code>preflop_match_shown</code></td><td>matched</td><td>照合バナー表示・GTO一致率</td></tr>
+    <tr><td><code>range_viewer_opened</code></td><td>source</td><td>従機能の受動利用</td></tr>
+    <tr><td><code>drill_answered</code></td><td>correct</td><td>答え合わせ利用</td></tr>
+    <tr><td><code>weekly_review_started</code></td><td>source</td><td>レビュー着手（notification / home 別）</td></tr>
+    <tr><td><code>weekly_review_completed</code></td><td>tag_count, has_next_focus</td><td>レビュー完遂（週次リテンションの核）</td></tr>
+    <tr><td><code>share_card_created</code></td><td>なし</td><td>GTM素材生成</td></tr>
+    <tr><td><code>share_card_shared</code></td><td>なし</td><td>実共有（ストア外流入の種）</td></tr>
+    <tr><td><code>paywall_shown</code></td><td>source（7種）</td><td>課金ファネル入口</td></tr>
+    <tr><td><code>subscribe_completed</code></td><td>plan</td><td>課金成立</td></tr>
+  </table>
+  <div class="callout">
+    <strong>ファネル設計思想:</strong> 「abandoned」イベントは直接出さず、<code>shown</code> と <code>accepted</code> / <code>completed</code> の突合で離脱率を算出する（旧PokerLesson方式踏襲）。<br><br>
+    全イベントは <code>privacy: .public</code> で出力可能な値のみで構成する。<strong>金額・自由記述を含まない設計だから成立する。</strong>
+  </div>
+
+  <h2>禁止事項</h2>
+  <ul>
+    <li><code>print()</code> の使用（CI / lint で検知）</li>
+    <li>APIキー・パスワード・課金トランザクション詳細の出力</li>
+    <li>収支金額・店名・メモ・次回の課題テキストを公開ログに含めること</li>
+  </ul>
+
+  <h2>確認方法</h2>
+  <p>
+    macOS の Console.app でデバイスを選択し、subsystem（<code>com.happyboy1002.PokerDiary</code>）でフィルタすると当該アプリのログのみ確認可能。
+  </p>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>

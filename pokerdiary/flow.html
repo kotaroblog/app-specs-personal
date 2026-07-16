@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳（PokerDiary）- 画面遷移図</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">ポーカー手帳（PokerDiary）</a> / 画面遷移図</div>
+
+  <header class="site-header">
+    <h1>画面遷移図</h1>
+    <p>ポーカー手帳（PokerDiary）全画面の遷移マップ</p>
+  </header>
+
+  <div class="callout">
+    ステータス: <strong>企画確定・実装未着手</strong>（2027-Q1リリース目標）。本書は Fable 5 設計・企画書 v2026-06-11 に準拠した設計方針であり、実装済みを意味しない。スマホでは横スクロールで全体を確認できる。
+  </div>
+
+  <h2>全体フロー</h2>
+  <div class="mermaid">
+flowchart TD
+  Launch([起動]) --> InitCheck{初回起動か}
+  InitCheck -->|Yes| Onb[オンボーディング<br/>価値訴求・通知許可・完了]
+  InitCheck -->|No| Tabs
+  Onb --> Tabs
+
+  Tabs{{タブバー4本}}
+  Tabs --> Home[ホーム]
+  Tabs --> History[履歴タブ<br/>セッション／ハンド]
+  Tabs --> Analysis[分析タブ]
+  Tabs --> Settings[設定タブ]
+
+  Home --> RecBtn(今夜を記録・主ボタン)
+  RecBtn --> RecSheet[収支セッション記録シート<br/>店名サジェスト・バイイン・キャッシュアウト]
+  RecSheet --> RecDone[記録完了画面]
+  RecDone -->|気になった1手を残す| HandSheet[ハンド簡易記録シート<br/>52セルグリッド・ボード・弱点タグ3タップ・任意1行]
+  RecDone -->|閉じる| Home
+  HandSheet --> MatchChk{MTTレンジ表に該当？}
+  MatchChk -->|該当| Banner[プリフロップ照合バナー]
+  MatchChk -->|非該当| Home
+  Banner -->|レンジを見る| RangeViewer[レンジ逆引きビューア]
+  Banner -->|似た問題| Drill[答え合わせ・130問接続]
+
+  Home --> QuickMemo[クイックメモシート<br/>ホールカード2枚・1行・席外し用]
+  Home --> ReviewCard[週次レビューカード]
+  ReviewCard --> ReviewFlow[週次レビューフロー<br/>今週サマリ・メモ再掲・頻出弱点タグ・次回の課題・完了]
+  Notif([日曜夜ローカル通知]) --> ReviewFlow
+
+  History --> SessionDetail[セッション詳細]
+  SessionDetail --> HandSheet
+  SessionDetail --> HandDetail[ハンド詳細]
+  History --> HandDetail
+  HandDetail --> RangeViewer
+  HandDetail --> Drill
+  HandDetail --> ShareCard[シェアカード生成]
+  ShareCard --> SharePreview[プレビュー]
+  SharePreview --> OSShare[OS共有シート]
+
+  Analysis --> Dashboard[収支ダッシュボード<br/>累計損益・月別・店別3グラフ・弱点タグ集計]
+  Dashboard --> VenueDetail[店別成績詳細]
+
+  Settings --> Paywall[Paywall]
+  Settings --> VenueMaster[店マスタ管理]
+  Settings --> NotifSetting[通知設定]
+  Settings --> SubMgmt[サブスク管理・法務リンク]
+
+  HandSheet -.ハンド月10件超.-> Paywall
+  Dashboard -.全期間・店別分析.-> Paywall
+  ReviewFlow -.フル版.-> Paywall
+  Drill -.照合1日3回超.-> Paywall
+  ShareCard -.WM除去.-> Paywall
+  Onb -.価値訴求後.-> Paywall
+  </div>
+
+  <h2>主要な遷移パターン</h2>
+  <table>
+    <tr><th>起点</th><th>遷移先</th><th>トリガー</th></tr>
+    <tr><td>ホーム</td><td>収支記録シート</td><td>「今夜を記録」主ボタン（最頻動線・10秒で完結）</td></tr>
+    <tr><td>記録完了画面</td><td>ハンド簡易記録シート</td><td>「気になった1手、残しますか?」1タップ（本アプリ最重要ファネル）</td></tr>
+    <tr><td>ハンド保存</td><td>プリフロップ照合バナー</td><td>ポジション＋ハンドがMTTレンジ表に該当する場合のみ自動表示</td></tr>
+    <tr><td>照合バナー</td><td>レンジ逆引き／答え合わせ</td><td>バナー内ボタン（従機能は常にこの経路で受動的に呼ばれる）</td></tr>
+    <tr><td>日曜夜通知</td><td>週次レビューフロー</td><td>UNUserNotificationCenter ローカル通知</td></tr>
+    <tr><td>ハンド詳細</td><td>シェアカード生成</td><td>共有ボタン（無料版はウォーターマーク付き）</td></tr>
+    <tr><td>ロック機能</td><td>Paywall</td><td>source 付き遷移（下表7種）</td></tr>
+  </table>
+
+  <h2>Paywall 遷移元（PaywallView.Source）</h2>
+  <p style="color: var(--color-text-soft); font-size: 0.9rem;">旧PokerLesson の <code>PaywallView.Source</code> enum パターン（導線元で訴求文言を出し分ける）を踏襲し、7種を採用する。</p>
+  <table>
+    <tr><th>Source</th><th>発火元</th><th>ロック内容</th></tr>
+    <tr><td><code>onboarding</code></td><td>オンボーディング末尾</td><td>初回価値訴求 Paywall</td></tr>
+    <tr><td><code>handLimit</code></td><td>ハンド簡易記録シート</td><td>ハンド記録 月10件超</td></tr>
+    <tr><td><code>statsLocked</code></td><td>収支ダッシュボード</td><td>全期間・店別／ステークス別・時給分析</td></tr>
+    <tr><td><code>reviewLocked</code></td><td>週次レビューフロー</td><td>週次レビューのフル版</td></tr>
+    <tr><td><code>matchLimit</code></td><td>照合バナー・答え合わせ</td><td>照合・答え合わせ 1日3回超</td></tr>
+    <tr><td><code>shareWatermark</code></td><td>シェアカード生成</td><td>ウォーターマーク除去</td></tr>
+    <tr><td><code>settings</code></td><td>設定タブ</td><td>Pro機能一覧からの導線</td></tr>
+  </table>
+
+  <h2>設計原則</h2>
+  <div class="callout">
+    <strong>プレイ中はアプリの空白地帯とする。</strong> 卓上スマホNGの制約に正面から従い、プレイ中はクイックメモ（ホールカード2枚＋1行）のみを許容する。詳細な記録・分析はすべて「帰宅後アプリ」として設計する。
+  </div>
+  <div class="callout">
+    <strong>従機能は単体タブ・単体メニューを持たない。</strong> レンジ逆引き・答え合わせは記録とハンド詳細からの導線でのみ受動的に呼び出す設計とする。前面のメニューには出さない。
+  </div>
+  <div class="callout">
+    <strong>収支入力はどの経路でも Paywall に阻まれない（永久無料の錨）。</strong> 収支記録シートは習慣の錨であり、課金で塞がない設計とする。
+  </div>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
+      flowchart: { curve: 'basis', useMaxWidth: true }
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-07-16</footer>
+</div>
+</body>
+</html>
