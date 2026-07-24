@@ -23,8 +23,8 @@
     <li><span class="k">言語</span><span class="v">日本語</span></li>
     <li><span class="k">配信地域</span><span class="v">日本（初回）</span></li>
     <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（月¥480 / 年¥3,800）+ Google AdMob</span></li>
-    <li><span class="k">ステータス</span><span class="v">v1.2.0 (build69) 機能凍結中・未提出（build67 リリース済み）</span></li>
-    <li><span class="k">直近バージョン</span><span class="v">v1.2.0 (build69): VideoCompletion 完成実績モデル / NextRecordingSelector / ClipLibraryCTA 3状態分岐 / オンボ完了後撮影直行 / ATT 遅延延伸 / Analytics creation_session_id 追加 / ProductLoadState 3状態管理 / テスト 92 件</span></li>
+    <li><span class="k">ステータス</span><span class="v">撮影・書き出しUX改善バッチ（acf8f50 / abba1b0 / f7bb7b0）反映済み・提出準備中</span></li>
+    <li><span class="k">直近バージョン</span><span class="v">撮影UI改善（カメラ準備状態 SetupState / 進捗ドット色＋形状区別 / 状態説明テキスト / トップバー ステップ名主表示 / マイク非遮断バナー） + 完成動画刷新（全画面アウトロ廃止 / ルーティン名タイトルテロップ / ステップ名は各クリップ冒頭2.4秒 / 音声なし書き出しの実挙動修正） + 保存先状態管理（ExportDestination × 工程別進捗文言 / 保存先ごと再試行 / BackAction / 順序依存解消）</span></li>
   </ul>
 
   <h2>画面仕様書</h2>
@@ -63,8 +63,8 @@
     </a>
     <a class="card" href="screens/preview.html">
       <div class="title">プレビュー・書き出し（PreviewView）</div>
-      <div class="desc">動画合成後プレビュー・カメラロール/アプリ内の2種保存・VideoCompletion記録</div>
-      <div class="meta"><span class="tag">build69</span></div>
+      <div class="desc">「仕上がりを確認」・総時間/クリップ数表示・保存先状態管理・工程別進捗・VideoCompletion記録</div>
+      <div class="meta"><span class="tag">2026-07-24</span></div>
     </a>
   </div>
 
@@ -102,6 +102,11 @@
       <div class="title">SNS シェアフロー</div>
       <div class="desc">TikTok/Reels 1tap 直起動 + 翌日復帰通知 + シェアトリガー型レビュー依頼</div>
     </a>
+    <a class="card" href="features/export-save-flow.html">
+      <div class="title">書き出し・保存フロー（保存先状態管理）</div>
+      <div class="desc">カメラロール/アプリ内の2保存先を状態管理。工程別の進捗文言・保存先ごとの再試行・戻る操作分岐・順序依存解消</div>
+      <div class="meta"><span class="tag">2026-07-24</span></div>
+    </a>
     <a class="card" href="features/scene-label-layout.html">
       <div class="title">SceneLabel レイアウト</div>
       <div class="desc">撮影プレビューと完成動画のテロップ配置 WYSIWYG 統一</div>
@@ -137,6 +142,7 @@
       <tr><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>2026-07-24</td><td><strong>撮影・書き出しUX改善バッチ反映（acf8f50 / abba1b0 / f7bb7b0）</strong>: 新規1ファイル（features/export-save-flow.html）作成。既存5ファイル更新（shooting / preview / video-composition / sns-share-flow / index）。<strong>撮影UI（acf8f50）</strong>: カメラ準備状態 <code>SetupState</code>（idle/preparing/ready/permissionDenied/failed）+ 準備中オーバーレイ・起動失敗時の再試行導線 / 進捗ドットを色＋形状（撮影済み=塗り／スキップ済み=アウトライン）で区別（純粋関数 ShootingProgress・ShootingStepStatus）/ 録画ボタン付近の状態説明テキスト / トップバーに現在のステップ名を主表示 / マイク権限拒否の非遮断バナー / カメラ反転の連打防止。<strong>完成動画（abba1b0）</strong>: 全画面アウトロカード（QR等）廃止→無料版は左上ウォーターマークのみ / 冒頭にルーティン名タイトルテロップ（0〜1.2秒）/ ステップ名・時刻を各クリップ冒頭のみ最大2.4秒に短縮 / テロップタイミングを純粋計算 OverlayTiming に分離 / プレビュー画面タイトル「プレビュー」→「仕上がりを確認」/ 総時間・クリップ数表示 / 音声トグルを肯定形化＋「音声なしで書き出す」の実挙動修正（音声トラック実除去）/ プリセットのステップ名を映像で分かりやすい表現に変更。<strong>保存先UX（f7bb7b0）</strong>: 保存先（ExportDestination）× 工程（ExportOperation）の状態管理で進捗文言を正しく出し分け / 保存失敗時の再試行を失敗した保存先だけに限定 / 戻る操作を BackAction で分岐（保存中は戻る無効化）/ アプリ内保存後の選択肢提示・ExportCompleteView からの仕上がり画面復帰で順序依存解消 / SNSボタン文言を「TikTokを開く」「Instagramを開く」に変更 / VideoSaving プロトコル新設</td></tr>
       <tr><td>2026-07-15</td><td><strong>build69 反映</strong>（機能凍結中・未提出）: 新規2ファイル（screens/preview.html・features/video-completion.html）作成。既存9ファイル更新（home / clip-library / routine-edit / paywall / video-list / onboarding-flow / analytics / testing / index）。主な変更: VideoCompletion @Model 追加（完成実績の単一情報源・creationSessionId 二重計上防止）/ NextRecordingSelector（「次に撮影」CTA 対象選定の安定ソート）/ ClipLibraryCTA.resolvePrimary（状況別主CTA 1択集約）/ ScheduleOutcome.notAuthorized（通知拒否 UI フィードバック）/ ProductLoadState 3状態管理（loading/loaded/failed）/ オンボ完了後撮影直行（F5）/ ATT 遅延を hasSeenFirstValueMoment まで延伸 / Analytics に creation_session_id・entry_source・destination を追加 / VideoListView 文言統一（「アプリ内の動画」）/ テスト 21→92 件（純粋関数化で Product/SwiftUI 非依存）</td></tr>
       <tr><td>2026-07-11</td><td><strong>v1.2.0 (build67) 反映</strong>: 計測イベント 9 種追加（撮影ファネル 3 件 / 動画合成 2 件 / export_failed / paywall_dismissed / purchase_failed / att_result）を analytics.html に追記。週次リマインダー（曜日指定）機能仕様書（features/weekly-reminder.html）を新規作成。続きから撮る導線機能仕様書（features/resume-shooting.html）を新規作成。home.html / shooting.html / clip-library.html / routine-edit.html にそれぞれ v1.2 変更を反映</td></tr>
       <tr><td>2026-07-01</td><td><strong>v1.1.0 追加反映</strong>: 年額トライアル廃止（7日間無料→なし）に伴い paywall.html / subscription.html を更新（CTA文言・planSubtitle・trialNoticeSection をトライアルなし表記に統一）。P1-a バグ修正 <code>inFlightTempURLs</code> / <code>isCancelled</code> ガード / <code>removeItem(sourceURL)</code> 削除を paywall.html に記録。AdMob 本番 App ID 切り替え・SnapshotGallery→RoutineVideoPoster 刷新は仕様書補足として記載</td></tr>
@@ -153,7 +159,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-15</footer>
+  <footer class="site-footer">最終更新: 2026-07-24</footer>
 </div>
 </body>
 </html>

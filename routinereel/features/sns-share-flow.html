@@ -23,7 +23,7 @@
     <strong>レビュー依頼</strong>と<strong>翌日復帰通知</strong>を仕込むことで、継続率とアプリ評価の双方を底上げする。
   </p>
   <ul class="kv-list">
-    <li><span class="k">対象画面</span><span class="v"><code>Views/Export/ExportCompleteView.swift</code></span></li>
+    <li><span class="k">対象画面</span><span class="v"><code>Views/Preview/ExportCompleteView.swift</code>（abba1b0 でパス移動）</span></li>
     <li><span class="k">関連サービス</span><span class="v"><code>ReminderService</code> / <code>ReviewRequestService</code> / <code>InterstitialAdManager</code></span></li>
     <li><span class="k">関連 commit</span><span class="v">8e00351 / 9322fd7</span></li>
   </ul>
@@ -35,12 +35,14 @@
       <tr><th>役割</th><th>内容</th></tr>
     </thead>
     <tbody>
-      <tr><td>主役</td><td>「TikTok を開いて投稿」（ピンクオレンジグラデ）</td></tr>
-      <tr><td>副役</td><td>「Instagram Reels を開いて投稿」（border）</td></tr>
+      <tr><td>主役</td><td>「TikTokを開く」＋補助「カメラロールから動画を選択」（ピンクオレンジグラデ）※abba1b0 で文言変更</td></tr>
+      <tr><td>副役</td><td>「Instagramを開く」＋補助「カメラロールから動画を選択」（border）※abba1b0 で文言変更</td></tr>
       <tr><td>脇役</td><td>「その他のアプリでシェア」（テキストリンク）</td></tr>
-      <tr><td>完了</td><td>「完了」（最下部、<code>InterstitialAdManager</code> 経由でホーム復帰）</td></tr>
+      <tr><td>仕上がり画面に戻る</td><td>PreviewView へ pop（フィルタ変更・アプリ内保存のやり直し用・abba1b0 追加）</td></tr>
+      <tr><td>完了</td><td>「完了」（最下部、ホーム復帰）</td></tr>
     </tbody>
   </table>
+  <p><strong>abba1b0 の文言変更</strong>: ボタンラベルを「TikTokを開く」「Instagramを開く」に簡素化し、補助テキスト「カメラロールから動画を選択」で手順を明示（自動投稿との誤解を防止）。あわせて「仕上がり画面に戻る」導線を追加し、カメラロール保存後もアプリ内保存できるよう順序依存を解消（<a href="export-save-flow.html">書き出し・保存フロー</a>参照）。</p>
 
   <h2>2.1 投稿手順インラインガイド（v1.1）</h2>
   <p>TikTok / Instagram Reels の各ボタンはアプリを開くだけで動画を自動転送しない。初見ユーザーが「ボタンを押したのに投稿できない」と混乱しないよう、ExportCompleteView にインラインガイドを追加した。</p>
@@ -166,12 +168,13 @@ center.removeDeliveredNotifications(withIdentifiers: [sharePromptId])
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.2</td><td>2026-07-24</td><td>abba1b0 反映: SNS ボタンラベルを「TikTokを開く」「Instagramを開く」＋補助「カメラロールから動画を選択」に変更（自動投稿との誤解を防止）。「仕上がり画面に戻る」導線を追加し、カメラロール保存後もアプリ内保存できるよう順序依存を解消。対象画面ファイルパスを <code>Views/Preview/ExportCompleteView.swift</code> に更新</td></tr>
       <tr><td>v1.1</td><td>2026-07-07</td><td>操作性改善バッチ（7c014ad / cff03e9）: TikTok / Reels ボタンラベルを実態を反映した表記に変更（「で投稿」→「を開いて投稿」）。ボタンがアプリを開くだけで自動投稿しない点を明示し、投稿手順ガイド（カメラロール保存済みの旨 + ライブラリ選択案内）をボタン直下に追加</td></tr>
       <tr><td>v1.0</td><td>2026-06-10</td><td>初版作成。ExportCompleteView の 4 ボタン構成・URL スキーム多段フォールバック・翌日復帰通知・ディープリンク受け口を定義。</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-07</footer>
+  <footer class="site-footer">最終更新: 2026-07-24</footer>
 </div>
 </body>
 </html>

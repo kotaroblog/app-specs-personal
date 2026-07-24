@@ -24,10 +24,42 @@
   </ul>
 
   <h2>完成動画のレイヤー構成（時系列）</h2>
-  <p>v1.1（2026-06-13）で冒頭タイトルカードを削除し、再生開始直後から本編映像が始まる構成へ。</p>
-  <pre><code>[0.0 ─── (合計尺-1.5)]  動画本体 + テロップ + 透かし(無料のみ)
-                  ↓
-[末尾 1.5秒]       アウトロカード（無料ユーザーのみ・QR + #RoutineReel）</code></pre>
+  <p style="background:#fff7e6;border-left:4px solid #ff9559;padding:10px 14px;margin:8px 0 16px;">
+    <strong>2026-07-23（abba1b0）で全画面アウトロカード（QR 等）を廃止</strong>。無料版のブランド露出は左上の小さなウォーターマークのみに一本化した。
+    代わりに動画冒頭に<strong>ルーティン名のタイトルテロップ</strong>を短時間表示する構成に変更（本編映像を隠さない）。
+  </p>
+  <pre><code>[0.0 ─ 1.2秒]  ルーティン名タイトルテロップ（フェードイン→維持→フェードアウト）
+[各クリップ冒頭のみ] ステップ名 + 時刻（最大 2.4 秒で自動フェードアウト）
+[全編]          動画本体 + 透かし（無料のみ・左上小）</code></pre>
+
+  <h2>テロップ表示タイミング（OverlayTiming・abba1b0 新設）</h2>
+  <p>テロップの表示タイミング計算を <code>Models/OverlayTiming.swift</code> に分離し、CALayer・座標系に依存しない純粋計算（動画タイムライン上の秒数）としてユニットテスト可能にした（<code>OverlayTimingTests</code>）。</p>
+
+  <h3>ルーティン名タイトルテロップ（abba1b0 新規）</h3>
+  <p>動画冒頭にルーティン名を短時間だけ表示するタイトルテロップを追加。本編映像を長く隠さないよう、フェードイン→維持→フェードアウトで自動的に消える。</p>
+  <table>
+    <thead><tr><th>キー</th><th>秒</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td>fadeInStart</td><td>0.00</td><td>表示開始</td></tr>
+      <tr><td>fadeInEnd</td><td>0.12</td><td>フェードイン完了</td></tr>
+      <tr><td>holdEnd</td><td>0.90</td><td>全表示の維持終了</td></tr>
+      <tr><td>fadeOutEnd</td><td>1.20</td><td>フェードアウト完了（以降は非表示）</td></tr>
+    </tbody>
+  </table>
+  <p>動画尺が 1.2 秒未満の場合は各キーを動画尺内へクランプ（単調非減少を保証し順序が前後しない）。<code>OverlayTiming.titleTiming(totalDuration:)</code> で計算。</p>
+
+  <h3>ステップ名・時刻を各クリップ冒頭のみ表示（abba1b0 で短縮）</h3>
+  <p>従来はステップ名・時刻をクリップの全区間で表示していたが、<strong>各クリップ冒頭のみ（最大 2.4 秒）</strong>に短縮し、映像を見せる時間を確保した。ステップ名と時刻は必ず同じ区間を共有する。</p>
+  <ul class="kv-list">
+    <li><span class="k">計算</span><span class="v"><code>OverlayTiming.stepLabelTiming(clipStart:clipEnd:isFirstClip:)</code></span></li>
+    <li><span class="k">最大表示</span><span class="v">クリップ冒頭から <code>stepMaxVisible = 2.4</code> 秒（クリップ終端を超えない）</span></li>
+    <li><span class="k">フェード</span><span class="v">fadeIn 0.12 秒 / fadeOut 0.20 秒</span></li>
+    <li><span class="k">最初のクリップ</span><span class="v">ルーティン名タイトルからの引き継ぎのため <code>stepHandoff = 1.0</code> 秒まで開始を遅らせる</span></li>
+    <li><span class="k">短いクリップ保護</span><span class="v">キーは必ず <code>fadeInStart ≤ fadeInEnd ≤ fadeOutStart ≤ fadeOutEnd ≤ clipEnd</code> を満たすようクランプ（逆転・重複なし）</span></li>
+  </ul>
+
+  <h3>総尺フォーマッタ（VideoDurationFormatter）</h3>
+  <p>完成動画の総尺を「M:SS」形式（秒は小数なし・分はゼロ埋めしない）で表す純粋関数。プレビュー画面の尺表示に使用。例: 9 → "0:09" / 36 → "0:36" / 65 → "1:05"。</p>
 
   <h2>① 冒頭タイトルカード（<strong>v1.1 で削除</strong>・関数本体は残置）</h2>
   <p style="background:#fff7e6;border-left:4px solid #ff9559;padding:10px 14px;margin:8px 0 16px;">
@@ -51,7 +83,16 @@
     <li><span class="k">アスペクト比</span><span class="v">9:16 縦型固定</span></li>
     <li><span class="k">解像度</span><span class="v">ユーザー設定（720p / 1080p / 最高）<br>低スペック機（4GB RAM 未満）は 1080p+ → 720p に自動降格</span></li>
     <li><span class="k">音声</span><span class="v">撮影時の元音声のみ（BGMは v1.0 で完全廃止）</span></li>
-    <li><span class="k">元音声ミュート</span><span class="v">PreviewView の muteOriginalAudio トグルで無音化可能</span></li>
+    <li><span class="k">元音声ミュート（abba1b0 で実挙動を修正）</span><span class="v">PreviewView の「撮影音声を残す／音声なしで書き出す」トグルで制御。<strong>「音声なしで書き出す」を選ぶと保存動画の音声トラックが実際に除去される</strong>（保存直前に <code>exportVideoWithoutAudio</code> を実行）。旧実装は文言と実際の保存結果が食い違い、音声なしを選んでも音声が残っていた</span></li>
+  </ul>
+
+  <h3>撮影音声の除去（abba1b0・実ファイル上でトラック除去）</h3>
+  <p>マスター動画（<code>composed_</code>）は常に音声を保持したまま保持し、保存時のみ音声トラックを除去した新しい一時ファイルを生成する。合成時の <code>audioMix</code>（音量 0）方式では実ファイルに音声トラックが残り SNS 側で復元され得るため、<strong>トラックそのものを除去</strong>する方式へ変更した。</p>
+  <ul class="kv-list">
+    <li><span class="k">実装</span><span class="v"><code>VideoCompositionService.exportVideoWithoutAudio(from:)</code>（音声トラックを含まない新ファイルを UUID 名で書き出し）</span></li>
+    <li><span class="k">保存前処理の順序</span><span class="v"><code>PreviewViewModel.prepareVideoForExport</code> で a. 音声トラック除去 → b. フィルタ適用。中間生成物（<code>muted_</code>）はフィルタ成功・失敗いずれでも削除して蓄積を防止</span></li>
+    <li><span class="k">音声トラック無しの動画</span><span class="v">元動画に音声トラックが無い場合もそのまま正常終了</span></li>
+    <li><span class="k">後方互換</span><span class="v"><code>CompositionConfig.muteOriginalAudio</code>（合成時 audioMix）は残置。現行 PreviewViewModel は常に false で合成し、実ミュートは保存直前に行う</span></li>
   </ul>
 
   <h2>③ テロップ焼き込み（v1.0.6で SceneLabelLayout 単一ソース化 + descent slack 補正 + 長文折り返し）</h2>
@@ -117,7 +158,11 @@
   <p><strong>v1.0変更前</strong>: 右下・2行（ブランド+CTA）・opacity 0.85 → 「動画体験を削る」「右下UI衝突」と指摘され、左上1行に簡素化。</p>
   <p><strong>v1.2修正</strong>: y 座標のバグ修正により、撮影時の SwiftUI オーバーレイ（左上）と完成動画内のブランド名位置（左上）が一致するようになった。</p>
 
-  <h2>⑤ 末尾アウトロカード（v1.0.6 で QR + #RoutineReel 焼き込み追加・バイラル流入の核）</h2>
+  <h2>⑤ 末尾アウトロカード（<strong>2026-07-23 abba1b0 で廃止</strong>）</h2>
+  <p style="background:#fff7e6;border-left:4px solid #ff9559;padding:10px 14px;margin:8px 0 16px;">
+    <strong>全画面アウトロカード（QR コード + #RoutineReel + ブランド名 + CTA）を廃止した。</strong>
+    <code>makeOutroCardLayer</code> の呼び出しを <code>addLayers</code> から削除。無料版のブランド露出は左上の小さなウォーターマーク（④）のみに一本化し、末尾で本編が全画面カードに置き換わってしまう体験を排除した。以下は廃止前の仕様（参考）。
+  </p>
   <ul class="kv-list">
     <li><span class="k">対象</span><span class="v">無料ユーザーのみ（<code>watermarkText == nil</code> の Pro 加入者は透かしと同条件で除外）</span></li>
     <li><span class="k">尺</span><span class="v"><strong>1.5秒</strong>（旧 0.8秒）<br>※ QR 認識に 0.8 秒では不足するため 1.5 秒は維持。QR はアウトロカード全期間に表示</span></li>
@@ -195,20 +240,16 @@
   <h2>BGM の扱い（v1.0で完全廃止）</h2>
   <p>v1.0 で完全削除。元音声のみ。詳細は <a href="bgm-removal.html">BGM機能削除の意思決定記録</a>。</p>
 
-  <h2>動画例（5ステップ×8秒のモーニングルーティン）</h2>
-  <pre><code>[0.0 - 0.6秒]  左上「7:30」+「平日モーニングルーティン」（上部グラデのみ）
-[0.6 - 8.6秒] 起床・水を飲む（左下時刻+ステップ名 + 左上小「RoutineReel」）
-[8.6 - 16.6秒] スキンケア
-[16.6 - 24.6秒] 着替え
-[24.6 - 32.6秒] コーヒー
-[32.6 - 40.6秒] 外出
-[39.1 - 40.6秒] アウトロカード（黒0.55・無料のみ）:
-                  「習慣を、動画で残す。」
-                  「RoutineReel」（特大）
-                  [QR コード]（動画幅25%・白背景・角丸）
-                  「QR を読み取るか App Store で検索」
-                  「#RoutineReel」</code></pre>
-  <p>合計 約 40.6秒</p>
+  <h2>動画例（5ステップ×8秒のモーニングルーティン・abba1b0 以降）</h2>
+  <pre><code>[0.0 - 1.2秒]  ルーティン名タイトルテロップ「朝5分ルーティン」（フェードイン→維持→フェードアウト）
+[0.0 - 40.0秒] 左上に小さく「RoutineReel」（無料版ウォーターマーク・全編常時）
+[1.0 - 3.4秒] クリップ1冒頭のみ 左下「7:30 / カーテンを開ける」（最大2.4秒で消える）
+[8.0 - 10.4秒] クリップ2冒頭のみ「スキンケア」
+[16.0 - 18.4秒] クリップ3冒頭のみ「着替える」
+[24.0 - 26.4秒] クリップ4冒頭のみ「コーヒーを淹れる」
+[32.0 - 34.4秒] クリップ5冒頭のみ「いってきます」
+（末尾の全画面アウトロカードは廃止済み）</code></pre>
+  <p>合計 約 40秒</p>
 
   <h2>合成パイプライン</h2>
   <ol>
@@ -238,6 +279,7 @@
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.4</td><td>2026-07-24</td><td>テロップ・アウトロ・音声の刷新（abba1b0）: 全画面アウトロカード（QR + #RoutineReel + ブランド名 + CTA）を廃止し、無料版のブランド露出を左上ウォーターマークのみに一本化。動画冒頭にルーティン名のタイトルテロップ（0〜1.2秒でフェードイン→維持→フェードアウト）を追加。ステップ名・時刻の表示を各クリップ全区間 → 各クリップ冒頭のみ（最大2.4秒）に短縮。テロップ表示タイミングを純粋計算 <code>OverlayTiming</code>（titleTiming / stepLabelTiming）に分離してユニットテスト可能化。総尺フォーマッタ <code>VideoDurationFormatter</code> 追加。「音声なしで書き出す」選択時に保存動画の音声トラックを実際に除去する修正（保存直前に <code>exportVideoWithoutAudio</code>・旧実装は文言と実挙動が食い違っていた）</td></tr>
       <tr><td>v1.3</td><td>2026-07-07</td><td>機能性・デザイン改善（e012cc3）: 先頭クリップ欠損時の transform 未設定バグを修正（先頭固定 → 最初に挿入成功したクリップ基準で renderSize 取得、全欠損時はエラー返却）</td></tr>
       <tr><td>v1.2</td><td>2026-06-19</td><td><strong>ウォーターマーク y 座標バグを修正</strong>。AVFoundation の CALayer は左下原点のため、左上配置には <code>y = renderSize.height - marginY - brandHeight</code> が正しいが、修正前は <code>y = marginY</code>（左下配置）になっていた。修正により撮影時の SwiftUI オーバーレイ（左上）と完成動画内のブランド名位置（左上）が一致</td></tr>
       <tr><td>v1.1</td><td>2026-06-13</td><td><strong>冒頭タイトルカード（時刻 + ルーティン名）の焼き込みを削除</strong>（commit 5d82d0f）。動画再生開始 0.6 秒間、画面上部に「時刻 + ルーティン名」が大きく被さって本編映像を遮るというユーザー報告への対応。<code>VideoCompositionService.addLayers</code> から <code>makeIntroCardLayer(...)</code> 呼び出しを削除し、ログメッセージから「イントロ:」も削除。<code>makeIntroCardLayer</code> 関数本体は再有効化容易のためコメント付きで残置。維持される要素: 末尾アウトロカード（QR + #RoutineReel + ブランド名 + CTA）／本編 SceneLabel（時刻 + ステップ名・SceneLabelLayout で WYSIWYG 一致）／透かし。冒頭テキストを期待していたユーザーには「TikTok 冒頭視聴維持率対策」の意図が失われる影響あり、復活が必要なら 1 行戻すだけで対応可</td></tr>
@@ -251,7 +293,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-07</footer>
+  <footer class="site-footer">最終更新: 2026-07-24</footer>
 </div>
 </body>
 </html>

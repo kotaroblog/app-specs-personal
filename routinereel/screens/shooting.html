@@ -438,12 +438,81 @@
     <li><span class="k">詳細</span><span class="v"><a href="../features/analytics.html">Analytics 計測基盤</a> 参照</span></li>
   </ul>
 
+  <h2>カメラ準備状態（SetupState）（acf8f50）</h2>
+  <p>カメラの起動を <code>CameraService.SetupState</code> として明示的に状態管理し、黒画面のまま録画ボタンを押せてしまう問題を解消した。View はこの1つの状態で「準備中／利用可能／権限拒否／起動失敗」を出し分ける。</p>
+  <table>
+    <thead>
+      <tr><th>状態</th><th>意味</th><th>カメラカードの表示</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>idle</code></td><td>セットアップ未着手</td><td>黒（プレビューなし）</td></tr>
+      <tr><td><code>preparing</code></td><td>権限確認〜セッション構成〜起動待ち</td><td><code>CameraPreparingOverlay</code>（スピナー + 「カメラを準備中…」）。録画ボタン無効化</td></tr>
+      <tr><td><code>ready</code></td><td>セッション稼働中・録画可能</td><td>カメラプレビュー。録画ボタン有効</td></tr>
+      <tr><td><code>permissionDenied</code></td><td>カメラ権限が拒否されている</td><td>設定導線アラート</td></tr>
+      <tr><td><code>failed</code></td><td>権限以外の起動失敗（cameraUnavailable / configurationFailed 等）</td><td><code>CameraFailedOverlay</code>（「カメラを起動できませんでした」+ 「再試行」ボタン → <code>CameraService.retry()</code>）</td></tr>
+    </tbody>
+  </table>
+  <ul class="kv-list">
+    <li><span class="k">録画ボタンのガード</span><span class="v">カメラ準備完了（<code>ready</code>）まで録画開始ボタンを無効化し、黒画面での録画開始を防止</span></li>
+    <li><span class="k">世代管理</span><span class="v"><code>generation</code> トークンで prepare / stop / retry / flip の割り込みを管理。画面を閉じた後や再試行後に古い prepare チェーンが UI 状態を書き換えない構造（<code>retry()</code> はリセット後の世代を引き継ぐ）</span></li>
+  </ul>
+
+  <h2>進捗ドットの状態を色＋形状で区別（acf8f50）</h2>
+  <p>ステッププログレスバーの各ドットを、色だけでなく<strong>塗り／中空（アウトライン）</strong>の形状差でも区別するようにした。判定は View から切り離した純粋関数 <code>ShootingProgress.status(for:currentIndex:recordedIndices:skippedIndices:)</code> に集約し、単体テスト可能（<code>ShootingStepStatusTests</code> / <code>ShootingViewModelRecordedIndexTests</code>）。</p>
+  <table>
+    <thead>
+      <tr><th>状態（<code>ShootingStepStatus</code>）</th><th>形状・色</th><th>VoiceOver 状態語</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>current</code></td><td>ピンク→オレンジ グラデ（塗り・22×4pt）</td><td>現在のステップ</td></tr>
+      <tr><td><code>recorded</code></td><td>濃色（塗り・primaryText 0.85）</td><td>撮影済み</td></tr>
+      <tr><td><code>skipped</code></td><td>濃色の<strong>アウトライン（中空）</strong>＝撮影済みと明確に区別</td><td>スキップ済み</td></tr>
+      <tr><td><code>pending</code></td><td>薄グレー（塗り・tertiaryText 0.25）</td><td>未撮影</td></tr>
+    </tbody>
+  </table>
+  <p><strong>変更前</strong>: 撮影済みとスキップ済みが同じ表示で区別できなかった。優先順位は current &gt; recorded &gt; skipped &gt; pending（recorded と skipped の矛盾入力でも撮影済みを優先して安定した結果を返す）。</p>
+
+  <h2>録画ボタン付近の状態説明テキスト（acf8f50）</h2>
+  <p>録画ボタンを押すと何が起こるかを言葉で示す説明テキストを、カメラ映像・SceneLabel を隠さない操作エリア内（録画ボタンの上）に追加した。</p>
+  <table>
+    <thead>
+      <tr><th>状態</th><th>テキスト</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>待機中（ready）</td><td>「○秒録画」（ステップの録画秒数）</td></tr>
+      <tr><td>カウントダウン中</td><td>「タップですぐ開始」</td></tr>
+      <tr><td>録画中</td><td>「停止して次へ」／最終ステップは「停止して完了」</td></tr>
+      <tr><td>保存中</td><td>「クリップを保存中…」</td></tr>
+    </tbody>
+  </table>
+
+  <h2>トップバーに現在のステップ名を主表示（acf8f50）</h2>
+  <p>トップバーの主表示を<strong>現在のステップ名</strong>（16pt medium）に変更し、ルーティン名とステップ番号（<code>N/総数</code>）を従表示（12pt light）に降格した。撮影中に「今どのステップを撮っているか」が一目で分かる。</p>
+  <ul class="kv-list">
+    <li><span class="k">変更前</span><span class="v">ルーティン名 + ステップ番号のみ（ステップ名は非表示）</span></li>
+    <li><span class="k">省略挙動</span><span class="v">ステップ名は <code>lineLimit(1)</code> + <code>truncationMode(.tail)</code> + <code>minimumScaleFactor(0.85)</code> で左右ボタンと重ならないよう1行省略</span></li>
+  </ul>
+
+  <h2>マイク権限拒否時の非遮断バナー（acf8f50）</h2>
+  <p>マイク権限が拒否されていても撮影をアラートで止めず、映像のみで撮影を続けられることを伝える非遮断バナー <code>MicrophoneDisabledBanner</code> を追加した。</p>
+  <ul class="kv-list">
+    <li><span class="k">判定</span><span class="v"><code>CameraService.isMicrophoneDenied</code>（true でも映像のみで録画継続）</span></li>
+    <li><span class="k">文言</span><span class="v">「マイクが許可されていないため、音声なしで撮影します」（mic.slash.fill アイコン + 黒半透明カプセル）</span></li>
+  </ul>
+
+  <h2>カメラ反転の連打防止（acf8f50）</h2>
+  <ul class="kv-list">
+    <li><span class="k">フラグ</span><span class="v"><code>CameraService.isSwitchingCamera</code>。反転処理中は反転ボタン・録画開始ボタンを無効化し、session への同時操作（多重反転）を防止</span></li>
+    <li><span class="k">切替先の取得</span><span class="v">反転後のカメラ位置は <code>session.inputs</code> から読み取る（状態の二重管理を回避）</span></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table>
     <thead>
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v2.0</td><td>2026-07-24</td><td>撮影UI改善（acf8f50）: カメラ準備状態 <code>CameraService.SetupState</code>（idle/preparing/ready/permissionDenied/failed）を追加し、準備中オーバーレイ（<code>CameraPreparingOverlay</code>）・起動失敗時の再試行導線（<code>CameraFailedOverlay</code> → <code>retry()</code>）を表示。カメラ準備完了まで録画ボタンを無効化。進捗ドットを色＋形状（撮影済み=塗り／スキップ済み=アウトライン中空）で区別（判定を純粋関数 <code>ShootingProgress.status</code> に集約・<code>ShootingStepStatus</code> 4状態）。録画ボタン付近に状態説明テキスト（○秒録画／タップですぐ開始／停止して次へ・完了／クリップを保存中…）を追加。トップバーの主表示を現在のステップ名に変更（ルーティン名・ステップ番号を従表示に降格）。マイク権限拒否時の非遮断バナー <code>MicrophoneDisabledBanner</code> を追加。カメラ反転の連打防止 <code>isSwitchingCamera</code> を追加</td></tr>
       <tr><td>v1.9</td><td>2026-07-13</td><td>52c8a94 反映: 「次へ」ボタンを「後で撮る」に改名。ShootingViewModel に hasSkippedSteps フラグを追加し、スキップが1回でも発生した場合は撮影完了後を ClipGenerateView へ遷移（全ステップ撮影済みの場合は従来通りプレビュー直行）。SingleStepShootingView 保存成功時に singleStepCaptureCompleted イベントを新規追加（firstRecording / streakUpdated は継続）。保存失敗時アラート文言を「クリップをライブラリに保存できませんでした。今回の撮影を続けられますが、この素材は後から選び直せません。空き容量を確認してください。」に変更</td></tr>
       <tr><td>v1.8</td><td>2026-07-11</td><td>v1.2 反映: 中断ダイアログを 2択（保存して終了/キャンセル）から 3択（クリップを残して終了/破棄して終了/続ける）に変更。破棄時は DB 確定後にファイル削除する順序で参照整合性を保証。ShootingViewModel に skipStepsWithExistingClips モードを追加（Routine.unshotSteps を使って未撮影ステップのみを連続撮影）。続き撮影完了後はクリップ選択画面（最新クリップ自動選択済み）に遷移。撮影ファネル計測 3 イベント追加（capture_started / capture_interrupted / capture_completed）</td></tr>
       <tr><td>v1.7</td><td>2026-07-07</td><td>機能性・デザイン改善（e216de7, e012cc3, e3e6ca1）: テロップ時刻を録画完了時刻から録画開始時刻に変更（recordingStartedAt をキャプチャして persistClip に渡す）。撮影プレビューの SceneLabel が routine.fontFamily を参照して選択フォントを反映（Pro 未加入時はデフォルトフォントにフォールバック）。フロントカメラのミラー録画: AVCaptureConnection.isVideoMirrored = true でプレビューと録画ファイルの左右向きを統一。クリップ生成の時刻フォーマットを AppSettings.timestampFormat に一本化（全撮影経路での表記を統一）</td></tr>
@@ -462,7 +531,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-13</footer>
+  <footer class="site-footer">最終更新: 2026-07-24</footer>
 </div>
 </body>
 </html>

@@ -13,7 +13,7 @@
 
   <header class="site-header">
     <h1>プレビュー・書き出し（PreviewView）</h1>
-    <p>動画合成後のプレビューと2種類の保存ボタンを提供する画面。ClipGenerateView から NavigationStack に push される。</p>
+    <p>動画合成後のプレビューと2種類の保存ボタンを提供する画面。ClipGenerateView から NavigationStack に push される。画面タイトルは「仕上がりを確認」（旧「プレビュー」）。</p>
   </header>
 
   <h2>基本情報</h2>
@@ -28,10 +28,12 @@
 
   <h2>画面構成</h2>
   <ol>
-    <li><strong>トップバー</strong>: 「← 戻る」ボタン（左）+ 「プレビュー」タイトル（中央）</li>
+    <li><strong>トップバー</strong>: 「← 戻る」ボタン（左）+ 「仕上がりを確認」タイトル（中央）</li>
     <li><strong>動画プレビュー領域</strong>: 9:16 縦型・黒背景・warm white 上に黒カードとして浮かせる。build69 より上詰め配置（余白を下側に集約）</li>
-    <li><strong>元音声ミュートトグル</strong>: Toggle + speaker アイコン</li>
+    <li><strong>動画メタ情報</strong>: 総時間・クリップ数（例「0:36・5クリップ」）を合成完了後に表示</li>
+    <li><strong>音声トグル</strong>: 「撮影音声を残す／音声なしで書き出す」（肯定形。旧「元の音声をミュート」）</li>
     <li><strong>フィルタセクション</strong>: 横スクロールチップ（無料フィルタ + Pro フィルタ）</li>
+    <li><strong>無料ユーザー補足</strong>: 保存前に「動画の左上に小さくRoutineReelロゴが入ります」を表示</li>
     <li><strong>書き出しボタン</strong>: カメラロール保存（主役・グラデ）+ アプリ内保存（脇役・アウトライン）</li>
   </ol>
 
@@ -52,7 +54,7 @@
       <tr><td><code>.composing</code></td><td>動画作成中プログレス（%表示 + バー + キャンセルボタン）</td></tr>
       <tr><td><code>.ready</code></td><td>AVPlayer 動画再生・タップで再生/一時停止・全画面ボタン</td></tr>
       <tr><td><code>.exported</code></td><td>同上（保存済み状態。戻るボタンでアラートなしで閉じる）</td></tr>
-      <tr><td><code>.exporting</code></td><td>カメラロール保存中プログレス（動画 opacity 0.3 の上にオーバーレイ。キャンセル不可）</td></tr>
+      <tr><td><code>.exporting(operation)</code></td><td>保存前処理・保存中プログレス（動画 opacity 0.3 の上にオーバーレイ。キャンセル不可）。工程・保存先ごとに文言を出し分け（下記「保存先・工程の状態モデル」参照）</td></tr>
       <tr><td><code>.error(message, recovery)</code></td><td>エラーメッセージ + リカバリボタン（recompose / retrySave / openSettings の 3 種）</td></tr>
       <tr><td><code>.idle</code></td><td>EmptyView（遷移直後の一瞬）</td></tr>
     </tbody>
@@ -75,6 +77,75 @@
     <li><span class="k">アプリ内保存完了アラート</span><span class="v">「アプリに保存しました」タイトル + 「動画はホーム画面の『アプリ内の動画』から確認できます。」メッセージ（build69 より「最近の動画」→「アプリ内の動画」に更新）</span></li>
     <li><span class="k">二重保存ガード</span><span class="v">PreviewViewModel 内で保存済み (sessionId, destination) ペアを Set で保持し、同一セッション・同一 destination での重複実行を防止（Analytics の重複送信防止も兼ねる）</span></li>
     <li><span class="k">カメラロール保存完了後</span><span class="v">親（CreateSessionView）の <code>onSavedToPhotos</code> コールバック経由で ExportCompleteView を push</span></li>
+  </ul>
+
+  <h2>動画メタ情報（総時間・クリップ数）（abba1b0 追加）</h2>
+  <ul class="kv-list">
+    <li><span class="k">表示例</span><span class="v">「0:36・5クリップ」</span></li>
+    <li><span class="k">表示条件</span><span class="v">合成完了後のみ（実測総尺 <code>composedDurationSeconds &gt; 0</code>）。合成前や取得失敗（尺 0）は非表示</span></li>
+    <li><span class="k">尺フォーマット</span><span class="v"><code>VideoDurationFormatter.string(seconds:)</code>（M:SS）</span></li>
+    <li><span class="k">クリップ数</span><span class="v"><code>usedClipCount</code>（実際に合成へ使用したクリップ数の単一情報源）</span></li>
+    <li><span class="k">accessibilityLabel</span><span class="v">「動画の長さ 0:36、5クリップ」</span></li>
+  </ul>
+
+  <h2>音声トグル（肯定形に変更）（abba1b0）</h2>
+  <p>トグルを「撮影音声を残すか」の肯定形で表示するよう変更した。内部フラグ <code>muteOriginalAudio</code> はトグルの反転で更新する（isOn = 撮影音声を残す = <code>!muteOriginalAudio</code>）。</p>
+  <table>
+    <thead><tr><th>トグル状態</th><th>表示ラベル</th></tr></thead>
+    <tbody>
+      <tr><td>ON（音声を残す）</td><td>「撮影時の音を動画に残す」</td></tr>
+      <tr><td>OFF（音声なし）</td><td>「音声なしで書き出す」</td></tr>
+    </tbody>
+  </table>
+  <p><strong>実挙動の修正（abba1b0）</strong>: 「音声なしで書き出す」を選ぶと保存動画の音声トラックが実際に除去される（保存直前に <code>exportVideoWithoutAudio</code> を実行）。旧実装は文言と実際の保存結果が食い違っていた。詳細は <a href="../features/video-composition.html">動画合成仕様</a>参照。</p>
+
+  <h2>無料ユーザーへのウォーターマーク補足（abba1b0）</h2>
+  <p>無料ユーザーには保存前に「動画の左上に小さくRoutineReelロゴが入ります」を表示し、保存後に透かしへ気づく期待ギャップを防ぐ。全画面アウトロカード廃止に伴い、無料版のブランド露出は左上ウォーターマークのみ。</p>
+
+  <h2>保存先・工程の状態モデル（f7bb7b0）</h2>
+  <p>保存先（カメラロール／アプリ内）を明示的な状態として管理し、保存中の進捗文言を保存先・工程ごとに正しく出し分けるよう変更した。旧実装は保存先に関わらず常に「カメラロールに保存中」と表示するバグがあった。</p>
+  <ul class="kv-list">
+    <li><span class="k">保存先</span><span class="v"><code>ExportDestination</code>: <code>.photoLibrary</code>（カメラロール）／<code>.appStorage</code>（アプリ内）</span></li>
+    <li><span class="k">工程</span><span class="v"><code>ExportOperation</code>: <code>.preparingAudio(destination:)</code> / <code>.applyingFilter(destination:)</code> / <code>.saving(destination:)</code></span></li>
+  </ul>
+  <table>
+    <thead><tr><th>工程・保存先</th><th>進捗オーバーレイの文言</th></tr></thead>
+    <tbody>
+      <tr><td>preparingAudio（音声除去中）</td><td>「音声なし動画を準備中…」</td></tr>
+      <tr><td>applyingFilter（フィルタ適用中）</td><td>「フィルタを適用中…」</td></tr>
+      <tr><td>saving(.photoLibrary)</td><td>「カメラロールに保存中…」</td></tr>
+      <tr><td>saving(.appStorage)</td><td>「アプリに保存中…」</td></tr>
+    </tbody>
+  </table>
+  <p>音声除去・フィルタ・保存は正確な進捗率が取れないため indeterminate 表示。詳細な状態機械・保存先ごとの再試行・戻る操作の分岐は <a href="../features/export-save-flow.html">書き出し・保存フロー（保存先状態管理）</a> を参照。</p>
+
+  <h2>保存の再試行を失敗した保存先だけに限定（f7bb7b0）</h2>
+  <p>保存失敗時の「保存をやり直す」が、<strong>失敗した保存先だけ</strong>を再試行するよう修正した。旧実装は常にカメラロール保存が実行されるバグがあった。</p>
+  <ul class="kv-list">
+    <li><span class="k">Recovery</span><span class="v"><code>.retrySave(destination:)</code> が失敗した保存先を保持。<code>retrySave</code> は <code>.error(_, .retrySave(destination))</code> 状態からのみ実行し、その destination のみ再試行</span></li>
+    <li><span class="k">失敗文言</span><span class="v">カメラロール失敗「保存に失敗しました」／アプリ内失敗「アプリ内への保存に失敗しました」</span></li>
+  </ul>
+
+  <h2>戻る操作の分岐（BackAction）（f7bb7b0）</h2>
+  <p>保存中は戻るボタンを無効化し、状態に応じて破棄確認の要否を出し分ける純粋判定 <code>BackAction</code> を導入した。</p>
+  <table>
+    <thead><tr><th>状態</th><th>BackAction</th><th>挙動</th></tr></thead>
+    <tbody>
+      <tr><td>保存前処理・保存中（.exporting）</td><td><code>blocked</code></td><td>戻れない（戻るボタン無効化・「保存中のため戻れません」）</td></tr>
+      <tr><td>合成中（.composing）</td><td><code>confirmCancelCompose</code></td><td>確認の上で合成キャンセル</td></tr>
+      <tr><td>未保存</td><td><code>confirmDiscard</code></td><td>破棄確認アラートを表示</td></tr>
+      <tr><td>保存済み or 初期状態</td><td><code>dismissImmediately</code></td><td>そのまま閉じる</td></tr>
+    </tbody>
+  </table>
+  <p>保存済み判定は <code>savedDestinations</code>（実際に保存成功した保存先の集合）を単一情報源とする。Analytics 送信済み集合（<code>sentVideoSavedDestinations</code>）とは目的を分け、UI 状態の代用にしない。</p>
+
+  <h2>アプリ内保存成功後の選択肢提示（f7bb7b0）</h2>
+  <p>アプリ内保存に成功したら、confirmationDialog「アプリに保存しました」で次アクションを提示する。旧実装はアラートで OK を押すだけでプレビューに留まっていた。</p>
+  <ul class="kv-list">
+    <li><span class="k">続けてカメラロールにも保存</span><span class="v">そのまま <code>saveToPhotoLibrary</code> を実行し、成功後は ExportCompleteView へ</span></li>
+    <li><span class="k">ホームへ戻る</span><span class="v">再生停止して作成セッション全体を閉じる（<code>onFinishSession</code>）</span></li>
+    <li><span class="k">この画面に残る</span><span class="v">cancel。プレビューに留まる</span></li>
+    <li><span class="k">メッセージ</span><span class="v">「動画はホーム画面の『アプリ内の動画』から確認できます。カメラロールにも保存すると SNS へ投稿できます。」</span></li>
   </ul>
 
   <h2>VideoCompletion 記録</h2>
@@ -115,17 +186,22 @@
   <ul>
     <li><a href="clip-library.html">クリップライブラリ（ClipLibraryView）</a></li>
     <li><a href="video-list.html">アプリ内の動画（VideoListView）</a></li>
+    <li><a href="../features/export-save-flow.html">書き出し・保存フロー（保存先状態管理）</a></li>
+    <li><a href="../features/video-composition.html">動画合成仕様</a>（テロップ・アウトロ・音声除去）</li>
     <li><a href="../features/video-completion.html">VideoCompletion 完成実績モデル</a></li>
+    <li><a href="../features/sns-share-flow.html">SNS シェアフロー</a>（ExportCompleteView の TikTok/Instagram 導線）</li>
     <li><a href="../features/analytics.html">Analytics 計測基盤</a>（video_saved / export_failed）</li>
   </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.2</td><td>2026-07-24</td><td>保存先・工程のUX改善（f7bb7b0）: 保存先（<code>ExportDestination</code>）と工程（<code>ExportOperation</code>: preparingAudio / applyingFilter / saving）を状態として管理し、進捗文言を保存先・工程ごとに出し分け（旧: 常に「カメラロールに保存中」と表示するバグ）。保存失敗時の再試行を失敗した保存先だけに限定（<code>.retrySave(destination:)</code>、旧: 常にカメラロール保存が実行されるバグ）。戻る操作を <code>BackAction</code>（blocked / confirmCancelCompose / confirmDiscard / dismissImmediately）で分岐し保存中は戻る無効化・保存済みは破棄確認なしで閉じる。アプリ内保存成功後に「続けてカメラロールにも保存／ホームへ戻る／この画面に残る」の選択肢を confirmationDialog で提示（旧: OK でプレビューに留まる）。詳細は features/export-save-flow.html に分離</td></tr>
+    <tr><td>1.1</td><td>2026-07-24</td><td>プレビュー画面の改善（abba1b0）: 画面タイトルを「プレビュー」→「仕上がりを確認」に変更。総時間・クリップ数表示（例「0:36・5クリップ」・<code>VideoDurationFormatter</code> / <code>usedClipCount</code>）を追加。音声トグルの文言を肯定形（「撮影時の音を動画に残す」／「音声なしで書き出す」）に変更し、内部フラグ <code>muteOriginalAudio</code> と実挙動を一致（音声なし選択時は保存動画の音声トラックを実除去）。無料ユーザーへ保存前に「動画の左上に小さくRoutineReelロゴが入ります」を表示</td></tr>
     <tr><td>1.0</td><td>2026-07-15</td><td>build69 相当の実装をベースに初版作成。2 種類の保存ボタンに用途副説明（カメラロール「TikTokやInstagramへの投稿用」/ アプリ内「RoutineReel内であとから再生できます」）を追加。動画プレビュー領域を上詰め配置に変更（上部余白削減）。アプリ内保存完了アラートの参照先「最近の動画」→「アプリ内の動画」に更新。VideoCompletion 記録と Analytics 重複防止設計を明文化</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-15</footer>
+  <footer class="site-footer">最終更新: 2026-07-24</footer>
 </div>
 </body>
 </html>

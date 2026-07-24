@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>書き出し・保存フロー（保存先状態管理） - RoutineReel</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← RoutineReel Specs</a></div>
+
+  <header class="site-header">
+    <h1>書き出し・保存フロー（保存先状態管理）</h1>
+    <p>完成動画の「カメラロール／アプリ内」2 保存先を明示的な状態として管理し、進捗文言・再試行・戻る操作・工程完了後の導線を保存先ごとに正しく出し分ける（f7bb7b0）。</p>
+  </header>
+
+  <h2>概要</h2>
+  <p>PreviewView の保存処理は、保存先（カメラロール／アプリ内）× 工程（音声除去 → フィルタ → 保存）の組み合わせで進む。従来は保存先を状態として持たなかったため、(1) 進捗文言が常に「カメラロールに保存中」になる、(2) 保存失敗時の再試行が常にカメラロール保存を実行する、といった保存先の取り違えバグがあった。これらを <code>ExportDestination</code> を軸とした状態モデルで解消し、あわせて「保存中は戻れない」「アプリ内保存後に次アクションを選べる」「カメラロール保存後もアプリ内保存できる」といった工程の順序依存も是正した。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/preview.html">プレビュー・書き出し（PreviewView）</a></li>
+  </ul>
+
+  <h2>状態モデル</h2>
+
+  <h3>ExportDestination（保存先）</h3>
+  <ul class="kv-list">
+    <li><span class="k"><code>.photoLibrary</code></span><span class="v">カメラロール（SNS 投稿用）。無料枠を消費しない</span></li>
+    <li><span class="k"><code>.appStorage</code></span><span class="v">アプリ内ストレージ（あとから再生用）。無料は 3 本まで消費</span></li>
+  </ul>
+
+  <h3>ExportOperation（保存工程）と進捗文言</h3>
+  <p>音声除去・フィルタ・保存はいずれも正確な進捗率が取れないため indeterminate 表示。工程は保存先を内包し、文言と保存先を必ず一致させる。</p>
+  <table>
+    <thead><tr><th>ExportOperation</th><th>progressTitle</th></tr></thead>
+    <tbody>
+      <tr><td><code>.preparingAudio(destination:)</code></td><td>音声なし動画を準備中…</td></tr>
+      <tr><td><code>.applyingFilter(destination:)</code></td><td>フィルタを適用中…</td></tr>
+      <tr><td><code>.saving(.photoLibrary)</code></td><td>カメラロールに保存中…</td></tr>
+      <tr><td><code>.saving(.appStorage)</code></td><td>アプリに保存中…</td></tr>
+    </tbody>
+  </table>
+
+  <h3>PreviewState</h3>
+  <p><code>idle</code> / <code>composing</code> / <code>ready</code> / <code>exporting(ExportOperation)</code> / <code>exported</code> / <code>error(String, recovery: Recovery)</code>。</p>
+
+  <h3>Recovery（リカバリ導線）</h3>
+  <table>
+    <thead><tr><th>Recovery</th><th>ボタン</th><th>挙動</th></tr></thead>
+    <tbody>
+      <tr><td><code>.recompose</code></td><td>再合成する</td><td>合成自体が失敗 → 合成をやり直す</td></tr>
+      <tr><td><code>.retrySave(destination:)</code></td><td>保存をやり直す</td><td>合成は成功・保存のみ失敗 → <strong>失敗した保存先だけ</strong>再試行（再合成しない）</td></tr>
+      <tr><td><code>.openSettings</code></td><td>設定を開く</td><td>写真ライブラリ権限拒否 → iOS 設定アプリを開く</td></tr>
+    </tbody>
+  </table>
+  <p><strong>バグ修正（f7bb7b0）</strong>: 旧実装は保存失敗時の再試行が常にカメラロール保存を実行していた。<code>.retrySave(destination:)</code> が失敗した保存先を保持し、<code>retrySave</code> は <code>.error(_, .retrySave(destination))</code> 状態からのみ、その destination のみを再試行する。</p>
+
+  <h2>保存の低レベル抽象化（VideoSaving プロトコル）</h2>
+  <p>カメラロール（UISaveVideo）とアプリ内（VideoStorageService）への書き込みを <code>VideoSaving</code> プロトコルに集約し、PreviewViewModel からは保存先に応じて呼び分ける。テストでは <code>SpyVideoSaving</code> を注入し「appStorage 再試行が writeToPhotoLibrary を呼ばない」等の経路を検証する（<code>PreviewSaveDestinationTests</code>）。</p>
+  <table>
+    <thead><tr><th>メソッド</th><th>役割</th></tr></thead>
+    <tbody>
+      <tr><td><code>writeToPhotoLibrary(path:) -> PhotoLibraryWriteResult</code></td><td>カメラロールへ書き込み。互換性チェック内包（<code>.success</code> / <code>.incompatibleFormat</code> / <code>.failed</code>）</td></tr>
+      <tr><td><code>writeToAppStorage(from:) -> VideoSaveOutput</code></td><td>アプリ内へコピー＋サムネイル生成</td></tr>
+      <tr><td><code>deleteAppStorage(fileName:thumbnailFileName:)</code></td><td>永続 save 失敗時のロールバック削除</td></tr>
+    </tbody>
+  </table>
+  <p><code>PhotoLibraryWriteResult</code> で「動画形式が非互換（→ 再合成が必要）」と「保存失敗（→ 同じ保存先で再試行）」を区別し、リカバリ導線を正しく出し分ける。</p>
+
+  <h2>保存前処理の順序</h2>
+  <p><code>prepareVideoForExport</code> は a. 撮影音声の除去 → b. フィルタ適用 の順で新しい一時ファイルを生成する。マスター動画（<code>composed_</code>）は音声を保持したまま保持し、置き換えない。中間生成物（<code>muted_</code>）はフィルタ成功・失敗いずれでも削除して蓄積を防ぐ。詳細（音声トラックの実除去）は <a href="video-composition.html">動画合成仕様</a> を参照。</p>
+
+  <h2>処理フロー（カメラロール保存・音声なし＋フィルタあり）</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant V as PreviewView
+  participant VM as PreviewViewModel
+  participant S as VideoSaving
+
+  U->>V: 「カメラロールに保存」タップ
+  V->>VM: saveToPhotoLibrary()
+  VM->>V: state=.exporting(.preparingAudio(.photoLibrary))
+  VM->>VM: exportVideoWithoutAudio（音声トラック除去）
+  VM->>V: state=.exporting(.applyingFilter(.photoLibrary))
+  VM->>VM: exportFiltered（フィルタ適用）
+  VM->>V: state=.exporting(.saving(.photoLibrary))
+  VM->>S: writeToPhotoLibrary(path:)
+  S-->>VM: .success / .incompatibleFormat / .failed
+  alt success
+    VM->>VM: savedDestinations.insert(.photoLibrary)
+    VM->>VM: VideoCompletionRecorder.recordIfNeeded
+    VM->>V: state=.exported → ExportCompleteView へ
+  else incompatibleFormat
+    VM->>V: state=.error(recovery: .recompose)
+  else failed
+    VM->>V: state=.error(recovery: .retrySave(.photoLibrary))
+  end
+  </div>
+
+  <h2>戻る操作の分岐（BackAction）</h2>
+  <table>
+    <thead><tr><th>状態</th><th>BackAction</th><th>挙動</th></tr></thead>
+    <tbody>
+      <tr><td>.exporting（保存前処理・保存中）</td><td><code>blocked</code></td><td>戻れない（戻るボタン無効化）</td></tr>
+      <tr><td>.composing（合成中）</td><td><code>confirmCancelCompose</code></td><td>確認の上で合成キャンセル</td></tr>
+      <tr><td>未保存</td><td><code>confirmDiscard</code></td><td>破棄確認アラート</td></tr>
+      <tr><td>保存済み or 初期状態</td><td><code>dismissImmediately</code></td><td>そのまま閉じる</td></tr>
+    </tbody>
+  </table>
+  <p>保存済み判定は <code>savedDestinations</code>（実際に保存成功した保存先の集合）を単一情報源とする。Analytics 送信済み集合（<code>sentVideoSavedDestinations</code>）とは目的を分け、UI 状態の代用にしない。</p>
+
+  <h2>工程完了後の導線</h2>
+  <ul>
+    <li><strong>アプリ内保存成功後</strong>: confirmationDialog「アプリに保存しました」で「続けてカメラロールにも保存／ホームへ戻る／この画面に残る」を提示（旧: OK でプレビューに留まる）。</li>
+    <li><strong>ExportCompleteView から仕上がり画面へ戻る</strong>: 「仕上がり画面に戻る」で PreviewView へ pop できるようにし、<strong>カメラロール保存が先でもアプリ内保存できる</strong>順序依存を解消（旧: カメラロール保存を先にするとアプリ内保存できなかった）。</li>
+    <li><strong>SNS 導線の文言明確化</strong>: ExportCompleteView の SNS ボタンを「TikTokを開く」「Instagramを開く」＋補助「カメラロールから動画を選択」に変更し、自動投稿との誤解を防止（<a href="sns-share-flow.html">SNS シェアフロー</a>参照）。</li>
+  </ul>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>進捗オーバーレイの文言は「工程 × 保存先」と必ず一致させる（保存先の取り違え表示を禁止）。</li>
+    <li>保存失敗時の再試行は失敗した保存先のみ実行する（他方の保存先を巻き込まない）。</li>
+    <li>保存前処理・保存の実行中（.exporting）は戻る操作を禁止する。</li>
+    <li>VideoCompletion は保存先に関わらず 1 セッション 1 件のみ記録する（<code>creationSessionId</code> で二重計上防止・<a href="video-completion.html">VideoCompletion 完成実績モデル</a>）。</li>
+  </ul>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>合成失敗 / 動画形式が非互換</td><td><code>.recompose</code>（再合成する）</td></tr>
+    <tr><td>音声除去・フィルタ・保存の失敗</td><td><code>.retrySave(destination:)</code>（失敗した保存先だけ再試行）</td></tr>
+    <tr><td>写真ライブラリ権限拒否</td><td><code>.openSettings</code>（設定アプリを開く）</td></tr>
+    <tr><td>アプリ内 永続 save 失敗</td><td>コピー済みファイルを <code>deleteAppStorage</code> でロールバック</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>実装: <code>ViewModels/PreviewViewModel.swift</code> / <code>Services/VideoSaving.swift</code>（新規）/ <code>Views/Preview/PreviewView.swift</code> / <code>Views/Preview/ExportCompleteView.swift</code> / <code>Views/Library/CreateSessionView.swift</code></li>
+    <li>テスト: <code>PreviewSaveDestinationTests</code>（保存先ごとの再試行経路）/ <code>PreviewExportAudioTests</code>（音声除去の順序・実挙動）</li>
+    <li><code>DefaultVideoSaving</code> は UISaveVideo の複数回コールバック実機バグに <code>didComplete</code> フラグで二重 resume を防止</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-24</td><td>初版作成（f7bb7b0）。保存先（ExportDestination）× 工程（ExportOperation）の状態モデル、VideoSaving プロトコル、保存先ごとの再試行（.retrySave(destination:)）、戻る操作の分岐（BackAction）、アプリ内保存後の選択肢提示・ExportCompleteView からの仕上がり画面復帰による順序依存解消を明文化</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-07-24</footer>
+</div>
+</body>
+</html>
