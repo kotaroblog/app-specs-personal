@@ -22,7 +22,7 @@
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語</span></li>
     <li><span class="k">マネタイズ</span><span class="v">フリーミアム + サブスク（¥480/月・¥3,600/年）+ AdMob</span></li>
-    <li><span class="k">ステータス</span><span class="v">企画確定（2026-06-11）</span></li>
+    <li><span class="k">ステータス</span><span class="v">実装済み・未リリース（フェーズ3完了 / 2026-07-26時点。残: AdMob・fastlane・app-policies・ASC登録）</span></li>
     <li><span class="k">リリース予定</span><span class="v">2027-Q1</span></li>
     <li><span class="k">App Store表示名</span><span class="v">ポーカー手帳｜収支・ハンド記録</span></li>
     <li><span class="k">サブタイトル</span><span class="v">負け筋がわかる振り返りノート</span></li>
@@ -50,42 +50,42 @@
     <div class="card">
       <div class="title">収支・セッション記録</div>
       <div class="desc">10秒入力・リング／トナメ2モード・BB自動換算・店名サジェスト</div>
-      <div class="meta"><span class="tag todo">未着手</span></div>
+      <div class="meta"><span class="tag done">実装済み</span></div>
     </div>
     <div class="card">
       <div class="title">収支ダッシュボード</div>
       <div class="desc">リングBB収支・トナメ成績・月間支出の3ビュー。Swift Charts</div>
-      <div class="meta"><span class="tag todo">未着手</span></div>
+      <div class="meta"><span class="tag done">実装済み</span></div>
     </div>
     <div class="card">
       <div class="title">ハンド簡易記録</div>
       <div class="desc">30秒・グリッド52セルピッカー・弱点タグ3タップ＋任意1行</div>
-      <div class="meta"><span class="tag todo">未着手</span></div>
+      <div class="meta"><span class="tag done">実装済み</span></div>
     </div>
     <div class="card">
       <div class="title">弱点タグ＋週次レビュー</div>
       <div class="desc">タグ集計型（PlayerTendencyを作り直し）。日曜通知でメモ再掲</div>
-      <div class="meta"><span class="tag todo">未着手</span></div>
+      <div class="meta"><span class="tag done">実装済み</span></div>
     </div>
     <div class="card">
       <div class="title">レンジ逆引きビューア</div>
       <div class="desc">旧レッスンのHandRangeMatrixViewほぼ流用。無料開放</div>
-      <div class="meta"><span class="tag todo">未着手</span></div>
+      <div class="meta"><span class="tag done">実装済み</span></div>
     </div>
     <div class="card">
       <div class="title">MTT照合バナー＋130問答え合わせ</div>
       <div class="desc">HeroPreflopResult流用。旧レッスンquestions JSON活用</div>
-      <div class="meta"><span class="tag todo">未着手</span></div>
+      <div class="meta"><span class="tag done">実装済み</span></div>
     </div>
     <div class="card">
       <div class="title">シェアカード</div>
       <div class="desc">1080×1080・WM付き。GTM用途（開発者自身のX発信）</div>
-      <div class="meta"><span class="tag todo">未着手</span></div>
+      <div class="meta"><span class="tag done">実装済み</span></div>
     </div>
     <div class="card">
       <div class="title">基盤・リリース実務</div>
-      <div class="desc">Paywall・StoreKit・fastlane・app-policies・KPIロガー</div>
-      <div class="meta"><span class="tag todo">未着手</span></div>
+      <div class="desc">Paywall・StoreKit 2・KPIロガーは実装済み。AdMob・fastlane・app-policies は未着手</div>
+      <div class="meta"><span class="tag warn">一部実装</span></div>
     </div>
   </div>
 
@@ -107,7 +107,22 @@
       <div class="title">ロギング方針</div>
       <div class="desc">os.log カテゴリとログレベル</div>
     </a>
+    <a class="card" href="error-design.html">
+      <div class="title">エラー設計</div>
+      <div class="desc">保存失敗の通知・バリデーション方針</div>
+    </a>
   </div>
+
+  <h2>共通UI・アクセシビリティ方針</h2>
+  <ul style="color: var(--color-text-soft); font-size: 0.9rem; line-height: 1.9; padding-left: 1.2rem;">
+    <li><strong>ダークテーマ固定</strong>（案A＋テラコッタ）・ライトモード非対応</li>
+    <li><strong>文字サイズはOS設定に追従</strong> — <code>AppTheme.Typography</code> は指定ptを基準にDynamic Typeでスケールする（標準サイズでは従来と同じ寸法）。9〜11pt用に <code>micro()</code> を用意</li>
+    <li><strong><code>.dynamicTypeSize</code> の上限指定は行わない</strong> — フォントはOS設定基準、レイアウト分岐は環境値基準のため、上限をかけると「文字だけ大きい／レイアウトだけ縮む」ズレが生じる</li>
+    <li><strong>アクセシビリティ文字サイズでは横並びを縦積みへ切替</strong> — ホームの今月サマリ3枚・Paywallの機能比較表・Paywallの法務リンク</li>
+    <li><strong>読ませる文は <code>textSecondary</code> 以上</strong>。<code>textMuted</code> は装飾的・非重要な情報（シェブロン等）に限定する</li>
+    <li><strong>状態を色だけで表さない</strong> — 無効なボタンは枠線・アイコン・理由テキスト・VoiceOverヒントを併用する</li>
+    <li><strong>タップ領域は44pt以上</strong>を確保する</li>
+  </ul>
 
   <h2>画面仕様書</h2>
   <div class="card-grid">
@@ -238,10 +253,15 @@
         <td style="padding:6px 8px;">2026-07-16</td>
         <td style="padding:6px 8px;">周辺画面の仕様書11本を追加</td>
       </tr>
+      <tr>
+        <td style="padding:6px 8px;">v1.5</td>
+        <td style="padding:6px 8px;">2026-07-26</td>
+        <td style="padding:6px 8px;">UI/UX改善実装を反映（初回Paywall自動提示の廃止・記録シートのバリデーションと保存失敗通知・Dynamic Type対応）。エラー設計を新規作成し、共通UI・アクセシビリティ方針を追記。実装ステータス（フェーズ3完了）をMVP機能一覧に反映</td>
+      </tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

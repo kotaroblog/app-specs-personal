@@ -25,9 +25,9 @@
   <div class="mermaid">
 flowchart TD
   Launch([起動]) --> InitCheck{初回起動か}
-  InitCheck -->|Yes| Onb[オンボーディング<br/>価値訴求・通知許可・完了]
+  InitCheck -->|Yes| Onb[オンボーディング<br/>3頁の価値訴求・単一CTA「はじめる」<br/>通知許可は求めない]
   InitCheck -->|No| Tabs
-  Onb --> Tabs
+  Onb -->|Paywallを挟まずホームへ| Tabs
 
   Tabs{{タブバー4本}}
   Tabs --> Home[ホーム]
@@ -37,10 +37,14 @@ flowchart TD
 
   Home --> RecBtn(今夜を記録・主ボタン)
   RecBtn --> RecSheet[収支セッション記録シート<br/>リング／トナメ2モード・店名サジェスト・チップIN／OUT→BB自動換算]
-  RecSheet --> RecDone[記録完了画面]
+  RecSheet --> SaveChk{保存成功？}
+  SaveChk -->|失敗: 入力を維持しAlert| RecSheet
+  SaveChk -->|成功| RecDone[記録完了画面]
   RecDone -->|気になった1手を残す| HandSheet[ハンド簡易記録シート<br/>52セルグリッド・状況選択・弱点タグ3タップ・任意1行]
   RecDone -->|閉じる| Home
-  HandSheet --> MatchChk{MTTレンジ表に該当？}
+  HandSheet --> HandSaveChk{保存成功？}
+  HandSaveChk -->|失敗: 入力を維持しAlert| HandSheet
+  HandSaveChk -->|成功| MatchChk{MTTレンジ表に該当？}
   MatchChk -->|該当| Banner[プリフロップ照合バナー]
   MatchChk -->|非該当| Home
   Banner -->|レンジを見る| RangeViewer[レンジ逆引きビューア]
@@ -74,15 +78,19 @@ flowchart TD
   ReviewFlow -.フル版.-> Paywall
   Drill -.照合1日3回超.-> Paywall
   ShareCard -.WM除去.-> Paywall
-  Onb -.価値訴求後.-> Paywall
+  </div>
+  <div class="callout">
+    <strong>オンボーディングからPaywallへの線はない。</strong> 初回起動時は3頁の価値訴求を終えたらそのままホームへ送り出す。通知許可の要求（→設定タブ）とPro訴求（→利用上限・分析ロック等）は、いずれも後続の文脈付き導線に委ねる。
   </div>
 
   <h2>主要な遷移パターン</h2>
   <table>
     <tr><th>起点</th><th>遷移先</th><th>トリガー</th></tr>
     <tr><td>ホーム</td><td>収支記録シート</td><td>「今夜を記録」主ボタン（最頻動線・10秒で完結）</td></tr>
+    <tr><td>ホーム</td><td>クイックメモシート</td><td>右上「✎ メモ」ボタン（席外し5秒用）</td></tr>
+    <tr><td>収支記録シート</td><td>記録完了画面</td><td><strong>保存成功時のみ</strong>遷移。失敗時は入力を維持して記録シートにとどまる</td></tr>
     <tr><td>記録完了画面</td><td>ハンド簡易記録シート</td><td>「気になった1手、残しますか?」1タップ（本アプリ最重要ファネル）</td></tr>
-    <tr><td>ハンド保存</td><td>プリフロップ照合バナー</td><td>ポジション＋ハンドがMTTレンジ表に該当する場合のみ自動表示</td></tr>
+    <tr><td>ハンド保存（成功時）</td><td>プリフロップ照合バナー</td><td>ポジション＋ハンドがMTTレンジ表に該当する場合のみ自動表示。保存失敗時は進まない</td></tr>
     <tr><td>照合バナー</td><td>レンジ逆引き／答え合わせ</td><td>バナー内ボタン（従機能は常にこの経路で受動的に呼ばれる）</td></tr>
     <tr><td>日曜夜通知</td><td>週次レビューフロー</td><td>UNUserNotificationCenter ローカル通知</td></tr>
     <tr><td>ハンド詳細</td><td>シェアカード生成</td><td>共有ボタン（無料版はウォーターマーク付き）</td></tr>
@@ -93,7 +101,7 @@ flowchart TD
   <p style="color: var(--color-text-soft); font-size: 0.9rem;">旧PokerLesson の <code>PaywallView.Source</code> enum パターン（導線元で訴求文言を出し分ける）を踏襲し、7種を採用する。</p>
   <table>
     <tr><th>Source</th><th>発火元</th><th>ロック内容</th></tr>
-    <tr><td><code>onboarding</code></td><td>オンボーディング末尾</td><td>初回価値訴求 Paywall</td></tr>
+    <tr><td><code>onboarding</code></td><td>—（<strong>初回自動提示は廃止・現在未使用</strong>）</td><td>初回価値訴求 Paywall。source enum は将来の再利用に備えて残す</td></tr>
     <tr><td><code>handLimit</code></td><td>ハンド簡易記録シート</td><td>ハンド記録 月10件超</td></tr>
     <tr><td><code>statsLocked</code></td><td>収支ダッシュボード</td><td>全期間・店別／ステークス別・時給分析</td></tr>
     <tr><td><code>reviewLocked</code></td><td>週次レビューフロー</td><td>週次レビューのフル版</td></tr>
@@ -112,6 +120,9 @@ flowchart TD
   <div class="callout">
     <strong>収支入力はどの経路でも Paywall に阻まれない（永久無料の錨）。</strong> 収支記録シートは習慣の錨であり、課金で塞がない設計とする。
   </div>
+  <div class="callout">
+    <strong>保存が成功しない限り次の画面へ進めない。</strong> 記録系シート（収支記録・ハンド記録・クイックメモ）は保存成功時のみ遷移・シートを閉じる設計とし、失敗時は入力を維持したまま Alert で知らせる。「記録したつもりが消えている」状態を作らない（→<a href="error-design.html">エラー設計</a>）。
+  </div>
 
   <h2>変更履歴</h2>
   <table class="history-table">
@@ -119,6 +130,7 @@ flowchart TD
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
     <tr><td>1.1</td><td>2026-07-16</td><td>収支2レイヤー化に伴う記録シート・ダッシュボード表記の更新</td></tr>
     <tr><td>1.2</td><td>2026-07-16</td><td>ハンド記録に状況（シナリオ）選択ステップを追加</td></tr>
+    <tr><td>1.3</td><td>2026-07-26</td><td>初回起動フローからPaywall自動提示ノードを削除（オンボーディング完了→ホーム直行）。記録フローに保存成否の分岐を追加</td></tr>
   </table>
 
   <script>
@@ -129,7 +141,7 @@ flowchart TD
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-07-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

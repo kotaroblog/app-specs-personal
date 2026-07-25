@@ -17,7 +17,8 @@
   </header>
 
   <div class="callout">
-    ステータス: <strong>企画確定・実装未着手</strong>（2027-Q1リリース目標）。本書は設計方針であり、以下は「〜する設計とする」前提で読むこと。
+    ステータス: <strong>実装済み</strong>（2027-Q1リリース目標）。KPIイベント16種と <code>EventLogger</code>・Logger カテゴリは実装済み。
+    AdMob は未実装のため <code>ad</code> カテゴリのみ未使用。
   </div>
 
   <h2>基本方針</h2>
@@ -72,11 +73,11 @@ Logger.data.info("収支: \(session.profit)円 @\(venue.name)")</code></pre>
   </p>
   <table>
     <tr><th>イベント名</th><th>パラメータ</th><th>計測目的</th></tr>
-    <tr><td><code>onboarding_completed</code></td><td>なし</td><td>初回体験の到達率</td></tr>
-    <tr><td><code>session_logged</code></td><td>game_type, has_duration, venue_is_new</td><td>錨行動の頻度（最重要リテンション指標）</td></tr>
+    <tr><td><code>onboarding_completed</code></td><td>なし</td><td>初回体験の到達率。「はじめる」またはスキップで発火（通知許可の有無に依存しない）</td></tr>
+    <tr><td><code>session_logged</code></td><td>game_type, has_duration, venue_is_new</td><td>錨行動の頻度（最重要リテンション指標）。<strong>保存成功時のみ発火</strong></td></tr>
     <tr><td><code>hand_prompt_shown</code></td><td>なし</td><td>完了画面「1手残す?」表示数</td></tr>
     <tr><td><code>hand_prompt_accepted</code></td><td>なし</td><td>同・承諾数（収支→ハンドの最重要ファネル）</td></tr>
-    <tr><td><code>hand_logged</code></td><td>entry_mode, tag_count, has_session</td><td>差別化行動の量と質</td></tr>
+    <tr><td><code>hand_logged</code></td><td>entry_mode, tag_count, has_session</td><td>差別化行動の量と質。<strong>保存成功時のみ発火</strong>（簡易記録・クイックメモ共通）</td></tr>
     <tr><td><code>draft_link_prompt_shown</code></td><td>なし</td><td>下書き紐づけ提案の表示</td></tr>
     <tr><td><code>draft_link_accepted</code></td><td>なし</td><td>同・承諾。クイックメモ→セッション接続のファネル</td></tr>
     <tr><td><code>preflop_match_shown</code></td><td>matched</td><td>照合バナー表示・GTO一致率</td></tr>
@@ -86,12 +87,19 @@ Logger.data.info("収支: \(session.profit)円 @\(venue.name)")</code></pre>
     <tr><td><code>weekly_review_completed</code></td><td>tag_count, has_next_focus</td><td>レビュー完遂（週次リテンションの核）</td></tr>
     <tr><td><code>share_card_created</code></td><td>なし</td><td>GTM素材生成</td></tr>
     <tr><td><code>share_card_shared</code></td><td>なし</td><td>実共有（ストア外流入の種）</td></tr>
-    <tr><td><code>paywall_shown</code></td><td>source（7種）</td><td>課金ファネル入口</td></tr>
+    <tr><td><code>paywall_shown</code></td><td>source（7種）</td><td>課金ファネル入口。<code>source=onboarding</code> は初回自動提示の廃止により<strong>現在発生しない</strong>（設定・利用上限・分析ロック等の文脈付き導線のみ）</td></tr>
     <tr><td><code>subscribe_completed</code></td><td>plan</td><td>課金成立</td></tr>
   </table>
   <div class="callout">
     <strong>ファネル設計思想:</strong> 「abandoned」イベントは直接出さず、<code>shown</code> と <code>accepted</code> / <code>completed</code> の突合で離脱率を算出する（旧PokerLesson方式踏襲）。<br><br>
     全イベントは <code>privacy: .public</code> で出力可能な値のみで構成する。<strong>金額・自由記述を含まない設計だから成立する。</strong>
+  </div>
+
+  <div class="callout">
+    <strong>記録系イベントの発火条件:</strong> <code>session_logged</code> / <code>hand_logged</code> は
+    <strong>SwiftData への保存が成功した後にのみ</strong>発火する。保存失敗時は throw して発火しないため、
+    記録数が過大計上されない（→<a href="error-design.html">エラー設計</a>）。
+    保存エラーそのものは KPI ではなく <code>Logger</code> の <code>data</code> カテゴリに <code>error</code> で記録する。
   </div>
 
   <h2>禁止事項</h2>
@@ -111,9 +119,10 @@ Logger.data.info("収支: \(session.profit)円 @\(venue.name)")</code></pre>
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
     <tr><td>1.1</td><td>2026-07-16</td><td>下書き紐づけ動線のKPIイベント2種を追加</td></tr>
+    <tr><td>1.2</td><td>2026-07-26</td><td>記録系イベントを保存成功時のみ発火と明記。paywall_shown の source=onboarding が発生しなくなった旨と、onboarding_completed の発火条件を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

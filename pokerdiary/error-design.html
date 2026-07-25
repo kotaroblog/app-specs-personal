@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ポーカー手帳 - エラー設計</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">← Personal App Specs</a> / <a href="./">ポーカー手帳</a> / エラー設計</div>
+
+  <header class="site-header">
+    <h1>エラー設計・例外パターン一覧</h1>
+    <p>例外の分類とユーザーへの提示方針。「記録したつもりが消えている」状態を作らないことが最優先</p>
+  </header>
+
+  <h2>基本原則</h2>
+  <div class="callout">
+    <strong>保存が成功しない限り、次の画面へ進めない。</strong>
+    記録系シート（収支記録 PD-02 / ハンド簡易記録 PD-04 / クイックメモ PD-05）は保存成功時のみ遷移・シートを閉じる。
+    失敗時は入力値と画面をそのまま維持し、日本語のアラートで知らせる。
+  </div>
+
+  <h2>エラー分類の方針</h2>
+  <ul>
+    <li><strong>入力エラー（ビジネス）</strong>: 最低入力条件を満たさない。保存ボタンを無効化し、理由をインラインで提示する（アラートは出さない）</li>
+    <li><strong>永続化エラー（システム）</strong>: SwiftData の保存失敗。今回の変更のみを打ち消し、アラートで再試行を促す</li>
+    <li><strong>課金エラー</strong>: StoreKit の購入・復元失敗。アラートで結果を伝える（内部ロジックの詳細は本書では扱わない）</li>
+    <li><strong>権限エラー</strong>: 通知許可の拒否。設定タブのトグルを自動でOFFに戻し、強制も再要求もしない</li>
+    <li>本アプリはローカル完結（SwiftData）のため<strong>ネットワークエラーは課金・レンジデータ以外に存在しない</strong></li>
+  </ul>
+
+  <h2>エラー一覧</h2>
+  <table>
+    <tr>
+      <th>エラーID</th>
+      <th>分類</th>
+      <th>発生条件</th>
+      <th>ユーザー表示</th>
+      <th>復旧方法</th>
+      <th>ロギング</th>
+    </tr>
+    <tr>
+      <td>ERR-001</td>
+      <td>入力</td>
+      <td>リング: チップINが0（チップOUT=0は正当な記録として許可）</td>
+      <td>インライン「チップINを入力してください（持ち込んだ点数）」</td>
+      <td>保存ボタンを無効化して入力を促す</td>
+      <td>不要</td>
+    </tr>
+    <tr>
+      <td>ERR-002</td>
+      <td>入力</td>
+      <td>リング: ステークスBBが0（BB収支が算出できない）</td>
+      <td>インライン「ステークスのBBを1以上にしてください」</td>
+      <td>ステークスプリセットの選択を促す</td>
+      <td>不要</td>
+    </tr>
+    <tr>
+      <td>ERR-003</td>
+      <td>入力</td>
+      <td>トナメ: 参加費・支出合計・結果・プライズメモがすべて初期状態（参加費0のフリーロールは結果選択で保存可）</td>
+      <td>インライン「参加費・結果・プライズのいずれかを入力してください」</td>
+      <td>保存ボタンを無効化して入力を促す</td>
+      <td>不要</td>
+    </tr>
+    <tr>
+      <td>ERR-004</td>
+      <td>入力</td>
+      <td>クイックメモ: ホールカードが2枚未満</td>
+      <td>保存ボタン無効（VoiceOverヒント「ホールカードを2枚選ぶと保存できます」）</td>
+      <td>カード選択を促す</td>
+      <td>不要</td>
+    </tr>
+    <tr>
+      <td>ERR-010</td>
+      <td>システム</td>
+      <td>Session の保存・更新失敗</td>
+      <td>アラート「保存できませんでした」／「入力内容はそのまま残っています。もう一度お試しください。」＋詳細</td>
+      <td>入力を維持したまま再試行。記録完了画面へは進まない</td>
+      <td>error（data カテゴリ）</td>
+    </tr>
+    <tr>
+      <td>ERR-011</td>
+      <td>システム</td>
+      <td>Hand の保存・更新失敗（簡易記録・下書き昇格）</td>
+      <td>アラート「保存できませんでした」＋詳細</td>
+      <td>入力を維持したまま再試行。照合バナー・完了へ進まない</td>
+      <td>error（data カテゴリ）</td>
+    </tr>
+    <tr>
+      <td>ERR-012</td>
+      <td>システム</td>
+      <td>クイックメモ（下書きHand）の保存失敗</td>
+      <td>アラート「保存できませんでした」／「選んだカードとメモはそのまま残っています。もう一度お試しください。」</td>
+      <td>入力を維持したまま再試行。シートを閉じない</td>
+      <td>error（data カテゴリ）</td>
+    </tr>
+    <tr>
+      <td>ERR-020</td>
+      <td>課金</td>
+      <td>購入処理の失敗</td>
+      <td>アラート「購入エラー」＋システムのエラー説明</td>
+      <td>Paywallにとどまり再試行可</td>
+      <td>error</td>
+    </tr>
+    <tr>
+      <td>ERR-021</td>
+      <td>課金</td>
+      <td>復元対象の購入が見つからない</td>
+      <td>アラート「復元できる購入が見つかりませんでした。」</td>
+      <td>無料プランのまま継続</td>
+      <td>info</td>
+    </tr>
+    <tr>
+      <td>ERR-030</td>
+      <td>権限</td>
+      <td>週次レビュー通知の許可が拒否された</td>
+      <td>追加ダイアログは出さない（トグルがOFFに戻る）</td>
+      <td>設定タブのトグルから再度ON操作</td>
+      <td>info</td>
+    </tr>
+    <tr>
+      <td>ERR-040</td>
+      <td>システム</td>
+      <td>起動時の ModelContainer 初期化失敗（スキーマ不整合等）</td>
+      <td>画面上は通常起動（インメモリにフォールバック）</td>
+      <td>アプリ側で自動フォールバック。次回起動で再試行</td>
+      <td>error（app カテゴリ）</td>
+    </tr>
+  </table>
+
+  <h2>保存失敗時の巻き戻し方針</h2>
+  <div class="callout">
+    <strong><code>ModelContext.rollback()</code> は使わない。</strong>
+    画面は共有の <code>mainContext</code> を使うため、rollback は今回の保存対象だけでなく
+    <strong>同じコンテキストにある無関係な未保存変更まで巻き戻してしまう</strong>。
+    そのため「今回の変更のみ」を個別に打ち消す。
+  </div>
+  <table>
+    <tr><th>経路</th><th>失敗時の打ち消し方法</th></tr>
+    <tr><td>収支記録（新規）</td><td>insert した Session を <code>delete</code>。今回新規作成した店（Venue）も <code>delete</code>（既存店を選択していた場合は何もしない）</td></tr>
+    <tr><td>収支記録（編集）</td><td>書き換えるフィールドを事前にスナップショットし、失敗時にその値へ戻す（日付・形式・店・支出・チップIN/OUT・ステークス・エントリー数・結果・プライズ）</td></tr>
+    <tr><td>ハンド簡易記録（新規）</td><td>insert した Hand を <code>delete</code></td></tr>
+    <tr><td>ハンド簡易記録（編集・下書き昇格）</td><td>スナップショットから復元（entryMode が quick に戻り、昇格しない）</td></tr>
+    <tr><td>クイックメモ</td><td>insert した Hand を <code>delete</code></td></tr>
+  </table>
+  <ul>
+    <li><strong>KPIイベントは保存成功時のみ発火</strong>する（<code>session_logged</code> / <code>hand_logged</code>）。失敗時に記録数が過大計上されない（→<a href="logging.html">ロギング方針</a>）</li>
+    <li><strong>既知の制約</strong>: 本番の <code>mainContext</code> は autosave が有効なため、明示保存より前に autosave が走っていた場合「保存失敗＝何も永続していない」は厳密には保証されない</li>
+  </ul>
+
+  <h2>入力バリデーションの方針</h2>
+  <ul>
+    <li>保存条件は ViewModel の <code>canSave</code> / <code>validationMessage</code> に集約し、<strong>保存ボタンの無効化と理由表示の両方に同じ値を使う</strong></li>
+    <li>無効状態は色だけで表さない。<strong>枠線・アイコン・ボタン直上の理由テキスト・VoiceOverヒント</strong>で伝える</li>
+    <li><code>save()</code> 自体も SwiftData に触れる前に条件を検査して throw する。<strong>空記録を作らない保証を View の <code>.disabled</code> だけに依存させない</strong></li>
+    <li><strong>編集モードの緩和</strong>: 過去に保存された不完全なデータを「保存できない記録」にしないため、元データが最低条件未満の場合は<strong>その形式に限って</strong>条件を緩める。形式を切り替えた場合は通常条件を適用する</li>
+  </ul>
+
+  <h2>Swift エラー型の方針</h2>
+  <div class="callout">
+    <strong>throws を統一して使用</strong>。コールバックでのエラー返却は禁止（CLAUDE.md準拠）。
+    ViewModel の <code>save</code> は成功時に対象モデルを返し、失敗時は throw する。
+  </div>
+
+  <pre><code>/// 収支記録の保存を中断する理由
+enum SessionEntrySaveError: LocalizedError, Equatable {
+    /// 最低入力条件を満たしていない（メッセージはそのままユーザーに見せる日本語）
+    case invalidInput(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidInput(let message): return message
+        }
+    }
+}
+
+// 呼び出し側は成否で遷移を分岐する（失敗時は .stay ＝画面と入力を維持）
+switch SessionEntryViewModel.nextStep(saveSucceeded: saved != nil, isEditing: isEditing) {
+case .showDone: savedSession = saved   // 新規保存成功 → 記録完了画面
+case .close:    dismiss()              // 編集保存成功 → シートを閉じる
+case .stay:     break                  // 保存失敗 → とどまる
+}</code></pre>
+
+  <h2>UI 表示パターン</h2>
+  <table>
+    <tr><th>重要度</th><th>表示形式</th><th>本アプリでの例</th></tr>
+    <tr><td>低</td><td>インラインメッセージ</td><td>保存条件を満たさない理由（保存ボタン直上・warn色）</td></tr>
+    <tr><td>中</td><td>無効化された操作＋ヒント</td><td>保存ボタンの無効表示（枠線＋アイコン＋VoiceOverヒント）</td></tr>
+    <tr><td>高</td><td>アラートダイアログ</td><td>保存失敗、購入エラー、購入の復元結果</td></tr>
+    <tr><td>致命</td><td>自動フォールバック</td><td>ModelContainer 初期化失敗時のインメモリ継続（ユーザーには見せない）</td></tr>
+  </table>
+
+  <h2>ロギングの原則</h2>
+  <ul>
+    <li>失敗は <code>Logger</code>（os.log）の <code>data</code> / <code>app</code> カテゴリに <code>error</code> で記録する。<code>print()</code> は使わない</li>
+    <li>ログに<strong>金額・店名・メモ本文などのユーザーデータを載せない</strong>（記録するのは失敗の事実と localizedDescription のみ）</li>
+    <li>ユーザーに見せるアラートとログは別物として扱う（アラートは日本語の行動指示、ログは原因調査用）</li>
+  </ul>
+
+  <h2>関連仕様書</h2>
+  <ul>
+    <li><a href="flow.html">画面遷移図</a>（保存成否の分岐）</li>
+    <li><a href="logging.html">ロギング方針</a>（KPIイベントの発火条件）</li>
+    <li><a href="screens/session-entry.html">収支記録シート（PD-02）</a></li>
+    <li><a href="screens/hand-entry.html">ハンド簡易記録（PD-04）</a></li>
+    <li><a href="screens/quick-memo.html">クイックメモ（PD-05）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-26</td><td>初版作成（保存失敗の通知・対象限定の巻き戻し・入力バリデーション方針を明文化）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
+</div>
+</body>
+</html>

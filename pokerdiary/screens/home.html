@@ -26,8 +26,9 @@
   <h2>UI 構成</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>クイックメモ ツールバー</td><td>Toolbar Button（ラベル付き）</td><td>右上に<strong>「✎ メモ」</strong>（稲妻アイコンのみの表示から変更）。クイックメモ（PD-05）を開く。VoiceOver label「クイックメモ」／hint「ホールカード2枚だけを先に保存します。詳細はあとで追記できます」</td></tr>
     <tr><td>今月ヘッダ</td><td>Title + Chip</td><td>「今月の成績」見出し＋月セレクトチップ（例: 7月）</td></tr>
-    <tr><td>今月サマリ3点セット</td><td>Card × 3（横並び）</td><td>①リング（実力）＝BB収支（例: +240 BB）／②トナメ＝エントリー数＋ITM数（例: 5エントリー・2 ITM）／③支出（娯楽費）＝円（例: ¥18,000）。円のプラマイ収支は表示しない</td></tr>
+    <tr><td>今月サマリ3点セット</td><td>Card × 3（横並び／縦積み）</td><td>①リング（実力）＝BB収支（例: +240 BB）／②トナメ＝エントリー数＋ITM数（例: 5エントリー・2 ITM）／③支出（娯楽費）＝円（例: ¥18,000）。円のプラマイ収支は表示しない。<strong>アクセシビリティ文字サイズでは縦積みに切替</strong>し、カード高もDynamic Typeに追従させる</td></tr>
     <tr><td>「今夜を記録」主CTA</td><td>Primary Button</td><td>収支記録シート（PD-02）を開く最頻動線。アクセントカラーの主ボタン</td></tr>
     <tr><td>「次回の課題」カード</td><td>Card（左アクセントボーダー）</td><td>最新 <code>WeeklyReview.nextFocus</code> を表示（例: 「COからの3betに、KJs以下は降りる」）。未設定時は非表示</td></tr>
     <tr><td>店別（今月）成績リスト</td><td>List（Card行）</td><td>店ごとの今月成績。頭文字アイコン・店名・内訳（リング/トナメ戦数）・BB収支・ITMバッジ。行タップで店別成績詳細へ</td></tr>
@@ -38,8 +39,9 @@
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>初回起動（記録0件）</td><td>エンプティステート。サマリ3点セットは出さず、「今夜を記録」CTAと価値説明のみを表示する</td></tr>
+    <tr><td>初回起動（記録0件）</td><td>エンプティステート。サマリ3点セットは出さず、「今夜を記録」主CTAと価値説明を表示する。<strong>上部余白を圧縮</strong>して要素をファーストビューに収め、初回ヒント「席を外す前の5秒メモは、右上の『メモ』から。」を添える</td></tr>
     <tr><td>通常</td><td>今月サマリ・次回の課題（あれば）・店別リスト・週次レビュー誘導カードを表示</td></tr>
+    <tr><td>アクセシビリティ文字サイズ</td><td>今月サマリ3枚を横並びから縦積みに切替し、数値・ラベルの文字切れを防ぐ</td></tr>
     <tr><td>日曜（レビュー誘導活性）</td><td>週次レビューが未完了なら誘導カードを強調表示し、レビューへの着手を促す</td></tr>
     <tr><td>次回の課題 未設定</td><td>「次回の課題」カードを非表示にする（存在しないものを空欄で見せない）</td></tr>
   </table>
@@ -48,6 +50,7 @@
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
     <tr><td>「今夜を記録」タップ</td><td>収支記録シート（PD-02）</td></tr>
+    <tr><td>右上「✎ メモ」タップ</td><td>クイックメモ（PD-05）</td></tr>
     <tr><td>週次レビュー誘導カード タップ</td><td>週次レビュー（PD-06）</td></tr>
     <tr><td>店別成績行 タップ</td><td>店別成績詳細</td></tr>
     <tr><td>タブバー各アイコン</td><td>履歴／分析／設定タブ</td></tr>
@@ -66,6 +69,9 @@ WeeklyReview // nextFocus（「次回の課題」）/ completedAt（当週レビ
     <li>「次回の課題」は <code>completedAt != nil</code> の最新 WeeklyReview の <code>nextFocus</code>。空文字なら非表示</li>
     <li>週次レビュー誘導の強調は「曜日が日曜以降 かつ 当週 WeeklyReview 未完了」で判定</li>
     <li>負け表示色はテラコッタ（#D0876B）、勝ち表示色はグリーン（#3FB950）でBB収支の正負を表現</li>
+    <li>クイックメモのツールバーは<strong>アイコン単独にせずラベル「メモ」を併記</strong>する（稲妻アイコンだけでは機能が推測できない）。VoiceOver label / hint も設定する</li>
+    <li>今月サマリ3枚は <code>@Environment(\.dynamicTypeSize)</code> の <code>isAccessibilitySize</code> で横並び／縦積みを分岐する。カード高も固定値にせずDynamic Typeに追従させる</li>
+    <li>エンプティステートは上部余白を詰め、主CTAと初回ヒントの両方をスクロールなしで見せる（主CTAは「今夜を記録」のまま変更しない）</li>
   </ul>
 
   <h2>未決事項</h2>
@@ -78,6 +84,7 @@ WeeklyReview // nextFocus（「次回の課題」）/ completedAt（当週レビ
     <li><a href="../flow.html">画面遷移図</a></li>
     <li><a href="../data-model.html">データモデル</a></li>
     <li><a href="session-entry.html">収支記録シート（PD-02）</a></li>
+    <li><a href="quick-memo.html">クイックメモ（PD-05）</a></li>
     <li><a href="weekly-review.html">週次レビュー（PD-06）</a></li>
   </ul>
 
@@ -85,9 +92,10 @@ WeeklyReview // nextFocus（「次回の課題」）/ completedAt（当週レビ
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv2+Fable 5評価反映）</td></tr>
+    <tr><td>1.1</td><td>2026-07-26</td><td>クイックメモを「✎ メモ」ラベル付きボタン化、空状態に初回ヒントを追加、今月サマリ3枚のアクセシビリティ文字サイズ時の縦積み切替を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

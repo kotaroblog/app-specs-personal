@@ -30,7 +30,8 @@
     <tr><td>リングビュー</td><td>Chart群</td><td>BB収支の推移（直近90日・折れ線）・月別BB収支バー・ステークス別／BB per 時（Proロック）</td></tr>
     <tr><td>トナメビュー</td><td>Chart群</td><td>総エントリー・ITM率・月別エントリーバー・入賞履歴</td></tr>
     <tr><td>支出ビュー</td><td>Chart群</td><td>今月の支出・月間支出バー・店別</td></tr>
-    <tr><td>全期間オーバーレイ</td><td>Blur + Overlay</td><td>90日より前はブラー＋「全期間を見る（Pro）」（source=statsLocked）</td></tr>
+    <tr><td>全期間オーバーレイ</td><td>Blur + Overlay</td><td>90日より前はブラー＋「全期間を見る（Pro）」（source=statsLocked）。ロック説明文は <code>textSecondary</code> 以上の色で表示する</td></tr>
+    <tr><td>月別チャートの軸ラベル</td><td>Chart Axis Label</td><td><strong>10pt／<code>textSecondary</code></strong>（9pt・<code>textMuted</code> から可読性を改善）</td></tr>
     <tr><td>弱点タグ集計</td><td>Bar List</td><td>回数バー（共通下部）</td></tr>
     <tr><td>店別成績</td><td>List</td><td>店別行（→PD-12）。指標はビューに連動</td></tr>
     <tr><td>タブバー</td><td>Tab Bar</td><td>ホーム／履歴／分析／設定</td></tr>
@@ -47,7 +48,8 @@
     <tr><td>リングビュー</td><td>BB収支推移・月別バー。ステークス別/BB per 時はProロック</td></tr>
     <tr><td>トナメビュー</td><td>総エントリー・ITM率・月別・入賞履歴。店別成績はE/ITM表示に連動</td></tr>
     <tr><td>支出ビュー</td><td>今月・月間バー・店別</td></tr>
-    <tr><td>無料・90日超過分</td><td>ブラー＋全期間オーバーレイ（statsLocked）</td></tr>
+    <tr><td>無料・90日超過分</td><td>ブラー＋全期間オーバーレイ（statsLocked）。CTA「全期間を見る（Pro）」を表示</td></tr>
+    <tr><td>無料・ステークス別／BB per 時</td><td>Proロック表示のみ。<strong>CTAは出さない</strong>（同一画面の期間ロックにCTAがあるため二重に出さない）</td></tr>
     <tr><td>Pro</td><td>全期間・ステークス別分析を開放</td></tr>
   </table>
 
@@ -78,6 +80,8 @@ Venue   // 店別成績の見出し</code></pre>
     <li>店別成績の指標は<strong>ビューに連動して切替</strong>（リング＝BB収支／トナメ＝E・ITM／支出＝円）</li>
     <li>ステークス別・BB per 時はProロック（勝てるステークスの見極め訴求）</li>
     <li>集計はSessionのクエリで算出。弱点タグ集計はHandのweaknessTagsRawをin-memory集計</li>
+    <li>月別チャートの軸ラベルは<strong>10pt・<code>textSecondary</code></strong>。Proロックの説明文も <code>textSecondary</code> 以上とし、読ませる文に <code>textMuted</code> を使わない</li>
+    <li><strong>ステークス別ロックにCTAを出さない方針は現状維持</strong> — 同一画面内の「それ以前の期間」ロックに既にCTAがあり、2か所から同時にPaywallへ誘うと圧が強くなるため（意図的な設計であり実装漏れではない）</li>
   </ul>
 
   <h2>関連</h2>
@@ -92,9 +96,10 @@ Venue   // 店別成績の見出し</code></pre>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv3+Fable 5評価反映）</td></tr>
+    <tr><td>1.1</td><td>2026-07-26</td><td>月別チャート軸ラベル・ロック説明文の可読性（10pt／textSecondary以上）を反映。ステークス別ロックにCTAを出さない方針を既存仕様として明記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

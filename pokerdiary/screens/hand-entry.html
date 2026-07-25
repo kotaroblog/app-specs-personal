@@ -46,13 +46,15 @@
     <tr><td>弱点タグ3つ選択済み</td><td>それ以上の選択を受け付けない（カウンタ 3/3）</td></tr>
     <tr><td>記録完了（PD-03）経由</td><td>Hand.session に直前 Session を紐づけ（has_session=true）</td></tr>
     <tr><td>月10件超（無料）</td><td>保存時に Paywall（source=handLimit）を提示</td></tr>
+    <tr><td>保存失敗</td><td>照合バナー・完了へ進まず、<strong>入力内容を維持</strong>したまま日本語Alert「保存できませんでした」を表示（詳細は<a href="../error-design.html">エラー設計</a>）</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>保存（scenarioRaw が照合可能3種 かつ ホール・ポジション入力済み）</td><td>MTTレンジ照合バナー（PD-07）</td></tr>
-    <tr><td>保存（上記以外・その他・入力不足）</td><td>そのまま完了（ホームまたは呼び出し元へ）</td></tr>
+    <tr><td>保存成功（scenarioRaw が照合可能3種 かつ ホール・ポジション入力済み）</td><td>MTTレンジ照合バナー（PD-07）</td></tr>
+    <tr><td>保存成功（上記以外・その他・入力不足）</td><td>そのまま完了（ホームまたは呼び出し元へ）</td></tr>
+    <tr><td>保存失敗</td><td>遷移しない。記録シートにとどまり Alert を表示（入力は維持）</td></tr>
     <tr><td>ハンド記録 月10件超</td><td>Paywall（source=handLimit）</td></tr>
     <tr><td>戻る／スキップ</td><td>呼び出し元へ戻る</td></tr>
   </table>
@@ -77,6 +79,7 @@
     <li>状況=other は照合対象外。誤って照合しないようガードする</li>
     <li>カードは "Ah" 形式（Rank+Suit rawValue）で保存。旧PokerLesson の PokerCard / HandNotation と相互変換</li>
     <li>無料はハンド記録 月10件。11件目の保存操作で Paywall（source=handLimit）</li>
+    <li><strong>保存の成否で後続処理を分ける</strong> — レンジ照合バナー（PD-07）への遷移・完了処理・<code>hand_logged</code> の発火はすべて保存成功時のみ。失敗時は入力を維持して Alert 表示にとどめる</li>
   </ul>
 
   <h2>未決事項</h2>
@@ -91,6 +94,7 @@
   <ul>
     <li><a href="../flow.html">画面遷移図</a></li>
     <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="../error-design.html">エラー設計</a></li>
     <li><a href="session-done.html">記録完了（PD-03）</a></li>
     <li><a href="gto-match.html">MTTレンジ照合バナー（PD-07）</a></li>
     <li><a href="quick-memo.html">クイックメモ（PD-05）</a></li>
@@ -101,9 +105,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv2+Fable 5評価反映）</td></tr>
     <tr><td>1.1</td><td>2026-07-16</td><td>弱点タグの課金境界（無料1個・Pro3個）を追記</td></tr>
+    <tr><td>1.2</td><td>2026-07-26</td><td>保存失敗時は照合バナー・完了へ進まず、入力を維持して Alert を表示する挙動を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

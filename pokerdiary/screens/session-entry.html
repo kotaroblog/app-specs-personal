@@ -27,10 +27,12 @@
   <h3>共通</h3>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>ナビバー</td><td>Navigation</td><td>「今夜を記録」タイトル・キャンセル・日付ピッカー</td></tr>
+    <tr><td>ナビバー</td><td>Navigation</td><td>タイトル（新規=「今夜を記録」／編集=「セッションを編集」）＋キャンセルのみ。<strong>日付ピッカーはナビバーに置かない</strong>（タイトルとの横並び競合を解消）</td></tr>
+    <tr><td>日付</td><td>DatePicker（compact）</td><td><strong>フォーム最上部の行</strong>。カード内に配置し最小高44ptを確保する</td></tr>
     <tr><td>モードセグメント</td><td>Segmented Control</td><td>リング／トナメの切替。前回使用モードを記憶して初期選択する</td></tr>
-    <tr><td>店選択チップ</td><td>Chip（横スクロール）</td><td>店名サジェスト（使用頻度順）＋「＋新規」。選択済みはアクセント塗り</td></tr>
-    <tr><td>保存ボタン</td><td>Primary Button</td><td>Session を保存し記録完了画面（PD-03）へ</td></tr>
+    <tr><td>店選択チップ</td><td>Chip（横スクロール）</td><td>店名サジェスト（使用頻度順）＋「＋新規」。選択済みはアクセント塗り。<strong>選択は任意</strong></td></tr>
+    <tr><td>保存できない理由</td><td>Inline Caption</td><td>保存条件を満たさないとき、<strong>保存ボタン直上に1行表示</strong>（例: チップINを入力してください）</td></tr>
+    <tr><td>保存ボタン</td><td>Primary Button</td><td>Session を保存し、<strong>成功時のみ</strong>記録完了画面（PD-03）へ。条件未満は無効化</td></tr>
   </table>
   <h3>リングモード</h3>
   <table>
@@ -52,6 +54,20 @@
     <tr><td>注記</td><td>Caption</td><td>「アミューズメントのため賞金は出ません。円換算・ROIは記録しません」</td></tr>
   </table>
 
+  <h2>保存条件（バリデーション）</h2>
+  <table>
+    <tr><th>形式</th><th>最低条件</th><th>意図</th></tr>
+    <tr><td>リング</td><td>BB（bbChips）≧ 1 <strong>かつ</strong> チップIN ≧ 1</td><td>BB収支の換算が成立する最小条件。<strong>チップOUT = 0 は正当な記録として許可</strong>する（全額失った夜を記録できないのは誤り）</td></tr>
+    <tr><td>トナメ</td><td>エントリー数 ≧ 1 <strong>かつ</strong> 参加費・支出合計・結果・プライズメモの<strong>いずれかに入力あり</strong></td><td><strong>参加費0のフリーロールでも結果を選ぶだけで保存できる</strong>ようにする。一方で完全な空レコードは作らせない</td></tr>
+    <tr><td>共通</td><td>店の選択は<strong>任意</strong></td><td>店を思い出せない・登録していない夜でも記録を止めない</td></tr>
+  </table>
+  <div class="callout">
+    <strong>条件を満たさない間は保存ボタンを無効化する。</strong> 無効状態は背景 <code>surfaceElevated</code>＋枠線＋文字色 <code>textSecondary</code>＋警告アイコンで表現し（「押せそうなのに押せない」を避ける）、<strong>保存できない理由を1行だけボタン直上に表示</strong>する。同じ文をVoiceOverヒントにも設定し、視覚に頼らず理由が伝わるようにする。
+  </div>
+  <div class="callout warn">
+    <strong>編集モードの緩和は「その形式に限って」適用する。</strong> 既存データが現在の最低条件を満たしていない場合（旧バージョンで作られた記録など）、そのままでは編集画面から保存できなくなる。そこで編集時は<strong>元データの形式に限り</strong>条件を緩める。ユーザーがシート内で形式を切り替えた場合は、切り替え後の形式には通常条件を適用する（緩和を横に広げない）。
+  </div>
+
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
@@ -60,12 +76,16 @@
     <tr><td>入賞（ITM/優勝）選択時</td><td>プライズ内容テキスト欄を表示する</td></tr>
     <tr><td>BB収支換算中（リング）</td><td>チップIN/OUTとステークスが揃った時点で緑（勝ち）／テラコッタ（負け）カードにライブ換算を表示</td></tr>
     <tr><td>新規店</td><td>「＋新規」から店名を追加し Venue を作成</td></tr>
+    <tr><td>保存条件 未達</td><td>保存ボタンを無効表示（surfaceElevated＋枠線＋textSecondary＋警告アイコン）。直上に理由を1行表示</td></tr>
+    <tr><td>保存失敗</td><td>記録完了画面へ遷移せず、<strong>入力内容を保持したまま</strong>日本語Alert「保存できませんでした」を表示（詳細は<a href="../error-design.html">エラー設計</a>）</td></tr>
+    <tr><td>編集モード（旧データ）</td><td>元データの形式に限り保存条件を緩め、過去の記録を保存不能にしない</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>保存する タップ</td><td>記録完了画面（PD-03）</td></tr>
+    <tr><td>保存する タップ（<strong>保存成功時のみ</strong>）</td><td>記録完了画面（PD-03）</td></tr>
+    <tr><td>保存する タップ（保存失敗時）</td><td>遷移しない。記録シートにとどまり Alert を表示（入力は維持）</td></tr>
     <tr><td>キャンセル タップ</td><td>ホーム（PD-01）へ戻る</td></tr>
     <tr><td>リング／トナメ セグメント切替</td><td>同一シート内でモード切替</td></tr>
   </table>
@@ -92,12 +112,17 @@ Venue     // name（店選択・前回値クエリの起点）</code></pre>
     <li>BB収支換算は <code>bbChips &gt; 0</code> のときのみ算出（0除算回避、bbProfitはOptional）</li>
     <li>トナメの円換算・ROIは意図的に非実装。プライズは金銭換算せずテキストのみ（4+・賭博性の否定）</li>
     <li>KPIのパラメータに金額・店名・自由記述を含めない（件数・真偽値・enum値のみ）</li>
+    <li>日付はナビバーではなく<strong>フォーム最上部の行</strong>に置く（compact DatePicker・最小高44pt）。ナビバーはタイトル＋キャンセルのみとする</li>
+    <li>保存できない理由は<strong>インライン表示とVoiceOverヒントの二重で伝える</strong>。ボタンを無効化するだけで理由を隠さない</li>
+    <li><strong>保存の成否で遷移を分ける</strong> — <code>session_logged</code> の発火と PD-03 への遷移は保存成功時のみ。失敗時は入力を維持して Alert 表示にとどめる</li>
+    <li>バリデーションは <code>save()</code> 内でも再検査し、条件未達なら SwiftData に触れる前に <code>SessionEntrySaveError.invalidInput</code> を throw する（空記録を作らない保証を View の <code>disabled</code> だけに依存させない）</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
     <li><a href="../flow.html">画面遷移図</a></li>
     <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="../error-design.html">エラー設計</a></li>
     <li><a href="home.html">ホーム（PD-01）</a></li>
     <li><a href="session-done.html">記録完了（PD-03）</a></li>
   </ul>
@@ -106,9 +131,10 @@ Venue     // name（店選択・前回値クエリの起点）</code></pre>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（モックv2+Fable 5評価反映）</td></tr>
+    <tr><td>1.1</td><td>2026-07-26</td><td>日付ピッカーをナビバーからフォーム最上部へ移動。保存条件（バリデーション）・無効時の理由表示・編集モードの条件緩和・保存失敗時の挙動を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>
