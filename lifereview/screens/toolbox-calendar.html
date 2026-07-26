@@ -15,7 +15,7 @@
     <h1>道具箱: カレンダー</h1>
     <p>記録の積み重なりをヒートマップで可視化し、日付選択でその日のログを展開する。</p>
     <div style="margin-top:8px;">
-      <span class="tag done">S2実装済</span>
+      <span class="tag done">実装済</span>
       <span class="tag">画面ID: LR-TOOLBOX-CAL</span>
     </div>
   </header>
@@ -23,77 +23,161 @@
   <h2>目的・役割</h2>
   <p>
     振り返りの「道具箱」として、記録（LogEntry）を時間軸で俯瞰する画面。
-    月カレンダーのヒートマップで「どの日に何件記録したか」を色で示し、
-    日付をタップするとその日のログ一覧を展開する。
-    振り返りセッションの STEP1「見返す」前に下調べする用途にも使える。
+    月カレンダーのヒートマップで「どの日に何件記録したか」を藍の深浅で示し、
+    日付をタップするとその日のログ一覧を下部に展開する。
+    振り返りセッションの STEP「見返す」前に下調べする用途にも使える。
   </p>
+  <div class="callout">
+    <strong>金は使わない画面（例外は「今日」の1点）:</strong> 記録の「量」を金で語らせない。
+    ヒートマップは night2 から始まる藍の階段で量を表し、amber は今日を指す 4pt のドットだけに使う。
+  </div>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（CalendarView）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>月ナビゲーション</td><td>HStack + Button</td><td>「&lt;」「&gt;」ボタンで前月・翌月に移動。中央に「YYYY年M月」表示（18pt bold）。</td></tr>
-    <tr><td>曜日ラベル行</td><td>HStack</td><td>月〜日の7列。土: 青、日: 赤、平日: textMuted。月曜起点。</td></tr>
-    <tr><td>カレンダーグリッド</td><td>VStack × rows</td><td>月の日数分のセルをグリッド配置。各セルは dayCell（44px 高）。</td></tr>
-    <tr><td>日付セル（dayCell）</td><td>Button + RoundedRectangle</td><td>記録件数に応じたヒートマップ色塗り。今日は amber の 4px ドット表示。選択中は amber 2px 枠。</td></tr>
-    <tr><td>選択日ログ展開</td><td>selectedEntries()</td><td>日付選択時に区切り線 + 「曜日/日付 — N件」見出し + LogCardView × N を下部に表示。記録なし時は「この日の記録はありません」。</td></tr>
-    <tr><td>ログカード</td><td>NavigationLink + LogCardView</td><td>タップで LogDetailView へ遷移。</td></tr>
+    <tr><td>画面コンテナ</td><td>ScrollView + VStack（spacing 8）</td><td>背景は <code>screenBackground()</code>（background + grainOverlay）。タイトルは <code>minchoNavigationTitle("カレンダー")</code>。下端に padding 24。</td></tr>
+    <tr><td>月ナビゲーション（monthHeader）</td><td>HStack + Button × 2</td><td>「chevron.left」「chevron.right」で前月・翌月へ。中央に「YYYY年M月」（<code>Date.yearMonth</code>・scaledFont 18 bold・onSurface）。左右 padding 24。</td></tr>
+    <tr><td>曜日ラベル行（weekdayLabels）</td><td>HStack（spacing 0）</td><td>月曜起点の7列（月・火・水・木・金・土・日）。scaledFont 12 semibold。左右 padding 16。</td></tr>
+    <tr><td>カレンダーグリッド（calendarGrid）</td><td>VStack（spacing 4）× HStack（spacing 4）</td><td>行数分の HStack を積む。月外のマスは <code>Color.clear</code>（minHeight 44）で埋めて行の高さを揃える。左右 padding 16・上下 padding 8。</td></tr>
+    <tr><td>日付セル（dayCell）</td><td>Button + RoundedRectangle（角丸 8）</td><td>記録件数に応じたヒートマップ色で塗る。日付数字（scaledFont 14）とマーカー（4pt）の VStack。<code>maxWidth: .infinity</code> × <code>minHeight: 44</code>。</td></tr>
+    <tr><td>ヒートマップ凡例（heatmapLegend）</td><td>HStack（spacing 10）</td><td>グリッド直下に <strong>5段階すべて</strong>のスウォッチ（角丸 3・12×12）＋ラベルを左寄せで並べる。ラベルは scaledFont 10.5・textMuted。</td></tr>
+    <tr><td>選択日ログ展開（selectedEntries）</td><td>VStack（spacing 8）</td><td>日付選択時のみ表示。cardBorder 1px の区切り線＋「金曜日 6/15 — N件」見出し（<code>Date.weekdayWideMD</code>＝曜日は完全形「EEEE M/d」・scaledFont 15 bold・onSurfaceVariant）＋ LogCardView × N。</td></tr>
+    <tr><td>ログカード</td><td>NavigationLink + LogCardView</td><td>タップで LogDetailView へ push。今日タブと共通のカード部品。</td></tr>
   </table>
 
-  <h2>ヒートマップ配色</h2>
+  <h2>ヒートマップ配色（5段階）</h2>
   <table>
-    <tr><th>件数</th><th>トークン</th><th>説明</th></tr>
-    <tr><td>0件</td><td>heatmap0</td><td>背景色に近い（記録なし）</td></tr>
-    <tr><td>1件</td><td>heatmap1</td><td>薄い強調</td></tr>
-    <tr><td>2件</td><td>heatmap2</td><td>中程度</td></tr>
-    <tr><td>3件</td><td>heatmap3</td><td>濃い強調（テキストを white に切替）</td></tr>
-    <tr><td>4件以上</td><td>heatmap4</td><td>最大強調</td></tr>
+    <tr><th>件数</th><th>トークン</th><th>16進</th><th>相対輝度 L</th><th>備考</th></tr>
+    <tr><td>0件</td><td>heatmap0（= night2）</td><td>#161C28</td><td>.0115</td><td>カード面と同じ地の色</td></tr>
+    <tr><td>1件</td><td>heatmap1</td><td>#20293C</td><td>.0222</td><td>ヒートマップ専用値（night3 の流用をやめた）</td></tr>
+    <tr><td>2件</td><td>heatmap2</td><td>#26324A</td><td>.0319</td><td></td></tr>
+    <tr><td>3件</td><td>heatmap3</td><td>#3A4A66</td><td>.0676</td><td>ここから日付数字を moonWhite に切り替え</td></tr>
+    <tr><td>4件以上</td><td>heatmap4</td><td>#54627E</td><td>.1213</td><td>最大強調</td></tr>
   </table>
+  <div class="callout warn">
+    <strong>heatmap1 を専用値へ切り離した理由:</strong> 以前 heatmap1 は押下面トークン <code>night3</code>（#1B2333）を流用しており、
+    0件（#161C28・L=.0115）との輝度差が <strong>.0052 しかなく「0件と1件」が見分けられなかった</strong>。
+    night3 は「沈み／押下面」の意味を持つトークンでヒートマップの尺度とは別物のため、#20293C を専用に切り出した。
+    現在は 5 段が相対輝度でほぼ均等な階段（.0115 → .0222 → .0319 → .0676 → .1213）になっている。
+  </div>
+
+  <h2>セルの状態表示（色だけに頼らない）</h2>
+  <table>
+    <tr><th>状態</th><th>表示</th></tr>
+    <tr><td>今日</td><td>日付数字を bold にし、数字の下に <strong>amber の Circle（4×4）</strong>を置く。</td></tr>
+    <tr><td>選択中</td><td>数字の下に <strong>moonWhite .8 の RoundedRectangle（角丸1・4×4）</strong>＋セル外周に moonWhite .5 の 2pt ストローク。</td></tr>
+    <tr><td>今日かつ選択中</td><td>マーカーは今日（丸ドット）が優先。外周ストロークは選択中として付く。</td></tr>
+    <tr><td>それ以外</td><td>マーカー位置は <code>Color.clear</code>（4×4）で確保し、レイアウトが跳ねないようにする。</td></tr>
+    <tr><td>3件以上</td><td>日付数字を moonWhite に切り替える（濃い藍の上での可読性確保）。2件以下は onSurfaceVariant。</td></tr>
+  </table>
+  <p>
+    今日は<strong>丸</strong>、選択中は<strong>角丸の四角</strong>と<strong>形で</strong>区別する。色（amber / moonWhite）だけの差にしない。
+  </p>
+
+  <h2>曜日ラベルの色</h2>
+  <table>
+    <tr><th>曜日</th><th>色</th><th>和名</th></tr>
+    <tr><td>土</td><td>#7590A0</td><td>錆浅葱</td></tr>
+    <tr><td>日</td><td>#A87E82</td><td>梅鼠</td></tr>
+    <tr><td>平日</td><td>textMuted（#8E8B84）</td><td>暖グレー</td></tr>
+  </table>
+  <p>一般的なカレンダーの「土＝青／日＝赤」は使わない。C案の禁止色（原色）を避け、和色鼠に寄せた土日色を当てている。</p>
 
   <h2>カレンダーグリッド計算ロジック</h2>
   <ul class="checklist">
-    <li>月の第1日の weekday を取得し、月曜起点のオフセット（月=0, 火=1, …, 日=6）を計算。</li>
-    <li>totalCells = offset + daysInMonth。rows = ceil(totalCells / 7)。</li>
-    <li>dailyCounts: ログを year × month でフィルタして日ごとの件数 Dict を生成。</li>
+    <li>月の1日の <code>weekday</code>（1=日…7=土）から月曜起点のオフセットを求める: <code>offset = (firstWeekday + 5) % 7</code>。</li>
+    <li><code>totalCells = offset + daysInMonth</code>、<code>rows = ceil(totalCells / 7)</code>。</li>
+    <li>各マスの日付は <code>day = row * 7 + col - offset + 1</code>。1未満・月末超は <code>Color.clear</code> のプレースホルダ。</li>
+    <li><code>dailyCounts(year:month:)</code>: ログを year × month でフィルタし、日ごとの件数 <code>[Int: Int]</code> を作る。</li>
+    <li>件数は <strong>LogEntry の実体数</strong>。ハイライトかどうかは関与しない（カレンダーは「記録した量」だけを見る道具）。</li>
+  </ul>
+
+  <h2>月送りの規約</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>タップ領域</td><td>chevron は <code>.buttonStyle(.plain)</code> でパディングが付かず、実効タップ領域がアイコンサイズ（約20pt）しかなかった。<strong>44×44 の frame と <code>contentShape(Rectangle())</code> を明示</strong>して確保している。アイコン自体は 18pt 固定。</td></tr>
+    <tr><td>未来月への遷移</td><td>表示中が今月のとき「次の月」を <code>disabled</code> にし、色を outline に落とす（未来の空カレンダーへ進めない）。</td></tr>
+    <tr><td>月を変えたとき</td><td><code>selected = nil</code> にして選択日を解除する（表示月と展開中のログがずれるのを防ぐ）。</td></tr>
+    <tr><td>アクセシビリティラベル</td><td>「前の月」「次の月」。</td></tr>
+  </table>
+
+  <h2>Dynamic Type の扱い</h2>
+  <ul class="checklist">
+    <li>文字はすべて <code>scaledFont(_:weight:)</code>（基準サイズを保ったまま Dynamic Type に追従する <code>@ScaledMetric</code> ベースの modifier）。<code>.font(.system(size:))</code> の直書きは chevron アイコンのみ。</li>
+    <li>日付セルは <strong>固定高ではなく <code>minHeight: 44</code></strong>。文字サイズを上げると行の高さが伸びて数字が切れない。</li>
+    <li>月外のプレースホルダも同じ <code>minHeight: 44</code> を持たせ、行の高さが揃うようにしている。</li>
+    <li>横幅は <code>maxWidth: .infinity</code> の7等分。セルは正方形に固定していない。</li>
   </ul>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>日付未選択</td><td>月カレンダーのみ表示。</td></tr>
-    <tr><td>日付選択・記録あり</td><td>カレンダー下部に LogCardView を件数分表示。</td></tr>
-    <tr><td>日付選択・記録なし</td><td>「この日の記録はありません」（outline 色）。</td></tr>
+    <tr><td>日付未選択（初期）</td><td>月ナビ＋曜日ラベル＋グリッド＋凡例のみ。<code>selected == nil</code>。</td></tr>
+    <tr><td>日付選択・記録あり</td><td>凡例の下に区切り線＋「金曜日 6/15 — N件」（曜日は完全形）＋ LogCardView を件数分表示。</td></tr>
+    <tr><td>日付選択・記録なし</td><td>「この日の記録はありません」（scaledFont 14・outline 色・上下 padding 16）。</td></tr>
+    <tr><td>今月表示中</td><td>「次の月」ボタンが無効（outline 色）。</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
-    <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>「&lt;」ボタン</td><td>前月に移動（month state を -1か月）</td></tr>
-    <tr><td>「&gt;」ボタン</td><td>翌月に移動（month state を +1か月）</td></tr>
-    <tr><td>日付セルタップ</td><td>selected state を更新 → ログ展開</td></tr>
-    <tr><td>ログカードタップ</td><td>LogDetailView へ NavigationLink 遷移</td></tr>
+    <tr><th>操作</th><th>遷移先・結果</th></tr>
+    <tr><td>「chevron.left」タップ</td><td>前月へ（month を -1か月して startOfMonth に正規化・selected を解除）</td></tr>
+    <tr><td>「chevron.right」タップ</td><td>翌月へ（今月表示中は無効）</td></tr>
+    <tr><td>日付セルタップ</td><td><code>selected</code> を更新 → 下部にその日のログを展開</td></tr>
+    <tr><td>ログカードタップ</td><td>LogDetailView へ NavigationLink push</td></tr>
   </table>
+  <p>
+    LogDetailView 側で記録を削除すると、<code>@Query</code> 経由でヒートマップの件数も選択日リストも即座に減る。
+    削除時は各 ReflectionSession の <code>highlightLogIds</code> から当該 ID を取り除く後始末も行われる
+    （詳細は <a href="S02_today.html">今日タブ</a> を参照）。
+  </p>
 
   <h2>使用するデータモデル</h2>
   <pre><code>@Query(sort: \LogEntry.date, order: .reverse)
 private var logs: [LogEntry]
 
-// dailyCounts(year:month:) — year × month でフィルタして日ごとの件数を集計
+@State private var month = Date().startOfMonth   // 表示月（1日 0:00 に正規化）
+@State private var selected: Date?               // 選択日（nil = 未選択）
+
+// 日ごとの件数を集計（表示月のみ）
 private func dailyCounts(year: Int, month m: Int) -> [Int: Int]
 
-// selectedEntries(_ date: Date) — 選択日の LogEntry をフィルタ</code></pre>
+// 選択日の LogEntry を抽出
+//   logs.filter { cal.isDate($0.date, inSameDayAs: date) }
+
+// LogEntry（SwiftData @Model）— カレンダーが参照するのは date のみ
+//   var date: Date
+//   var content: String?
+//   var imagePaths: [String]      // 1件あたり最大3枚
+//   var categoryRaw: String       // LogCategory.rawValue
+//   var moodRaw: String?          // LogMood.rawValue
+//   ※ isHighlight は廃止。ハイライトは ReflectionSession.highlightLogIds が唯一の真実源</code></pre>
+
+  <h2>アクセシビリティ対応</h2>
+  <ul class="checklist">
+    <li>日付セルの読み上げは「<code>N日、記録N件</code>」＋該当時に「、今日」「、選択中」を連結。数字と塗りの意味を音声だけで判別できる。</li>
+    <li>月送りボタンは 44×44 の <code>contentShape</code> ＋ <code>accessibilityLabel</code>（「前の月」「次の月」）。</li>
+    <li>凡例は 5 段すべてを常時表示し、色の濃淡が何件を意味するかを画面上で明示する。</li>
+    <li>今日／選択中を色だけでなく形（丸／角丸四角）と外周ストロークでも区別する。</li>
+    <li>ナビタイトルは principal に自前描画するため <code>.accessibilityHidden(true)</code>。読みは <code>navigationTitle</code> 側に寄せる。</li>
+  </ul>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li><code>month: Date</code> は startOfMonth を保持（1日の 0:00:00）。</li>
-    <li>曜日ラベルは固定配列 <code>["月", "火", "水", "木", "金", "土", "日"]</code>。</li>
-    <li>ヒートマップ色は AppColors トークン（heatmap0〜4）で管理。C案「ダーク天体」規律に従い暖色寄りのグラデを採用予定（S4 仕上げで確定）。</li>
-    <li>LogDetailView・LogCardView は 今日タブ（Today）と共有コンポーネント。</li>
+    <li><code>month</code> は常に <code>startOfMonth</code>（その月の1日 0:00）を保持する。</li>
+    <li>曜日ラベルは固定配列 <code>["月", "火", "水", "木", "金", "土", "日"]</code>（月曜起点）。</li>
+    <li>ヒートマップ色は <code>AppColors.heatmap0〜4</code> に集約。View 側に16進を直書きしない。</li>
+    <li>背景とフィルム粒は <code>screenBackground()</code> の1行に束ねる（背景色 + grainOverlay 2.5%）。</li>
+    <li>ナビタイトルは <code>minchoNavigationTitle("カレンダー")</code>。iOS 26 でカスタムフォントのラージタイトルが描画されないため、<code>ToolbarItem(placement: .principal)</code> に明朝17ptで自前描画している。</li>
+    <li>LogDetailView・LogCardView は今日タブ（Today）と共有のコンポーネント。</li>
+    <li>この画面自体には記録の作成・編集・削除のコントロールを持たない（閲覧専用の道具）。編集・削除は push 先の LogDetailView のツールバーメニューから行う。</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
     <li><a href="../data-model.html">データモデル</a></li>
-    <li><a href="reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a></li>
+    <li><a href="S03_reflect_home.html">ふりかえりタブ（LR-S03）</a></li>
+    <li><a href="S02_today.html">今日タブ（LR-S02）</a></li>
     <li><a href="toolbox-stats.html">道具箱: 統計（LR-TOOLBOX-STATS）</a></li>
   </ul>
 
@@ -102,9 +186,10 @@ private func dailyCounts(year: Int, month m: Int) -> [Int: Int]
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（CalendarView）を反映</td></tr>
     <tr><td>1.1</td><td>2026-06-16</td><td>Phase S4 実装済み: ナビゲーションバーをダーク天体背景＋明朝インラインタイトルに統一。</td></tr>
+    <tr><td>1.2</td><td>2026-07-26</td><td>ヒートマップ5段階の実値（#161C28 / #20293C / #26324A / #3A4A66 / #54627E）と相対輝度の階段を明記。heatmap1 を night3 流用から専用値 #20293C へ切り離した理由（0件との輝度差が .0052 しかなく判別不能だった）を追記。グリッド直下に5段階の凡例（heatmapLegend）を常時表示する仕様を追加。月送りボタンを 44×44 frame + contentShape でタップ領域確保・今月では「次の月」を disabled・月変更で選択日を解除する仕様を追記。選択中の枠を amber から moonWhite .5 の 2pt ストロークへ訂正し、今日＝丸ドット／選択中＝角丸四角の形による区別を追記。土日の色を「青／赤」から錆浅葱 #7590A0 / 梅鼠 #A87E82 へ訂正。セル高を固定44pxから minHeight 44 へ変更し、全テキストを scaledFont 化（Dynamic Type 追従）。3件以上で日付数字を moonWhite に切り替える閾値を明記。背景を screenBackground()（背景色+グレイン）に、タイトルを minchoNavigationTitle に統一。LogEntry.isHighlight 廃止（ハイライトは ReflectionSession.highlightLogIds が唯一の真実源）を反映し、件数集計がハイライトに依存しないことを明記。VoiceOver 読み上げ文言・削除時の highlightLogIds 後始末を追記。選択日見出しの日付書式を weekdayWideMD（曜日完全形「金曜日 6/15」）へ明記し、編集・削除は push 先 LogDetailView のツールバーにある旨を補足</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

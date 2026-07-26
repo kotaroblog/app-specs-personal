@@ -13,114 +13,207 @@
 
   <header class="site-header">
     <h1>道具箱: 統計</h1>
-    <p>サマリー4カード・カテゴリ円グラフ・カテゴリ内訳・感情の移ろいグラフ。</p>
+    <p>サマリー4カード・カテゴリ円グラフ・感情の移ろい（月別スタック棒）・カテゴリ内訳。</p>
     <div style="margin-top:8px;">
-      <span class="tag done">S3実装済</span>
+      <span class="tag done">実装済</span>
       <span class="tag">画面ID: LR-TOOLBOX-STATS</span>
     </div>
   </header>
 
   <h2>目的・役割</h2>
   <p>
-    日々の記録（LogEntry）を集計し、カテゴリ分布・記録頻度・感情の移ろいをビジュアルで把握する画面。
+    日々の記録（LogEntry）を集計し、カテゴリ分布・記録の積み重なり・感情の移ろいをビジュアルで把握する画面。
     振り返りの「道具箱」として「自分はどんなことをよく記録しているか」「感情がどう変化しているか」を俯瞰する用途。
-    Phase S3 で感情の移ろいグラフ（Swift Charts 月別スタック棒グラフ）を追加実装済み。
+    ふりかえりタブ（<a href="S03_reflect_home.html">LR-S03</a>）の道具箱セクションから NavigationLink で push される。
   </p>
+  <div class="callout">
+    <strong>この画面が集計するのは記録（LogEntry）だけ。</strong>
+    振り返り（ReflectionSession）側の集計 —「これまでの振り返り」「振り返った週」「残したハイライト」の3指標 — は
+    <a href="reflection-timeline.html">これまでの軌跡（LR-TIMELINE-01）</a>が持つ。統計画面には振り返り回数の指標を置かない。
+  </div>
+  <div class="callout warn">
+    <strong>「記録率」は廃止（2026-07-26）。</strong>
+    旧仕様の4枚目は「今月記録した日 ÷ 今月の経過日数」の達成率だったが、
+    毎日書かない使い方を自動的に「未達」と表示してしまう評価的な指標だった。
+    現在は <code>totalRecordedDays</code>（記録した日の累計・同一日に何件書いても1日）に置き換えている。
+    増えるだけで減らない、淡々とした積み重ねの指標にする。
+  </div>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（StatsView）</h2>
+  <p>ログが1件以上あるときの縦積み順は <strong>サマリー → 円グラフ → 感情の移ろい → カテゴリ内訳</strong>（ScrollView / VStack spacing 24 / padding 16）。</p>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>サマリーカード（4枚）</td><td>LazyVGrid 2列 × SummaryCard</td><td>総記録数 / 今月の記録日数 / 最多カテゴリ / 記録率。各カード: SF Symbol + 大きな数値（22pt bold）+ ラベル（12pt textMuted）。</td></tr>
-    <tr><td>カテゴリ別割合（円グラフ）</td><td>Swift Charts SectorMark</td><td>ドーナツ型。各カテゴリの件数割合をカテゴリカラーで表示。innerRadius: 0.5。angularInset: 1.5。cornerRadius: 3。</td></tr>
-    <tr><td>カテゴリ内訳リスト</td><td>ForEach + HStack</td><td>件数降順。アイコン + カテゴリ名 + 件数 + 割合（%）。</td></tr>
-    <tr><td>空状態</td><td>EmptyStateView</td><td>ログ0件時: 「記録をつけると統計が表示されます」。chart.bar アイコン（64px）。</td></tr>
+    <tr><td>画面の地</td><td><code>screenBackground()</code></td><td>背景色（night1）＋フィルムの粒（grainOverlay）を一括で敷く共通 modifier。</td></tr>
+    <tr><td>ナビタイトル</td><td><code>minchoNavigationTitle("統計")</code></td><td>明朝17pt を <code>ToolbarItem(.principal)</code> に自前描画（inline）。iOS 26 でラージタイトルにカスタムフォントを指定すると描画されないための対処。</td></tr>
+    <tr><td>サマリーカード（4枚）</td><td>LazyVGrid × SummaryCard</td><td>総記録数 / 今月記録した日 / 最多カテゴリ / 記録した日（累計）。列数は Dynamic Type に応じて可変（下記）。</td></tr>
+    <tr><td>カテゴリ別割合（円グラフ）</td><td>Swift Charts SectorMark</td><td>ドーナツ型。<code>innerRadius: .ratio(0.5)</code> / <code>angularInset: 1.5</code> / <code>cornerRadius: 3</code>。高さ 200。見出しは明朝16pt。</td></tr>
+    <tr><td>カテゴリ凡例</td><td>LazyVGrid（adaptive minimum 96）</td><td>円グラフ直下。10×10 の角丸（cornerRadius 2）色サンプル＋カテゴリ名（12pt・textMuted）。<strong>breakdown と同じ件数降順</strong>で並ぶ（0件のカテゴリは出ない）。</td></tr>
+    <tr><td>感情の移ろい</td><td>Swift Charts BarMark（スタック棒）</td><td>見出し「感情の移ろい」（明朝16pt）＋サブテキスト「直近6か月の記録から」（12pt・textMuted）。グラフ高さ 180。</td></tr>
+    <tr><td>感情凡例（MoodLegend）</td><td>LazyVGrid（adaptive minimum 78）</td><td>グラフの 16pt 下。<strong>LogMood.allCases の5種を常に全部表示</strong>（その月に出現しない感情も並ぶ）。色サンプル10×10＋ラベル12pt。</td></tr>
+    <tr><td>カテゴリ内訳リスト</td><td>ForEach + HStack</td><td>件数降順。アイコン（20pt・カテゴリ色・幅24）＋カテゴリ名（14pt）＋件数（14pt semibold）＋割合（13pt・幅56右寄せ・小数1桁）。</td></tr>
+    <tr><td>空状態</td><td>EmptyStateView</td><td>ログ0件時のみ。<code>chart.bar</code>（64pt）＋「記録をつけると統計が表示されます」。この場合サマリー・グラフ・内訳は<strong>一切描画しない</strong>。</td></tr>
+  </table>
+
+  <h2>サマリーカード詳細</h2>
+  <table>
+    <tr><th>カード</th><th>値</th><th>ラベル</th><th>SF Symbol</th><th>iconColor</th></tr>
+    <tr><td>1</td><td><code>totalCount</code>（数値のみ）</td><td>総記録数</td><td>square.and.pencil</td><td>textMuted</td></tr>
+    <tr><td>2</td><td><code>monthlyRecordDays</code>（「n日」）</td><td>今月記録した日</td><td>calendar</td><td>textMuted</td></tr>
+    <tr><td>3</td><td><code>topCategory?.label</code>（無ければ「—」）</td><td>最多カテゴリ</td><td><code>topCategory?.symbolName</code>（無ければ square.grid.2x2）</td><td><code>topCategory?.color</code>（無ければ textMuted）</td></tr>
+    <tr><td>4</td><td><code>totalRecordedDays</code>（「n日」）</td><td>記録した日（累計）</td><td>calendar.badge.clock</td><td>textMuted</td></tr>
+  </table>
+  <div class="callout">
+    <strong>色を持つのは3枚目だけ。</strong> 4枚のアイコンのうち色が付くのは「最多カテゴリ」のカテゴリ色のみで、
+    残り3枚は textMuted に沈める。旧仕様では記録率カードに青（#2563EB）を使っていたが、
+    C案のパレットに存在しない原色だったため撤去した。金（amber）はこの画面では一切使わない。
+  </div>
+  <table>
+    <tr><th>SummaryCard 実装</th><th>値</th></tr>
+    <tr><td>コンテナ</td><td>AppCard（padding 12 / cornerRadius 12 / surface 面 + cardBorder 1px）</td></tr>
+    <tr><td>アイコン</td><td><code>.font(.system(size: 24))</code></td></tr>
+    <tr><td>値テキスト</td><td><code>scaledFont(22, weight: .bold)</code> / onSurface / lineLimit(1) / minimumScaleFactor(0.6)</td></tr>
+    <tr><td>ラベル</td><td><code>scaledFont(12)</code> / textMuted</td></tr>
+    <tr><td>サイズ</td><td>横は maxWidth .infinity、縦は <strong>minHeight 96</strong>（固定高にしないことで文字拡大時も切れない）</td></tr>
+    <tr><td>グリッド列数</td><td><code>dynamicTypeSize &gt;= .accessibility1</code> なら <strong>1列</strong>、それ未満は <strong>2列</strong>（spacing 12）</td></tr>
   </table>
 
   <h2>集計ロジック</h2>
   <table>
     <tr><th>指標</th><th>計算方法</th></tr>
-    <tr><td>総記録数</td><td>logs.count</td></tr>
-    <tr><td>今月の記録日数</td><td>今月のログを year × month でフィルタ → 日（day）の Set のカウント</td></tr>
-    <tr><td>最多カテゴリ</td><td>breakdown（件数降順）の first?.category</td></tr>
-    <tr><td>記録率</td><td>今月記録日数 / 今月経過日数 × 100（%）。小数1桁表示。</td></tr>
-    <tr><td>カテゴリ内訳</td><td>LogCategory.allCases × 件数 Dict。0件は非表示。件数降順ソート。</td></tr>
+    <tr><td>totalCount（総記録数）</td><td><code>logs.count</code>。全期間・フィルタなし。</td></tr>
+    <tr><td>breakdown（カテゴリ内訳）</td><td>全ログを <code>log.category</code> で数え上げ → <code>LogCategory.allCases</code> の順に写す → <strong>0件を除外</strong> → 件数降順ソート。<code>[(category:, count:)]</code>。</td></tr>
+    <tr><td>topCategory（最多カテゴリ）</td><td><code>breakdown.first?.category</code>。ログが0件のときは画面ごと空状態なので実質 nil にならない。</td></tr>
+    <tr><td>monthlyRecordDays（今月記録した日）</td><td>今日と同じ year かつ month のログを抽出 → <code>day</code> の Set のカウント。<strong>今月内の日数のみ</strong>。</td></tr>
+    <tr><td>totalRecordedDays（記録した日・累計）</td><td><code>Set(logs.map { calendar.startOfDay(for: $0.date) }).count</code>。全期間・<strong>同一日の複数記録は1日</strong>。</td></tr>
+    <tr><td>割合（内訳リスト）</td><td><code>count / totalCount × 100</code>。<code>String(format: "%.1f%%")</code> で小数1桁。totalCount が0なら0。</td></tr>
   </table>
+  <div class="callout">
+    <code>totalRecordedDays</code> は <code>static func totalRecordedDays(_ logs:calendar:)</code> として
+    View から切り離した純粋関数になっている（カレンダーを引数で受けるためタイムゾーン固定でテストできる）。
+    ユニットテスト2件（同一日2件＋別日1件 → 2 / 空配列 → 0）で担保。
+  </div>
 
-  <h2>サマリーカード詳細</h2>
-  <table>
-    <tr><th>カード</th><th>値</th><th>SF Symbol</th><th>iconColor</th></tr>
-    <tr><td>総記録数</td><td>totalCount（件）</td><td>square.and.pencil</td><td>textMuted</td></tr>
-    <tr><td>今月の記録</td><td>monthlyRecordDays（日）</td><td>calendar</td><td>orange</td></tr>
-    <tr><td>最多カテゴリ</td><td>topCategory.label または「—」</td><td>topCategory.symbolName</td><td>topCategory.color</td></tr>
-    <tr><td>記録率</td><td>recordRate（XX.X%）</td><td>chart.line.uptrend.xyaxis</td><td>#2563EB（青）</td></tr>
-  </table>
-
-  <h2>感情の移ろいグラフ（S3 追加）</h2>
+  <h2>感情の移ろい（直近6か月）</h2>
   <table>
     <tr><th>項目</th><th>仕様</th></tr>
-    <tr><td>グラフ種別</td><td>Swift Charts BarMark（スタック棒グラフ）</td></tr>
-    <tr><td>表示期間</td><td>直近6か月（今月を含む6か月分）</td></tr>
-    <tr><td>X軸</td><td>月（YYYY-MM 形式を "M月" に整形して表示）</td></tr>
-    <tr><td>Y軸</td><td>件数（ラベル自動、目盛り4本程度）</td></tr>
-    <tr><td>スタック方式</td><td>LogMood 5種をそれぞれ積み上げ。感情ごとに foregroundStyle で色分け。</td></tr>
-    <tr><td>感情カラー</td><td>joy: #EAB308 / fulfilled: #2563EB / calm: #0F766E / tired: #64748B / anxious: #9333EA（LogMood カラーと同一）</td></tr>
-    <tr><td>凡例</td><td>グラフ下部にインライン凡例（感情ラベル + 色サンプル丸。横スクロール可）</td></tr>
-    <tr><td>空状態</td><td>感情タグ付き記録が0件の場合: 「感情タグをつけて記録すると、感情の移ろいが表示されます」をグラフエリア中央に表示</td></tr>
+    <tr><td>集計単位</td><td><code>MoodMonth { month: Date, counts: [LogMood: Int] }</code>。<strong>常に6要素</strong>（今月から5か月前まで）を古い→新しい順で作る。</td></tr>
+    <tr><td>対象ログ</td><td><code>log.mood != nil</code> のログのみ。感情タグなしの記録はどの帯にも入らない。</td></tr>
+    <tr><td>X軸</td><td>月（<code>"n月"</code>）。AxisValueLabel 11pt・textMuted。</td></tr>
+    <tr><td>Y軸</td><td>件数。<code>AxisMarks(position: .leading, values: .automatic(desiredCount: 3))</code>。グリッド線 cardBorder、ラベル10pt・textMuted。</td></tr>
+    <tr><td>棒（記録あり）</td><td><code>LogMood.allCases</code> の順（喜び→充実→穏やか→疲れ→不安）に、<strong>件数0の感情は BarMark を出さずに</strong>積み上げる。各帯 <code>cornerRadius(1.5)</code> で境界に切れ目を作り、積み上げの対応付けを助ける。</td></tr>
+    <tr><td>棒（記録なしの月）</td><td>その月の合計が0なら、<strong>高さ 0.4 の薄い土台を1本だけ</strong> surfaceContainer 色で描く。「棒がない＝データがない」ことを空白でなく形で伝えるため。</td></tr>
+    <tr><td>凡例</td><td>Swift Charts の自動凡例は <code>.chartLegend(.hidden)</code> で消し、自前の MoodLegend（5種固定）をグラフ下に置く。</td></tr>
+    <tr><td>空状態</td><td>6か月すべて合計0（＝感情タグ付きの記録が直近6か月に1件もない）の場合、グラフと凡例の代わりに AppCard を1枚表示: 「記録に感情を添えると、／ここに移ろいが見えてきます。」（13pt・textMuted・中央揃え・lineSpacing 7）。</td></tr>
   </table>
 
-  <h2>感情グラフの集計ロジック</h2>
-  <pre><code>// 直近6か月の (year, month) ペアを生成
-let months: [(year: Int, month: Int)] = ...  // 降順で6か月
+  <h2>カテゴリ8色（C案・和色の輝度階段）</h2>
+  <p>
+    <code>LogCategory.color</code>。識別は「色相差」＋<strong>相対輝度の8段階段</strong>で行う（OKLab 明度 0.80→0.52 をほぼ等間隔に配分）。
+    原色・紫・マゼンタは使わない。彩度は金 <code>#C2894B</code> より必ず低く保つ（金がこのアプリで最も彩度の高い色である序列を崩さないため）。
+    以前は彩度だけでなく明度も揃えてしまい、8色が狭い輝度帯に密集して experience × creation が実質同一色になっていた。
+    低彩度の代償は二次符号 — 円グラフの角丸インセットによる隙間・凡例・内訳リストの件数表示 — が支払う。
+  </p>
+  <table>
+    <tr><th>case</th><th>ラベル</th><th>HEX</th><th>和色名</th><th>SF Symbol</th></tr>
+    <tr><td>happiness</td><td>日常の幸せ</td><td><code>#DCB688</code></td><td>杏色（陽の最上段）</td><td>sun.max</td></tr>
+    <tr><td>learning</td><td>学び</td><td><code>#86BBC8</code></td><td>水浅葱</td><td>book</td></tr>
+    <tr><td>relationship</td><td>人間関係</td><td><code>#CC9497</code></td><td>薄梅鼠</td><td>heart</td></tr>
+    <tr><td>achievement</td><td>達成</td><td><code>#869CBF</code></td><td>藍鼠（明）</td><td>trophy</td></tr>
+    <tr><td>creation</td><td>作品・創作</td><td><code>#A38193</code></td><td>鳩羽鼠（赤寄りの鼠。紫ではない）</td><td>paintpalette</td></tr>
+    <tr><td>travel</td><td>旅</td><td><code>#778862</code></td><td>老竹色</td><td>airplane</td></tr>
+    <tr><td>other</td><td>その他</td><td><code>#69737F</code></td><td>青鈍（夜色に馴染む専用値）</td><td>ellipsis</td></tr>
+    <tr><td>experience</td><td>体験</td><td><code>#816045</code></td><td>焦香（最暗部のアンカー）</td><td>star</td></tr>
+  </table>
+  <p class="section-meta">
+    上表は輝度の階段順に並べたもの。<code>allCases</code> の定義順は experience → achievement → relationship → creation → learning → travel → happiness → other で、
+    こちらはカテゴリ選択 UI の並び順に対応する。円グラフ・凡例・内訳リストは3つとも <code>breakdown</code>（件数降順）を使うため、常に同じ順序で並ぶ。
+  </p>
 
-// moodData: [(month: String, mood: LogMood, count: Int)]
-// logs から moodRaw != nil のものを抽出 → (year, month, mood) でグループ集計
-let moodData = logs
-    .compactMap { log -> (Date, LogMood)? in
-        guard let raw = log.moodRaw,
-              let mood = LogMood(rawValue: raw) else { return nil }
-        return (log.date, mood)
-    }
-    .filter { /* 直近6か月 */ }
-    .grouped(by: ...) // (monthLabel, mood) → count</code></pre>
+  <h2>感情5色（C案・非評価トーン）</h2>
+  <p>
+    <code>LogMood.color</code>。感情に良し悪しの色を付けない。「不安＝紫」のような安直なマッピングを避け、濁った土色で表す。
+    カテゴリ色と同じく色相差＋輝度の階段で識別する（彩度は金より低いまま）。
+    <code>tired</code> は以前 <code>#8E8B84</code> で <code>LogCategory.other</code> と16進が完全一致していたため、青寄りの薄鈍に分けた
+    （積み上げ棒は凡例が別置きなので、帯の輝度差だけが対応付けの手がかりになる）。
+  </p>
+  <table>
+    <tr><th>case</th><th>ラベル</th><th>HEX</th><th>和色名</th><th>SF Symbol</th></tr>
+    <tr><td>joy</td><td>喜び</td><td><code>#D7B38E</code></td><td>杏色（happiness と意図的に響き合わせる）</td><td>face.smiling</td></tr>
+    <tr><td>fulfilled</td><td>充実</td><td><code>#86ABC2</code></td><td>水縹</td><td>sparkles</td></tr>
+    <tr><td>calm</td><td>穏やか</td><td><code>#879877</code></td><td>柳鼠</td><td>leaf</td></tr>
+    <tr><td>tired</td><td>疲れ</td><td><code>#757E88</code></td><td>薄鈍（青寄り）</td><td>moon.zzz</td></tr>
+    <tr><td>anxious</td><td>不安</td><td><code>#83614F</code></td><td>胡桃染</td><td>cloud</td></tr>
+  </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>ログ0件</td><td>EmptyStateView（chart.bar / 64px / 「記録をつけると統計が表示されます」）。サマリーカード・グラフは非表示。</td></tr>
-    <tr><td>ログあり・感情タグなし</td><td>サマリー → 円グラフ → カテゴリ内訳 → 感情グラフ（空状態メッセージ）の順で表示。</td></tr>
-    <tr><td>ログあり・感情タグあり</td><td>サマリー → 円グラフ → カテゴリ内訳 → 感情の移ろいグラフ（スタック棒）を縦スクロールで表示。</td></tr>
+    <tr><td>ログ0件</td><td>EmptyStateView（chart.bar 64pt / 「記録をつけると統計が表示されます」）のみ。ScrollView ごと出さない。</td></tr>
+    <tr><td>ログあり・直近6か月に感情タグなし</td><td>サマリー → 円グラフ＋凡例 → 感情セクション（AppCard の案内文） → カテゴリ内訳。</td></tr>
+    <tr><td>ログあり・感情タグあり</td><td>サマリー → 円グラフ＋凡例 → 感情の移ろい（スタック棒＋MoodLegend） → カテゴリ内訳。</td></tr>
+    <tr><td>6か月のうち一部の月だけ記録がある</td><td>記録がある月は積み上げ棒、無い月は高さ 0.4 の薄い土台1本。X軸ラベルは6か月分すべて出る。</td></tr>
+    <tr><td>Dynamic Type 拡大（accessibility1 以上）</td><td>サマリーカードが2列→1列に切り替わる。凡例の LazyVGrid は <code>adaptive(minimum:)</code> の値が固定（96 / 78）なので列数は文字サイズでは変わらず、幅に応じてラベルが折り返す。</td></tr>
   </table>
 
-  <h2>S4 以降の拡張予定</h2>
-  <ul class="checklist">
-    <li>振り返り頻度グラフ: ReflectionSession の completedAt を週単位で集計。S4 以降。</li>
-  </ul>
-
   <h2>使用するデータモデル</h2>
-  <pre><code>@Query
-private var logs: [LogEntry]
+  <pre><code>@Query private var logs: [LogEntry]              // 全ログ（期間フィルタなし）
+@Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-// breakdown: [(category: LogCategory, count: Int)] — 件数降順・0件除外
-// topCategory: LogCategory? — breakdown.first?.category
-// monthlyRecordDays: Int — 今月の記録日の Set カウント
-// recordRate: Double — 記録率（%）
-// moodData: [(monthLabel: String, mood: LogMood, count: Int)] — 直近6か月・感情別件数</code></pre>
+// 集計（すべて computed var。ログ件数が少ない前提で毎回計算する）
+//   totalCount: Int                              // logs.count
+//   breakdown: [(category: LogCategory, count: Int)]  // 0件除外・件数降順
+//   topCategory: LogCategory?                    // breakdown.first?.category
+//   monthlyRecordDays: Int                       // 今月の記録日の Set カウント
+//   totalRecordedDays: Int                       // 記録した日の累計（同一日は1）
+//   moodTrend: [MoodMonth]                       // 常に6要素・古い→新しい順
+
+// 感情の月次集計（純粋値オブジェクト）
+struct MoodMonth: Identifiable {
+    let month: Date                 // その月の startOfMonth
+    let counts: [LogMood: Int]
+    var id: Date { month }
+    var total: Int { counts.values.reduce(0, +) }
+}
+
+// 記録した日の累計（テスト可能な純粋関数として切り出し）
+static func totalRecordedDays(_ logs: [LogEntry], calendar: Calendar = .current) -> Int {
+    Set(logs.map { calendar.startOfDay(for: $0.date) }).count
+}</code></pre>
+
+  <h2>アクセシビリティ対応</h2>
+  <ul class="checklist">
+    <li>3つのセクション見出し（カテゴリ別割合 / 感情の移ろい / カテゴリ内訳）に <code>.accessibilityAddTraits(.isHeader)</code> を付与。VoiceOver のローター見出し送りで各ブロックへ跳べる。</li>
+    <li>サマリーの値・ラベル、凡例、内訳リストのテキストを <code>scaledFont(_:weight:)</code> にして Dynamic Type に追従させる。見出しは <code>AppFont.mincho(16, relativeTo: .headline)</code> で追従。<strong>例外</strong>: グラフの軸ラベル（Y 10pt / X 11pt）とアイコン（サマリー24pt・内訳20pt）は <code>.font(.system(size:))</code> の固定サイズのままで、文字サイズ設定には追従しない。</li>
+    <li>サマリーカードは固定高ではなく <code>minHeight 96</code>。文字が拡大しても値・ラベルが切れずカードが伸びる。</li>
+    <li><code>accessibility1</code> 以上でサマリーグリッドを1列に落とし、2列のまま横方向に潰れるのを避ける。</li>
+    <li>ナビタイトルは principal に自前描画するため <code>.accessibilityHidden(true)</code>。読みは <code>navigationTitle</code> 側に寄せて二重読みを避ける。</li>
+    <li>この画面にタップ可能な要素は無い（閲覧専用）。44pt のタップ領域要件に該当する部品を持たない。</li>
+  </ul>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li>Swift Charts（<code>import Charts</code>）を使用。iOS 16+ 必須。本アプリは iOS 18+ なので問題なし。</li>
-    <li>SummaryCard は private struct として StatsView 内に定義。AppCard（cornerRadius: 12）ベース。値テキストは <code>.minimumScaleFactor(0.6)</code> で長い文字列も収める。</li>
-    <li>breakdown は computed var で毎回計算（ログ数が少ないため許容）。ログ数が増える場合はメモ化を検討。</li>
-    <li>カテゴリカラーは LogCategory.color（Flutter 版の配色を踏襲）。</li>
-    <li>感情グラフの BarMark は <code>.foregroundStyle(by: .value("感情", mood.label))</code> + <code>.chartForegroundStyleScale</code> でカラーマッピングを明示指定する。</li>
-    <li>6か月分データが存在しない月（記録0件）はスタック棒を表示しない（X軸のラベルは表示）。</li>
+    <li>Swift Charts（<code>import Charts</code>）を使用。iOS 16+ が必要だが本アプリは iOS 18+ のため問題なし。</li>
+    <li>SummaryCard / MoodTrendChart / MoodLegend は StatsView と同ファイル内の <code>private struct</code>。MoodMonth のみテストとプレビューから触れるよう非 private。</li>
+    <li>breakdown・moodTrend は computed var で毎回再計算する（ログ数が少ないため許容。件数が増えたらメモ化を検討）。</li>
+    <li>感情グラフの色は <code>.chartForegroundStyleScale</code> ではなく、各 BarMark に直接 <code>.foregroundStyle(mood.color)</code> を指定する。標準凡例は隠して自前の MoodLegend を出すため、スケール定義を持つ必要がない。</li>
+    <li>背景とナビタイトルは共通部品（<code>screenBackground()</code> / <code>minchoNavigationTitle(_:)</code>）に寄せる。この画面で個別に背景色や grain を書かない。</li>
+    <li>金（amber / goldDim）はこの画面では使わない。「1画面1点」の金の予算は人生タブの週グリッド「今週」マーカーに割り当てている。</li>
+  </ul>
+
+  <h2>v1.0.0 で実装しないもの</h2>
+  <ul class="checklist">
+    <li>期間フィルタ（今年だけ／去年だけ等）。サマリー・円グラフ・カテゴリ内訳はすべて<strong>全期間</strong>を対象とし、期間を絞れるのは感情の移ろい（直近6か月固定）だけ。</li>
+    <li>振り返り頻度のグラフ。ReflectionSession を素材にした集計は「これまでの軌跡」に置いており、統計画面には持ち込まない。</li>
+    <li>グラフのタップによる詳細表示・値ツールチップ。閲覧専用のまま置く。</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
-    <li><a href="../data-model.html">データモデル</a></li>
-    <li><a href="reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a></li>
+    <li><a href="../data-model.html">データモデル（LogEntry / LogCategory / LogMood）</a></li>
+    <li><a href="S03_reflect_home.html">ふりかえりタブ（LR-S03）</a></li>
     <li><a href="toolbox-calendar.html">道具箱: カレンダー（LR-TOOLBOX-CAL）</a></li>
+    <li><a href="reflection-timeline.html">これまでの軌跡（LR-TIMELINE-01）</a></li>
+    <li><a href="S02_today.html">今日タブ（LR-S02）</a></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -129,9 +222,10 @@ private var logs: [LogEntry]
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（StatsView）を反映。感情推移グラフは S3 予定として記載</td></tr>
     <tr><td>1.1</td><td>2026-06-15</td><td>Phase S3 実装済み: 感情の移ろいグラフ（Swift Charts 月別スタック棒グラフ・直近6か月・5感情色分け・凡例・空状態メッセージ）を追加</td></tr>
     <tr><td>1.2</td><td>2026-06-16</td><td>Phase S4 実装済み: ナビゲーションバーをダーク天体背景＋明朝インラインタイトルに統一。</td></tr>
+    <tr><td>1.3</td><td>2026-07-26</td><td>サマリー4枚目の「記録率（今月記録日÷経過日数）」を廃止し <code>totalRecordedDays</code>「記録した日（累計）」に差し替え（同一日の複数記録は1日。純粋関数化＋テスト2件）。記録率カードの青 #2563EB と「今月の記録」カードのオレンジを撤去し、色を持つアイコンを「最多カテゴリ」1枚のみに限定。カテゴリ8色・感情5色を輝度階段の和色パレットへ全面差し替え（旧・原色パレットの記述を削除。HEX と和色名の表を新設）。縦積み順を実装どおり サマリー→円グラフ→感情の移ろい→カテゴリ内訳 に訂正。円グラフ直下のカテゴリ凡例（件数降順）を追記。感情グラフの記録0件月に高さ 0.4 の薄い土台を描く仕様・<code>.chartLegend(.hidden)</code>＋自前 MoodLegend（5種固定表示）・空状態文言を実装に合わせて修正。<code>screenBackground()</code> / <code>minchoNavigationTitle()</code> への集約と Dynamic Type 対応（scaledFont・minHeight 96・accessibility1 で1列化）を追記。「振り返り頻度グラフ（S4以降）」を削除し、v1.0.0 の非対象を明示。関連リンクの <code>reflect-home.html</code> を <code>S03_reflect_home.html</code> に修正</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

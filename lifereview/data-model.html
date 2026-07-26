@@ -14,13 +14,12 @@
 
   <header class="site-header">
     <h1>データモデル</h1>
-    <p>SwiftData @Model 構造とリレーション（Phase S2 時点）</p>
+    <p>SwiftData @Model 構造・enum・色トークン・端末内永続化キー（v1.0.0 提出直前時点）</p>
   </header>
 
-  <div class="callout warn">
-    <strong>技術移行メモ:</strong> LifeReview は Flutter（drift / Riverpod）から Swift（SwiftData / @Observable）へ全面移行中。
-    本ドキュメントは Swift 実装の正を記述する。Flutter 版の drift スキーマ（ReflectionSessions テーブル等）は参考として併記する。<br>
-    Phase S3 での主な技術置換: <code>flutter_local_notifications</code> → <code>UNUserNotificationCenter</code>（通知）、<code>SharedPreferences</code> → <code>@AppStorage</code>（リマインダー設定の永続化）。
+  <div class="callout">
+    <strong>技術状況:</strong> Flutter（drift / Riverpod）→ Swift（SwiftData / SwiftUI）の全面移行は<strong>完了済み</strong>。
+    本ドキュメントは Swift 実装が正。Flutter 版の drift スキーマは末尾に「参考（移行前の対応表）」として残す。
   </div>
 
   <h2>ER 図</h2>
@@ -36,10 +35,9 @@ erDiagram
     UUID id
     Date date
     String content
-    String[] imagePaths
+    String_array imagePaths
     String categoryRaw
     String moodRaw
-    Bool isHighlight
     Date createdAt
   }
   ReflectionSession {
@@ -48,9 +46,10 @@ erDiagram
     Date periodStart
     Date periodEnd
     String moodSummaryRaw
-    ReflectionAnswer[] answers
-    UUID[] highlightLogIds
+    ReflectionAnswer_array answers
+    UUID_array highlightLogIds
     String note
+    Int starSeq
     Date completedAt
     Date createdAt
   }
@@ -67,13 +66,17 @@ erDiagram
     UUID id
     String name
     String relation
-    Int currentAge
+    Date birthDate
     Int targetAge
     Int meetingsPerYear
     Date createdAt
   }
   ReflectionSession }o--o{ LogEntry : "highlights (highlightLogIds)"
   </div>
+  <p>
+    5モデルとも <code>@Relationship</code> は張らず、<strong>参照は UUID の配列で緩く持つ</strong>（ReflectionSession → LogEntry のみ）。
+    参照先が消えたときの扱いは「表示時に生存照合」＋「削除時に発生源で掃除」の二段構えで担保する（後述）。
+  </p>
 
   <h2>UserProfile</h2>
   <p>ユーザープロフィール（常に1件のみ存在）。生年月日と目標年齢から残り時間・週グリッドを計算する。</p>
@@ -89,59 +92,89 @@ final class UserProfile {
 
 // 計算 extension（UserProfile+Life.swift）
 extension UserProfile {
-    var targetDate: Date      // 誕生日 + targetAge 年後の同月日
-    func remaining(from:) -> TimeInterval       // 残り秒数（過去ならゼロ）
-    func progress(from:) -> Double             // 進捗率 0.0〜1.0
+    var targetDate: Date                                  // 誕生日 + targetAge 年後の同月日
+    func remaining(from:) -> TimeInterval                 // 残り秒数（過ぎていたらゼロ）
+    func progress(from:) -> Double                        // 進捗率 0.0〜1.0
     func remainingYearsMonths(from:) -> (years: Int, months: Int)
-    var totalWeeks: Int                        // targetAge × 52
-    func elapsedWeeks(from:) -> Int            // 経過週数
-    func currentAge(from:) -> Int              // 現在年齢
+    var totalWeeks: Int                                   // targetAge × 52
+    func elapsedWeeks(from:) -> Int                       // 経過週数
+    func currentAge(from:) -> Int                         // 現在年齢
+
+    // ↓ 2026-07-26 追加
+    static func age(of birthDate: Date, at now: Date = Date()) -> Int
+    static func isValidTargetAge(_ targetAge: Int, birthDate: Date, now: Date = Date()) -> Bool
 }</code></pre>
   <div class="callout warn">
-    <strong>注意:</strong> UserProfile は常に1件のみ存在する設計。オンボーディング完了時に1件 insert し、以降は更新のみ行う。
-    設定画面の「全データを削除」で削除後、onboardingCompleted=false を設定してオンボーディングに戻る。
+    <strong>目標年齢バリデーションの集約（2026-07-26）:</strong>
+    「目標年齢は現在の年齢より大きい」という規則を、オンボーディング・目標年齢シート・生年月日シートの3画面が個別に書いていた。
+    生年月日シートだけ書き忘れがあり、<strong>そこからだけ「残り 0年0ヶ月・進捗100%」で固まる状態を作れた</strong>。
+    判定を <code>UserProfile.isValidTargetAge(_:birthDate:now:)</code> に集約し、画面が増えても同じ規則を共有できるようにした。
+    <code>now:</code> を注入できるため、テストが実行日に依存しない。
   </div>
+  <ul class="checklist">
+    <li>UserProfile は常に1件のみ。オンボーディング完了時に1件 insert し、以降は更新のみ。</li>
+    <li>設定「全データを削除」で削除後、<code>onboardingCompleted = false</code> にしてオンボーディングへ戻す。</li>
+  </ul>
 
   <h2>LogEntry</h2>
-  <p>日々の記録（ログ）。振り返りの素材になる。</p>
+  <p>日々の記録（ログ）。振り返りの素材になる。写真は最大3枚まで添付できる。</p>
   <pre><code>@Model
 final class LogEntry {
     var id: UUID = UUID()
     var date: Date = Date()
     /// 本文（任意・最大500文字想定）
     var content: String?
-    /// 添付画像のファイルパス配列
+    /// 添付画像のファイルパス配列（最大3件・実体は ImageStore がアプリ内領域に保存）
     var imagePaths: [String] = []
     /// カテゴリ（rawValue で保存 → LogCategory enum アクセサで取得）
     var categoryRaw: String = LogCategory.experience.rawValue
     /// 感情タグ（任意・rawValue で保存）
     var moodRaw: String?
-    /// 振り返りで「心に残った」と選んだ記録か
-    var isHighlight: Bool = false
     var createdAt: Date = Date()
 }</code></pre>
+  <div class="callout warn">
+    <strong>破壊的変更: <code>isHighlight: Bool</code> を削除（2026-07-26）</strong><br>
+    書き込まれるだけで<strong>読み手が一箇所も無く</strong>、しかも再振り返りで選択を外しても <code>false</code> に戻らない二重管理だった。
+    ハイライトの真実源は <code>ReflectionSession.highlightLogIds</code> に一本化する。
+  </div>
 
-  <h3>LogCategory（7種）</h3>
+  <h3>LogCategory（8種・「その他」を含む）</h3>
   <table>
-    <tr><th>rawValue</th><th>表示名</th><th>SF Symbol</th><th>カラー</th></tr>
-    <tr><td>experience</td><td>体験</td><td>star</td><td>#EA580C（オレンジ）</td></tr>
-    <tr><td>achievement</td><td>達成</td><td>trophy</td><td>#CA8A04（黄）</td></tr>
-    <tr><td>relationship</td><td>人間関係</td><td>heart</td><td>#DB2777（ピンク）</td></tr>
-    <tr><td>creation</td><td>作品・創作</td><td>paintpalette</td><td>#7C3AED（紫）</td></tr>
-    <tr><td>learning</td><td>学び</td><td>book</td><td>#2563EB（青）</td></tr>
-    <tr><td>travel</td><td>旅</td><td>airplane</td><td>#0F766E（緑）</td></tr>
-    <tr><td>happiness</td><td>日常の幸せ</td><td>sun.max</td><td>#EAB308（黄）</td></tr>
+    <tr><th>rawValue</th><th>表示名</th><th>SF Symbol</th><th>カラー</th><th>和名</th></tr>
+    <tr><td>happiness</td><td>日常の幸せ</td><td>sun.max</td><td><code>#DCB688</code></td><td>杏色（陽の最上段）</td></tr>
+    <tr><td>learning</td><td>学び</td><td>book</td><td><code>#86BBC8</code></td><td>水浅葱</td></tr>
+    <tr><td>relationship</td><td>人間関係</td><td>heart</td><td><code>#CC9497</code></td><td>薄梅鼠</td></tr>
+    <tr><td>achievement</td><td>達成</td><td>trophy</td><td><code>#869CBF</code></td><td>藍鼠（明）</td></tr>
+    <tr><td>creation</td><td>作品・創作</td><td>paintpalette</td><td><code>#A38193</code></td><td>鳩羽鼠（赤寄りの鼠・紫でない）</td></tr>
+    <tr><td>travel</td><td>旅</td><td>airplane</td><td><code>#778862</code></td><td>老竹色</td></tr>
+    <tr><td>other</td><td>その他</td><td>ellipsis</td><td><code>#69737F</code></td><td>青鈍（夜色に馴染む専用値）</td></tr>
+    <tr><td>experience</td><td>体験</td><td>star</td><td><code>#816045</code></td><td>焦香（最暗部のアンカー）</td></tr>
   </table>
+  <p>表の並びが、そのまま<strong>明度の階段（明→暗）</strong>になっている。</p>
 
   <h3>LogMood（5種）</h3>
   <table>
-    <tr><th>rawValue</th><th>表示名</th><th>SF Symbol</th><th>カラー</th></tr>
-    <tr><td>joy</td><td>喜び</td><td>face.smiling</td><td>#EAB308</td></tr>
-    <tr><td>fulfilled</td><td>充実</td><td>sparkles</td><td>#2563EB</td></tr>
-    <tr><td>calm</td><td>穏やか</td><td>leaf</td><td>#0F766E</td></tr>
-    <tr><td>tired</td><td>疲れ</td><td>moon.zzz</td><td>#64748B</td></tr>
-    <tr><td>anxious</td><td>不安</td><td>cloud</td><td>#9333EA</td></tr>
+    <tr><th>rawValue</th><th>表示名</th><th>SF Symbol</th><th>カラー</th><th>和名</th></tr>
+    <tr><td>joy</td><td>喜び</td><td>face.smiling</td><td><code>#D7B38E</code></td><td>杏色（happiness と意図的に響き合わせる）</td></tr>
+    <tr><td>fulfilled</td><td>充実</td><td>sparkles</td><td><code>#86ABC2</code></td><td>水縹</td></tr>
+    <tr><td>calm</td><td>穏やか</td><td>leaf</td><td><code>#879877</code></td><td>柳鼠</td></tr>
+    <tr><td>tired</td><td>疲れ</td><td>moon.zzz</td><td><code>#757E88</code></td><td>薄鈍（青寄り）</td></tr>
+    <tr><td>anxious</td><td>不安</td><td>cloud</td><td><code>#83614F</code></td><td>胡桃染</td></tr>
   </table>
+  <div class="callout warn">
+    <strong>配色を「輝度の階段」へ再設計（2026-07-26）</strong><br>
+    旧仕様の原色パレット（experience <code>#EA580C</code> / relationship <code>#DB2777</code> / creation <code>#7C3AED</code> / anxious <code>#9333EA</code> 等）は
+    C案「ダーク天体」の禁止色（原色・紫・マゼンタ）に真っ向から反していたため和色系へ差し替え済みだったが、
+    そのとき<strong>彩度だけでなく明度まで揃えてしまい</strong>、8色が輝度 0.249〜0.395 の狭帯に密集していた。
+    全28ペアのどれもコントラスト比 1.5:1 に届かず、<strong>experience × creation は輝度差 0.0003 で実質同一色</strong>だった。
+    <ul class="checklist" style="margin-top:10px;">
+      <li>識別は<strong>色相差＋OKLab 明度 0.80→0.52 の8段階段</strong>で行う（彩度を上げて買い戻さない）。</li>
+      <li>彩度は金 <code>#C2894B</code>（OKLCH C=0.105）より必ず低く保つ。<strong>金がこのアプリで最も彩度の高い色</strong>という序列を崩さないため。</li>
+      <li>低彩度の代償は<strong>二次符号</strong>が支払う: 円グラフの隙間・凡例・内訳リストの件数表示。</li>
+      <li>LogMood の <code>tired</code> は以前 <code>#8E8B84</code> で <code>LogCategory.other</code> と16進が完全一致していた。積み上げ棒グラフは凡例が別置きで、帯の輝度差だけが対応付けの手がかりになるため青寄りの薄鈍に分けた。</li>
+      <li>チップ等の<strong>文字色にはカテゴリ色を使わない</strong>（焦香など暗い色が night2 の面で本文可読性に届かないため）。識別は色罫＋不透明度 0.14 の面が担い、文字は月白で読ませる。</li>
+    </ul>
+  </div>
 
   <h2>ReflectionSession</h2>
   <p>完了した振り返りセッション（週次・月次・年次共通）。蓄積されたこれ自体がアプリ固有の価値資産になる。</p>
@@ -156,13 +189,49 @@ final class ReflectionSession {
     var moodSummaryRaw: String?
     /// 静かな問いへの回答（[{prompt, answer}]）
     var answers: [ReflectionAnswer] = []
-    /// ハイライトに選んだ LogEntry の id 集合
+    /// ハイライトに選んだ LogEntry の id 集合（ハイライトの唯一の真実源）
     var highlightLogIds: [UUID] = []
     /// 気づき・自由記述（任意）
     var note: String?
+    /// 星図での位置を決める採番（-1 = 未採番）
+    var starSeq: Int = -1
     var completedAt: Date = Date()
     var createdAt: Date = Date()
+
+    // 導出
+    func resolvedHighlightLogs(from candidates: [LogEntry]) -> [LogEntry]
+    var starIndex: Int
+    func survivingHighlightCount(in existingLogIds: Set&lt;UUID&gt;) -> Int
 }</code></pre>
+
+  <h3>starSeq / starIndex（2026-07-26 追加）</h3>
+  <div class="callout warn">
+    以前は<strong>配列インデックス</strong>から星の座標を決めていたため、振り返りを1件追加するだけで
+    （並び順が繰り上がり）<strong>既存の星が全部動いていた</strong>。「振り返った夜の数だけ星が灯る」という約束を守るには、
+    星が自分の場所を持っている必要がある。
+  </div>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>採番タイミング</td><td>新規セッションの insert 時に一度だけ（既存 <code>starSeq</code> の最大 + 1）。以後変えない。</td></tr>
+    <tr><td>採番失敗時</td><td>fetch 失敗時は <code>-1</code> を返す（<code>0</code> を返すと既存の星と衝突するため）。</td></tr>
+    <tr><td><code>starIndex</code></td><td>採番済みならその値。未採番（<code>-1</code>）なら <strong>id のバイト列先頭8バイト</strong>から決定論的に導く（<code>% 4096</code>）。</td></tr>
+    <tr><td><code>UUID.hashValue</code> を使わない理由</td><td>プロセスごとにシードが変わるため、<strong>起動ごとに星が動いてしまう</strong>。</td></tr>
+    <tr><td>同一期間の再振り返り</td><td>同じ種別＋同じ <code>periodStart</code>（1秒未満の差）の既存セッションがあれば<strong>上書き</strong>する。星が重複増殖せず「星＝振り返りの数」の意味構造が保たれる。上書き時は採番し直さない。</td></tr>
+  </table>
+
+  <h3>survivingHighlightCount（2026-07-26 追加）</h3>
+  <p>
+    件数表示に <code>highlightLogIds.count</code> を直接使うと、元の記録を削除したあとも数字が減らず、
+    詳細画面（<code>resolvedHighlightLogs</code> 経由）と食い違う。<strong>表示は必ずこちらを通す。</strong>
+  </p>
+  <pre><code>func survivingHighlightCount(in existingLogIds: Set&lt;UUID&gt;) -> Int</code></pre>
+
+  <h3>削除済みログ参照の扱い（二段構え）</h3>
+  <table>
+    <tr><th>層</th><th>担当</th><th>内容</th></tr>
+    <tr><td>発生源で断つ</td><td>LogDetailView.delete()</td><td>記録の削除時、その id を参照している全 ReflectionSession の <code>highlightLogIds</code> から取り除く（cascade cleanup）。掃除に失敗しても削除自体は続行し、Logger にのみ記録する。</td></tr>
+    <tr><td>表示側で照合</td><td>survivingHighlightCount / resolvedHighlightLogs</td><td>存在しない id は無視する。掃除が漏れてもクラッシュ・数字のズレを起こさない。</td></tr>
+  </table>
 
   <h3>ReflectionAnswer（埋め込み型）</h3>
   <pre><code>struct ReflectionAnswer: Codable, Hashable {
@@ -173,10 +242,33 @@ final class ReflectionSession {
   <h3>ReflectionType（3種）</h3>
   <table>
     <tr><th>rawValue</th><th>label</th><th>shortLabel</th><th>対象期間</th></tr>
-    <tr><td>weekly</td><td>週の振り返り</td><td>週</td><td>直近7日（今日の末まで）</td></tr>
-    <tr><td>monthly</td><td>月の振り返り</td><td>月</td><td>当月月初〜今日末</td></tr>
-    <tr><td>yearly</td><td>年の振り返り</td><td>年</td><td>今年元日〜今日末</td></tr>
+    <tr><td>weekly</td><td>週の振り返り</td><td>週</td><td>直近7日（今日-6日の 0:00 〜 今日 23:59:59）</td></tr>
+    <tr><td>monthly</td><td>月の振り返り</td><td>月</td><td>当月月初 〜 今日 23:59:59</td></tr>
+    <tr><td>yearly</td><td>年の振り返り</td><td>年</td><td>今年元日 〜 今日 23:59:59</td></tr>
   </table>
+
+  <h3>ReflectionDraft / ReflectionDraftStore（端末内下書き）</h3>
+  <p>完了前の振り返りを退避する軽量な下書き。SwiftData ではなく <code>UserDefaults</code>（JSON エンコード）に保存する。</p>
+  <pre><code>struct ReflectionDraft: Codable, Equatable {
+    var periodStart: Date
+    var step: Int
+    var highlightIds: Set&lt;UUID&gt;
+    var answers: [Int: String]
+    var moodRaw: String?
+    var note: String
+}
+
+@MainActor enum ReflectionDraftStore {
+    static func load(type:periodStart:defaults:) -> ReflectionDraft?
+    static func save(_:type:defaults:)
+    static func clear(type:defaults:)
+}
+// キー: "reflectionDraft.{weekly|monthly|yearly}"</code></pre>
+  <ul class="checklist">
+    <li>種別ごとに1件。<strong>期間（periodStart）が変わった古い下書きは読み込まず破棄</strong>する。</li>
+    <li>内容が空（<code>hasContent == false</code>）なら保存せずクリアする。</li>
+    <li>セッション完了時と「全データを削除」時に全種別をクリアする。</li>
+  </ul>
 
   <h2>ReflectionPrompts（コード定数テーブル）</h2>
   <p>問い文は assets ではなくコード内の <code>ReflectionPrompts</code> 定数で集約（多言語化を見据えた設計）。</p>
@@ -208,6 +300,7 @@ final class BucketItem {
     <li>createdAt 降順で一覧表示。</li>
     <li>isCompleted=true にする際、completedAt = Date() を同時に設定する（BucketListView.toggle()）。</li>
     <li>isCompleted を false に戻す際、completedAt = nil にリセットする。</li>
+    <li>スワイプ削除は<strong>確認ダイアログを経由</strong>する（メモ・目標期日も一緒に消えるため）。</li>
   </ul>
 
   <h2>Relation</h2>
@@ -219,39 +312,102 @@ final class Relation {
     var name: String = ""
     /// 続柄（父・母・親友など・任意）
     var relation: String?
-    /// 現在の年齢（任意・nil の場合は回数計算を行わない）
-    var currentAge: Int?
+    /// 生年月日（任意）
+    var birthDate: Date?
     /// 想定の終端年齢（既定: 80）
     var targetAge: Int = 80
-    /// 年あたりに会える回数（既定: 1）
+    /// 年あたりに会える回数（既定: 1・編集シートの初期値は 2）
     var meetingsPerYear: Int = 1
     var createdAt: Date = Date()
 }
 
-// 残り会える回数（RelationRow 内のロジック）
-var remainingMeetings: Int? {
-    guard let age = currentAge else { return nil }
-    return max(0, targetAge - age) * meetingsPerYear
+// 算出 extension（Relation+Life.swift）
+extension Relation {
+    func currentAge(from now: Date = Date()) -> Int?          // 生年月日未設定なら nil
+    func remainingMeetings(from now: Date = Date()) -> Int?    // max(0, targetAge - age) × meetingsPerYear
+    static func isValidTargetAge(_ targetAge: Int, birthDate: Date?, now: Date = Date()) -> Bool
 }</code></pre>
+  <div class="callout warn">
+    <strong>破壊的変更: <code>currentAge: Int?</code> → <code>birthDate: Date?</code>（2026-07-26）</strong><br>
+    「現在の年齢」を Int で保存していたため、<strong>登録した瞬間の年齢が固定され、1年経っても「あと○回」が減らなかった</strong>——
+    この機能の価値そのものが時間とともに嘘になる。<code>UserProfile</code> と同じく生年月日を持ち、
+    年齢・残り回数は暦から毎回算出する方式に変更した。算出は <code>Relation+Life.swift</code> に分離（<code>UserProfile</code> / <code>UserProfile+Life</code> と同じ分け方）。
+  </div>
   <ul class="checklist">
-    <li>currentAge が nil の場合、残り回数は表示せず「年○回」のみ表示する（RelationRow）。</li>
-    <li>meetingsPerYear の範囲: 1〜365（RelationEditSheet の Stepper 設定）。</li>
+    <li>生年月日が未設定なら残り回数は表示せず「年○回」のみ表示する（RelationRow）。</li>
+    <li><code>isValidTargetAge</code> は生年月日が未設定なら常に true（検査対象が無いため）。</li>
+    <li>meetingsPerYear の範囲: 1〜365。想定年齢の範囲: 1〜120（数値入力 + Stepper 併用）。</li>
+    <li>一覧のフッターに算出根拠を明記する: 「『あと○回』は、生年月日・想定年齢・会う頻度から算出した目安です。」</li>
   </ul>
+
+  <h2>色トークン（AppColors）</h2>
+  <p>C案「ダーク天体」固定。ライト（書斎トーン）は将来プレミアムで解放するため、現在は持たない。</p>
+  <table>
+    <tr><th>トークン</th><th>HEX</th><th>用途</th></tr>
+    <tr><td>amber</td><td><code>#C2894B</code></td><td>真鍮の金。<strong>面で塗らず線と一字のみ・1画面1点</strong></td></tr>
+    <tr><td>goldDim</td><td><code>#C2894B</code> 38%</td><td>細罫・バッジ枠</td></tr>
+    <tr><td>night0 / night1 / night2 / night3</td><td><code>#0B0E14</code> / <code>#10141C</code> / <code>#161C28</code> / <code>#1B2333</code></td><td>最深（タブバー）／主背景／カード面／沈み・押下面</td></tr>
+    <tr><td>warmShadow / warmShadow2</td><td><code>#2A2B33</code> / <code>#35363F</code></td><td>罫の基調／罫の1段明</td></tr>
+    <tr><td>moonWhite / textBody / darkTextMuted</td><td><code>#EAE6DC</code> / <code>#C9C5BA</code> / <code>#8E8B84</code></td><td>見出し／本文／補助</td></tr>
+  </table>
+
+  <h3>ヒートマップ（カレンダーの記録濃度）</h3>
+  <table>
+    <tr><th>件数</th><th>トークン</th><th>HEX</th><th>相対輝度</th></tr>
+    <tr><td>0件</td><td>heatmap0（= night2）</td><td><code>#161C28</code></td><td>.0115</td></tr>
+    <tr><td>1件</td><td>heatmap1</td><td><code>#20293C</code></td><td>.0222</td></tr>
+    <tr><td>2件</td><td>heatmap2</td><td><code>#26324A</code></td><td>.0319</td></tr>
+    <tr><td>3件</td><td>heatmap3</td><td><code>#3A4A66</code></td><td>.0676</td></tr>
+    <tr><td>4件以上</td><td>heatmap4</td><td><code>#54627E</code></td><td>.1213</td></tr>
+  </table>
+  <p>
+    金は「量」の意味を持たせない（夜が深まる→月光が差す、を世界観内の語彙で表す）。
+    heatmap1 は以前 night3 を流用していたが、0件との輝度差が .0052 しかなく<strong>「0件と1件」が見分けられなかった</strong>ため専用値に切り出した。
+  </p>
+
+  <h3>人生の週グリッド（2026-07-26 新設）</h3>
+  <table>
+    <tr><th>トークン</th><th>HEX</th><th>相対輝度</th><th>用途</th></tr>
+    <tr><td>weekPast</td><td><code>#706D66</code></td><td>.1727</td><td>経過した週（textBody の色相を保った暖グレー）</td></tr>
+    <tr><td>weekFuture</td><td><code>#1B2333</code></td><td>.0167</td><td>残りの週（値は night3 と同じだが用途を分離）</td></tr>
+    <tr><td>amber</td><td><code>#C2894B</code></td><td>—</td><td>今週の1点</td></tr>
+  </table>
+  <div class="callout warn">
+    以前は経過セルを <code>textBody.opacity(0.28)</code> で作っていたが、実効コントラストが未来（night3）に対し <strong>1.80:1</strong> しかなく、
+    サムネイルサイズで境界が消えていた。さらに<strong>凡例ドットはカード面（night2）・グリッド本体は背景（night1）の上</strong>に描かれるため、
+    同じ opacity 指定でも凡例と本体で実効色がズレるという合成の罠もあった。不透明の専用トークンに切り出して両方を解決（実測 3.05:1）。
+  </div>
+
+  <h2>端末内永続化キー（@AppStorage / UserDefaults）</h2>
+  <table>
+    <tr><th>キー</th><th>型</th><th>既定値</th><th>用途</th></tr>
+    <tr><td><code>onboardingCompleted</code></td><td>Bool</td><td>false</td><td>オンボーディング表示の判定</td></tr>
+    <tr><td><code>reminderEnabled</code></td><td>Bool</td><td>false</td><td>週次リマインダーの有効/無効</td></tr>
+    <tr><td><code>reminderWeekday</code></td><td>Int</td><td>1（日）</td><td>Calendar 準拠（1=日..7=土）</td></tr>
+    <tr><td><code>reminderHour</code> / <code>reminderMinute</code></td><td>Int</td><td>21 / 0</td><td>通知時刻</td></tr>
+    <tr><td><code>hasOfferedReminder</code></td><td>Bool</td><td>false</td><td>リマインダー提案カードを一度出したか</td></tr>
+    <tr><td><code>showLifeCountdown</code></td><td>Bool</td><td>true</td><td>残り時間と人生の週を表示するか（設定「表示」）</td></tr>
+    <tr><td><code>reflectionDraft.{type}</code></td><td>Data(JSON)</td><td>—</td><td>未完了の振り返り下書き</td></tr>
+    <tr><td><code>initialTab</code></td><td>Int</td><td>0</td><td>スクショ撮影用の初期タブ指定（UITest から設定）</td></tr>
+  </table>
+  <p>
+    「全データを削除」では SwiftData の5モデル・添付画像ファイル・予約済み通知・全種別の下書きに加え、
+    <code>SettingsView.resettableDefaultsKeys</code>（reminder系4キー + showLifeCountdown）も削除して既定値へ戻す。
+  </p>
 
   <h2>マイグレーション方針</h2>
   <div class="callout warn">
     SwiftData の <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する。
-    Swift 版では drift の <code>schemaVersion</code> 管理は不要だが、SwiftData の <code>ModelConfiguration</code> でスキーマバージョンが変わる場合は <code>MigrationPlan</code> を実装する。
   </div>
   <ul class="checklist">
-    <li><code>isHighlight: Bool = false</code> — LogEntry に Phase S2 で追加。デフォルト false により既存データは自動互換。</li>
-    <li>ReflectionSession は Phase S2 で新規追加テーブル。Flutter 版 drift の <code>ReflectionSessions</code> テーブル定義（schemaVersion 5）とデータ構造は対応しているが、移行ツールは未実装（新規ユーザー優先）。</li>
-    <li><strong>Phase S4 補足:</strong> オンボーディングで収集する生年月日（<code>profile.birthDate</code>: TimeInterval）と目標年齢（<code>profile.targetAge</code>: Int）は <code>@AppStorage</code> で管理する。SwiftData の <code>@Model</code> クラスには追加しない（ユーザープロファイル情報は少量でモデル変更コストを避ける設計方針）。</li>
+    <li><strong>v1.0.0 は未リリース</strong>のため、2026-07-26 のスキーマ変更（<code>LogEntry.isHighlight</code> 削除・<code>Relation.currentAge</code> → <code>birthDate</code>・<code>ReflectionSession.starSeq</code> 追加）は <code>MigrationPlan</code> を用意せず<strong>破壊的変更として実施</strong>した。実機で旧データを持つのは開発端末のみ。</li>
+    <li><code>starSeq: Int = -1</code> のデフォルトは「未採番」を意味する。仮に採番されていないデータが混ざっても <code>starIndex</code> の id 由来フォールバックが位置を決めるため、星が消えたり原点に重なったりしない。</li>
+    <li><strong>リリース以降</strong>にスキーマを変える場合は <code>VersionedSchema</code> + <code>SchemaMigrationPlan</code> を必ず実装する。</li>
   </ul>
 
-  <h2>Flutter 版との対応（参考）</h2>
+  <h2>参考: Flutter 版（drift）との対応表</h2>
   <div class="callout">
-    Flutter 版（drift）から Swift 版（SwiftData）への移行中。主要な構造対応は下記の通り。
+    移行は完了済み。以下は経緯を追うための記録。
   </div>
   <table>
     <tr><th>Flutter / drift</th><th>Swift / SwiftData</th></tr>
@@ -260,9 +416,9 @@ var remainingMeetings: Int? {
     <tr><td>intEnum&lt;ReflectionType&gt;()</td><td>typeRaw: String（rawValue保存）</td></tr>
     <tr><td>answers: TextColumn（JSON文字列）</td><td>answers: [ReflectionAnswer]（Codable配列）</td></tr>
     <tr><td>highlightLogIds: TextColumn（JSON配列）</td><td>highlightLogIds: [UUID]</td></tr>
-    <tr><td>Riverpod AsyncNotifier</td><td>@Observable @MainActor ViewModel（移行中）</td></tr>
-    <tr><td>flutter_local_notifications</td><td>UNUserNotificationCenter（Phase S3 で実装）</td></tr>
-    <tr><td>SharedPreferences（通知設定の保存）</td><td>@AppStorage（Phase S3 で実装）</td></tr>
+    <tr><td>Riverpod AsyncNotifier</td><td>SwiftUI @Query + View 内 private func（専用 ViewModel は置かない）</td></tr>
+    <tr><td>flutter_local_notifications</td><td>UNUserNotificationCenter（NotificationService）</td></tr>
+    <tr><td>SharedPreferences（通知設定の保存）</td><td>@AppStorage</td></tr>
   </table>
 
   <h2>変更履歴</h2>
@@ -270,8 +426,9 @@ var remainingMeetings: Int? {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 時点の SwiftData モデル（LogEntry・ReflectionSession）を記述。Flutter→Swift 移行状況を追記</td></tr>
     <tr><td>1.1</td><td>2026-06-15</td><td>Phase S3 技術置換を反映: flutter_local_notifications→UNUserNotificationCenter・SharedPreferences→@AppStorage を移行対応表に追記</td></tr>
-    <tr><td>1.2</td><td>2026-06-16</td><td>Phase S4 を反映: オンボーディング入力値（birthDate・targetAge）は @AppStorage（TimeInterval/Int）で管理し SwiftData モデルには追加しない方針を補足。マイグレーション方針セクションに注記追加</td></tr>
+    <tr><td>1.2</td><td>2026-06-16</td><td>Phase S4 を反映: オンボーディング入力値（birthDate・targetAge）は @AppStorage で管理する方針を補足</td></tr>
     <tr><td>1.3</td><td>2026-06-30</td><td>UserProfile・BucketItem・Relation モデルを追加。ER 図に5モデル全てを反映。各モデルの注意事項・計算ロジックを追記</td></tr>
+    <tr><td>1.4</td><td>2026-07-26</td><td>スキーマ変更3件を反映: <code>LogEntry.isHighlight</code> 削除（ハイライトは <code>ReflectionSession.highlightLogIds</code> に一本化）・<code>Relation.currentAge: Int?</code> → <code>birthDate: Date?</code>（残り回数を暦から毎回算出）・<code>ReflectionSession.starSeq</code> 追加（starIndex / survivingHighlightCount も併記）。LogCategory を8種に訂正し、カテゴリ・感情の配色を輝度の階段（和色系）へ全面差し替え。UserProfile に age / isValidTargetAge を追加（目標年齢規則の集約）。週グリッド用トークン weekPast / weekFuture 新設・ヒートマップ輝度値を明記。ReflectionDraft・@AppStorage キー一覧・削除済みログ参照の二段構えを新規追加。オンボーディング入力は @AppStorage ではなく UserProfile（SwiftData）へ保存する実装に合わせて 1.2 の記述を訂正</td></tr>
   </table>
 
   <script>
@@ -281,7 +438,7 @@ var remainingMeetings: Int? {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-30</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

@@ -14,110 +14,263 @@
 
   <header class="site-header">
     <h1>振り返りセッション機能</h1>
-    <p>5ステップフロー・保存・ハイライト更新・期間計算ロジックの機能仕様。</p>
+    <p>起動から完了までの状態遷移・下書きの保存/復元/破棄・保存（upsert）とデータの流れ。</p>
     <div style="margin-top:8px;">
-      <span class="tag done">S2実装済</span>
+      <span class="tag done">実装済</span>
       <span class="tag">機能ID: LR-FEAT-SESSION</span>
     </div>
   </header>
 
   <h2>概要</h2>
   <p>
-    LifeReview の中核機能。「立ち止まり、見返し、言葉にする」儀式を5ステップで提供し、
-    完了時に <code>ReflectionSession</code> を SwiftData へ保存、選択したログの <code>isHighlight</code> を更新する。
+    LifeReview の中核機能。「立ち止まり、見返し、言葉にする」儀式を最大5ステップで提供し、
+    完了時に <code>ReflectionSession</code> を SwiftData へ保存する。
     週次・月次・年次を <code>ReflectionType</code> で統一フローとして扱い、
-    期間計算・問い文言・ラベル表示のみを type に応じて切り替える設計。
+    期間計算・問い文言・ラベル表示だけを type に応じて切り替える。
+  </p>
+  <p>
+    本ドキュメントは<strong>フローと状態遷移・データの流れ</strong>を扱う。
+    各ステップの画面構成・文言・配色は <a href="../screens/reflection-session.html">LR-SESSION-01</a> を参照。
   </p>
 
   <h2>関連画面</h2>
   <ul>
-    <li><a href="../screens/reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a> — セッション起動ポイント</li>
-    <li><a href="../screens/reflection-session.html">振り返りセッション（LR-SESSION-01）</a> — メイン実装画面</li>
-    <li><a href="../screens/reflection-timeline.html">これまでの軌跡（LR-TIMELINE-01）</a> — 完了後の確認先</li>
+    <li><a href="../screens/S03_reflect_home.html">ふりかえりタブ（LR-S03）</a> — 主たるセッション起動ポイント</li>
+    <li><a href="../screens/reflection-session.html">振り返りセッション（LR-SESSION-01）</a> — 各ステップの画面仕様</li>
+    <li><a href="../screens/reflection-timeline.html">これまでの軌跡（LR-TIMELINE-01）</a> — 完了後の確認先／空状態からの起動ポイント</li>
   </ul>
 
-  <h2>処理フロー</h2>
+  <h2>起動ポイント</h2>
+  <table>
+    <tr><th>起動元</th><th>type</th><th>渡すコールバック</th><th>備考</th></tr>
+    <tr><td>ReflectHomeView のリズムカード</td><td>タップしたカードの種別</td><td><code>onViewTimeline</code> / <code>onCompleted</code> の両方</td><td>完了後にリマインダー提案の判定が走る唯一の経路</td></tr>
+    <tr><td>ReflectionTimelineView の空状態「最初の振り返りを始める」</td><td><code>.weekly</code> 固定</td><td>なし（両方 nil）</td><td>完了画面の「軌跡を見る」は dismiss のみ。リマインダー提案も出ない</td></tr>
+  </table>
+  <p>いずれも <code>.fullScreenCover(item: $sessionType)</code> で全画面表示し、<code>interactiveDismissDisabled(true)</code> でスワイプダウンを禁じる（× ボタン経由でのみ閉じる）。</p>
+
+  <h2>全体の状態遷移</h2>
+  <div class="mermaid">
+flowchart TD
+  A["起動: sessionType に ReflectionType を代入"] --> B["init(type:) で period(for:) を確定<br>ReflectionDraftStore.load(type:periodStart:)"]
+  B --> C{"下書きあり かつ<br>periodStart が同じ日"}
+  C -->|あり| D["step / highlightIds / answers / mood / note を復元"]
+  C -->|なし| E["step = 0 で開始<br>期間違いの下書きはキーごと削除"]
+  D --> F["onAppear: activeSteps に無い step は 2 へ補正"]
+  E --> F
+  F --> G["ステップ進行<br>step/highlightIds/answers/mood/note の変化ごとに下書きを保存"]
+  G -->|"× かつ 入力あり"| H["中断アラート → 下書きを保存して閉じる"]
+  G -->|"× かつ 入力なし"| I["確認なしで dismiss"]
+  G -->|"最終ステップの CTA"| J["finish(): upsert して modelContext.save()"]
+  J -->|成功| K["下書きを clear → 完了画面（step = 5）→ onCompleted"]
+  J -->|失敗| L["rollback → 保存エラーアラート → STEP5 に留まる"]
+  </div>
+
+  <h2>ステップ進行モデル</h2>
+  <p>
+    内部の <code>step</code> は 0〜4 の固定 ID（0=見返す / 1=選ぶ / 2=問い / 3=総括 / 4=気づき）で、
+    <code>step &gt;= 5</code>（<code>ReflectionSessionView.stepCount</code>）が完了画面を意味する。
+    ユーザーに見える「STEP n」と進捗（n/m）は、この固定 ID ではなく
+    <strong>実際に通るステップの並び <code>activeSteps</code> の中での位置</strong>から作る。
+  </p>
+  <table>
+    <tr><th>対象期間の記録</th><th>activeSteps</th><th>プログレスの分割数</th><th>ユーザーに見える番号</th></tr>
+    <tr><td>0件</td><td><code>[0, 2, 3, 4]</code></td><td>4</td><td>見返す=STEP 1 / 問い=STEP 2 / 総括=STEP 3 / 気づき=STEP 4</td></tr>
+    <tr><td>1件以上</td><td><code>[0, 1, 2, 3, 4]</code></td><td>5</td><td>見返す=STEP 1 / 選ぶ=STEP 2 / 問い=STEP 3 / 総括=STEP 4 / 気づき=STEP 5</td></tr>
+  </table>
+  <div class="callout warn">
+    <strong>記録0件の期間は「選ぶ」を飛ばす。</strong>
+    <code>next()</code> / <code>back()</code> は <code>activeSteps</code> 上の前後へ移動するため、0件なら STEP1「見返す」の次は「問い」になる。
+    番号を各ステップ側に固定するとアイブロウの「STEP n」とプログレス（n/m）が食い違うので、
+    親（<code>ReflectionSessionView</code>）が <code>stepLabel</code> を作って各ステップに渡す。
+    古い下書きが飛ばすべき <code>step = 1</code> を指していた場合は <code>onAppear</code> で <code>step = 2</code> に補正し、空の「選ぶ」画面を出さない。
+  </div>
+  <table>
+    <tr><th>関数</th><th>挙動</th></tr>
+    <tr><td><code>next()</code></td><td><code>activeSteps</code> 上の次へ。末尾なら <code>stepCount</code>(=5) に移り完了画面へ。</td></tr>
+    <tr><td><code>back()</code></td><td><code>activeSteps</code> 上の前へ。先頭では何もしない（STEP1 に「戻る」は無い）。</td></tr>
+    <tr><td><code>go(to:)</code></td><td>遷移の実体。Reduce Motion がオンなら即時、オフなら <code>.easeOut(duration: 0.35)</code>。演出はフェード＋上方8pxのみ（横スライドは使わない）。</td></tr>
+  </table>
+  <p>
+    STEP3「問い」だけは内部にさらに問い単位のカーソル（<code>index</code>）を持ち、3問を1画面で送る。
+    最終問での「次へ」で STEP4 に進み、最初の問いでの「戻る」で STEP2（または STEP1）へ戻る。
+    移動のたび表示中の回答を <code>answers[index]</code> に確定する。
+  </p>
+
+  <h2>下書き（中断と再開）</h2>
+  <p>
+    中断は「破棄」ではなく「下書き保存」。<code>ReflectionDraftStore</code> が端末内（UserDefaults）に
+    <code>reflectionDraft.&lt;type.rawValue&gt;</code> のキーで種別ごとに1件だけ保持する（週・月・年で最大3件）。外部送信はしない。
+  </p>
+  <table>
+    <tr><th>タイミング</th><th>処理</th></tr>
+    <tr><td>保存</td><td><code>step</code> / <code>highlightIds</code> / <code>answers</code> / <code>mood</code> / <code>note</code> のいずれかが変わるたび <code>saveDraft()</code>。完了画面に入った後（<code>isCompletion</code>）は保存しない。</td></tr>
+    <tr><td>空の下書き</td><td><code>ReflectionDraft.hasContent</code> が false（選択・回答・感情・ノートがすべて空）なら保存せずキーを削除する。書いた内容を消してから閉じれば下書きも残らない。</td></tr>
+    <tr><td>復元</td><td><code>init(type:)</code> 内で <code>load(type:periodStart:)</code>。デコードできて <strong>下書きの periodStart が今回の periodStart と同じ日</strong>なら、step を含めて全項目を復元する。</td></tr>
+    <tr><td>期限切れ</td><td>periodStart が一致しない下書きは<strong>読み込まずキーごと削除</strong>する（古い期間の入力を新しい期間に持ち込まない）。</td></tr>
+    <tr><td>破棄</td><td>完了保存に成功した時のみ <code>clear(type:)</code>。保存失敗時は下書きを残す。</td></tr>
+  </table>
+  <table>
+    <tr><th>種別</th><th>periodStart</th><th>下書きが再開できる範囲</th></tr>
+    <tr><td>weekly</td><td>今日−6日の 0:00</td><td>中断した<strong>その日のうち</strong>（日付が変わると periodStart がずれる）</td></tr>
+    <tr><td>monthly</td><td>今月の 1日 0:00</td><td>同じ月のあいだ</td></tr>
+    <tr><td>yearly</td><td>今年の 1/1 0:00</td><td>同じ年のあいだ</td></tr>
+  </table>
+  <p>
+    × を押したときの分岐は <code>hasAnyInput</code>（ハイライト選択あり／空白でない回答あり／感情選択あり／空白でないノートあり）で決まる。
+    true ならアラート「振り返りを中断しますか？」（選択肢は「続ける」／「下書きを保存して閉じる」）、false なら確認なしで閉じる。
+    <strong>下書きの書き込み自体はアラートより前に済んでいる</strong>ため、アラートは同意の確認であって保存の実行契機ではない。
+  </p>
+
+  <h2>完了時の保存（upsert）</h2>
   <div class="mermaid">
 sequenceDiagram
   participant U as ユーザー
-  participant Home as ReflectHomeView
-  participant Session as ReflectionSessionView
-  participant Context as ModelContext
+  participant S as ReflectionSessionView
+  participant C as ModelContext
+  participant D as ReflectionDraftStore
 
-  U->>Home: リズムカードをタップ（週/月/年）
-  Home->>Session: fullScreenCover(item: type)
-  Session->>Session: period(for: type) で対象期間を確定
-  Session->>Context: @Query で期間内 LogEntry を取得
-  U->>Session: STEP1 ログを見返す → 「次へ」
-  U->>Session: STEP2 ハイライト選択 → 「次へ」
-  U->>Session: STEP3 静かな問いに回答 → 「次へ」
-  U->>Session: STEP4 総括感情を選択 → 「次へ」
-  U->>Session: STEP5 気づきメモ入力 → 「振り返りを完了する」
-  Session->>Context: ReflectionSession を insert
-  Session->>Context: 選択 LogEntry の isHighlight = true
-  Session->>Context: modelContext.save()
-  Context-->>Session: 保存成功
-  Session->>Session: step = stepCount → 完了画面へ
-  Session-->>U: 星がひとつ灯る演出（fade 600ms）
-  U->>Session: 「閉じる」
-  Session-->>Home: dismiss
+  U->>S: 最終ステップの CTA
+  S->>S: isSaving を立てる（二重送信防止）
+  S->>S: answers を trim して空を除外 → [ReflectionAnswer]
+  S->>S: note を trim（空なら nil）
+  S->>C: typeRaw 一致のセッションを fetch
+  C-->>S: 同期間（periodStart の差 1秒未満）の1件 or なし
+  alt 既存あり
+    S->>C: periodEnd / moodSummary / answers / highlightLogIds / note / completedAt を更新
+    Note over S,C: starSeq は据え置き（星は動かず増えない）
+  else 既存なし
+    S->>S: nextStarSeq() で採番
+    S->>C: ReflectionSession を insert
+  end
+  S->>C: save()
+  alt 成功
+    S->>C: fetchCount で累計件数を取得
+    S->>D: clear(type:)
+    S->>S: step = 5（完了画面）
+    S-->>U: 星がひとつ灯る（0.6s ease-out）
+    S->>S: onCompleted?()
+  else 失敗
+    S->>C: rollback()
+    S-->>U: 「保存エラー」アラート
+    Note over S: isSaving を戻し STEP5 に留まる（下書きは残る）
+  end
   </div>
 
-  <h2>ビジネスルール</h2>
+  <div class="callout">
+    <strong>同じ期間をもう一度振り返ったら「上書き」。</strong>
+    種別が同じ かつ <code>periodStart</code> の差が1秒未満のセッションが既にあれば、新規挿入せず内容を更新する。
+    「同じ週をもう一度振り返る＝前回を推敲する」であり、星が重複増殖すると「星＝振り返りの数」という意味が壊れるため。
+    <code>completedAt</code> は更新されるので、ホームの「前回から ○日」と軌跡の並び順は最新に追従する。
+  </div>
+  <table>
+    <tr><th>ケース</th><th>結果</th></tr>
+    <tr><td>同じ日に週次を2回</td><td>periodStart が同一 → <strong>上書き</strong>（星は増えない）</td></tr>
+    <tr><td>翌日に週次をもう一度</td><td>periodStart が1日ずれる → <strong>新規</strong>（星がひとつ増える）</td></tr>
+    <tr><td>同じ月に月次を複数回</td><td>periodStart が月初で同一 → <strong>上書き</strong></td></tr>
+    <tr><td>同じ年に年次を複数回</td><td>periodStart が元日で同一 → <strong>上書き</strong></td></tr>
+  </table>
+
+  <h3>starSeq の採番</h3>
   <ul>
-    <li>周期は強制しない。「やりたい時に」できる設計。ただし前回からの経過日数をホームで表示し、静かに促す。</li>
-    <li>未記録期間でも振り返り可能（「今週は記録が少なかった」も気づき）。ログ0件でも STEP1 を通過できる。</li>
-    <li>各入力（ハイライト選択・問い回答・感情・メモ）はすべて任意。1つも入力せず完了してもよい。</li>
-    <li>answers は空白のみの回答を除外して保存する。</li>
-    <li>note は空白のみの場合は nil として保存する。</li>
-    <li>保存は isSaving フラグで二重送信を防ぐ。</li>
-    <li>中断時（×ボタン）: hasAnyInput が true の場合はアラートで確認。false の場合は確認なし dismiss。</li>
-    <li>セッション画面は <code>interactiveDismissDisabled(true)</code> でスワイプダウンを禁止。×ボタン経由のみ閉じられる。</li>
+    <li>新規挿入時に <code>nextStarSeq()</code> ＝ 既存 <code>starSeq</code> の最大値 + 1 を一度だけ与え、以後変えない。</li>
+    <li>星図（<code>StarMapView</code>）は <code>ReflectionSession.starIndex</code> だけから座標を決める。<code>index + 1</code> を Halton(2, 3) 低差異列に通し、Canvas サイズに対する正規化座標へ写す。<strong>件数・並び順・他の星の増減・Canvas 高さから独立</strong>しているため、振り返りを積んでも既存の星は動かない。</li>
+    <li>採番のための fetch に失敗した場合は <code>-1</code>（未採番）を保存する。<code>starIndex</code> は id のバイト列由来の決定論的な値（先頭8バイト % 4096）にフォールバックする。<strong>0 を返さない</strong>のは、既存の星と位置が衝突するため。</li>
   </ul>
+
+  <h3>ハイライト（highlightLogIds）の流れ</h3>
+  <ul>
+    <li>STEP2 の選択は <code>Set&lt;UUID&gt;</code> として保持し、完了時に <code>Array</code> にして <code>ReflectionSession.highlightLogIds</code> へ書き込む。<strong>これがハイライトの唯一の真実源</strong>で、<code>LogEntry</code> 側に印は持たない（旧 <code>LogEntry.isHighlight</code> は削除済み）。</li>
+    <li>上書き（upsert）時は <code>highlightLogIds</code> を今回の選択で<strong>置き換える</strong>（マージしない）。</li>
+    <li>表示側は <code>resolvedHighlightLogs(from:)</code> で現存ログとの照合を通す。存在しない id は無視され、クラッシュも空行も出ない。</li>
+    <li>件数は <code>survivingHighlightCount(in:)</code> ／ <code>TimelineTally(sessions:existingLogIds:)</code> を通して<strong>実体ベース</strong>で数える。<code>highlightLogIds.count</code> を直接使うと、元の記録を削除したあとも数字が減らず詳細画面と食い違う。</li>
+    <li>記録の削除時（<code>LogDetailView</code>）は、削除前に全セッションの <code>highlightLogIds</code> からその id を外す（cascade cleanup）。表示側でも生存照合しているため二重の備えだが、参照を残すと「消えた記録の id」が永久に溜まるので発生源で断つ。掃除に失敗しても削除自体は続行する。</li>
+  </ul>
+
+  <h2>完了後の遷移</h2>
+  <table>
+    <tr><th>操作・契機</th><th>処理</th></tr>
+    <tr><td><code>onCompleted?()</code>（保存成功時）</td><td>ReflectHomeView が <code>justCompleted = true</code> を立てる。<strong>中断では呼ばれない。</strong></td></tr>
+    <tr><td>完了画面「軌跡を見る」</td><td><code>dismiss()</code> してから <code>onViewTimeline?()</code>。親が <code>navigateToTimeline = true</code> にし、<code>navigationDestination(isPresented:)</code> で ReflectionTimelineView を push する（ネストした NavigationStack を避けるため）。</td></tr>
+    <tr><td>完了画面「閉じる」</td><td><code>dismiss()</code> のみ。</td></tr>
+    <tr><td>ホームへ戻った時（<code>sessionType == nil</code>）</td><td><code>justCompleted</code> が true なら false に戻し、<code>hasOfferedReminder == false</code> かつ <code>reminderEnabled == false</code> のときだけリマインダー提案カードを表示する。完了画面の上では提案しない。</td></tr>
+  </table>
 
   <h2>期間計算ロジック</h2>
   <div class="mermaid">
 flowchart TD
-  A[ReflectionType] -->|weekly| B["periodStart = 今日-6日 の startOfDay<br>periodEnd = 今日の 23:59:59"]
-  A -->|monthly| C["periodStart = 今月の月初（startOfMonth）<br>periodEnd = 今日の 23:59:59"]
-  A -->|yearly| D["periodStart = 今年の元日 0:00:00<br>periodEnd = 今日の 23:59:59"]
+  A["ReflectionType"] -->|weekly| B["periodStart = 今日−6日 の 0:00<br>periodEnd = 今日 23:59:59"]
+  A -->|monthly| C["periodStart = 今月1日 0:00<br>periodEnd = 今日 23:59:59"]
+  A -->|yearly| D["periodStart = 今年1月1日 0:00<br>periodEnd = 今日 23:59:59"]
   </div>
-  <p>
-    期間は <code>init(type:)</code> 時に確定し、<code>@Query</code> の <code>filter</code> 述語として渡す。
-    セッションを開いてから日付が変わっても期間は変わらない（init 時確定）。
-  </p>
+  <ul>
+    <li>期間は <code>init(type:)</code> 時に確定する。セッションを開いたまま日付が変わっても期間は変わらない。</li>
+    <li><code>@Query</code> の述語は <code>date &gt;= periodStart &amp;&amp; date &lt;= periodEnd</code>、並びは <code>date</code> の降順。STEP1・STEP2 はこの同じ配列を共有する。</li>
+    <li>年次でも <code>periodEnd</code> は「今日の 23:59:59」であり 12/31 ではない。まだ来ていない日を対象に含めない。</li>
+  </ul>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>周期は強制しない。「やりたい時に」できる設計。ホームは前回からの経過日数と「そろそろ」バッジ（最優先の1枚のみ）で静かに促すだけ。</li>
+    <li>記録0件の期間でも振り返れる（「今週は記録が少なかった」も気づき）。0件のときは STEP1 の CTA が「問いから始める ›」になり、「選ぶ」を飛ばす。</li>
+    <li>各入力（ハイライト選択・問い回答・感情・メモ）はすべて任意。ひとつも入力せず完了してもよい。CTA は入力状態に応じて「選ばずに進む ›」「このまま終える ✓」等に変わる。</li>
+    <li>回答は前後の空白を除去し、空になったものは保存しない（<code>answers</code> に含めない）。</li>
+    <li>ノートは前後の空白を除去し、空なら <code>nil</code> で保存する。</li>
+    <li>入力長は問いの回答が 500 文字、ノートが 1000 文字で頭打ち（超過分は入力時点で切り捨て）。</li>
+    <li>保存は <code>isSaving</code> フラグで二重送信を防ぐ。処理中は主ボタンが ProgressView に変わる。</li>
+    <li>感情はもう一度タップすると選択解除（<code>nil</code>）に戻せる。</li>
+  </ul>
 
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
-    <tr><td>SwiftData ModelContext</td><td>ReflectionSession 保存・LogEntry isHighlight 更新</td><td>@Environment(\.modelContext) で取得</td></tr>
-    <tr><td>os.log (Logger)</td><td>保存失敗時のエラーロギング</td><td>subsystem: com.happyboy1002.LifeReview、category: Reflection</td></tr>
+    <tr><td>SwiftData ModelContext</td><td>対象期間ログの取得・ReflectionSession の upsert・累計件数の取得</td><td><code>@Environment(\.modelContext)</code> で取得</td></tr>
+    <tr><td>UserDefaults（ReflectionDraftStore）</td><td>未完了セッションの下書き保存・復元</td><td>種別ごと1件・端末内のみ</td></tr>
+    <tr><td>os.log (Logger)</td><td>保存失敗・照合失敗・採番失敗のロギング</td><td>subsystem: com.happyboy1002.LifeReview、category: Reflection</td></tr>
+    <tr><td>UNUserNotificationCenter（NotificationService）</td><td>完了後のリマインダー提案で「設定する」を選んだ場合のみ</td><td>セッション側からは呼ばない（ReflectHomeView の責務）</td></tr>
   </table>
 
   <h2>エラー処理</h2>
   <table>
     <tr><th>発生条件</th><th>対応</th></tr>
-    <tr><td>modelContext.save() が throw する</td><td>Logger.error でログ記録。isSaving = false に戻す。STEP5 に留まる（ユーザーは再試行可能）。エラーアラートは S3 以降で追加予定。</td></tr>
-    <tr><td>completedCount の FetchDescriptor が失敗</td><td>completedCount を 1 にフォールバック。完了画面の表示には影響しない。</td></tr>
+    <tr><td><code>modelContext.save()</code> が throw</td><td>Logger.error → <code>rollback()</code> で挿入・更新を巻き戻す → 「振り返りを保存できませんでした。もう一度お試しください。」のアラート → <code>isSaving</code> を戻して STEP5 に留まる。下書きは消さないので再試行で失われない。</td></tr>
+    <tr><td>既存セッション照合の fetch が失敗</td><td>Logger.error。<code>existing = nil</code> として新規挿入で続行する（振り返りを落とさないことを優先）。</td></tr>
+    <tr><td><code>nextStarSeq()</code> の fetch が失敗</td><td>Logger.error。<code>-1</code>（未採番）で保存し、星図では id 由来の決定論的な座標にフォールバックする。</td></tr>
+    <tr><td>累計件数の <code>fetchCount</code> が失敗</td><td>Logger.error。<code>completedCount = 1</code> にフォールバック。保存自体は成功しているので完了画面はそのまま出す。</td></tr>
+    <tr><td>下書きのデコードに失敗</td><td>下書きなしとして扱い、<code>step = 0</code> から開始する（例外は投げない）。</td></tr>
+    <tr><td>記録削除時のハイライト掃除に失敗</td><td>Logger.error。記録の削除自体は続行する。件数表示は生存照合なので数字は狂わない。</td></tr>
   </table>
 
   <h2>ReflectionType ごとの差分一覧</h2>
   <table>
     <tr><th>項目</th><th>weekly</th><th>monthly</th><th>yearly</th></tr>
-    <tr><td>periodLabel</td><td>MM/DD – MM/DD</td><td>YYYY年M月</td><td>YYYY年</td></tr>
-    <tr><td>問い（prompts）</td><td>週次3問</td><td>月次3問</td><td>年次3問</td></tr>
-    <tr><td>セッション所要</td><td>1〜2分</td><td>3〜5分</td><td>5〜10分</td></tr>
     <tr><td>typeRaw（保存値）</td><td>"weekly"</td><td>"monthly"</td><td>"yearly"</td></tr>
+    <tr><td>periodStart</td><td>今日−6日 0:00</td><td>今月1日 0:00</td><td>今年1/1 0:00</td></tr>
+    <tr><td>periodLabel</td><td>M/D – M/D</td><td>YYYY年M月</td><td>YYYY年</td></tr>
+    <tr><td>問い（prompts）</td><td>週次3問</td><td>月次3問</td><td>年次3問</td></tr>
+    <tr><td>label</td><td>週の振り返り</td><td>月の振り返り</td><td>年の振り返り</td></tr>
     <tr><td>shortLabel（バッジ）</td><td>週</td><td>月</td><td>年</td></tr>
+    <tr><td>星図での見え方</td><td>小さい星（半径1.1・textBody）</td><td>明星（半径2.0・moonWhite）</td><td>最も明るい星（半径2.8・moonWhite）。2件以上あれば星座線で結ぶ</td></tr>
   </table>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li><code>ReflectionType: Identifiable</code>（id = rawValue）。<code>.fullScreenCover(item: $sessionType)</code> で型安全に種別ごとのセッションを起動できる。</li>
-    <li>問い（prompts）は <code>ReflectionPrompts.forType(type)</code> で取得。コード定数テーブルで管理（多言語化対応の余地あり）。</li>
-    <li>アニメーション: <code>withAnimation(.easeInOut(duration: 0.28))</code> + <code>.transition(.asymmetric(...))</code>。</li>
-    <li>セッションの <code>answers</code> は <code>[Int: String]</code>（prompts インデックスキー）で STEP3 中に保持 → 完了時に <code>[ReflectionAnswer]</code> に変換して保存。</li>
-    <li>Flutter 版との構造対応: drift の <code>answers: TextColumn（JSON文字列）</code> → Swift の <code>answers: [ReflectionAnswer]（Codable配列）</code>。SwiftData が内部的にシリアライズする。</li>
+    <li><code>ReflectionType: Identifiable</code>（id = rawValue）。<code>.fullScreenCover(item: $sessionType)</code> で型安全に種別ごとのセッションを起動する。</li>
+    <li>問い（prompts）は <code>ReflectionPrompts.forType(type)</code> で取得するコード定数テーブル。多言語化の余地を残して一箇所に集約している。</li>
+    <li>セッション中の <code>answers</code> は <code>[Int: String]</code>（prompts のインデックスをキー）で保持し、完了時に <code>[ReflectionAnswer]</code>（prompt 文字列＋回答）へ変換して保存する。<strong>問い文言を後から変えても、保存済みの振り返りには当時の問いが残る。</strong></li>
+    <li>セッション画面はナビゲーションバーを持たないため、共通の <code>screenBackground()</code> ではなく自前の ZStack ＋ <code>grainOverlay()</code> を使う。ステップ切り替えは <code>.id(step)</code> ＋ <code>.transition(.opacity.combined(with: .offset(y: 8)))</code>。</li>
+    <li>キーボードは STEP3・STEP5 とも <code>.scrollDismissesKeyboard(.interactively)</code> の下方向ドラッグで閉じる。ツールバーの「完了」ボタンは<strong>意図的に置いていない</strong>（問いに集中させ、ボタンを増やさない）。</li>
+    <li>本文・ラベルは <code>scaledFont</code>、見出しと問いは <code>AppFont.mincho(_:relativeTo:)</code> で Dynamic Type に追従。テキストエディタは固定高ではなく <code>minHeight</code>。</li>
+    <li>Reduce Motion がオンのときは、ステップ遷移も完了画面の星も<strong>アニメーションせず最終状態で表示</strong>する。</li>
+    <li>プログレスバーの × は 44×44、<code>accessibilityLabel("振り返りを閉じる")</code>。完了画面の星は装飾なので <code>accessibilityHidden(true)</code>。</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../index.html">LifeReview アプリトップ</a></li>
+    <li><a href="../data-model.html">データモデル（ReflectionSession / ReflectionDraft）</a></li>
+    <li><a href="../screens/S03_reflect_home.html">ふりかえりタブ（LR-S03）</a></li>
+    <li><a href="../screens/reflection-session.html">振り返りセッション画面（LR-SESSION-01）</a></li>
+    <li><a href="../screens/reflection-timeline.html">これまでの軌跡（LR-TIMELINE-01）</a></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -125,6 +278,7 @@ flowchart TD
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（ReflectionSessionView・period計算・保存ロジック）を反映。週次・月次・年次共通設計を記述</td></tr>
     <tr><td>1.1</td><td>2026-06-16</td><td>Phase S4 実装済み: オンボーディング（LR-ONBOARD-01）完了後にセッション起動導線が繋がることを補足。エラー処理のエラーアラートを S4 で実装済みとして更新。</td></tr>
+    <tr><td>1.2</td><td>2026-07-26</td><td>本書の軸足を「フローと状態遷移・データの流れ」に変更（画面構成は LR-SESSION-01 に委譲）。①中断を「破棄」から「下書き保存」に変更し、ReflectionDraftStore の保存契機・periodStart 同日判定による復元/期限切れ削除・種別ごとの再開可能範囲を追加。②完了時の保存を insert から <strong>upsert</strong>（同種別・periodStart 差1秒未満なら上書き）に修正し、上書き/新規の判定表を追加。③<code>starSeq</code> の採番（既存最大+1・一度だけ・失敗時は -1 で id 由来フォールバック）と Halton(2,3) による座標決定を追加。④ハイライトの真実源を <code>ReflectionSession.highlightLogIds</code> に一本化（<code>LogEntry.isHighlight</code> 削除）し、生存照合（<code>survivingHighlightCount(in:)</code> / <code>TimelineTally</code>）と記録削除時の cascade cleanup を追加。⑤記録0件時に「選ぶ」を飛ばす <code>activeSteps</code> と STEP 番号の動的採番、古い下書きの step 補正を追加。⑥起動ポイントを2経路（ホーム／軌跡の空状態）に整理し、<code>onCompleted</code> → リマインダー提案の判定タイミングを明記。⑦エラー処理に rollback・照合失敗・採番失敗・下書きデコード失敗・掃除失敗を追加。⑧根拠のない「セッション所要時間」行と、実在しないリンク先（reflect-home.html）を削除。入力上限（回答500字・ノート1000字）、Reduce Motion 時の挙動、STEP3/STEP5 にキーボード「完了」を置かない方針、periodLabel の実表記（M/D – M/D）を追記</td></tr>
   </table>
 
   <script>
@@ -134,7 +288,7 @@ flowchart TD
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

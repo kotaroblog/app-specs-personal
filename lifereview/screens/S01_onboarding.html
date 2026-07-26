@@ -36,21 +36,29 @@
   <h2>UI 構成</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>全体背景</td><td>ZStack / Color</td><td><code>AppColors.background（night1: #10141C）</code> で塗りつぶす。Launch 画面と同色で起動時の白フラッシュを防ぐ。</td></tr>
-    <tr><td>ウェルカムブロック</td><td>VStack テキスト群</td><td>ラベル「人生アルバム」（明朝 15pt・tracking 4・textMuted）＋ヒーロー文「立ち止まり、\nこれまでを振り返るために。」（明朝 24pt・moonWhite）＋サブコピー（13.5pt・textMuted）。</td></tr>
-    <tr><td>真鍮の細罫</td><td>Rectangle（1px）</td><td>幅 40px・goldDim 色・ウェルカムブロックとフィーチャーリストの間に配置。</td></tr>
-    <tr><td>フィーチャーリスト</td><td>VStack + HStack 箇条書き</td><td>「日々の出来事を、ひとつずつ記録する」「週・月・年の節目で振り返る」「人生の時間を、静かに俯瞰する」3行。各行先頭に真鍮細線（12px × 0.75px・goldDim）。</td></tr>
-    <tr><td>入力ヒントテキスト</td><td>Text</td><td>「生年月日と目標年齢は、人生の週と\n残り時間の計算に使います。」（12pt・textMuted 70%透過）</td></tr>
-    <tr><td>入力カード</td><td>AppCard（RoundedRectangle cornerRadius 16・cardBorder 1px 枠）</td><td>生年月日 DatePicker（in: ...Date()・displayedComponents: .date）と目標年齢 Stepper（40...120・既定 80）を縦並びで格納。中間に cardBorder 1px セパレーター。目標年齢の値は amber 色 16pt semibold。</td></tr>
-    <tr><td>はじめるボタン（金 CTA）</td><td>Button（safeAreaInset .bottom）</td><td>「はじめる」テキスト（16pt semibold・#14110A 色）。背景 AppColors.amber・角丸 14px・高さ 52px・横フル幅。画面最下部に固定表示。</td></tr>
+    <tr><td>全体背景</td><td>ZStack / Color + grainOverlay</td><td><code>AppColors.background（night1: #10141C）</code> で塗り、最上層にフィルムの粒（2.5%）を敷く。Launch 画面と同色で起動時の白フラッシュを防ぐ。</td></tr>
+    <tr><td>ウェルカムブロック</td><td>VStack テキスト群</td><td>ラベル「人生アルバム」（明朝 15pt・tracking 4・textMuted）＋ヒーロー文「立ち止まり、\nこれまでを振り返るために。」（明朝 24pt・moonWhite）＋サブコピー「はじめに、あなたのことを少しだけ。\nこれからの時間を、そっと見つめる準備をします。」（13.5pt・textMuted）。</td></tr>
+    <tr><td>区切りの細罫</td><td>Rectangle（40 × 1px）</td><td><strong>warmShadow2（<code>#35363F</code>）</strong>。金の1点は CTA に集約するため、ここは陰翳の罫にする。</td></tr>
+    <tr><td>フィーチャーリスト</td><td>VStack + HStack 箇条書き</td><td>「週・月・年の節目で、立ち止まって振り返る」「日々の出来事を、素材としてひとつずつ残す」「人生の時間を、静かに俯瞰する」3行。<strong>主役が振り返りであることが伝わる順序</strong>（記録は素材集め）。各行先頭に細線（12px × 0.75px・warmShadow2）。</td></tr>
+    <tr><td>入力ヒントテキスト</td><td>Text</td><td>「生年月日と目標年齢は、人生の週と\nこれからの時間の計算にだけ使います。\n入力内容はこの端末内に保存されます。」（12pt・textMuted）</td></tr>
+    <tr><td>入力カード</td><td>VStack（RoundedRectangle cornerRadius 16・surface 面・cardBorder 1px 枠）</td><td>生年月日 DatePicker（<code>.wheel</code>・in: ...Date()）と目標年齢 Stepper（40...120・既定 80）を縦並びで格納。中間に cardBorder 1px セパレーター。目標年齢の値は <strong>moonWhite</strong> 16pt semibold monospacedDigit。</td></tr>
+    <tr><td>バリデーション文言</td><td>Text（caption・textMuted）</td><td>目標年齢が現在年齢以下のとき、カード内に「現在の年齢（○歳）より上に設定してください」を表示。</td></tr>
+    <tr><td>はじめるボタン（主CTA）</td><td>LineButton（safeAreaInset .bottom）</td><td><strong>金は面で塗らない</strong>——night2 の面＋goldDim 細罫＋amber 文字（15pt semibold・minHeight 52pt）。押下時のみ night3 に沈む。無効時は opacity 0.45。</td></tr>
     <tr><td>保存エラーアラート</td><td>.alert</td><td>UserProfile の save 失敗時に表示。rollback 後に再試行を促すメッセージ。</td></tr>
   </table>
+
+  <div class="callout warn">
+    <strong>2026-07-26 の変更:</strong> CTA を「amber ソリッド面のボタン」から共通部品 <code>LineButton</code>（線のボタン）へ統一した。
+    金を面で塗らないのは C案の絶対規律（金は線と一字のみ・1画面1点）。同じ理由で区切り罫・フィーチャー行頭の細線も goldDim から warmShadow2 に落とし、
+    <strong>この画面の金は CTA だけ</strong>にしている。
+  </div>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示・挙動</th></tr>
-    <tr><td>初期表示</td><td>生年月日の初期値は 1995-01-01（DatePicker のデフォルト）。目標年齢は 80 歳。CTA は常に活性。</td></tr>
+    <tr><td>初期表示</td><td>生年月日の初期値は<strong>今日から30年前</strong>（<code>Calendar.date(byAdding: .year, value: -30)</code>）。目標年齢は 80 歳。</td></tr>
     <tr><td>入力中</td><td>DatePicker のホイール操作で日付が更新される。Stepper 操作で目標年齢が 40〜120 の範囲でインクリメント／デクリメント。</td></tr>
+    <tr><td>目標年齢が不正</td><td><code>UserProfile.isValidTargetAge(targetAge, birthDate:)</code> が false のとき、CTA を <code>disabled</code> + opacity 0.45 にし、カード内にバリデーション文言を表示する。</td></tr>
     <tr><td>保存成功</td><td>UserProfile を modelContext に insert + save → isCompleted = true → fullScreenCover が閉じてメインタブへ遷移。</td></tr>
     <tr><td>保存失敗</td><td>modelContext.rollback() 後に保存エラーアラートを表示。OK タップで再試行可能。</td></tr>
   </table>
@@ -72,15 +80,26 @@
 
 // 保存アクション
 func start() {
+    // 目標年齢が現在の年齢を下回っていると「残り時間」が空虚になるため止める。
+    guard isTargetAgeValid else {
+        saveError = "目標年齢が現在の年齢（\(currentAge)歳）を下回っています。もう一度ご確認ください。"
+        return
+    }
     let profile = UserProfile(birthDate: birthDate, targetAge: targetAge)
     modelContext.insert(profile)
     do {
         try modelContext.save()
-        isCompleted = true    // @Binding → RootTabView の onboardingCompleted を true に
+        isCompleted = true    // @Binding → 保存成功後にのみ完了とする
     } catch {
         modelContext.rollback()
         saveError = "プロフィールを保存できませんでした。もう一度お試しください。"
     }
+}
+
+// バリデーションは UserProfile 側に集約（3画面で共有）
+private var currentAge: Int { UserProfile.age(of: birthDate) }
+private var isTargetAgeValid: Bool {
+    UserProfile.isValidTargetAge(targetAge, birthDate: birthDate)
 }
 
 // UserProfile（SwiftData @Model）
@@ -92,30 +111,34 @@ func start() {
   <table>
     <tr><th>トークン</th><th>HEX</th><th>オンボーディングでの用途</th></tr>
     <tr><td>night1（background）</td><td>#10141C</td><td>全体背景。Launch 画面と同色で白フラッシュを防ぐ</td></tr>
-    <tr><td>surface</td><td>#161C28</td><td>入力カードの面</td></tr>
-    <tr><td>moonWhite</td><td>#EAE6DC</td><td>ヒーロー文・onSurface テキスト</td></tr>
+    <tr><td>night2（surface）</td><td>#161C28</td><td>入力カードの面・CTA の面</td></tr>
+    <tr><td>night3</td><td>#1B2333</td><td>CTA 押下時の沈み</td></tr>
+    <tr><td>moonWhite</td><td>#EAE6DC</td><td>ヒーロー文・目標年齢の値</td></tr>
     <tr><td>textMuted</td><td>#8E8B84</td><td>補助テキスト・フィーチャーリスト</td></tr>
-    <tr><td>goldDim</td><td>#C2894B（38%透過）</td><td>入力カード枠線・フィーチャーリスト先頭細線</td></tr>
-    <tr><td>amber</td><td>#C2894B</td><td>CTA ボタン背景・目標年齢の値テキスト</td></tr>
-    <tr><td>cardBorder</td><td>#2A3040</td><td>入力カード内部のセパレーター・カード外枠</td></tr>
+    <tr><td>warmShadow2</td><td>#35363F</td><td>区切りの細罫・フィーチャー行頭の細線</td></tr>
+    <tr><td>goldDim</td><td>#C2894B（38%透過）</td><td>CTA の細罫（この画面で金を使う唯一の場所）</td></tr>
+    <tr><td>amber</td><td>#C2894B</td><td>CTA の文字色</td></tr>
+    <tr><td>cardBorder</td><td>#2A2B33</td><td>入力カード内部のセパレーター・カード外枠</td></tr>
   </table>
 
   <h2>アクセシビリティ対応</h2>
   <ul class="checklist">
     <li>DatePicker に <code>.accessibilityLabel("生年月日")</code> を付与。</li>
     <li>Stepper に <code>.accessibilityLabel("目標年齢")</code> + <code>.accessibilityValue("\(targetAge)歳")</code> を付与。</li>
-    <li>はじめるボタンはシステムフォントサイズに追従（minimumScaleFactor は未設定だが短文のため問題なし）。</li>
+    <li>本文・ラベルは <code>scaledFont</code>、ヒーロー文は <code>AppFont.mincho(_:relativeTo:)</code> で <strong>Dynamic Type に追従</strong>する。</li>
+    <li>CTA は固定高ではなく <code>minHeight: 52</code>（LineButton 側）。大きな文字サイズでも文字が切れない。</li>
+    <li>グレイン（<code>Grain</code>）は <code>.accessibilityHidden(true)</code> + <code>.allowsHitTesting(false)</code>。</li>
     <li>背景色は night1 固定（ダーク専用アプリのため preferredColorScheme の考慮不要）。</li>
   </ul>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li>バックグラウンドは <code>AppColors.background.ignoresSafeArea()</code> で塗り、Launch 画面（night1）と同色にする。</li>
+    <li>バックグラウンドは <code>AppColors.background.ignoresSafeArea()</code> で塗り、Launch 画面（night1）と同色にする。<strong>この画面は共通の <code>screenBackground()</code> ではなく <code>grainOverlay()</code> を直に呼ぶ</strong>（背景を ZStack で自前に敷いているため）。</li>
     <li>ScrollView + <code>.safeAreaInset(edge: .bottom)</code> でコンテンツをスクロールさせつつ、「はじめる」ボタンを常に画面下部に固定する。</li>
-    <li>DatePicker の tint は amber 色。<code>.labelsHidden()</code> でシステムラベルを非表示にする。</li>
-    <li>目標年齢は Stepper（40〜120）。値は amber 色 16pt semibold で左隣に表示し、視覚的に強調する。</li>
+    <li>生年月日は <code>.datePickerStyle(.wheel)</code>。既定の <code>.compact</code> では数十年ぶんの月送りを強いられ、初回接触でいちばん摩擦の大きい操作になる（設定の生年月日シート・大切な人の編集シートとも統一）。</li>
+    <li>目標年齢は Stepper（40〜120）。値は moonWhite 16pt semibold monospacedDigit で左隣に表示する。</li>
     <li>保存エラー時は <code>modelContext.rollback()</code> を必ず呼び出す。insert をキャンセルしないと再試行時に重複が発生する。</li>
-    <li>UserProfile は常に1件のみ存在する想定。重複防止は RootTabView 側でオンボーディングを once のみ表示することで担保する。</li>
+    <li>UserProfile は常に1件のみ存在する想定。重複防止は「オンボーディングは <code>onboardingCompleted == false</code> のときだけ出す」ことで担保する。</li>
   </ul>
 
   <h2>関連</h2>
@@ -123,16 +146,17 @@ func start() {
     <li><a href="../index.html">LifeReview アプリトップ</a></li>
     <li><a href="../data-model.html">データモデル（UserProfile）</a></li>
     <li><a href="S02_today.html">今日タブ（LR-S02）</a></li>
-    <li><a href="onboarding.html">旧オンボーディング仕様書（S4以前）</a></li>
+    <li><a href="S04_life.html">人生タブ（LR-S04・設定＝プロフィール編集）</a></li>
   </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-30</td><td>初版作成。ソースコード（OnboardingView.swift）を元に実装済み仕様を記述</td></tr>
+    <tr><td>1.1</td><td>2026-07-26</td><td>CTA を LineButton（金は線・面禁止）に統一・区切り罫とフィーチャー細線を warmShadow2 に変更・フィーチャー文言と順序を更新（振り返りが主役）・生年月日の初期値を「30年前」に訂正・目標年齢バリデーション（UserProfile.isValidTargetAge）と CTA 無効化を追記・Dynamic Type 対応とグレインを追記。旧仕様書 <code>onboarding.html</code>（S4 世代・重複）を廃止し本書に一本化</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-30</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

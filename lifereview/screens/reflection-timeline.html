@@ -13,109 +13,204 @@
 
   <header class="site-header">
     <h1>これまでの軌跡（星図タイムライン）</h1>
-    <p>振り返り数だけ星を灯す星図・タリー（累計/連続週/ハイライト計）・縦タイムライン。</p>
+    <p>振り返りの数だけ星を灯す星図・タリー3値（振り返りの数／振り返った週／残したハイライト）・縦タイムライン。</p>
     <div style="margin-top:8px;">
-      <span class="tag done">S2実装済</span>
+      <span class="tag done">実装済</span>
       <span class="tag">画面ID: LR-TIMELINE-01</span>
     </div>
   </header>
 
   <h2>目的・役割</h2>
   <p>
-    「蓄積された振り返りそのものがアプリ固有の価値資産」（DESIGN.md 4.4）を体現する画面。
-    過去の振り返りを時系列カードで積み上げ、読み返せる「振り返りの軌跡」として提示する。
-    <strong>「星＝あなたの振り返り」</strong>と再定義し、C案「ダーク天体」の最大の差別化要素として星図を上部に配置。
-    壁紙としての星は全廃し、振り返り1回ごとに意味のある1粒が灯る。
+    蓄積された振り返りそのものを、このアプリ固有の価値資産として提示する画面。
+    過去の振り返りを時系列カードで積み上げ、読み返せる「振り返りの軌跡」にする。
+    <strong>「星＝あなたの振り返り」</strong>と定義し、C案「ダーク天体」の差別化要素として星図を上部に置く。
+    壁紙としての星は持たず、振り返り1回ごとに意味のある1粒が灯る。
   </p>
+  <div class="callout">
+    <strong>非評価トーンの規律（2026-07-26）:</strong> この画面の数字は「積み上がる」ものだけを出す。
+    途切れるとゼロに戻る指標（旧「連続した週」）は、進捗に良し悪しを付けない本アプリのトーンの中で唯一の異物だったため廃止した。
+  </div>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（ReflectionTimelineView）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>StarMapView</td><td>Canvas描画</td><td>振り返りセッション数だけ小星を描画。シードRNG（seed: 20260613）でクラスタ配置。グロー禁止・textBody 色の2px前後。</td></tr>
-    <tr><td>キャプション</td><td>Text（明朝11.5pt）</td><td>「あなたが振り返った夜の数だけ、星が灯る」（textMuted）</td></tr>
-    <tr><td>タリーカード</td><td>AppCard（3列）</td><td>これまでの振り返り（累計）/ 連続した週 / 残したハイライト。等幅24pt数字 + 11pt補助ラベル。</td></tr>
-    <tr><td>縦タイムライン</td><td>ForEach + ReflectionTile</td><td>completedAt 降順で全件表示。各タイルに種別バッジ・期間・総括感情・気づきメモ冒頭・ハイライト数を表示。</td></tr>
-    <tr><td>空状態（EmptyNight）</td><td>EmptyStateView風</td><td>「まだ星のない夜」明朝16pt + 説明文。「最初の振り返りを始める」CTAボタン（金ヘアライン枠 + 明朝15pt）。</td></tr>
+    <tr><td>画面の地</td><td>共通 modifier</td><td><code>screenBackground()</code>（背景色＋フィルムの粒）。<code>minchoNavigationTitle("これまでの軌跡")</code> で明朝インラインタイトルを principal に自前描画。</td></tr>
+    <tr><td>StarMapView</td><td>Canvas 描画</td><td>各セッションを <code>Star(index: starIndex, type:)</code> に写して渡す。高さ 150、角丸16 + cardBorder 1px 枠。</td></tr>
+    <tr><td>キャプション</td><td>Text（明朝11.5）</td><td>「あなたが振り返った夜の数だけ、星が灯る」（textMuted）。星図の下 10pt。</td></tr>
+    <tr><td>星の凡例</td><td>HStack（spacing 20）</td><td>ドット＋ラベルで「週 / 月 / 年」。ドットは実際の描画色・直径（2.2 / 4.0 / 5.6）に一致させる。</td></tr>
+    <tr><td>タリーカード</td><td>AppCard（padding 0）</td><td>3セル横並び。これまでの振り返り／振り返った週／残したハイライト。数値は 24pt semibold・monospacedDigit、ラベル 11pt。セル間は cardBorder 1px（幅1・高さ52）。</td></tr>
+    <tr><td>縦タイムライン</td><td>ForEach + ReflectionTile</td><td><code>completedAt</code> 降順で全件。先頭／末尾のフラグを渡して縦罫の描き分けをする。</td></tr>
+    <tr><td>空状態（emptyNight）</td><td>枠付きブロック + ボタン</td><td>「まだ星のない夜」（明朝16・onSurfaceVariant）＋「最初の振り返りを終えると、この空に星がひとつ灯ります。」（12.5・textMuted）。下に「最初の振り返りを始める」ボタン。</td></tr>
   </table>
+  <p>
+    レイアウトの余白: 外周 <code>EdgeInsets(top: 8, leading: 16, bottom: 32, trailing: 16)</code>、
+    キャプション 10 / 凡例 10 / タリー 24 / タイムライン 32 の順に上マージンを取る。
+  </p>
 
-  <h2>StarMapView 描画仕様（S3 段階表現追加）</h2>
+  <h2>StarMapView 描画仕様</h2>
+
+  <h3>座標の決め方（2026-07-26 全面変更）</h3>
+  <div class="callout warn">
+    <strong>星は自分の場所を持つ:</strong> 以前は配列インデックスと共有の乱数ストリーム（シード固定の SeededGenerator）から座標を作っていたため、
+    振り返りを1件足すだけで降順の並びが繰り上がり、<strong>空の配置が丸ごと変わっていた</strong>。
+    「振り返った夜の数だけ星が灯る」という約束を守るため、座標は <code>ReflectionSession.starSeq</code>（挿入時に一度だけ採番）<strong>だけ</strong>から決める。
+  </div>
   <table>
     <tr><th>項目</th><th>仕様</th></tr>
-    <tr><td>星の数</td><td>振り返りセッション数（= starCount）</td></tr>
-    <tr><td>座標生成</td><td>シード固定（20260613）の擬似乱数 SeededGenerator。再描画でも位置がぶれない。</td></tr>
-    <tr><td>クラスタ配置</td><td>clusterCount = ceil(starCount / 4)。クラスタ中心から散らすことでノイズ感を回避。</td></tr>
-    <tr><td>星の種別（S3 追加）</td><td>振り返り種別に応じて3段階の大きさ・明るさを使い分け（下表参照）。</td></tr>
-    <tr><td>グロー</td><td>禁止（外周 box-shadow 相当は一切使わない）</td></tr>
-    <tr><td>色</td><td>週次/月次は AppColors.textBody（#C9C5BA）。年次は moonWhite（#EAE6DC）。紫・青グラデ禁止。</td></tr>
-    <tr><td>星座線（S3 追加）</td><td>年次振り返りが2件以上の場合、年次の星同士を completedAt 昇順で金の細線（#C2894B・不透明度0.45・lineWidth 0.5）で結ぶ。</td></tr>
-    <tr><td>高さ</td><td>frame height: 150px。RoundedRectangle(cornerRadius: 16) + cardBorder 1px 枠。</td></tr>
+    <tr><td>星の数</td><td>渡された <code>stars</code> の件数（= 振り返りセッション数）。空なら何も描かない。</td></tr>
+    <tr><td>採番（starSeq）</td><td>セッションを新規 insert する時に <code>既存の最大 starSeq + 1</code> を一度だけ設定。以後変更しない。既定値は <code>-1</code>（未採番）。</td></tr>
+    <tr><td>未採番のフォールバック</td><td><code>starIndex</code> は <code>starSeq &gt;= 0</code> ならその値、未採番なら <code>id</code> の先頭8バイトを畳んだ値の <code>% 4096</code>。<code>UUID.hashValue</code> は起動ごとにシードが変わり星が動くため使わない。採番のフェッチに失敗した場合も <code>-1</code> のままにして、このフォールバックへ委ねる（0 を返すと既存の星と衝突する）。</td></tr>
+    <tr><td>正規化座標</td><td>Halton 低差異列。<code>n = starIndex + 1</code>（n=0 は (0,0) になるため1始まり）、x は base 2、y は base 3。</td></tr>
+    <tr><td>余白（inset）</td><td>左右 8、上 12、下 24。正規化値をこの内側の矩形に写す。</td></tr>
+    <tr><td>件数・並び順からの独立</td><td>座標は他の星の有無・Canvas の高さ・削除・ソート順に一切依存しない。既存の星は動かない。</td></tr>
+    <tr><td>重なり回避</td><td>Halton は本質的に均等散布するため棄却サンプリング不要（高さ150のまま200件でも最近接 4.6pt を維持）。</td></tr>
+    <tr><td>グロー</td><td>禁止（外周 shadow 相当は一切使わない）。</td></tr>
   </table>
 
-  <h3>星の段階表現（S3 追加）</h3>
+  <h3>星の段階表現と凡例</h3>
   <table>
-    <tr><th>振り返り種別</th><th>呼称</th><th>radius</th><th>opacity</th><th>補足</th></tr>
-    <tr><td>weekly（週次）</td><td>小星（petite star）</td><td>1.0〜1.25px</td><td>0.5〜0.65</td><td>ベースの星。最も数が多い。</td></tr>
-    <tr><td>monthly（月次）</td><td>明星（bright star）</td><td>1.8〜2.2px</td><td>0.72〜0.85</td><td>週次より明確に大きく明るい。</td></tr>
-    <tr><td>yearly（年次）</td><td>節目の星（milestone star）</td><td>3.0〜3.5px</td><td>0.92〜1.0</td><td>最も明るく大きい。moonWhite 色。年次が2件以上で星座線を結ぶ。</td></tr>
+    <tr><th>種別</th><th>呼称</th><th>radius（直径）</th><th>色</th><th>opacity</th></tr>
+    <tr><td>weekly（週次）</td><td>小星</td><td>1.1（2.2）</td><td>textBody #C9C5BA</td><td>0.65</td></tr>
+    <tr><td>monthly（月次）</td><td>明星</td><td>2.0（4.0）</td><td>moonWhite #EAE6DC</td><td>0.85</td></tr>
+    <tr><td>yearly（年次）</td><td>節目の星</td><td>2.8（5.6）</td><td>moonWhite #EAE6DC</td><td>1.0</td></tr>
+  </table>
+  <p>
+    凡例（starLegend）は上表の直径・色をそのまま <code>Circle</code> で再現し、「週」「月」「年」を 11pt textMuted で添える。
+    <strong>凡例と本体の見た目がズレないよう、値は描画側と同じものを使う。</strong>
+  </p>
+
+  <h3>星座線（年次2件以上）</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>条件</td><td>yearly の星が <strong>2つ以上</strong>あるとき。</td></tr>
+    <tr><td>描画</td><td><code>stars</code> の並び順のまま yearly を抽出し、その座標を <code>Path.addLines</code> で結ぶ。星本体より先に（最背面に）描く。</td></tr>
+    <tr><td>線</td><td>amber #C2894B・不透明度 <strong>0.22</strong>・lineWidth <strong>0.75</strong>。</td></tr>
   </table>
 
-  <h3>StarMapView への渡し方（S3 以降）</h3>
-  <pre><code>// sessions を種別ごとに分類して StarMapView に渡す
-StarMapView(
-    weeklySessions: sessions.filter { $0.typeRaw == "weekly" },
-    monthlySessions: sessions.filter { $0.typeRaw == "monthly" },
-    yearlySessions: sessions.filter { $0.typeRaw == "yearly" }
-)
-// 従来の starCount: Int は互換維持しつつ種別配列も受け取る形に拡張</code></pre>
+  <h2>タリー集計（TimelineTally）</h2>
+  <p>純粋値オブジェクト。<code>init(sessions:existingLogIds:)</code> で3値を算出する。</p>
+  <table>
+    <tr><th>表示ラベル</th><th>プロパティ</th><th>算出</th></tr>
+    <tr><td>これまでの振り返り</td><td><code>total</code></td><td><code>sessions.count</code>（週次・月次・年次の合計）</td></tr>
+    <tr><td>振り返った週</td><td><code>reflectedWeeks</code></td><td>weekly セッションの <code>periodStart</code> をその週の<strong>月曜 0:00</strong> に正規化し、Set に入れた件数（ユニーク週数）。重複・順序に依存しない。</td></tr>
+    <tr><td>残したハイライト</td><td><code>highlightCount</code></td><td>各セッションの <code>survivingHighlightCount(in: existingLogIds)</code> の総和。<strong>元の記録が削除された分は数えない。</strong></td></tr>
+  </table>
+  <div class="callout warn">
+    <strong>「連続した週」は廃止（2026-07-26）:</strong> 旧仕様の <code>streakWeeks</code>（降順にひと続きの週数・途切れたら 0）は削除した。
+    置き換えた「振り返った週」は、統計画面の「記録した日（累計）」と同じ<strong>淡々と積み上がる</strong>指標。
+  </div>
+  <div class="callout warn">
+    <strong>ハイライト件数は実体ベース（2026-07-26）:</strong> <code>highlightLogIds.count</code> をそのまま出すと、元の記録を消しても数字が減らず、
+    詳細画面（<code>resolvedHighlightLogs</code> 経由の実表示）と食い違う。表示は必ず <code>survivingHighlightCount(in:)</code> を通す。
+    加えて記録の削除時に <code>LogDetailView</code> 側で <code>highlightLogIds</code> から当該 id を外す（発生源で断つ二重の備え）。
+  </div>
+  <p>
+    照合用の <code>existingLogIds</code>（<code>Set&lt;UUID&gt;</code>）は画面で <code>@Query</code> を1回だけ引いて作り、
+    <strong>ForEach の外でローカル変数に束ねてから</strong>タイルへ配る。計算プロパティのままクロージャ内で参照すると
+    タイル1枚ごとに全ログ分の Set を作り直してしまう。
+  </p>
 
-  <h2>タリー集計ロジック（TimelineTally）</h2>
-  <ul class="checklist">
-    <li><strong>total</strong>: sessions.count（全種別の合計）</li>
-    <li><strong>highlightCount</strong>: sessions の highlightLogIds.count を reduce 集計。</li>
-    <li><strong>streakWeeks</strong>: weekly セッションの periodStart を週月曜 0:00 に正規化 → 降順でひと続きになっている週数をカウント。1週ずつ途切れた時点で終了。</li>
-  </ul>
+  <h2>ReflectionTile（タイムライン1行）</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>行全体</td><td><code>NavigationLink</code>（<code>.buttonStyle(.plain)</code>）で ReflectionDetailView へ push。<code>accessibilityIdentifier("reflectionTile.&lt;id&gt;")</code>。</td></tr>
+    <tr><td>左の縦罫（TimelineRail）</td><td>幅1・cardBorder の縦線＋ノード（直径5・onSurfaceVariant 0.7・上端から 20）。先頭はノードより上を描かず、末尾はノードまでで止める。</td></tr>
+    <tr><td>種別バッジ（TypeBadge）</td><td>「週 / 月 / 年」の一字（明朝11・textMuted）＋ Capsule の cardBorder 細罫。</td></tr>
+    <tr><td>対象期間</td><td>週次「M/D – M/D」／月次「YYYY年M月」／年次「YYYY年」（12pt・monospacedDigit・textMuted）。</td></tr>
+    <tr><td>総括感情</td><td>あれば SF Symbol を上段の右側に表示（16pt・textMuted）。色分けはしない。</td></tr>
+    <tr><td>chevron</td><td>上段の右端に <code>chevron.right</code>（13pt・outline）を常時表示し、タップして開けることを示す。</td></tr>
+    <tr><td>引用（quote）</td><td><code>note</code> が非空ならそれ、無ければ<strong>最初の非空 answer</strong>。明朝15.5・lineSpacing 8・最大5行。カギ括弧「」のみ amber。上段から 12pt 下。</td></tr>
+    <tr><td>区切り罫</td><td>引用とメタ行の間に cardBorder 1px の横罫（上 14 / 下 12 の余白）。</td></tr>
+    <tr><td>メタ行</td><td>「ハイライト N」（生存分のみ）／「問い N に回答」／「総括：ラベル」（総括はある場合のみ）。11.5pt・textMuted、数値だけ onSurfaceVariant + monospacedDigit。</td></tr>
+  </table>
+
+  <h2>振り返り詳細（ReflectionDetailView）</h2>
+  <p>タイルをタップして push する<strong>表示専用</strong>画面。保存済み振り返りの編集はここでは行わない。</p>
+  <table>
+    <tr><th>セクション</th><th>内容</th></tr>
+    <tr><td>ヘッダ</td><td>種別ラベル（明朝22・moonWhite・isHeader）＋対象期間（14pt・monospacedDigit、VoiceOver は「対象期間 …」）。</td></tr>
+    <tr><td>総括した気持ち</td><td><code>moodSummary</code> があるときのみ。SF Symbol（20pt・textMuted）＋ラベル。</td></tr>
+    <tr><td>選択したハイライト記録</td><td><code>resolvedHighlightLogs(from:)</code> で解決した LogEntry を LogCardView で列挙。各行から LogDetailView へ push。<strong>削除済みの id は無視される</strong>ためクラッシュしない。</td></tr>
+    <tr><td>すべての問いと回答</td><td>AppCard ごとに、問い（明朝15・textMuted・isHeader）と回答（15pt・onSurfaceVariant）。</td></tr>
+    <tr><td>最後の気づき</td><td><code>note</code> が非空のときのみ。明朝15.5、カギ括弧のみ amber。</td></tr>
+    <tr><td>地・タイトル</td><td><code>screenBackground()</code> ＋ <code>minchoNavigationTitle(session.type.label)</code>。</td></tr>
+  </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>振り返り0件</td><td>EmptyNight（空状態）。「最初の振り返りを始める」CTA → fullScreenCover で weekly セッション起動。</td></tr>
-    <tr><td>振り返り1件以上</td><td>StarMapView + キャプション + タリーカード + 縦タイムライン。</td></tr>
+    <tr><td>振り返り0件</td><td>emptyNight。「まだ星のない夜」ブロック（minHeight 200・角丸16・cardBorder 枠）＋「最初の振り返りを始める」ボタン（明朝15・amber・chevron・goldDim 1px 枠・縦 padding 16）。タップで weekly セッションを fullScreenCover 起動。</td></tr>
+    <tr><td>振り返り1件以上</td><td>星図＋キャプション＋凡例＋タリー＋縦タイムライン。</td></tr>
+    <tr><td>ハイライト元の記録を削除した後</td><td>タリーの「残したハイライト」とタイルの「ハイライト N」が同時に減る。詳細画面のハイライト一覧からも消える。</td></tr>
+    <tr><td>大きな文字サイズ（accessibility1 以上）</td><td>タリー3値が横並びから<strong>縦積み</strong>に切り替わる（区切りは横罫 1px）。潰れを防ぐ。</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>「最初の振り返りを始める」ボタン（空状態）</td><td>ReflectionSessionView（type: .weekly）フルスクリーン</td></tr>
-    <tr><td>ReflectionTile タップ（予定）</td><td>振り返り詳細（S3 以降実装予定）</td></tr>
+    <tr><td>「最初の振り返りを始める」（空状態）</td><td>ReflectionSessionView（type: .weekly）を fullScreenCover で表示</td></tr>
+    <tr><td>ReflectionTile タップ</td><td>ReflectionDetailView へ NavigationLink push</td></tr>
+    <tr><td>詳細画面のハイライト記録タップ</td><td>LogDetailView へ NavigationLink push</td></tr>
   </table>
+  <p>
+    この画面から起動したセッションには <code>onCompleted</code> / <code>onViewTimeline</code> を渡していない。
+    リマインダー提案（F12）はふりかえりホーム側の責務。
+  </p>
 
   <h2>使用するデータモデル</h2>
   <pre><code>@Query(sort: \ReflectionSession.completedAt, order: .reverse)
 private var sessions: [ReflectionSession]
 
-// StarMapView に starCount として sessions.count を渡す
-StarMapView(starCount: sessions.count)
+// ハイライトの生存照合用。タイル毎に引くと「タイル数 × 全ログ」になるので画面で1回だけ。
+@Query private var allLogs: [LogEntry]
+private var existingLogIds: Set&lt;UUID&gt; { Set(allLogs.map(\.id)) }
 
-// タリー集計
-let tally = TimelineTally(sessions: sessions)</code></pre>
+// ForEach の外で1回だけ束ねてから配る
+let logIds = existingLogIds
+let tally = TimelineTally(sessions: sessions, existingLogIds: logIds)
+
+StarMapView(
+    stars: sessions.map { StarMapView.Star(index: $0.starIndex, type: $0.type) }
+)
+
+// ReflectionSession（星図・ハイライトに関わる部分）
+//   var starSeq: Int = -1              // 挿入時に一度だけ採番（-1 = 未採番）
+//   var starIndex: Int                 // starSeq >= 0 ならそれ／未採番は id 先頭8バイト % 4096
+//   var highlightLogIds: [UUID]        // ハイライトの唯一の真実源
+//   func survivingHighlightCount(in: Set&lt;UUID&gt;) -&gt; Int
+//   func resolvedHighlightLogs(from: [LogEntry]) -&gt; [LogEntry]
+
+// 採番（ReflectionSessionView の保存時・新規 insert のときだけ）
+//   session.starSeq = (all.map(\.starSeq).max() ?? -1) + 1
+</code></pre>
+
+  <h2>アクセシビリティ対応</h2>
+  <ul class="checklist">
+    <li>StarMapView は <code>accessibilityLabel("振り返りの星図")</code>、値は「N件の振り返り。週x件、月y件、年z件」（0件時は「まだ星がありません」）。</li>
+    <li>タリーの各セルは <code>accessibilityElement(children: .combine)</code> で1要素にまとめ、label＝ラベル名／value＝数値。数値と説明が別々に読まれるのを防ぐ。</li>
+    <li>タリー数値は <code>lineLimit(1)</code> + <code>minimumScaleFactor(0.7)</code>。accessibility1 以上では3値を縦積みに切り替える。</li>
+    <li>本文・ラベルは <code>scaledFont</code>、見出し・引用・問いは <code>AppFont.mincho(_:relativeTo:)</code> で Dynamic Type に追従（小さな装飾アイコンは固定サイズのまま）。</li>
+    <li>ナビタイトルは principal に自前描画するため <code>.accessibilityHidden(true)</code>。読みは <code>navigationTitle</code> 側に寄せて二重読みを避ける。</li>
+    <li>ReflectionTile は NavigationLink（ボタン扱い）。UIテスト用に <code>reflectionTile.&lt;id&gt;</code> の identifier を持つ。</li>
+  </ul>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li>StarMapView は <code>Canvas</code> API（SwiftUI）で描画。CPU 負荷はほぼゼロ（静的描画）。</li>
-    <li>SeededGenerator はカスタム RNG（<code>RandomNumberGenerator</code> 準拠）。seed: 20260613 固定。</li>
-    <li>空状態のCTAボタンスタイル: 金ヘアライン枠（goldDim 1px）、明朝テキスト、amber 色。グラデ・グロー禁止。</li>
-    <li>振り返り詳細画面（ReflectionDetailView）は S4 以降の実装予定。現状は ReflectionTile は非タップ。</li>
-    <li>星座線は Canvas の <code>context.stroke</code> で描画。Path を年次セッションの座標リストから順に生成。</li>
-    <li>座標の決定: 各セッションは SeededGenerator の連番シードで座標が確定しているため、種別を分けても位置の再現性は保たれる。</li>
-    <li>年次振り返りの特別演出（その年のハイライト写真まとめ）は S4 以降で検討。</li>
+    <li>StarMapView は SwiftUI の <code>Canvas</code> で静的描画。アニメーションもタイマーも持たない。</li>
+    <li>Halton 列の実装は 2〜3行の整数演算のみ（外部依存なし）。<code>halton(n, base:)</code> が 0..&lt;1 を返す。</li>
+    <li>背景・粒・タイトルは共通部品（<code>screenBackground()</code> / <code>minchoNavigationTitle(_:)</code>）に寄せる。粒は子ビューへ継承されないため、画面ごとに2行書く運用ではなくこの1行に集約している。</li>
+    <li>ユニットテスト: <code>survivingHighlightCount</code>（生存2・削除1 → 2）と <code>TimelineTally</code>（total 2・highlightCount 1）を検証済み。</li>
+    <li>グローはセッション完了画面（ReflectionCompletionView）にのみ許可。この画面には出さない。</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
-    <li><a href="../data-model.html">データモデル</a></li>
-    <li><a href="reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a></li>
+    <li><a href="../data-model.html">データモデル（ReflectionSession）</a></li>
+    <li><a href="S03_reflect_home.html">ふりかえりタブ（LR-S03）</a></li>
     <li><a href="reflection-session.html">振り返りセッション（LR-SESSION-01）</a></li>
     <li><a href="../features/reflection-session-flow.html">振り返りセッション機能仕様</a></li>
+    <li><a href="toolbox-stats.html">道具箱: 統計（LR-TOOLBOX-STATS）</a></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -124,9 +219,10 @@ let tally = TimelineTally(sessions: sessions)</code></pre>
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（ReflectionTimelineView・StarMapView・TimelineTally）を反映</td></tr>
     <tr><td>1.1</td><td>2026-06-15</td><td>Phase S3 実装済み: StarMapView 段階表現（週次=小星・月次=明星・年次=節目の星）および年次2件以上で星座線（金の細線）を結ぶ演出を追加</td></tr>
     <tr><td>1.2</td><td>2026-06-16</td><td>Phase S4 実装済み: ナビゲーションバーをダーク天体背景＋明朝タイトルに統一。</td></tr>
+    <tr><td>1.3</td><td>2026-07-26</td><td>星図の座標決定を全面改訂: シード乱数＋配列インデックス方式を廃止し、<code>ReflectionSession.starSeq</code>（挿入時に一度だけ採番・未採番は id 由来のフォールバック）を Halton(2,3) で正規化座標に写す方式へ変更（件数・並び順・削除・Canvas サイズから独立し既存の星が動かない）。星座線を amber 0.22・lineWidth 0.75 に修正。星のサイズ／色を実装値（radius 1.1/2.0/2.8）に修正し、凡例（週・月・年のドット）を追記。タリーの「連続した週」を廃止し「振り返った週」（週次 periodStart の月曜正規化ユニーク数）へ差し替え。「残したハイライト」を <code>survivingHighlightCount(in:)</code> による生存分のみの集計に変更（記録削除時の cascade cleanup も追記）。ReflectionTile をタップ可能にし ReflectionDetailView（表示専用）の節を新設（タイル上段右端の chevron・引用とメタ行の間の区切り罫も明記）。<code>screenBackground()</code> / <code>minchoNavigationTitle(_:)</code>・Dynamic Type（accessibility1 で縦積み）・アクセシビリティ対応を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

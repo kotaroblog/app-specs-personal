@@ -13,110 +13,152 @@
 
   <header class="site-header">
     <h1>リマインダー設定</h1>
-    <p>週次振り返りの曜日・時刻をユーザーが指定する端末内ローカル通知設定画面。</p>
+    <p>週次振り返りの曜日・時刻を指定する端末内ローカル通知の設定画面。</p>
     <div style="margin-top:8px;">
-      <span class="tag done">S3実装済</span>
+      <span class="tag done">実装済</span>
       <span class="tag">画面ID: LR-REMINDER-01</span>
     </div>
   </header>
 
   <h2>目的・役割</h2>
   <p>
-    ユーザーが週次振り返りを習慣化できるよう、毎週指定した曜日・時刻にローカル通知を送る設定画面。
-    端末内の <code>UNUserNotificationCenter</code> を使用するため、サーバーへのデータ送信は一切行わない。
-    設定→通知セクションから遷移する。
+    週次の振り返りを習慣にできるよう、毎週きまった曜日・時刻にローカル通知を出すための設定画面。
+    設定（人生タブ右上の歯車）→「通知」セクションの「リマインダー」行から NavigationLink で push する。
+    通知は端末内の <code>UNUserNotificationCenter</code> で完結し、サーバー送信・外部共有は行わない。
+    実装は <code>ReminderSettingsView</code>（UI・永続化）と <code>NotificationService</code>（許可・登録・解除）に分かれている。
   </p>
 
-  <div class="callout">
-    <strong>プライバシーポリシー上の重要事項:</strong> 通知スケジュール（曜日・時刻）はデバイス内にのみ保持し、サーバー送信・外部共有は行わない。
-    通知許可ダイアログはシステム提供のもの（UNUserNotificationCenter.requestAuthorization）を使用する。
+  <div class="callout warn">
+    <strong>実装されている通知は週次1本だけ（v1.0.0）:</strong>
+    <code>NotificationService</code> が持つスケジュール API は <code>scheduleWeekly</code> / <code>cancelWeekly</code> の2つのみで、
+    識別子も <code>"weekly_reflection"</code> の1本だけ。<strong>月次・年次のリマインダーは未実装</strong>で、通知の種類を選ぶ UI も存在しない。
+    ふりかえりタブの月次・年次カードはユーザーが自分で開くもので、通知は出ない。
   </div>
 
-  <h2>UI 構成</h2>
+  <div class="callout">
+    <strong>プライバシー:</strong> 通知の有効/無効・曜日・時刻は <code>@AppStorage</code>（UserDefaults）で端末内にのみ保持する。
+    通知許可ダイアログはシステム提供のもの（<code>requestAuthorization</code>）。通知関連の Info.plist キーは <code>project.yml</code> に定義していない（ローカル通知のみのため不要）。
+  </div>
+
+  <h2>UI 構成（ReminderSettingsView）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>有効/無効トグル</td><td>Toggle（SwiftUI）</td><td>「週次リマインダー」ラベル付き。ON にすると通知許可リクエストを発行し、以降の設定を表示する。OFF にすると既存の通知を全キャンセル。</td></tr>
-    <tr><td>許可拒否時の案内</td><td>callout warn</td><td>通知許可が拒否されている場合「設定アプリ → LifeReview → 通知を有効にしてください」とリンク付きガイドを表示（UIApplication.open で設定アプリへ遷移）。</td></tr>
-    <tr><td>曜日ピッカー</td><td>Picker（.segmented スタイル）</td><td>日・月・火・水・木・金・土の7択。既定: 日（Weekday index 1）。トグルが ON の場合のみ表示。</td></tr>
-    <tr><td>時刻ピッカー</td><td>DatePicker（.hourAndMinute・displayedComponents: .hourAndMinute）</td><td>既定: 21:00。トグルが ON の場合のみ表示。</td></tr>
-    <tr><td>次回通知日時プレビュー</td><td>Text（textMuted）</td><td>「次回: 〇月〇日（日）21:00」を動的計算して表示。設定変更のたびにリアルタイム更新。</td></tr>
-    <tr><td>通知プレビューカード</td><td>AppCard（静的表示）</td><td>実際に届く通知のタイトル/本文をプレビュー表示（下記「通知内容」参照）。</td></tr>
+    <tr><td>ルート</td><td>List</td><td><code>.scrollContentBackground(.hidden)</code> ＋ <code>screenBackground()</code>（地の藍＋粒）。タイトルは <code>.minchoNavigationTitle("リマインダー")</code>（明朝インライン）。</td></tr>
+    <tr><td>有効/無効トグル</td><td>Toggle「週次リマインダー」</td><td>ON で許可リクエスト → 許可されたら有効化＋スケジュール登録。OFF で <code>enabled = false</code> ＋ <code>cancelWeekly()</code>。</td></tr>
+    <tr><td>トグル下の説明</td><td>Section footer</td><td>「毎週きまった曜日・時刻に、振り返りをそっとお知らせします。端末内だけで完結し、データは送信されません。」</td></tr>
+    <tr><td>タイミング Section</td><td>Section（header「タイミング」）</td><td><strong>トグル ON のときだけ</strong> List に現れる（<code>if enabled</code>）。</td></tr>
+    <tr><td>曜日ピッカー</td><td>Picker「曜日」（スタイル未指定＝List 既定）</td><td><code>ForEach(1...7)</code>。ラベルは <code>JapaneseWeekday.fullSymbol</code>（「日曜日」〜「土曜日」）。タグは Calendar 準拠の 1=日〜7=土。変更で即再スケジュール。</td></tr>
+    <tr><td>時刻ピッカー</td><td>DatePicker「時刻」（<code>displayedComponents: .hourAndMinute</code>）</td><td>選択値から <code>Calendar.current</code> で hour / minute を取り出して保存し、即再スケジュール。表示用の Date は「今日の hour:minute」を都度組み立てている。</td></tr>
+    <tr><td>次回表示</td><td>Section footer（footnote・textMuted）</td><td>「次回：日曜日 21:00」の形式。<strong>保存済みの曜日・時刻をそのまま整形しているだけ</strong>で、実際の日付計算はしていない。</td></tr>
+    <tr><td>許可なしアラート</td><td>alert</td><td>タイトル「通知が許可されていません」／本文「リマインダーを使うには、設定アプリで「人生アルバム」の通知を許可してください。」／ボタン「設定を開く」「閉じる」。</td></tr>
   </table>
+  <p>
+    通知内容のプレビューカードや、画面内に常設される警告バナーは実装していない（許可がない場合はアラートで一度だけ伝える）。
+  </p>
 
-  <h2>通知内容</h2>
+  <h2>通知内容（NotificationService.scheduleWeekly）</h2>
   <table>
     <tr><th>項目</th><th>内容</th></tr>
     <tr><td>タイトル</td><td>「そろそろ、ふりかえりませんか」</td></tr>
     <tr><td>本文</td><td>「この一週間で、心が動いた瞬間は？」</td></tr>
-    <tr><td>繰り返し</td><td>毎週同じ曜日・同じ時刻（UNCalendarNotificationTrigger・repeats: true）</td></tr>
-    <tr><td>タイムゾーン</td><td>Asia/Tokyo 固定</td></tr>
-    <tr><td>サウンド</td><td>UNNotificationSound.default</td></tr>
-    <tr><td>通知 ID</td><td><code>"lifereview.weekly.reminder"</code>（固定・再設定時に上書き）</td></tr>
+    <tr><td>サウンド</td><td><code>.default</code></td></tr>
+    <tr><td>バッジ</td><td>設定しない（許可 options には <code>.badge</code> を含むが、content.badge は未使用）</td></tr>
+    <tr><td>トリガー</td><td><code>UNCalendarNotificationTrigger(dateMatching:repeats: true)</code>。<code>DateComponents</code> は weekday / hour / minute / timeZone のみ。</td></tr>
+    <tr><td>タイムゾーン</td><td><code>TimeZone(identifier: "Asia/Tokyo")</code> 固定（下記の callout 参照）</td></tr>
+    <tr><td>識別子</td><td><code>"weekly_reflection"</code>（固定・private static）</td></tr>
+    <tr><td>登録手順</td><td><code>removePendingNotificationRequests(withIdentifiers:)</code> で同一識別子を消してから <code>add(request)</code>。失敗時は <code>Logger</code> にエラー出力するだけで UI 表示はしない。</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <strong>タイムゾーンは Asia/Tokyo 固定（実装の事実）:</strong>
+    時刻ピッカーは <code>Calendar.current</code>（＝端末のタイムゾーン）で hour / minute を取り出して保存するが、
+    スケジュール時は<strong>その数値をそのまま Asia/Tokyo の時・分として</strong> <code>DateComponents.timeZone</code> に載せる。
+    したがって端末が JST 以外に設定されている場合、通知は「端末ローカルの 21:00」ではなく「JST の 21:00」に鳴り、
+    ピッカーの表示値と実際の発火時刻がずれる。「次回：」の文言も保存値の整形のみでタイムゾーン変換をしない。
+    日本国内向けアプリとして JST 固定を選んだ結果であり、v1.0.0 時点では端末タイムゾーン追従にしていない。
+  </div>
+
+  <h2>通知許可の扱い</h2>
+  <table>
+    <tr><th>場面</th><th>実装の挙動</th></tr>
+    <tr><td>この画面を開いただけ</td><td>許可リクエストは<strong>発行しない</strong>。<code>.task</code> で <code>syncWithSystemAuthorization()</code> を走らせるだけ。</td></tr>
+    <tr><td>トグルを ON にした瞬間</td><td><code>turnOn()</code> → <code>requestAuthorization(options: [.alert, .badge, .sound])</code>。許可されたら <code>enabled = true</code> にして <code>scheduleWeekly</code>。</td></tr>
+    <tr><td>許可が得られなかった</td><td><code>enabled = false</code> に戻し（トグルは OFF のまま）、アラート「通知が許可されていません」を表示。通知は登録しない。</td></tr>
+    <tr><td>すでに設定アプリで拒否済み</td><td>システムはダイアログを出さず即座に false を返すため、同じアラートに落ちる。「設定を開く」で <code>UIApplication.openSettingsURLString</code> を <code>UIApplication.shared.open</code>（URL 生成は <code>guard let</code>・force unwrap しない）。</td></tr>
+    <tr><td>許可リクエスト自体が throw</td><td><code>Logger</code>（subsystem: com.happyboy1002.LifeReview / category: Notification）にエラーを残し false を返す＝拒否と同じ扱い。</td></tr>
+    <tr><td>画面表示のたび（<code>.task</code>）</td><td><code>enabled == true</code> のときだけ <code>notificationSettings().authorizationStatus</code> を確認。<code>.authorized</code> / <code>.provisional</code> のどちらでもなければ <code>enabled = false</code> ＋ <code>cancelWeekly()</code>。アプリ外で通知を切られたまま「ON」が残るのを防ぐ。</td></tr>
+    <tr><td>この画面以外からの許可要求</td><td>ふりかえりタブのリマインダー提案カード（F12）の「設定する」でも <code>requestAuthorization</code> を呼ぶ。アプリ起動時に許可を求める経路は存在しない。</td></tr>
   </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>初期表示（未設定）</td><td>トグルOFF。曜日・時刻ピッカーは非表示。既定値（日・21:00）はトグルON時に適用。</td></tr>
-    <tr><td>トグルON・通知許可済み</td><td>曜日ピッカー + 時刻ピッカー + 次回通知プレビュー + 通知プレビューカードを表示。</td></tr>
-    <tr><td>トグルON・通知未許可</td><td>システム許可ダイアログを表示。許可された場合は「許可済み」状態へ遷移。</td></tr>
-    <tr><td>トグルON・通知拒否済み</td><td>callout warn（設定アプリへの案内）を表示。曜日・時刻ピッカーは非表示。</td></tr>
-    <tr><td>トグルOFF</td><td>既存の通知を UNUserNotificationCenter でキャンセル（identifier: "lifereview.weekly.reminder"）。</td></tr>
+    <tr><td>初期表示（未設定）</td><td>トグル OFF（<code>reminderEnabled</code> の既定値 false）。「タイミング」Section は非表示。曜日・時刻の既定値（1=日 / 21:00）は AppStorage の初期値として常に保持されている。</td></tr>
+    <tr><td>トグル ON・許可済み</td><td>「タイミング」Section（曜日ピッカー・時刻ピッカー・「次回：〜」footer）を表示。</td></tr>
+    <tr><td>トグル ON 操作・未許可</td><td>システムの許可ダイアログ。許可されればそのまま ON＋登録、されなければ OFF に戻ってアラート。</td></tr>
+    <tr><td>トグル ON 操作・拒否済み</td><td>ダイアログは出ず、トグルは OFF のままアラート（設定アプリへ誘導）。</td></tr>
+    <tr><td>トグル OFF</td><td><code>cancelWeekly()</code> で識別子 <code>weekly_reflection</code> の<strong>予約分のみ</strong>を削除（配信済み通知は消さない）。</td></tr>
+    <tr><td>曜日・時刻を変更</td><td><code>enabled == true</code> のときだけ即座に再スケジュール（<code>reschedule()</code>）。OFF のときは値の保存だけ行う。</td></tr>
+    <tr><td>アプリ外で通知を拒否された後に再訪</td><td><code>.task</code> の突き合わせでトグルが自動的に OFF に戻り、予約も解除される。</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>画面を閉じる（または戻るボタン）</td><td>設定画面に戻る</td></tr>
-    <tr><td>通知拒否時の「設定を開く」リンクをタップ</td><td>UIApplication.open(URL(string: UIApplication.openSettingsURLString)!) → システム設定アプリ（LifeReview通知設定）</td></tr>
+    <tr><td>設定 →「通知」セクションの「リマインダー」行</td><td>ReminderSettingsView を NavigationLink で push（この画面への唯一の入口）</td></tr>
+    <tr><td>戻る</td><td>設定画面。行の右側サマリーは「オフ」／有効時は「日 21:00」形式（1文字曜日 <code>JapaneseWeekday.symbol</code> + <code>%02d:%02d</code>）に更新される。</td></tr>
+    <tr><td>アラート「設定を開く」</td><td>システム設定アプリ（人生アルバムの通知設定）</td></tr>
+    <tr><td>アラート「閉じる」</td><td>アラートを閉じるのみ（トグルは OFF のまま）</td></tr>
   </table>
 
-  <h2>使用するデータモデル</h2>
-  <pre><code>// 設定値は @AppStorage で端末内に永続化（UserDefaults 経由・SwiftData 非使用）
-@AppStorage("reminder.enabled") private var isEnabled: Bool = false
-@AppStorage("reminder.weekday") private var weekday: Int = 1    // 1=日曜
-@AppStorage("reminder.hour")    private var hour: Int = 21
-@AppStorage("reminder.minute")  private var minute: Int = 0
+  <h2>使用するデータ</h2>
+  <pre><code>// 設定値は @AppStorage（UserDefaults）で端末内に永続化。SwiftData は使わない。
+@AppStorage("reminderEnabled") private var enabled = false
+@AppStorage("reminderWeekday") private var weekday = 1   // 1=日..7=土（Calendar 準拠）
+@AppStorage("reminderHour")    private var hour = 21
+@AppStorage("reminderMinute")  private var minute = 0
 
-// 通知スケジュール（UNUserNotificationCenter）
-// ※ サーバー送信なし・端末内完結
-func scheduleWeeklyReminder(weekday: Int, hour: Int, minute: Int) {
-    let center = UNUserNotificationCenter.current()
-    let content = UNMutableNotificationContent()
-    content.title = "そろそろ、ふりかえりませんか"
-    content.body  = "この一週間で、心が動いた瞬間は？"
-    content.sound = .default
+// NotificationService（@MainActor / static let shared）の公開 API はこの4つだけ
+func requestAuthorization() async -> Bool
+func authorizationStatus() async -> UNAuthorizationStatus
+func scheduleWeekly(weekday: Int, hour: Int, minute: Int) async
+func cancelWeekly()
 
-    var components = DateComponents()
-    components.weekday = weekday    // 1=日 〜 7=土
-    components.hour    = hour
-    components.minute  = minute
-    components.timeZone = TimeZone(identifier: "Asia/Tokyo")
+// 曜日ラベルの単一情報源（Support/JapaneseWeekday.swift）
+JapaneseWeekday.symbol(1)      // "日"     … 設定画面のサマリー行
+JapaneseWeekday.fullSymbol(1)  // "日曜日" … この画面の曜日ピッカー・「次回：」
+// 範囲外（1...7 以外）は "—" を返す
+</code></pre>
+  <p>
+    設定画面の「全データを削除」では、<code>NotificationService.shared.cancelWeekly()</code> で予約を解除したうえで
+    <code>reminderEnabled</code> / <code>reminderWeekday</code> / <code>reminderHour</code> / <code>reminderMinute</code> を
+    <code>SettingsView.resetAppStorage()</code> で消す（キー一覧は <code>resettableDefaultsKeys</code>・ユニットテストで担保）。
+  </p>
 
-    let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
-    let request = UNNotificationRequest(
-        identifier: "lifereview.weekly.reminder",
-        content: content,
-        trigger: trigger
-    )
-    center.removePendingNotificationRequests(withIdentifiers: ["lifereview.weekly.reminder"])
-    center.add(request)
-}</code></pre>
+  <h2>アクセシビリティ対応</h2>
+  <ul class="checklist">
+    <li>操作要素は Toggle / Picker / DatePicker の標準コントロールのみ。タップ領域と VoiceOver 読み上げはシステム標準に従う。</li>
+    <li>「次回：〜」は <code>.font(.footnote)</code>＋<code>AppColors.textMuted</code>。Dynamic Type に追従する。</li>
+    <li>ナビタイトルは principal に明朝で自前描画し <code>.accessibilityHidden(true)</code>。読みは <code>navigationTitle</code> 側に寄せて二重読みを避ける（<code>minchoNavigationTitle</code> 共通実装）。</li>
+    <li>許可されていないことはアラート（システム標準）で伝えるため、フォーカス移動とボタン読み上げも標準どおり。</li>
+  </ul>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li>通知許可状態は画面表示のたびに <code>UNUserNotificationCenter.current().getNotificationSettings</code> で非同期確認する（アプリ外で変更される場合があるため）。</li>
-    <li>トグルを ON にする瞬間に <code>requestAuthorization(options: [.alert, .sound])</code> を呼ぶ。許可済みの場合はダイアログは出ない（システム挙動）。</li>
-    <li>Flutter 版の <code>flutter_local_notifications</code> 相当の機能を UNUserNotificationCenter に置換。@AppStorage は <code>SharedPreferences</code> からの移行先。</li>
-    <li>通知の identifier を固定（"lifereview.weekly.reminder"）することで、再設定時に <code>removePendingNotificationRequests</code> で確実に上書きできる。</li>
-    <li>次回通知日時は <code>Calendar.current.nextDate(after: .now, matching: components, matchingPolicy: .nextTime)</code> で計算して表示する。</li>
-    <li>C案デザイン規律: 設定画面はシンプル構成。金色の装飾は使わない。</li>
+    <li>識別子を <code>"weekly_reflection"</code> に固定しているため、曜日・時刻を変えるたびに remove → add で確実に1本だけが残る。</li>
+    <li><code>cancelWeekly()</code> は <code>removePendingNotificationRequests</code> のみ。配信済み通知の削除（<code>removeDelivered…</code>）はしていない。</li>
+    <li>トグルの見た目は <code>enabledBinding</code>（get/set カスタム Binding）で AppStorage に直結。ON のときは set が <code>Task { await turnOn() }</code> を起こすだけで、許可待ちの結果を受けて <code>turnOn()</code> 側が <code>enabled = false</code> に戻す（set 内で直接戻すわけではない）。</li>
+    <li>時刻の Binding は「今日の日付＋保存済み hour/minute」で Date を組み立てる。時刻のみのピッカーでも年月日が欠けないようにするため。</li>
+    <li>ふりかえりタブの提案カード（F12）から有効化した場合は、<strong>その日の曜日 ＋ 21:00 固定</strong>で登録される（カード本文は「いまと同じ曜日・時刻に」と書いているが、実装が現在時刻を使うのは曜日だけ）。時刻を変えたい場合はこの画面で調整する。</li>
+    <li>C案デザイン規律: この画面に金（amber / goldDim）は使わない。地は <code>screenBackground()</code> で全画面共通。</li>
+    <li>月次・年次通知、通知の一時停止（スヌーズ）、複数リマインダーは v1.0.0 のスコープ外。</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
     <li><a href="../data-model.html">データモデル</a></li>
-    <li><a href="reflect-home.html">ふりかえりホーム（LR-REFLECT-HOME）</a></li>
+    <li><a href="S03_reflect_home.html">ふりかえりタブ（LR-S03）— リマインダー提案カード F12</a></li>
+    <li><a href="S04_life.html">人生タブ（LR-S04）— 設定への入口</a></li>
     <li><a href="../features/reflection-session-flow.html">振り返りセッション機能仕様</a></li>
   </ul>
 
@@ -125,9 +167,10 @@ func scheduleWeeklyReminder(weekday: Int, hour: Int, minute: Int) {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S3 実装済み（UNUserNotificationCenter 週次リマインダー設定画面）</td></tr>
     <tr><td>1.1</td><td>2026-06-16</td><td>Phase S4 実装済み: ナビゲーションバーをダーク天体背景＋明朝インラインタイトルに統一。</td></tr>
+    <tr><td>1.2</td><td>2026-07-26</td><td>実装（ReminderSettingsView / NotificationService）と突き合わせて全面修正。通知識別子を <code>lifereview.weekly.reminder</code> → 実際の <code>weekly_reflection</code> に訂正し、週次1本のみで月次・年次は未実装であることを明記。存在しない記述（曜日の segmented ピッカー・通知プレビューカード・画面内 callout warn での拒否案内・<code>Calendar.nextDate</code> による次回日時計算・Flutter 移行メモ）を削除し、実装どおりの List 構成（Toggle ＋ 条件表示の「タイミング」Section ＋ footer「次回：日曜日 21:00」）とアラートによる拒否時案内に差し替え。許可リクエストの経路（トグル ON 時のみ・options は <code>[.alert, .badge, .sound]</code>）、<code>.task</code> でのシステム許可状態との突き合わせ（<code>.authorized</code>/<code>.provisional</code> 以外は自動 OFF ＋解除）、拒否時の挙動を追加。タイムゾーンが Asia/Tokyo 固定で、端末 TZ で読んだ時刻数値をそのまま JST として登録する点を callout に明記。AppStorage キー名を実装（<code>reminderEnabled</code> 等）に合わせ、全データ削除時のリセット・<code>JapaneseWeekday</code>・提案カード（F12）経由は 21:00 固定という事実を追記。ふりかえりタブへのリンク切れ（reflect-home.html）を修正</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-16</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

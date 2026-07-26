@@ -23,94 +23,126 @@
   <h2>目的・役割</h2>
   <p>
     ユーザーが毎日起動したときの最初の受け皿。「記録する」という行動を最小摩擦で促すことが主目的。
-    残り時間のミニ表示（のこり時間カード）でアプリの世界観を常に想起させつつ、
-    主役は「今日を記録する」CTA ボタン（画面で最も明るい要素：金ソリッド面）に置く。
-    直近 3 件の記録プレビューと「○年前の今日」機能で、過去の記録との縦断的なつながりも提供する。
+    主役は画面最上部の「今日を記録する」CTA。
+    直近 3 件の記録プレビューと「過去の今日」で、過去の記録との縦断的なつながりも提供する。
+    残り時間のミニ表示は<strong>画面最下部</strong>に置き、設定でオフにもできる（有限性を毎日突きつけない）。
   </p>
   <div class="callout">
-    <strong>C案規律（1画面1灯）:</strong> 「今日を記録する」ボタン（amber 背景）が画面内で最も明るい要素。他の要素は全て沈める。グロー効果・星・絵文字は出さない。
+    <strong>C案規律（1画面1点の金）:</strong> 金は面で塗らない。CTA は <code>LineButton</code>（night2 の面＋goldDim 細罫＋amber 文字）で立てる。
+    画面で最も明るい「面」は明朝見出しの moonWhite。グロー効果・星・絵文字は出さない。
   </div>
 
-  <h2>UI 構成</h2>
+  <h2>UI 構成（上から順）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>NavigationStack</td><td>コンテナ</td><td>タイトル「今日」（明朝インライン）。右上に「+」ボタン（記録追加の代替入口）。</td></tr>
-    <tr><td>残り時間ミニカード（RemainingTimeMiniView）</td><td>NavigationLink → LifeTimelineScreen</td><td>「のこり時間」ラベル（caption・tracking 2）＋残り年数・ヶ月数（30pt semibold monospacedDigit）＋ThinProgressBar（amber 細線）。タップで人生の週グリッド全画面へ遷移。UserProfile が存在しない場合は非表示。</td></tr>
-    <tr><td>「今日を記録する」CTA</td><td>Button</td><td>「square.and.pencil」アイコン＋テキスト（16pt semibold・#14110A 色）。背景 AppColors.amber・角丸 14px・高さフル幅。タップで LogFormView（新規）をシートで表示。</td></tr>
-    <tr><td>直近の記録セクション（recentSection）</td><td>VStack + ForEach</td><td>見出し「直近の記録」（明朝 18pt）＋件数バッジ。直近 3 件を LogCardView で表示。各カードは NavigationLink → LogDetailView。記録がない場合は EmptyStateView（moon.stars・「今日のことを、ひとつ残してみませんか」）。</td></tr>
-    <tr><td>○年前の今日セクション（onThisDaySection）</td><td>VStack + ForEach</td><td>同月日の過年度記録を「○年前」バッジ付きの LogCardView で表示。記録が存在する場合のみセクション表示。</td></tr>
+    <tr><td>NavigationStack</td><td>コンテナ</td><td><code>.minchoNavigationTitle("今日")</code>（明朝インライン・principal 自前描画）。<strong>ツールバーの「+」ボタンは廃止</strong>（入口は主CTAに一本化）。</td></tr>
+    <tr><td>背景</td><td>screenBackground()</td><td>AppColors.background ＋ フィルムの粒（2.5%）。</td></tr>
+    <tr><td>「今日を記録する」CTA</td><td>LineButton</td><td>「square.and.pencil」アイコン＋テキスト（15pt semibold・amber）。面は night2・角丸 14px・goldDim 1px 罫・minHeight 52pt。タップで LogFormView（新規）をシート表示。</td></tr>
+    <tr><td>今日の記録状態（todayStatusSection）</td><td>Text</td><td>当日の記録が1件以上あるとき「今日は○件残しました」（13pt medium・textMuted）。0件のときは何も出さない（空状態は直近の記録セクションが担う）。</td></tr>
+    <tr><td>直近の記録セクション（recentSection）</td><td>VStack + ForEach</td><td>見出し「直近の記録」（明朝 18pt）＋総件数。右端に<strong>「記録カレンダー ›」導線</strong>（CalendarView へ push）。直近 3 件を LogCardView で表示。各カードは NavigationLink → LogDetailView。記録0件のときは EmptyStateView（moon.stars・「今日のことを、ひとつ残してみませんか」）。</td></tr>
+    <tr><td>過去の今日セクション（onThisDaySection）</td><td>VStack + ForEach</td><td>見出し「<strong>過去の今日</strong>」（明朝 18pt）。同月日の過年度記録を「○年前」バッジ付きの LogCardView で表示。<strong>最大5件</strong>。該当が無ければセクションごと非表示。</td></tr>
+    <tr><td>残り時間ミニカード（RemainingTimeMiniView）</td><td>NavigationLink → LifeTimelineScreen</td><td>「のこり時間」ラベル（caption・tracking 2）＋残り年数・ヶ月数（monospacedDigit）＋ThinProgressBar（amber 細線）。タップで人生の週グリッド全画面へ。<strong>UserProfile があり、かつ <code>showLifeCountdown == true</code> のときのみ表示</strong>。</td></tr>
   </table>
+
+  <div class="callout warn">
+    <strong>2026-07-26 の変更（配置と導線）</strong>
+    <ul class="checklist" style="margin-top:8px;">
+      <li>残り時間ミニを<strong>最上部から最下部へ移動</strong>し、設定「表示」のトグル（<code>showLifeCountdown</code>）で丸ごと隠せるようにした。毎日開く画面で有限性を先頭に置かない。</li>
+      <li>ナビバーの「+」を廃止し、記録の入口を主CTAだけにした。</li>
+      <li>「記録カレンダー」導線は文字だけだと押せると分からず、タップ領域も文字高しか無かった。<strong>シェブロンを添え、<code>minHeight: 44</code> + <code>contentShape</code> で 44pt を確保</strong>。</li>
+      <li>「○年前の今日」→「<strong>過去の今日</strong>」に改称。</li>
+    </ul>
+  </div>
 
   <h2>サブ画面（Today タブから遷移）</h2>
 
   <h3>記録フォーム（LogFormView）</h3>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>カテゴリ選択（必須）</td><td>7種（体験・達成・人間関係・作品・創作・学び・旅・日常の幸せ）をグリッドチップで選択。未選択時は「保存」ボタン disabled。</td></tr>
-    <tr><td>気持ち選択（任意）</td><td>5種（喜び・充実・穏やか・疲れ・不安）をアイコン＋ラベル縦並びチップで選択。「クリア」ボタンで解除可能。</td></tr>
-    <tr><td>メモ入力（任意）</td><td>TextEditor（minHeight 120）。最大 500 文字想定。プレースホルダーなし。</td></tr>
+    <tr><td>カテゴリ選択（必須）</td><td><strong>8種</strong>（体験・達成・人間関係・作品・創作・学び・旅・日常の幸せ・<strong>その他</strong>）を LazyVGrid（adaptive minimum 104）のチップで選択。未選択時は「保存」ボタン disabled。チップは <code>minHeight: 44</code>。</td></tr>
+    <tr><td>気持ち選択（任意）</td><td>5種（喜び・充実・穏やか・疲れ・不安）をアイコン＋ラベル縦並びチップで選択（<code>minHeight: 44</code>）。同じチップの再タップでも解除できる。「クリア」ボタンは <code>minHeight: 44</code> + <code>contentShape</code> でタップ領域を確保。</td></tr>
+    <tr><td>メモ入力（任意）</td><td>TextEditor（minHeight 120）。最大 500 文字想定。<strong>プレースホルダー「今日、心に残ったことを書いてみましょう」</strong>を重ねて表示（<code>allowsHitTesting(false)</code>）。</td></tr>
+    <tr><td>写真（任意・最大3枚）</td><td>PhotosPicker（<code>matching: .images</code>・<code>maxSelectionCount</code> は残り枠）。88×88 のサムネイル横スクロール。取り消しの「×」は見た目 20pt のまま<strong>当たり判定を 44pt</strong> に広げる。実体は <code>ImageStore</code> がアプリ内領域へ保存し、パスのみ <code>imagePaths</code> に持つ。</td></tr>
     <tr><td>日付選択（任意）</td><td>DatePicker（in: ...Date()・displayedComponents: .date）。既定は本日。過去日付への記録も可能。</td></tr>
-    <tr><td>ツールバー</td><td>「閉じる」（cancellationAction）・「保存」（confirmationAction）。保存時に modelContext.save() → 失敗時はアラート + rollback。</td></tr>
-    <tr><td>編集モード</td><td>LogEntry を引数に渡すと編集モード（既存値でフォームを初期化）。タイトル「記録を編集」。</td></tr>
+    <tr><td>ツールバー</td><td>「閉じる」（cancellationAction）・「保存」（confirmationAction）・<strong>キーボード上「完了」</strong>（フォーカス解除）。</td></tr>
+    <tr><td>編集モード</td><td>LogEntry を引数に渡すと編集モード（既存値でフォームを初期化）。タイトル「記録を編集」／新規は「新しい記録」。</td></tr>
   </table>
+  <ul class="checklist">
+    <li>未保存の選択済み写真は <strong>id で管理</strong>する。<code>ForEach(enumerated(), id: \.offset)</code> の index で消すと、2枚の「×」を同時にタップされたとき縮んだ配列に古い index が適用されて範囲外クラッシュする。</li>
+    <li>保存手順: 新規画像をディスクへ書く → SwiftData を更新 → <code>save()</code> 成功後に<strong>取り消された旧画像を削除</strong>。save 失敗時は書き込んだ新規ファイルを掃除して <code>rollback()</code>。</li>
+    <li>チップの文字色に<strong>カテゴリ色を使わない</strong>（暗い色が night2 面で本文可読性に届かないため）。識別は色罫（不透明度 0.4／選択時 lineWidth 2）＋面 0.14 が担う。</li>
+  </ul>
 
   <h3>記録詳細（LogDetailView）</h3>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
     <tr><td>ヘッダー</td><td>カテゴリアイコン（48px 円バッジ・カテゴリ色 14%透過）＋カテゴリ名＋感情タグ（任意）。</td></tr>
     <tr><td>本文テキスト</td><td>entry.content が空でない場合のみ表示。</td></tr>
+    <tr><td>添付写真</td><td>96×96 サムネイルの横スクロール。タップで <code>PhotoViewer</code>（fullScreenCover・左右スワイプ切替）。</td></tr>
     <tr><td>ツールバーメニュー</td><td>「ellipsis.circle」メニューボタン → 「編集（pencil）」「削除（trash・destructive）」。削除は確認アラートを経由。</td></tr>
-    <tr><td>タイトル</td><td>日付（ymd フォーマット）。navigationBarTitleDisplayMode: .inline。</td></tr>
+    <tr><td>タイトル</td><td>日付（ymd フォーマット）を明朝インラインで表示。</td></tr>
   </table>
+  <div class="callout warn">
+    <strong>削除時の cascade cleanup（2026-07-26 追加）:</strong>
+    記録を削除する際、その id を参照している全 <code>ReflectionSession</code> の <code>highlightLogIds</code> からも id を取り除く。
+    表示側も生存照合しているので二重の備えだが、参照を残すと「消えた記録の id」が振り返りに永久に溜まり続けるため<strong>発生源で断つ</strong>。
+    掃除に失敗しても削除自体は続行し、Logger にのみ記録する。<br>
+    削除順序: ハイライト参照を外す → <code>modelContext.delete</code> → <code>save()</code> 成功後に<strong>画像ファイルを消す</strong>（失敗時は rollback するのでファイルは残す）。
+  </div>
 
   <h3>人生の週グリッド全画面（LifeTimelineScreen）</h3>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>WeekGridBody</td><td>サマリー（現在年齢・経過週・残り週・合計週）＋凡例＋WeekGridCanvas（52列 × targetAge 行・Canvas 描画）。</td></tr>
-    <tr><td>タイトル</td><td>「人生の週」インラインナビゲーションタイトル。</td></tr>
+    <tr><td>WeekGridBody</td><td>サマリー（現在年齢・経過週・残り週・合計週）＋凡例＋WeekGridCanvas（52列 × targetAge 行・Canvas 描画）。詳細は <a href="S04_life.html">人生タブ（LR-S04）</a>。</td></tr>
+    <tr><td>タイトル</td><td>「人生の週」（明朝インライン）。</td></tr>
     <tr><td>UserProfile なし時</td><td>「プロフィールを設定してください」テキストを textMuted で表示。</td></tr>
   </table>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>初期表示（記録なし）</td><td>残り時間ミニカード（UserProfile あり）→ 金 CTA → recentSection に EmptyStateView（moon.stars）</td></tr>
-    <tr><td>記録あり</td><td>直近 3 件の LogCardView を表示。同月日の過去記録があれば「○年前の今日」セクションも表示。</td></tr>
-    <tr><td>UserProfile 未設定</td><td>残り時間ミニカード非表示。CTA と記録セクションのみ表示。</td></tr>
+    <tr><td>初期表示（記録なし）</td><td>CTA → recentSection に EmptyStateView（moon.stars）→（表示設定 ON かつ UserProfile あり）残り時間ミニ。</td></tr>
+    <tr><td>当日に記録あり</td><td>CTA の直下に「今日は○件残しました」を表示。</td></tr>
+    <tr><td>記録あり</td><td>直近 3 件の LogCardView を表示。同月日の過去記録があれば「過去の今日」セクション（最大5件）も表示。</td></tr>
+    <tr><td>UserProfile 未設定 / 表示設定 OFF</td><td>残り時間ミニカードを非表示。CTA と記録セクションのみ。</td></tr>
     <tr><td>LogFormView 表示中</td><td>.sheet でオーバーレイ表示。背後のタブはそのまま残る。</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>残り時間ミニカードをタップ</td><td>LifeTimelineScreen（人生の週グリッド全画面）へ NavigationLink push</td></tr>
     <tr><td>「今日を記録する」ボタンタップ</td><td>LogFormView（新規作成）を .sheet で表示</td></tr>
-    <tr><td>ナビバー「+」ボタンタップ</td><td>LogFormView（新規作成）を .sheet で表示</td></tr>
+    <tr><td>「記録カレンダー ›」タップ</td><td>CalendarView（道具箱のカレンダーと同一画面）へ NavigationLink push</td></tr>
     <tr><td>LogCardView タップ</td><td>LogDetailView を NavigationLink push</td></tr>
     <tr><td>LogDetailView 内「編集」</td><td>LogFormView（編集モード）を .sheet で表示</td></tr>
-    <tr><td>LogDetailView 内「削除」→ 確認</td><td>記録を削除して LogDetailView を dismiss（前画面へ）</td></tr>
+    <tr><td>LogDetailView 内「削除」→ 確認</td><td>ハイライト参照を掃除 → 記録を削除 → 画像ファイル削除 → dismiss（前画面へ）</td></tr>
+    <tr><td>写真サムネイルタップ</td><td>PhotoViewer を fullScreenCover で表示</td></tr>
+    <tr><td>残り時間ミニカードをタップ</td><td>LifeTimelineScreen（人生の週グリッド全画面）へ NavigationLink push</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
   <pre><code>// TodayView — 読み取り専用
 @Query(sort: \LogEntry.date, order: .reverse) private var logs: [LogEntry]
 @Query private var profiles: [UserProfile]
+@AppStorage("showLifeCountdown") private var showLifeCountdown = true
 
 // 直近 3 件
 private var recent: [LogEntry] { Array(logs.prefix(3)) }
 
-// 同月日の過年度記録
-private var onThisDay: [LogEntry] {
-    // Calendar で同月・同日かつ今年より前の年のものをフィルター
-}
+// 当日の記録
+private var todayLogs: [LogEntry] { logs.filter { Calendar.current.isDateInToday($0.date) } }
+
+// 過去の今日（同月・同日かつ今年より前）。logs は date 降順なので
+// prefix で「最も近い過去の年」から順に残る。最大 5 件。
+private static let onThisDayLimit = 5
 
 // LogEntry（SwiftData @Model）
 //   var date: Date
 //   var content: String?
-//   var categoryRaw: String      // LogCategory.rawValue
+//   var categoryRaw: String      // LogCategory.rawValue（8種）
 //   var moodRaw: String?         // LogMood.rawValue
-//   var isHighlight: Bool = false
-//   var imagePaths: [String] = []
+//   var imagePaths: [String] = []   // 最大3枚
+//   ※ isHighlight は 2026-07-26 に廃止。ハイライトは ReflectionSession 側が真実源。
 
 // UserProfile（SwiftData @Model）
 //   var birthDate: Date
@@ -122,21 +154,20 @@ private var onThisDay: [LogEntry] {
   <h2>アクセシビリティ対応</h2>
   <ul class="checklist">
     <li>残り時間ミニカード: <code>.accessibilityElement(children: .combine)</code> ＋ <code>.accessibilityLabel("のこり時間")</code> ＋ <code>.accessibilityValue("\(years)年\(months)ヶ月")</code>。</li>
-    <li>ナビバー「+」ボタン: <code>.accessibilityLabel("記録を追加")</code>。</li>
-    <li>直近の記録セクション見出し: <code>.accessibilityAddTraits(.isHeader)</code>。</li>
-    <li>LogFormView のカテゴリチップ: <code>.accessibilityAddTraits(isSelected ? .isSelected : [])</code>。</li>
-    <li>LogDetailView のメニューボタン: <code>.accessibilityLabel("記録の操作メニュー")</code>。</li>
-    <li>LogCardView にはアクセシビリティ属性を LogCardView 内部で設定（今後の拡張を見据え）。</li>
+    <li>セクション見出し（「直近の記録」「過去の今日」）: <code>.accessibilityAddTraits(.isHeader)</code>。</li>
+    <li>LogFormView のカテゴリ／気持ちチップ: <code>.accessibilityAddTraits(isSelected ? .isSelected : [])</code>。写真の取り消しは <code>.accessibilityLabel("写真を外す")</code>、詳細のサムネイルは「写真○枚目」。</li>
+    <li>LogDetailView のメニューボタン: <code>.accessibilityLabel("記録の操作メニュー")</code>。PhotoViewer の閉じるは「閉じる」。</li>
+    <li><strong>Dynamic Type:</strong> 本文・ラベルは <code>scaledFont</code>（基準サイズを保ったまま追従）、見出しは <code>AppFont.mincho(_:relativeTo:)</code>。</li>
+    <li><strong>44pt タップ領域:</strong> 主CTA（minHeight 52）・記録カレンダー導線・カテゴリ/気持ちチップ・気持ちの「クリア」・写真の取り消し。</li>
   </ul>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li>TodayView は NavigationStack を持つ。今日タブ内のすべての遷移はこの NavigationStack 内で完結する。</li>
+    <li>背景は共通の <code>screenBackground()</code>（背景色＋グレイン）。ナビタイトルは <code>minchoNavigationTitle(_:)</code>。<strong>この2つを画面ごとに手で書かない</strong>（漏れを構造的に防ぐための共通部品）。</li>
     <li>LogFormView は新規・編集兼用。<code>entry: LogEntry? = nil</code> が nil なら新規、non-nil なら編集。</li>
-    <li>LogDetailView の削除は <code>modelContext.delete(entry)</code> → <code>modelContext.save()</code> → 失敗時 rollback + アラート。</li>
     <li>onThisDay の計算は <code>@Query</code> の結果（逆順全件）をフィルターしているため、記録件数が増えると計算コストが上がる。将来的にはクエリを分離すること。</li>
-    <li>「○年前の今日」は today のみ計算。記録が0件の場合はセクションごと非表示（<code>if !onThisDay.isEmpty</code>）。</li>
-    <li>AppColors.background（.ignoresSafeArea なし）を ScrollView の背景に設定。ナビゲーションバーは UINavigationBarAppearance でダーク統一済み。</li>
+    <li><strong>PhotoViewer には <code>screenBackground()</code> を付けない。</strong> グレインは白ノイズを <code>.overlay</code> 合成で乗せるため、明るい写真のハイライトを飛ばす（素の黒地のまま）。</li>
   </ul>
 
   <h2>関連</h2>
@@ -146,15 +177,17 @@ private var onThisDay: [LogEntry] {
     <li><a href="S01_onboarding.html">オンボーディング（LR-S01）</a></li>
     <li><a href="S03_reflect_home.html">ふりかえりタブ（LR-S03）</a></li>
     <li><a href="S04_life.html">人生タブ（LR-S04）</a></li>
+    <li><a href="toolbox-calendar.html">道具箱: カレンダー（LR-TOOLBOX-CAL）</a></li>
   </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-30</td><td>初版作成。ソースコード（TodayView / LogFormView / LogDetailView / RemainingTimeMiniView / WeekGridView）を元に実装済み仕様を記述</td></tr>
+    <tr><td>1.1</td><td>2026-07-26</td><td>画面構成の変更を反映: 残り時間ミニを最下部へ移動＋<code>showLifeCountdown</code> で非表示可・ナビバー「+」廃止・主CTAを LineButton 化・「今日は○件残しました」追加・「○年前の今日」→「過去の今日」（最大5件）・「記録カレンダー ›」導線（44pt）追加。LogFormView にカテゴリ8種／写真添付（最大3枚）／メモのプレースホルダー／キーボード「完了」を追記。LogDetailView に写真表示と<strong>削除時の cascade cleanup</strong> を追記。データモデルから <code>isHighlight</code> を削除。共通部品（screenBackground / minchoNavigationTitle）・Dynamic Type・44pt タップ領域を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-30</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>

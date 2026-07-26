@@ -28,14 +28,16 @@
     過去の振り返りを蓄積した「これまでの軌跡」タイムラインへの導線も集約する。
   </p>
   <div class="callout">
-    <strong>C案規律（グロー禁止・金は線でのみ）:</strong> 金面は使わない。リズムカードの isDue 状態のみ goldDim 枠線（1px）＋見出し明度上げで静かに格上げする。グロー・星・絵文字は出さない。
+    <strong>C案規律（グロー禁止・金は線でのみ）:</strong> 金面は使わない。「そろそろ」の格上げは <strong>最優先の1枚だけ</strong>に限り、
+    goldDim 枠線（1px）＋広い余白（padding 20）＋見出し moonWhite の3点で静かに行う。グロー・星・絵文字は出さない。
   </div>
 
   <h2>UI 構成（ReflectHomeView）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>NavigationStack</td><td>コンテナ</td><td>タイトル「ふりかえり」（明朝インライン）。</td></tr>
-    <tr><td>ヒーローブロック（hero）</td><td>VStack テキスト</td><td>「すこし、立ち止まって\nみませんか」（明朝 26pt・moonWhite・lineSpacing 9）＋サブテキスト（14pt・textMuted）。</td></tr>
+    <tr><td>NavigationStack</td><td>コンテナ</td><td><code>.minchoNavigationTitle("ふりかえり")</code>（明朝インライン）。背景は <code>screenBackground()</code>。</td></tr>
+    <tr><td>ヒーローブロック（hero）</td><td>VStack テキスト</td><td>「すこし、立ち止まって\nみませんか」（明朝 26pt・moonWhite・lineSpacing 16）＋サブテキスト「日々の記録を見返して、心に残ったものを言葉にする時間です。」（14pt・textMuted）。</td></tr>
+    <tr><td>リマインダー提案カード（ReminderOfferCard）</td><td>AppCard（goldDim 枠）・条件表示</td><td>振り返りを完了してホームへ戻った直後にのみ表示。「週に一度、そっとお知らせしましょうか」＋「今はしない」/「設定する」（各 minHeight 44）。<strong>カードの表示自体では通知許可を要求しない</strong>。</td></tr>
     <tr><td>リズムカード群（rhythmCards）</td><td>VStack（spacing 12）</td><td>週次・月次・年次の 3 枚の RhythmCard。各カードにタップで振り返りセッション（fullScreenCover）を起動。</td></tr>
     <tr><td>区切り線</td><td>Rectangle（cardBorder 1px）</td><td>リズムカードと道具箱の間の仕切り。</td></tr>
     <tr><td>道具箱セクション（toolbox）</td><td>VStack + NavigationLink</td><td>セクション見出し「道具箱」。カレンダー（LR-TOOLBOX-CAL）・統計（LR-TOOLBOX-STATS）への ToolCard 導線。</td></tr>
@@ -45,12 +47,11 @@
   <h3>RhythmCard（リズムカード）の詳細</h3>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>SF Symbol アイコン</td><td>週次: calendar / 月次: moon / 年次: moon.stars（26pt・isDue で amber・それ以外 textMuted）</td></tr>
-    <tr><td>見出しテキスト</td><td>「週の振り返り」「月の振り返り」「年の振り返り」（16pt semibold・isDue で onSurface・それ以外 onSurfaceVariant）</td></tr>
-    <tr><td>「そろそろ」バッジ</td><td>isDue が true のとき表示。amber テキスト + goldDim capsule 枠線。</td></tr>
-    <tr><td>メタテキスト</td><td>前回からの日数（「前回から ○日」）または初回文言（12.5pt・textMuted）</td></tr>
-    <tr><td>「今、ふりかえる」サブテキスト</td><td>isDue が true のとき表示（12pt・amber 80%透過）</td></tr>
-    <tr><td>カード枠線</td><td>isDue: goldDim 1px / 非 isDue: cardBorder 1px。カード padding: isDue 20px / 非 isDue 16px</td></tr>
+    <tr><td>SF Symbol アイコン</td><td>週次: calendar / 月次: moon / 年次: moon.stars（26pt・<strong>常に textMuted</strong>）</td></tr>
+    <tr><td>見出しテキスト</td><td>「週の振り返り」「月の振り返り」「年の振り返り」（16pt semibold・強調時 onSurface・それ以外 onSurfaceVariant）</td></tr>
+    <tr><td>「そろそろ」バッジ</td><td>強調カード（1枚）のみ表示。<strong>文字は textMuted に沈め、金は capsule の細罫だけ</strong>。</td></tr>
+    <tr><td>メタテキスト</td><td>「前回から ○日」／当日なら「前回から 今日」／未実施なら「はじめての振り返り」「今月をふりかえる」「一年をふりかえる」（12.5pt・textMuted）</td></tr>
+    <tr><td>カード枠線</td><td>強調: goldDim 1px（padding 20）／通常: cardBorder 1px（padding 16）</td></tr>
     <tr><td>chevron.right</td><td>右端に常時表示（outline 色）</td></tr>
   </table>
 
@@ -61,23 +62,44 @@
     <tr><td>月次（monthly）</td><td>前回の completedAt が今月ではない（または未実施）</td></tr>
     <tr><td>年次（yearly）</td><td>前回の completedAt が今年ではない（または未実施）</td></tr>
   </table>
+  <div class="callout">
+    <strong>強調は1枚だけ（emphasizedType）:</strong> 複数が isDue でも、格上げするのは <strong>週 &gt; 月 &gt; 年</strong> の優先順で最初の1種のみ。
+    最も低コストな儀式から習慣を作るため。3枚とも金罫になると「1画面1点」が構造的に破れる。
+  </div>
 
   <h2>サブ画面（ふりかえりタブから遷移）</h2>
 
   <h3>振り返りセッション（ReflectionSessionView）— fullScreenCover</h3>
   <p>5 ステップフロー + 完了画面。詳細は <a href="reflection-session.html">LR-SESSION-01</a> および <a href="../features/reflection-session-flow.html">機能仕様書</a> を参照。</p>
   <table>
-    <tr><th>STEP</th><th>サブ画面</th><th>内容</th></tr>
-    <tr><td>STEP 1</td><td>ReflectionStepReview</td><td>対象期間のログ一覧を表示（期間ラベル付き）。「次へ」で STEP 2 へ。</td></tr>
-    <tr><td>STEP 2</td><td>ReflectionStepChoose</td><td>「心に残った記録」を複数選択（isHighlight フラグ対象）。</td></tr>
-    <tr><td>STEP 3</td><td>ReflectionStepPrompts</td><td>「静かな問い」3 問への自由記述回答。</td></tr>
-    <tr><td>STEP 4</td><td>ReflectionStepMood</td><td>期間の総括感情（5 種）を選択。</td></tr>
-    <tr><td>STEP 5</td><td>ReflectionStepNote</td><td>気づきの自由記述（任意）＋「完了」ボタンで保存。</td></tr>
+    <tr><th>step</th><th>サブ画面</th><th>内容</th></tr>
+    <tr><td>0</td><td>ReflectionStepReview</td><td>対象期間のログ一覧を表示（期間ラベル付き）。「次へ」で次へ。</td></tr>
+    <tr><td>1</td><td>ReflectionStepChoose</td><td>「心に残った記録」を複数選択 → <code>ReflectionSession.highlightLogIds</code> に保存。<strong>記録0件の期間ではこのステップを飛ばす。</strong></td></tr>
+    <tr><td>2</td><td>ReflectionStepPrompts</td><td>「静かな問い」3 問への自由記述回答。</td></tr>
+    <tr><td>3</td><td>ReflectionStepMood</td><td>期間の総括感情（5 種）を選択。</td></tr>
+    <tr><td>4</td><td>ReflectionStepNote</td><td>気づきの自由記述（任意）＋「振り返りを終える」で保存。</td></tr>
     <tr><td>完了画面</td><td>ReflectionCompletionView</td><td>星がひとつ灯る（唯一許可するグロー）。「軌跡を見る」「閉じる」ボタン。</td></tr>
   </table>
   <div class="callout warn">
-    <strong>中断アラート:</strong> 入力あり（ハイライト選択・回答・感情・ノートいずれか）の状態で閉じようとすると「振り返りを中断しますか？」アラートを表示。「中断する」でデータは破棄（保存なし）。
+    <strong>STEP 番号は進行位置から動的に振る（2026-07-26）:</strong>
+    記録0件の期間は「選ぶ」を飛ばすため、各ステップ側に番号を固定していると<strong>アイブロウの「STEP n」とプログレス表示（n/m）が食い違う</strong>。
+    <code>activeSteps</code>（0件なら <code>[0,2,3,4]</code>／それ以外は <code>[0,1,2,3,4]</code>）の中での位置から <code>stepLabel</code> と進捗を同じ値で作る。
+    古い下書きが飛ばすべき step を指していた場合は <code>onAppear</code> で補正し、空画面へ戻さない。
   </div>
+  <div class="callout warn">
+    <strong>中断＝下書き保存（2026-07-26 変更）:</strong> 入力あり（ハイライト選択・回答・感情・ノートいずれか）の状態で閉じようとすると
+    「振り返りを中断しますか？」アラートを表示し、選択肢は「続ける」／「<strong>下書きを保存して閉じる</strong>」。
+    入力内容は端末内（<code>ReflectionDraftStore</code>）に保存され、次回同じ振り返りを開いたときに再開できる（旧仕様の「破棄」から変更）。
+  </div>
+
+  <h3>リマインダー提案（F12）</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>表示条件</td><td>セッションが<strong>完了保存され</strong>（中断では発火しない）、ホームへ戻った時点で <code>hasOfferedReminder == false</code> かつ <code>reminderEnabled == false</code>。</td></tr>
+    <tr><td>「設定する」</td><td>通知許可を要求 → 許可されたら「<strong>いま振り返りをした曜日</strong>」の 21:00 に週次リマインダーを登録し、AppStorage を更新。</td></tr>
+    <tr><td>「今はしない」</td><td><code>hasOfferedReminder = true</code> にしてカードを閉じる（二度と自動提案しない。以後は設定画面から）。</td></tr>
+    <tr><td>実装</td><td><code>onCompleted</code> コールバックで <code>justCompleted</code> を立て、<code>onChange(of: sessionType)</code> が nil になった時に判定する（完了画面上では出さない）。</td></tr>
+  </table>
 
   <h3>これまでの軌跡（ReflectionTimelineView）</h3>
   <p>振り返り履歴を蓄積した星図タイムライン。詳細は <a href="reflection-timeline.html">LR-TIMELINE-01</a> を参照。</p>
@@ -91,10 +113,11 @@
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>初期表示（振り返り未実施）</td><td>全リズムカードが isDue=true 状態（「そろそろ」バッジ + goldDim 枠）。「これまでの軌跡」は EmptyStateView（「まだ星のない夜」）。</td></tr>
-    <tr><td>週次のみ実施済み</td><td>週次カードは isDue に応じて通常または促進状態。月次・年次は isDue=true。</td></tr>
+    <tr><td>初期表示（振り返り未実施）</td><td>3枚とも isDue だが、<strong>強調されるのは週次カード1枚のみ</strong>（「そろそろ」バッジ + goldDim 枠）。「これまでの軌跡」は EmptyStateView（「まだ星のない夜」）。</td></tr>
+    <tr><td>週次のみ実施済み</td><td>週次が isDue でなくなれば、次点（月次 → 年次）が1枚だけ強調される。</td></tr>
     <tr><td>セッション中</td><td>fullScreenCover でオーバーレイ表示。背後のタブは維持。interactiveDismissDisabled(true) で誤スワイプを防止。</td></tr>
-    <tr><td>軌跡あり</td><td>「これまでの軌跡」に TrajectoryPreview（最新の note または最初の answer）が表示される。</td></tr>
+    <tr><td>セッション完了直後</td><td>ホーム最上部（ヒーローの下）にリマインダー提案カードを <code>.transition(.opacity)</code> で表示（初回のみ）。</td></tr>
+    <tr><td>軌跡あり</td><td>「これまでの軌跡」に TrajectoryPreview（最新の note または最初の非空 answer）が表示される。引用符のみ amber。</td></tr>
   </table>
 
   <h2>遷移</h2>
@@ -116,19 +139,26 @@ private var history: [ReflectionSession]
 
 // セッション起動管理
 @State private var sessionType: ReflectionType?   // nil = 表示なし
+@State private var justCompleted = false          // 完了保存されたか（中断では立たない）
+
+// リマインダー提案・設定（@AppStorage）
+//   hasOfferedReminder / reminderEnabled / reminderWeekday / reminderHour / reminderMinute
 
 // ReflectionSession（SwiftData @Model）
 //   var typeRaw: String           // ReflectionType.rawValue
-//   var periodStart: Date
-//   var periodEnd: Date
+//   var periodStart / periodEnd: Date
 //   var moodSummaryRaw: String?   // LogMood.rawValue
 //   var answers: [ReflectionAnswer]
-//   var highlightLogIds: [UUID]
+//   var highlightLogIds: [UUID]   // ハイライトの唯一の真実源
 //   var note: String?
+//   var starSeq: Int              // 星図の採番（挿入時に一度だけ）
 //   var completedAt: Date
 
 // isDue 判定（例: 週次）
-//   Calendar.current.dateComponents([.day], from: last.completedAt.startOfDay, to: now).day >= 7
+//   Calendar.current.dateComponents([.day], from: last.completedAt.startOfDay,
+//                                   to: now.startOfDay).day >= 7
+// 強調は1枚だけ
+//   [.weekly, .monthly, .yearly].first(where: isDue)
 </code></pre>
 
   <h2>アクセシビリティ対応</h2>
@@ -136,7 +166,9 @@ private var history: [ReflectionSession]
     <li>リズムカードはボタンとして実装（Button + .buttonStyle(.plain)）。VoiceOver は「週の振り返り、ボタン」等で読み上げ。</li>
     <li>道具箱 ToolCard は NavigationLink（ボタン扱い）。chevron.right は装飾のためアクセシビリティ非対象。</li>
     <li>セクション見出し（SectionHeader）には accessibilityAddTraits(.isHeader) を付与（SectionHeader 共通コンポーネント側で設定）。</li>
-    <li>ReflectionSessionView 内の ProgressBar に accessibilityLabel / accessibilityValue を設定（進捗 3/5 等）。</li>
+    <li>ReflectionSessionView 内の ProgressBar に accessibilityLabel / accessibilityValue を設定。閉じる（×）は 44×44 で <code>.accessibilityLabel("振り返りを閉じる")</code>。</li>
+    <li>本文・ラベルは <code>scaledFont</code>、見出し・問いは <code>AppFont.mincho(_:relativeTo:)</code> で Dynamic Type に追従。リマインダー提案の2ボタンは minHeight 44。</li>
+    <li>ナビタイトルは principal に自前描画するため <code>.accessibilityHidden(true)</code>。読みは <code>navigationTitle</code> 側に寄せ、二重読みを避ける。</li>
   </ul>
 
   <h2>実装メモ</h2>
@@ -146,6 +178,7 @@ private var history: [ReflectionSession]
     <li>navigateToTimeline の <code>navigationDestination(isPresented:)</code> で ReflectionTimelineView へ push する。</li>
     <li>isDue 判定と meta テキストは ReflectHomeView 内の private func で計算。history（@Query）から latest(_ type:) で最新セッションを取得する。</li>
     <li>グロー・星エフェクトはセッション完了画面（ReflectionCompletionView）にのみ許可。ReflectHomeView 本体には一切出さない。</li>
+    <li>背景・ナビタイトルは共通部品（<code>screenBackground()</code> / <code>minchoNavigationTitle(_:)</code>）に寄せる。<strong>セッション画面だけは自前の ZStack + <code>grainOverlay()</code></strong>（ナビバーを持たない全画面表示のため）。</li>
   </ul>
 
   <h2>関連</h2>
@@ -166,9 +199,10 @@ private var history: [ReflectionSession]
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-30</td><td>初版作成。ソースコード（ReflectHomeView / ReflectionSessionView）を元にタブ全体の構成・サブ画面・遷移を網羅的に記述</td></tr>
+    <tr><td>1.1</td><td>2026-07-26</td><td>STEP 番号を進行位置から動的に振る仕様（記録0件の期間は「選ぶ」を飛ばす）を追記。ハイライトの真実源を <code>highlightLogIds</code> に一本化（<code>isHighlight</code> 廃止）。中断アラートを「破棄」から「<strong>下書きを保存して閉じる</strong>」へ変更。リマインダー提案カード（F12）を追加。強調するリズムカードを最優先1枚に限定（emphasizedType）・アイコンは常に textMuted・「そろそろ」バッジの文字を沈める規律を反映。共通部品（screenBackground / minchoNavigationTitle）・Dynamic Type・44pt を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-30</footer>
+  <footer class="site-footer">最終更新: 2026-07-26</footer>
 </div>
 </body>
 </html>
