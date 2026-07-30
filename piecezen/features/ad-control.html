@@ -2,47 +2,107 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
-<title>PieceZen - 広告制御</title>
+<title>脳活ピース - 広告制御</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / 広告制御</div>
-  <header class="site-header"><h1>広告制御機能</h1><p>Banner / Interstitial / Rewarded 3種広告</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: PZ-FEAT-AD</span></div></header>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">脳活ピース</a> / 広告制御</div>
+  <header class="site-header"><h1>広告制御機能</h1><p>広告配信は v1.5.0 で恒久停止（AdEnvironment による環境判定）</p>
+  <div class="section-meta"><span class="tag done">v1.5.0</span><span class="tag">機能ID: PZ-FEAT-AD</span></div></header>
 
-  <h2>広告構成</h2>
+  <div class="callout">
+    <strong>現状: 広告は一切配信されていない。</strong>
+    2026-07-30、利用していた広告アカウントが「無効なトラフィック」を理由に恒久的に無効化され、再審査請求も却下された。
+    広告収益は永久にゼロであるため、<code>AdEnvironment.isAdDeliveryAvailable = false</code> として全広告を停止している。
+    別の広告ネットワークを導入するまでこの状態を維持する。
+  </div>
+
+  <h2>広告環境の判定（AdEnvironment）</h2>
   <table>
-    <tr><th>種類</th><th>表示タイミング</th><th>無料/購入</th></tr>
-    <tr><td>Banner</td><td>GameView 下部に常時</td><td>無料のみ</td></tr>
-    <tr><td>Interstitial</td><td>3ゲームに1回、最低90秒間隔</td><td>無料のみ</td></tr>
-    <tr><td>Rewarded</td><td>GameOver時の救済（1回限り）</td><td>常時利用可</td></tr>
+    <tr><th>判定</th><th>内容</th></tr>
+    <tr>
+      <td><code>isAdDeliveryAvailable</code></td>
+      <td>広告配信が利用可能か。<strong>v1.5.0 では false 固定</strong>。広告に関わる全挙動の単一停止スイッチとして機能する</td>
+    </tr>
+    <tr>
+      <td><code>isProduction</code></td>
+      <td>本番の広告ユニットIDを使ってよい環境か。<strong>App Store 配信版のみ true</strong>。DEBUG ビルド・シミュレーター・TestFlight はすべて Google 公式のテスト広告IDを使う。判定は App Store レシートが <code>sandboxReceipt</code> かどうかで行う</td>
+    </tr>
+  </table>
+  <p>
+    本番広告を開発者自身が表示・タップすることがアカウント無効化の直接原因になり得るため、
+    広告表示の動作確認は必ずテスト広告で行い、本番広告は App Store 配信版でのみ配信する運用に改めた。
+  </p>
+  <div class="callout">
+    具体的な広告ユニットIDおよびパブリッシャー識別子は本仕様書には記載しない（コード側で管理する）。
+  </div>
+
+  <h2>広告構成と停止中の挙動</h2>
+  <table>
+    <tr><th>種類</th><th>本来の表示タイミング</th><th>配信停止中（v1.5.0 の現状）</th></tr>
+    <tr>
+      <td>バナー</td>
+      <td>ゲーム画面下部に常時（未購入時のみ）</td>
+      <td><strong>枠ごと非表示</strong>。高さ0ではなくビュー自体を配置しないため、盤面下に余白が残らない</td>
+    </tr>
+    <tr>
+      <td>インタースティシャル</td>
+      <td>3ゲームに1回、最低90秒間隔（未購入時のみ）</td>
+      <td>呼び出さない。<strong>広告リクエストも発生しない</strong></td>
+    </tr>
+    <tr>
+      <td>リワード（もう1手 / アンドゥ追加）</td>
+      <td>ゲーム終了時の救済・アンドゥ2回目以降</td>
+      <td>広告を挟まず<strong>報酬を即付与</strong>。1ゲームあたりの上限回数は維持</td>
+    </tr>
   </table>
 
-  <h2>AdMob ID</h2>
-  <pre><code>App ID: ca-app-pub-4104853755894501~1889600698
-Interstitial: 2184902139
-Rewarded: 3655551463</code></pre>
+  <h2>付随して停止するもの</h2>
+  <table>
+    <tr><th>対象</th><th>停止中の挙動</th><th>理由</th></tr>
+    <tr>
+      <td>トラッキング許可（ATT）ダイアログ</td>
+      <td>表示しない</td>
+      <td>トラッキング許可は広告目的でしか求めていない。広告がない状態で許可を求めると「求める理由がない」状態になり審査リスクにもなる</td>
+    </tr>
+    <tr>
+      <td>広告SDKの初期化</td>
+      <td>行わない</td>
+      <td>広告リクエストを一切発生させないため</td>
+    </tr>
+  </table>
+  <p>アプリ起動時の計測ログは、広告の有無とは独立して従来どおり実行する。</p>
 
-  <h2>AdManager API</h2>
-  <pre><code>@Observable @MainActor
-final class AdManager {
-    func loadInterstitial()
-    func loadRewarded()
-    func showInterstitialIfReady()  // 3ゲーム/90秒制御
-    func showRewarded(completion: (Bool) -> Void)
-}</code></pre>
+  <h2>UI 文言への影響</h2>
+  <table>
+    <tr><th>箇所</th><th>広告配信中の表記</th><th>配信停止中の表記（現状）</th></tr>
+    <tr><td>ゲーム終了画面のリワードボタン</td><td>広告を見てもう1手</td><td><strong>無料でもう1手</strong>（アイコンも <code>gift.fill</code> に変化）</td></tr>
+    <tr><td>アンドゥボタン（無料回数を使い切った後）</td><td>戻す (広告)</td><td><strong>戻す</strong></td></tr>
+  </table>
+  <p>いずれも <code>isAdDeliveryAvailable</code> による分岐で、広告を再開すれば元の表記に戻る設計にしている。</p>
 
   <h2>ビジネスルール</h2>
   <ul>
-    <li>Banner はプレミアム時に非表示（高さ0）</li>
-    <li>Interstitial は表示頻度を抑制（プレミアム時は完全非表示）</li>
-    <li>Rewarded は救済機能として全ユーザー利用可</li>
-    <li>本番リリースは本番AdMob IDに切替必須</li>
+    <li>広告配信が停止している間は、広告枠を一切表示せず、広告リクエストも発生させない</li>
+    <li>リワードで与えていた報酬は広告なしで即付与する。ただし<strong>1ゲームあたりの上限回数は維持</strong>する</li>
+    <li>プレミアム購入者には広告を表示しない。<strong>将来別の広告ネットワークを導入した場合も表示しない</strong>（購入時の保証）</li>
+    <li>プレミアム購入者にはアンドゥの広告視聴を一切要求しない（アンドゥ無制限が特典のため）</li>
+    <li>本番の広告ユニットIDを使うのは App Store 配信版のみ。それ以外の環境では必ずテスト広告IDを使う</li>
+    <li>撮影モード（スクリーンショット自動撮影）では広告・ATT・計測をすべて抑止する</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="v1-5-premium.html">v1.5.0 リリース仕様書「プレミアム（買い切り）」</a></li>
+    <li><a href="storekit.html">StoreKit 課金機能</a></li>
+    <li><a href="../screens/game-over.html">ゲーム終了画面</a></li>
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+  <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+  <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: 広告配信の恒久停止を反映。AdEnvironment（本番IDは App Store 配信版のみ / isAdDeliveryAvailable による全停止）を追加。停止中の挙動（バナー枠ごと非表示・インタースティシャル非呼出・報酬の無条件付与・ATT と SDK 初期化の抑止）と UI 文言変更を記載。仕様書から広告ユニットID・パブリッシャー識別子の記載を削除</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-07-30</footer>
 </div></body></html>

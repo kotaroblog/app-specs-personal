@@ -64,12 +64,37 @@
   <h2>アンドゥ</h2>
   <ul>
     <li>UndoSnapshot で grid/blocks/score/comboCount をキャプチャ</li>
-    <li>最大3回（2回目以降はリワード広告必須）</li>
     <li>新手を配置すると snapshot が上書き → 1手のみ復元可</li>
+  </ul>
+  <table>
+    <tr><th>ユーザー区分</th><th>1ゲームあたりの回数</th><th>広告視聴</th></tr>
+    <tr><td>無料</td><td>3回（v1.4 から変更なし）</td><td>広告配信中は2回目以降に必要。<strong>配信停止中（v1.5.0 の現状）は不要</strong></td></tr>
+    <tr><td>プレミアム購入者</td><td><strong>無制限</strong>（★ v1.5.0 特典）</td><td><strong>一切要求しない</strong></td></tr>
+  </table>
+
+  <h2>「もう1手」（ゲーム終了後の救済）</h2>
+  <ul>
+    <li>ゲーム終了画面から使用し、ランダムで1セルを消去してプレイを継続する</li>
+    <li>広告配信停止中は広告を挟まず<strong>報酬を即付与</strong>するが、<strong>1ゲームあたりの上限回数は維持</strong>する</li>
+    <li>上限に達するとボタン自体が表示されなくなる</li>
+  </ul>
+  <table>
+    <tr><th>ユーザー区分</th><th>1ゲームあたりの回数</th></tr>
+    <tr><td>無料</td><td>1回（v1.4 から変更なし）</td></tr>
+    <tr><td>プレミアム購入者</td><td><strong>3回</strong>（★ v1.5.0 特典）</td></tr>
+  </table>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="v1-5-premium.html">v1.5.0 リリース仕様書「プレミアム（買い切り）」</a></li>
+    <li><a href="../screens/game.html">ゲーム画面</a></li>
+    <li><a href="../screens/game-over.html">ゲーム終了画面</a></li>
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+  <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+  <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: アンドゥの回数をユーザー区分別に整理（無料3回 / プレミアム無制限・広告視聴なし）。「もう1手」セクションを新設（無料1回 / プレミアム3回、広告なしで即付与するが上限は維持）</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-07-30</footer>
 </div></body></html>

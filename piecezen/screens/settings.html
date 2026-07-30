@@ -8,14 +8,14 @@
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / 設定</div>
-  <header class="site-header"><h1>設定画面（SettingsView）</h1><p>サウンド・ハプティクス・テーマ・課金</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: PZ-SET-01</span></div></header>
+  <header class="site-header"><h1>設定画面（SettingsView）</h1><p>サウンド・ハプティクス・テーマ・プレミアム</p>
+  <div class="section-meta"><span class="tag done">v1.5.0</span><span class="tag">画面ID: PZ-SET-01</span></div></header>
 
   <section class="screen-image">
     <h2>画面イメージ</h2>
     <figure class="screen-shot">
       <img src="_shots/settings.png" alt="設定画面（脳活ピース v1.4）" loading="lazy">
-      <figcaption>v1.4 自動撮影（fastlane snapshot）</figcaption>
+      <figcaption>v1.4 自動撮影（fastlane snapshot）。v1.5.0 のプレミアム対応前の状態</figcaption>
     </figure>
   </section>
 
@@ -24,10 +24,54 @@
     <tr><th>セクション</th><th>項目</th></tr>
     <tr><td>サウンド</td><td>有効/無効トグル</td></tr>
     <tr><td>ハプティクス</td><td>有効/無効トグル</td></tr>
-    <tr><td>カラーテーマ</td><td>6種類から選択（クラシック/オーシャン/サクラ/ネオン/モノクロ/見やすいモード）</td></tr>
-    <tr><td>課金</td><td>「広告を除去」 / 「購入を復元」</td></tr>
-    <tr><td>アプリ情報</td><td>バージョン v1.4 (build 21)</td></tr>
+    <tr><td>テーマ</td><td>10種類から選択（うち3種はプレミアム限定）。未購入時はフッターに補足文を表示</td></tr>
+    <tr><td>プレミアム</td><td>未購入: 「プレミアムを購入する」 /「購入を復元」<br>購入済み: 「プレミアム購入済み」</td></tr>
+    <tr><td>アプリ情報</td><td>バージョン v1.5.0 (build 22)</td></tr>
   </table>
+
+  <h2>テーマセクション（v1.5.0〜）</h2>
+  <h3>テーマ一覧（全10種）</h3>
+  <table>
+    <tr><th>表示名</th><th>区分</th><th>備考</th></tr>
+    <tr><td>アーケード</td><td>無料</td><td>既定テーマ</td></tr>
+    <tr><td>クラシック</td><td>無料</td><td></td></tr>
+    <tr><td>オーシャン</td><td>無料</td><td></td></tr>
+    <tr><td>サクラ</td><td>無料</td><td></td></tr>
+    <tr><td>ネオン</td><td>無料</td><td></td></tr>
+    <tr><td>モノクローム</td><td>無料</td><td></td></tr>
+    <tr><td>見やすい高コントラスト</td><td>無料</td><td>シニア向け高コントラスト</td></tr>
+    <tr><td>和み</td><td><strong>プレミアム限定</strong></td><td>★ v1.5.0 追加。和の伝統色</td></tr>
+    <tr><td>琥珀</td><td><strong>プレミアム限定</strong></td><td>★ v1.5.0 追加。暖色系</td></tr>
+    <tr><td>若草</td><td><strong>プレミアム限定</strong></td><td>★ v1.5.0 追加。緑系</td></tr>
+  </table>
+  <div class="callout">
+    <strong>既存7テーマは今後も全ユーザー無料。</strong>
+    すでに無料開放済みのテーマを後から有料化することはしない。未購入時のみ、テーマセクションのフッターに
+    「和み・琥珀・若草はプレミアム特典です。既存のテーマは今後も無料で使えます。」を表示してこれを明示する。
+  </div>
+
+  <h3>限定テーマのロック仕様</h3>
+  <table>
+    <tr><th>状態</th><th>表示</th><th>タップ時の挙動</th></tr>
+    <tr>
+      <td>未購入</td>
+      <td>一覧に<strong>鍵アイコン付き</strong>で表示。プレビュー色は<strong>不透明度 45%</strong> に落ち、テーマ名も控えめな文字色になる</td>
+      <td><strong>Paywall 画面へ遷移</strong>する。テーマは選択されない</td>
+    </tr>
+    <tr>
+      <td>購入済み</td>
+      <td>無料テーマと同じ表示（選択中はチェックマーク）</td>
+      <td>通常どおり選択・即適用される</td>
+    </tr>
+  </table>
+  <p>ロック中の行は支援技術に対して「（テーマ名）（プレミアム限定）」と読み上げ、「プレミアム購入画面を開きます」というヒントを提供する。</p>
+
+  <h3>限定テーマの色品質担保</h3>
+  <p>
+    追加した3テーマ × ブロック色12色 = <strong>36ケース</strong>について、空セル背景に対する
+    WCAG 1.4.11 非テキストコントラスト <strong>3:1 以上</strong>を自動テストで検証している。
+    初期案では和み・琥珀の indigo がそれぞれ 2.37:1 / 2.41:1 で基準未満だったため、明度を上げて是正済み。
+  </p>
 
   <h2>見やすいモード（seniorContrast）の色仕様</h2>
   <p>「見やすいモード」は空セル背景との間で WCAG コントラスト比 3:1 以上を確保する高コントラストテーマ。v1.4.0 にて indigo / blue の明度を調整し、WCAG 基準への非準拠（コントラスト不足）を是正した。</p>
@@ -38,22 +82,46 @@
   </table>
   <p>テーマカード選択時のCTAボタンデザインは全画面共通仕様を適用（→ <a href="game-over.html">ゲームオーバー画面 CTAボタン仕様</a> 参照）。</p>
 
+  <h2>プレミアムセクション（v1.5.0〜）</h2>
+  <table>
+    <tr><th>箇所</th><th>変更前（v1.4 まで）</th><th>変更後（v1.5.0〜）</th></tr>
+    <tr><td>セクション名</td><td>広告除去</td><td><strong>プレミアム</strong></td></tr>
+    <tr><td>購入導線</td><td>広告を除去する</td><td><strong>プレミアムを購入する</strong></td></tr>
+    <tr><td>購入済み表示</td><td>広告除去済み</td><td><strong>プレミアム購入済み</strong></td></tr>
+  </table>
+  <p>
+    購入済みの場合は購入導線を表示せず、「プレミアム購入済み」の表示のみになる。
+    商品は買い切り（¥480）で、Product ID は v1.5.0 でも変更していないため、既存購入者は追加課金なしで新特典を得る。
+  </p>
+
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>「広告を除去」</td><td>PaywallView</td></tr>
+    <tr><td>「プレミアムを購入する」</td><td>PaywallView</td></tr>
+    <tr><td>プレミアム限定テーマ（未購入時）をタップ</td><td>PaywallView（テーマは選択されない）</td></tr>
+    <tr><td>「購入を復元」</td><td>遷移なし（その場で復元処理）</td></tr>
   </table>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li class="done">@AppStorage で各設定値を直接バインド</li>
     <li class="done">テーマ変更時に GridView 自動再描画（BlockColor の動的参照）</li>
+    <li class="done">ロック判定は <code>ColorTheme.isPremiumOnly</code> と <code>StoreManager.isPremium</code> の組み合わせ</li>
+    <li class="done">ロック中の行は Button ではなく Paywall への NavigationLink として構成し、誤ってテーマが切り替わらないようにしている</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/v1-5-premium.html">v1.5.0 リリース仕様書「プレミアム（買い切り）」</a></li>
+    <li><a href="paywall.html">Paywall 画面</a></li>
+    <li><a href="../features/storekit.html">プレミアム課金機能</a></li>
   </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
   <tr><td>1.1</td><td>2026-06-10</td><td>画面イメージ（fastlane snapshot 自動撮影）を追加</td></tr>
-  <tr><td>1.2</td><td>2026-07-14</td><td>カラーテーマを6種類に更新（見やすいモード追加）。seniorContrast テーマの indigo/blue HSL 値是正（WCAG 3:1 対応）を色仕様セクションに記載</td></tr></table>
+  <tr><td>1.2</td><td>2026-07-14</td><td>カラーテーマを6種類に更新（見やすいモード追加）。seniorContrast テーマの indigo/blue HSL 値是正（WCAG 3:1 対応）を色仕様セクションに記載</td></tr>
+  <tr><td>1.3</td><td>2026-07-30</td><td>v1.5.0 対応: セクション名を「広告除去」→「プレミアム」、購入導線を「プレミアムを購入する」、購入済み表示を「プレミアム購入済み」に変更。テーマを全10種に更新し、プレミアム限定3種（和み・琥珀・若草）のロック仕様（鍵アイコン・不透明度45%・タップで Paywall 遷移）とフッター補足文を追加。限定テーマ36ケースの WCAG 3:1 自動検証を記載</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-07-14</footer>
+  <footer class="site-footer">最終更新: 2026-07-30</footer>
 </div></body></html>

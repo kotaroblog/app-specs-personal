@@ -29,8 +29,8 @@
   <table>
     <tr><th>クラス</th><th>責務</th></tr>
     <tr><td><code>GameEngine</code></td><td>グリッド・配置・ライン消去・スコア・アンドゥ・演出</td></tr>
-    <tr><td><code>AdManager</code></td><td>広告表示制御</td></tr>
-    <tr><td><code>StoreManager</code></td><td>課金（広告除去）</td></tr>
+    <tr><td><code>AdManager</code></td><td>広告表示制御（v1.5.0 以降は配信停止中。報酬の即付与のみ担当）</td></tr>
+    <tr><td><code>StoreManager</code></td><td>課金。<code>isPremium</code> でプレミアム購入状態を提供（★ v1.5.0 で <code>isAdFree</code> から改称・特典を差し替え）</td></tr>
     <tr><td><code>SoundManager</code></td><td>サウンド再生</td></tr>
     <tr><td><code>HapticManager</code></td><td>ハプティクス</td></tr>
     <tr><td><code>StreakManager</code></td><td>連続プレイ日数</td></tr>
@@ -62,8 +62,15 @@ enum CellState {
 enum GameState {
     case playing
     case gameOver
-    case rescued  // リワード広告で救済中
+    case rescued  // 「もう1手」で救済中
 }</code></pre>
+
+  <h2>広告環境の判定（AdEnvironment・★ v1.5.0 追加）</h2>
+  <table>
+    <tr><th>プロパティ</th><th>型</th><th>内容</th></tr>
+    <tr><td><code>isAdDeliveryAvailable</code></td><td>Bool</td><td>広告配信が利用可能か。v1.5.0 では <strong>false 固定</strong>（広告の恒久停止）</td></tr>
+    <tr><td><code>isProduction</code></td><td>Bool</td><td>本番の広告ユニットIDを使ってよい環境か。App Store 配信版のみ true</td></tr>
+  </table>
 
   <h2>BlockShape 19種類</h2>
   <p>dot / domino2H/V / line3H/V / lShape3A〜3D / line4H/V / square2x2 / tShapeDown/Up / sShape / zShape / bigLShapeA/B / plusShape</p>

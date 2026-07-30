@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>脳活ピース - v1.5.0 リリース仕様書「プレミアム（買い切り）」</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">脳活ピース</a> / v1.5.0 プレミアム</div>
+
+  <header class="site-header">
+    <h1>v1.5.0 リリース仕様書「プレミアム（買い切り）」</h1>
+    <p>広告配信の恒久停止と、買い切りIAPの商品内容をプレミアム特典へ差し替えた大型変更</p>
+    <div class="section-meta">
+      <span class="tag done">v1.5.0 (build 22)</span>
+      <span class="tag">機能ID: PZ-FEAT-V1-5</span>
+      <span class="tag">2026-07-30 実施</span>
+    </div>
+  </header>
+
+  <div class="callout">
+    <strong>この版の位置づけ</strong>：広告収益が永久にゼロになったという外部要因を受け、
+    「広告を消すために払う」という価値提案そのものが成立しなくなった。
+    そこで買い切りIAP（¥480）の Product ID は変更せずに<strong>商品内容だけを差し替え</strong>、
+    「じっくり考えて遊ぶための特典」へ転換した。既存購入者は自動的に新特典を得る。
+  </div>
+
+  <h2>概要</h2>
+  <p>
+    v1.5.0 の変更は大きく3系統に分かれる。
+  </p>
+  <table>
+    <tr><th>#</th><th>変更</th><th>ユーザーから見た影響</th></tr>
+    <tr>
+      <td>1</td>
+      <td>広告配信の恒久停止</td>
+      <td>バナー・インタースティシャルが枠ごと消え、トラッキング許可ダイアログも出なくなる。リワードで得られていた報酬は広告なしで即もらえる</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>買い切りIAPの商品内容差し替え（広告除去 → プレミアム）</td>
+      <td>アンドゥ無制限・「もう1手」3回・限定テーマ3種が特典になる。既存購入者は追加課金なしで新特典を得る</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>限定テーマの品質担保</td>
+      <td>追加テーマでもブロックが盤面上で見分けづらくならないことを自動テストで保証</td>
+    </tr>
+  </table>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/paywall.html">Paywall（PZ-PAY-01）</a> — 見出し・特典一覧を全面差し替え</li>
+    <li><a href="../screens/settings.html">設定（PZ-SET-01）</a> — プレミアムセクション化・テーマのロック表示</li>
+    <li><a href="../screens/game-over.html">ゲーム終了（PZ-OVER-01）</a> — 「無料でもう1手」・プレミアム訴求リンク</li>
+    <li><a href="../screens/game.html">ゲーム（PZ-GAME-01）</a> — バナー枠の消滅・アンドゥ残数の <code>∞</code> 表示</li>
+  </ul>
+
+  <h2>1. 広告配信の恒久停止</h2>
+
+  <h3>背景</h3>
+  <p>
+    アプリで利用していた広告アカウントが「無効なトラフィック」を理由に恒久的に無効化され、再審査請求も却下された。
+    このため<strong>広告収益は永久にゼロ</strong>であり、広告を配信し続ける理由がなくなった。
+    別の広告ネットワークを導入するまでは、広告に関わるすべての挙動を停止する。
+  </p>
+
+  <h3>広告環境の判定（AdEnvironment）</h3>
+  <p>各アプリ共通の前提変更として、広告の実行環境を判定する <code>AdEnvironment</code> を新設した。</p>
+  <table>
+    <tr><th>判定</th><th>内容</th></tr>
+    <tr>
+      <td><code>isProduction</code></td>
+      <td>本番の広告ユニットIDを使ってよい環境か。<strong>App Store 配信版のみ true</strong>。DEBUG ビルド・シミュレーター・TestFlight はすべて Google 公式のテスト広告IDを使う。判定は App Store レシートが <code>sandboxReceipt</code> かどうかで行う（TestFlight・実機直接インストールは <code>sandboxReceipt</code>、App Store 配信版のみ通常のレシート）</td>
+    </tr>
+    <tr>
+      <td><code>isAdDeliveryAvailable</code></td>
+      <td>広告配信が利用可能か。v1.5.0 では <strong>false 固定</strong>。広告枠の非表示と報酬の無条件付与でユーザー体験を維持する</td>
+    </tr>
+  </table>
+  <div class="callout">
+    本番広告を開発者自身が表示・タップすることがアカウント無効化の直接原因になり得る。
+    そのため広告表示の動作確認は必ずテスト広告で行い、本番広告は App Store 配信版でのみ配信する運用に改めた。
+    具体的な広告ユニットIDおよびパブリッシャー識別子は本仕様書には記載しない。
+  </div>
+
+  <h3>広告配信停止中の挙動</h3>
+  <table>
+    <tr><th>対象</th><th>停止中の挙動</th></tr>
+    <tr><td>バナー広告</td><td><strong>枠ごと非表示</strong>。高さ0ではなくビュー自体を配置しないため、盤面下に余白が残らない</td></tr>
+    <tr><td>インタースティシャル広告</td><td>呼び出さない。<strong>広告リクエストも発生しない</strong></td></tr>
+    <tr><td>リワード広告（もう1手 / アンドゥ追加）</td><td>広告を挟まず<strong>報酬を即付与</strong>。1ゲームあたりの上限回数は従来どおり維持する</td></tr>
+    <tr><td>トラッキング許可（ATT）ダイアログ</td><td>表示しない</td></tr>
+    <tr><td>広告SDKの初期化</td><td>行わない</td></tr>
+  </table>
+  <p>
+    ATT ダイアログを出さない理由は、トラッキング許可を広告目的でしか求めていないため。
+    広告がない状態で許可を求めると「求める理由がない」状態になり、審査上のリスクにもなる。
+  </p>
+
+  <h3>報酬付与フロー（広告配信停止中）</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant V as GameOverView / GameView
+  participant A as AdManager
+  participant E as GameEngine
+
+  U->>V: 「無料でもう1手」をタップ
+  V->>A: 報酬付与を依頼
+  A->>A: 広告配信が利用可能か判定
+  Note over A: 停止中 → 広告を表示しない
+  A-->>E: 報酬コールバックを即実行
+  E->>E: 上限回数を確認して救済処理
+  E-->>V: 状態更新（プレイ再開）
+  V-->>U: ゲーム続行
+  </div>
+
+  <h2>2. 買い切りIAPの商品内容差し替え</h2>
+
+  <h3>商品</h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>Product ID</td><td><code>com.happyboy1002.BlockPuzzle.removeAds</code>（<strong>変更しない</strong>）</td></tr>
+    <tr><td>形式</td><td>非消耗型・買い切り（¥480）</td></tr>
+    <tr><td>商品名（変更前）</td><td>広告除去</td></tr>
+    <tr><td>商品名（変更後）</td><td>プレミアム（買い切り）</td></tr>
+    <tr><td>既存購入者の扱い</td><td>追加課金なしで<strong>自動的に新特典を得る</strong>（購入済み判定は同一 Product ID のため）</td></tr>
+  </table>
+  <div class="callout">
+    Product ID を据え置いたのは、既存購入者の権利を確実に引き継ぐため。
+    新 Product ID にすると既存購入者が特典を失うか、移行処理が必要になる。
+  </div>
+
+  <h3>プレミアム特典（3つ）</h3>
+  <table>
+    <tr><th>特典</th><th>無料</th><th>プレミアム</th></tr>
+    <tr>
+      <td>アンドゥ（戻す）</td>
+      <td>3回 / ゲーム（変更なし）</td>
+      <td><strong>回数制限なし</strong>。ボタンの残数表示が <code>∞</code> になる</td>
+    </tr>
+    <tr>
+      <td>「もう1手」（ゲーム終了後の復活）</td>
+      <td>1回 / ゲーム（変更なし）</td>
+      <td><strong>3回 / ゲーム</strong></td>
+    </tr>
+    <tr>
+      <td>カラーテーマ</td>
+      <td>既存7種すべて</td>
+      <td>既存7種 + <strong>限定テーマ3種</strong></td>
+    </tr>
+  </table>
+  <p>
+    無料側の回数は<strong>いずれも従来から変更していない</strong>。
+    無料で提供していたものを後から取り上げる形にはせず、プレミアム側を上に伸ばす設計にした。
+  </p>
+
+  <h3>カラーテーマ一覧（全10種）</h3>
+  <table>
+    <tr><th>表示名</th><th>区分</th><th>備考</th></tr>
+    <tr><td>アーケード</td><td>無料</td><td>既定テーマ</td></tr>
+    <tr><td>クラシック</td><td>無料</td><td></td></tr>
+    <tr><td>オーシャン</td><td>無料</td><td></td></tr>
+    <tr><td>サクラ</td><td>無料</td><td></td></tr>
+    <tr><td>ネオン</td><td>無料</td><td></td></tr>
+    <tr><td>モノクローム</td><td>無料</td><td></td></tr>
+    <tr><td>見やすい高コントラスト</td><td>無料</td><td>シニア向け高コントラスト</td></tr>
+    <tr><td>和み</td><td><strong>プレミアム限定</strong></td><td>★ v1.5 追加。和の伝統色</td></tr>
+    <tr><td>琥珀</td><td><strong>プレミアム限定</strong></td><td>★ v1.5 追加。暖色系</td></tr>
+    <tr><td>若草</td><td><strong>プレミアム限定</strong></td><td>★ v1.5 追加。緑系</td></tr>
+  </table>
+  <div class="callout">
+    <strong>既存7テーマは今後も全ユーザー無料。</strong>
+    すでに無料開放済みのテーマを有料化することはしない、というのが本変更の前提ルール。
+  </div>
+
+  <h3>限定テーマのロック仕様</h3>
+  <table>
+    <tr><th>状態</th><th>表示</th><th>タップ時の挙動</th></tr>
+    <tr>
+      <td>未購入</td>
+      <td>鍵アイコン付きで一覧に表示。プレビュー色は不透明度 45% に落ちる。テーマ名も控えめな文字色になる</td>
+      <td><strong>Paywall 画面へ遷移</strong>する。テーマは選択されない</td>
+    </tr>
+    <tr>
+      <td>購入済み</td>
+      <td>無料テーマと同じ表示（選択中はチェックマーク）</td>
+      <td>通常どおり選択・適用される</td>
+    </tr>
+  </table>
+  <p>ロック中のテーマは、支援技術向けにも「プレミアム限定」であることと「購入画面を開く」ことが読み上げられる。</p>
+
+  <h3>画面別の文言変更</h3>
+
+  <h4>設定画面</h4>
+  <table>
+    <tr><th>箇所</th><th>変更前</th><th>変更後</th></tr>
+    <tr><td>セクション名</td><td>広告除去</td><td>プレミアム</td></tr>
+    <tr><td>購入導線</td><td>広告を除去する</td><td>プレミアムを購入する</td></tr>
+    <tr><td>購入済み表示</td><td>広告除去済み</td><td>プレミアム購入済み</td></tr>
+    <tr>
+      <td>テーマセクションのフッター</td>
+      <td>（なし）</td>
+      <td>「和み・琥珀・若草はプレミアム特典です。既存のテーマは今後も無料で使えます。」<br><small>※未購入時のみ表示</small></td>
+    </tr>
+  </table>
+
+  <h4>ゲーム終了画面</h4>
+  <table>
+    <tr><th>箇所</th><th>変更前</th><th>変更後</th></tr>
+    <tr><td>リワードボタン</td><td>広告を見てもう1手（<code>play.rectangle.fill</code>）</td><td>無料でもう1手（<code>gift.fill</code>）</td></tr>
+    <tr><td>訴求リンク</td><td>広告を除去して快適にプレイ</td><td>プレミアムでアンドゥ無制限・もう1手3回</td></tr>
+  </table>
+
+  <h4>Paywall 画面</h4>
+  <table>
+    <tr><th>箇所</th><th>変更前</th><th>変更後</th></tr>
+    <tr><td>見出し</td><td>広告を除去する</td><td>じっくり考えて遊ぶ</td></tr>
+    <tr>
+      <td>特典一覧</td>
+      <td>Banner / Interstitial 非表示</td>
+      <td>4項目に差し替え（下表）</td>
+    </tr>
+  </table>
+  <table>
+    <tr><th>特典</th><th>説明文</th></tr>
+    <tr><td>アンドゥが無制限</td><td>何度でも戻せるので、納得いくまで考えられます</td></tr>
+    <tr><td>「もう1手」が3回に</td><td>ゲーム終了後の復活が1回から3回に増えます</td></tr>
+    <tr><td>限定テーマ3種</td><td>和み・琥珀・若草。既存のテーマは今後も全員無料です</td></tr>
+    <tr><td>一度の購入で永続利用</td><td>月額課金なし。今後広告を導入しても表示されません</td></tr>
+  </table>
+  <p>
+    4つ目の「今後広告を導入しても表示されません」は、
+    <strong>「広告除去」として購入した既存ユーザーへの保証</strong>を明文化したもの。
+    将来別の広告ネットワークを導入した場合でも、購入者には広告を出さない。
+  </p>
+
+  <h2>3. 品質担保</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>検証対象</td><td>追加テーマ3種 × ブロック色12色 = <strong>36ケース</strong></td></tr>
+    <tr><td>基準</td><td>空セル背景（<code>boardWellInk</code>）に対する WCAG 1.4.11 非テキストコントラスト <strong>3:1 以上</strong></td></tr>
+    <tr><td>手段</td><td>自動テスト <code>ColorThemeContrastTests</code> でパラメタライズ検証。将来パレットを変更した際の回帰を機械的に検知する</td></tr>
+  </table>
+  <p>
+    ブロック色はテキストではなく盤面上の図形要素なので、文字用の 4.5:1 ではなく非テキスト基準の 3:1 を採用している。
+    琥珀は暖色、若草は緑系で色相帯が狭く、明度差だけで12色を弁別する必要があるため、有料特典として提供する以上は機械的な担保が必須と判断した。
+  </p>
+
+  <h3>是正した色</h3>
+  <table>
+    <tr><th>テーマ</th><th>色</th><th>初期案のコントラスト比</th><th>対応</th></tr>
+    <tr><td>和み</td><td>indigo</td><td>2.37 : 1（基準未満）</td><td>明度を上げて 3:1 以上を確保</td></tr>
+    <tr><td>琥珀</td><td>indigo</td><td>2.41 : 1（基準未満）</td><td>明度を上げて 3:1 以上を確保</td></tr>
+  </table>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>広告配信が停止している間は、広告枠を一切表示せず、広告リクエストも発生させない</li>
+    <li>リワードで与えていた報酬は広告なしで即付与する。ただし<strong>1ゲームあたりの上限回数は維持</strong>する（無料: もう1手1回・アンドゥ3回）</li>
+    <li>買い切りIAPの Product ID は変更しない。既存購入者は自動的にプレミアム特典を得る</li>
+    <li>既存7テーマは今後も全ユーザー無料。後から有料化しない</li>
+    <li>プレミアム購入者にはアンドゥの広告視聴を一切要求しない（無制限が特典のため）</li>
+    <li>プレミアム限定テーマは未購入でも一覧に表示し、タップで Paywall へ誘導する（隠さない）</li>
+    <li>購入者には将来広告を導入しても広告を表示しない</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>StoreKit 2</td><td>買い切りIAPの購入・復元・購入状態の同期</td><td>Product ID は据え置き。実装内部の詳細は本仕様書では扱わない</td></tr>
+    <tr><td>広告SDK</td><td>（v1.5.0 では未使用）</td><td>配信停止中は初期化も行わない。将来別ネットワークを導入する際に再検討</td></tr>
+    <tr><td>App Tracking Transparency</td><td>（v1.5.0 では未使用）</td><td>広告目的のみのため、広告がない間はダイアログを表示しない</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>商品情報の取得に失敗</td><td>Paywall にエラーアラートを表示。購入ボタンは押せない状態を維持する</td></tr>
+    <tr><td>購入がキャンセル・失敗</td><td>エラーアラートを表示し、購入前の状態を保つ（特典は付与しない）</td></tr>
+    <tr><td>購入復元で対象が見つからない</td><td>エラーアラートを表示。未購入状態のまま継続利用できる</td></tr>
+    <tr><td>広告配信が停止している状態でリワード相当の操作</td><td>エラーにせず、広告なしで報酬を付与する（上限回数の判定は維持）</td></tr>
+    <tr><td>プレミアム限定テーマを未購入でタップ</td><td>エラーにせず Paywall へ遷移。テーマ選択は行わない</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done"><code>AdEnvironment</code> を新設し、本番広告IDの使用を App Store 配信版に限定</li>
+    <li class="done"><code>AdEnvironment.isAdDeliveryAvailable = false</code> を単一の停止スイッチとして、バナー・インタースティシャル・ATT・SDK初期化・リワードの各分岐に適用</li>
+    <li class="done">購入状態は <code>StoreManager.isPremium</code> に集約（判定は従来と同じ Product ID）</li>
+    <li class="done">アンドゥ無制限は <code>GameEngine.isUndoUnlimited</code>、「もう1手」上限はプレミアム3回 / 無料1回で分岐</li>
+    <li class="done">テーマのロック判定は <code>ColorTheme.isPremiumOnly</code>（和み・琥珀・若草のみ true）</li>
+    <li class="done">追加テーマ36ケースのコントラストを <code>ColorThemeContrastTests</code> で自動検証</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="ad-control.html">広告制御機能</a></li>
+    <li><a href="storekit.html">StoreKit 課金機能</a></li>
+    <li><a href="game-logic.html">ゲームロジック</a></li>
+    <li><a href="../glossary.html">用語集・ドメイン辞書</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-07-30</td><td>初版作成（v1.5.0 build 22 の実装内容を反映）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-07-30</footer>
+</div>
+</body>
+</html>

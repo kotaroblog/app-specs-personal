@@ -27,10 +27,26 @@
     <tr><td>BlockTrayView</td><td>3スロットのドラッグ可能ピース</td></tr>
     <tr><td>プレビュー表示</td><td>ドラッグ中の配置先ハイライト</td></tr>
     <tr><td>回転ボタン</td><td>ピースを4回転。タッチターゲット 48pt（→アクセシビリティ基準参照）</td></tr>
-    <tr><td>アンドゥボタン（戻すボタン）</td><td>1手戻す（最大3回、2回目以降は広告）。タッチターゲット 48pt</td></tr>
+    <tr><td>アンドゥボタン（戻すボタン）</td><td>1手戻す。無料は最大3回、プレミアムは無制限。タッチターゲット 48pt（→下記アンドゥボタン仕様）</td></tr>
     <tr><td>PlayFeedbackOverlay</td><td>スコアポップアップ・賞賛テキスト・クロス爆発</td></tr>
-    <tr><td>BannerAdView</td><td>下部固定（広告除去未済時）</td></tr>
+    <tr><td>BannerAdView</td><td>下部固定。<strong>広告配信停止中（v1.5.0 の現状）は枠ごと非表示</strong>。プレミアム購入時・撮影モード時も非表示</td></tr>
   </table>
+  <div class="callout">
+    広告は v1.5.0 で恒久停止したため、現状はすべてのユーザーでバナー枠が表示されない。
+    高さ0ではなくビュー自体を配置しないため、盤面下に余白は残らない。
+    詳細は <a href="../features/ad-control.html">広告制御機能</a> を参照。
+  </div>
+
+  <h2>アンドゥボタン仕様（v1.5.0〜）</h2>
+  <table>
+    <tr><th>ユーザー区分</th><th>回数</th><th>残数表示</th><th>広告視聴</th></tr>
+    <tr><td>無料</td><td>3回 / ゲーム（v1.4 から変更なし）</td><td>「残り/3」形式</td><td>広告配信中は2回目以降に必要（現状は配信停止中のため不要）</td></tr>
+    <tr><td>プレミアム購入者</td><td><strong>無制限</strong>（★ v1.5.0 特典）</td><td><strong><code>∞</code></strong></td><td><strong>一切要求しない</strong></td></tr>
+  </table>
+  <p>
+    ボタンのラベルは広告視聴が必要な場合のみ「戻す (広告)」となるが、広告配信停止中は常に「戻す」と表示される。
+    支援技術向けには、無制限時は「配置を1手戻す（回数無制限）」、通常時は「配置を1手戻す（残りN回）」と読み上げる。
+  </p>
 
   <h2>アクセシビリティ基準</h2>
   <h3>タッチターゲットサイズ</h3>
@@ -48,7 +64,7 @@
     <tr><th>状態</th><th>説明</th></tr>
     <tr><td><code>.playing</code></td><td>通常プレイ中</td></tr>
     <tr><td><code>.gameOver</code></td><td>配置不可・GameOverView オーバーレイ</td></tr>
-    <tr><td><code>.rescued</code></td><td>リワード広告で救済中</td></tr>
+    <tr><td><code>.rescued</code></td><td>「もう1手」で救済中（広告配信停止中は広告を挟まず遷移）</td></tr>
   </table>
 
   <h2>遷移</h2>
@@ -62,13 +78,15 @@
   <ul>
     <li><a href="../features/game-logic.html">ゲームロジック仕様書</a></li>
     <li><a href="../features/ad-control.html">広告制御機能</a></li>
+    <li><a href="../features/v1-5-premium.html">v1.5.0 リリース仕様書「プレミアム（買い切り）」</a></li>
     <li><a href="game-over.html">GameOverView</a></li>
   </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
   <tr><td>1.1</td><td>2026-06-10</td><td>画面イメージ（fastlane snapshot 自動撮影）を追加</td></tr>
-  <tr><td>1.2</td><td>2026-07-14</td><td>回転・アンドゥボタンのタッチターゲットを 48pt（MD3 基準）に拡大。OS Dynamic Type 優先ロジックを反映。アクセシビリティ基準セクション新設</td></tr></table>
+  <tr><td>1.2</td><td>2026-07-14</td><td>回転・アンドゥボタンのタッチターゲットを 48pt（MD3 基準）に拡大。OS Dynamic Type 優先ロジックを反映。アクセシビリティ基準セクション新設</td></tr>
+  <tr><td>1.3</td><td>2026-07-30</td><td>v1.5.0 対応: バナー広告を枠ごと非表示（広告配信の恒久停止）に更新。アンドゥボタン仕様セクションを新設し、プレミアムのアンドゥ無制限（残数表示 <code>∞</code>・広告視聴を要求しない）を追加。<code>.rescued</code> 状態の説明を「もう1手」ベースに修正</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-07-14</footer>
+  <footer class="site-footer">最終更新: 2026-07-30</footer>
 </div></body></html>

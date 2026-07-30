@@ -2,40 +2,121 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
-<title>PieceZen - Paywall</title>
+<title>脳活ピース - Paywall</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / Paywall</div>
-  <header class="site-header"><h1>Paywall画面（PaywallView）</h1><p>広告除去IAPの購入画面</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: PZ-PAY-01</span></div></header>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">脳活ピース</a> / Paywall</div>
+  <header class="site-header"><h1>Paywall画面（PaywallView）</h1><p>プレミアム（買い切り）の購入画面。フルスクリーンモーダル</p>
+  <div class="section-meta"><span class="tag done">v1.5.0</span><span class="tag">画面ID: PZ-PAY-01</span></div></header>
+
+  <h2>目的・役割</h2>
+  <p>
+    買い切りIAP「プレミアム」の価値を伝えて購入に導く画面。
+    v1.5.0 で商品内容が「広告除去」から「じっくり考えて遊ぶための特典」へ転換したため、訴求軸も全面的に差し替えた。
+  </p>
 
   <h2>提供商品</h2>
   <table>
     <tr><th>商品</th><th>Product ID</th><th>形式</th></tr>
-    <tr><td>広告除去</td><td><code>com.happyboy1002.BlockPuzzle.removeAds</code></td><td>買い切り</td></tr>
+    <tr><td>プレミアム（買い切り）</td><td><code>com.happyboy1002.BlockPuzzle.removeAds</code></td><td>非消耗型・買い切り（¥480）</td></tr>
   </table>
+  <div class="callout">
+    Product ID は v1.5.0 でも<strong>変更していない</strong>（既存購入者の権利を確実に引き継ぐため）。
+    そのため既存購入者は追加課金なしで自動的に新特典を得る。
+  </div>
 
   <h2>UI 構成</h2>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>特典説明</td><td>Banner / Interstitial 非表示（Rewardedは救済として残る）</td></tr>
-    <tr><td>購入ボタン</td><td>StoreManager.purchase() 起動</td></tr>
-    <tr><td>復元ボタン</td><td>restorePurchases()</td></tr>
+    <tr><td>ヘッダーアイコン</td><td>深色基調 + テーマ accent</td></tr>
+    <tr><td>見出し</td><td>ラベル「プレミアム」＋ 主見出し <strong>「じっくり考えて遊ぶ」</strong>＋ サブ「快適なプレイ体験をあなたに」</td></tr>
+    <tr><td>特典一覧</td><td>4項目（下表）</td></tr>
+    <tr><td>価格表示</td><td>買い切り価格。月額課金ではないことを明示</td></tr>
+    <tr><td>購入ボタン</td><td>システム標準の購入シートを起動</td></tr>
+    <tr><td>復元ボタン</td><td>購入を復元</td></tr>
+    <tr><td>法的リンク</td><td>利用規約・プライバシーポリシー</td></tr>
+    <tr><td>閉じるボタン</td><td>右上。購入せずに閉じられる</td></tr>
+    <tr><td>購入成功オーバーレイ</td><td>購入完了時に表示。約2秒後に自動で閉じる</td></tr>
+  </table>
+  <p>配色は深色基調に固定してテキストの視認性を確保する（テーマによらずダーク表示）。</p>
+
+  <h2>見出しの変更（v1.5.0）</h2>
+  <table>
+    <tr><th>箇所</th><th>変更前（v1.4 まで）</th><th>変更後（v1.5.0〜）</th></tr>
+    <tr><td>主見出し</td><td>広告を除去する</td><td><strong>じっくり考えて遊ぶ</strong></td></tr>
+  </table>
+  <p>広告が存在しなくなったため「広告を消す」訴求を廃し、「納得いくまで考えられる」という体験価値を主軸に変更した。</p>
+
+  <h2>特典一覧（4項目・v1.5.0〜）</h2>
+  <table>
+    <tr><th>#</th><th>特典</th><th>説明文</th></tr>
+    <tr><td>1</td><td>アンドゥが無制限</td><td>何度でも戻せるので、納得いくまで考えられます</td></tr>
+    <tr><td>2</td><td>「もう1手」が3回に</td><td>ゲーム終了後の復活が1回から3回に増えます</td></tr>
+    <tr><td>3</td><td>限定テーマ3種</td><td>和み・琥珀・若草。既存のテーマは今後も全員無料です</td></tr>
+    <tr><td>4</td><td>一度の購入で永続利用</td><td>月額課金なし。今後広告を導入しても表示されません</td></tr>
+  </table>
+  <div class="callout">
+    4つ目の「今後広告を導入しても表示されません」は、<strong>「広告除去」として購入した既存ユーザーへの保証</strong>を明文化したもの。
+    将来別の広告ネットワークを導入した場合でも、購入者には広告を表示しない。
+  </div>
+  <p>
+    3つ目に「既存のテーマは今後も全員無料です」と併記しているのは、
+    無料で提供していたテーマを有料化したのではないことを購入前に明確にするため。
+  </p>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示</th></tr>
+    <tr><td>商品情報の読み込み中</td><td>価格欄が未確定の状態。購入ボタンは押せない</td></tr>
+    <tr><td>通常（未購入）</td><td>特典一覧・価格・購入ボタン・復元ボタンを表示</td></tr>
+    <tr><td>購入処理中</td><td>システムの購入シートに委ねる</td></tr>
+    <tr><td>購入成功</td><td>成功オーバーレイを表示し、約2秒後に自動で閉じる</td></tr>
+    <tr><td>エラー</td><td>エラーアラートを表示。画面は閉じない</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>購入成功</td><td>SettingsView へ戻る（広告非表示適用）</td></tr>
+    <tr><td>購入成功</td><td>成功表示 → 自動で閉じて呼び出し元へ戻る（プレミアム特典が即反映）</td></tr>
+    <tr><td>閉じる</td><td>呼び出し元へ戻る</td></tr>
   </table>
 
+  <h3>本画面への流入経路</h3>
+  <ul>
+    <li><a href="settings.html">設定画面</a>の「プレミアムを購入する」</li>
+    <li><a href="settings.html">設定画面</a>でプレミアム限定テーマ（未購入時）をタップ</li>
+    <li><a href="game-over.html">ゲーム終了画面</a>のプレミアム訴求リンク</li>
+  </ul>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>ユーザーに見える対応</th></tr>
+    <tr><td>商品情報の取得に失敗</td><td>エラーアラートを表示。購入は行われない</td></tr>
+    <tr><td>購入がキャンセル・失敗</td><td>エラーアラートを表示し、購入前の状態を保つ</td></tr>
+    <tr><td>復元で対象の購入が見つからない</td><td>エラーアラートを表示。未購入状態のまま継続利用できる</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">サブビュー構成（ヘッダー / 見出し / 特典 / 価格 / 価値比較 / 購入 / 復元 / 法的リンク）を維持</li>
+    <li class="done">購入状態の変化を検知して成功オーバーレイを出し、自動 dismiss する</li>
+    <li class="done">深色基調に固定（<code>preferredColorScheme(.dark)</code>）</li>
+  </ul>
+  <div class="callout">購入検証・トランザクション処理などの内部実装詳細は本仕様書では扱わない（意図的に非記載）。</div>
+
   <h2>関連</h2>
-  <ul><li><a href="../features/storekit.html">StoreKit機能仕様書</a></li></ul>
+  <ul>
+    <li><a href="../features/v1-5-premium.html">v1.5.0 リリース仕様書「プレミアム（買い切り）」</a></li>
+    <li><a href="../features/storekit.html">プレミアム課金機能仕様書</a></li>
+    <li><a href="settings.html">設定画面</a></li>
+  </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+  <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+  <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: 見出しを「広告を除去する」→「じっくり考えて遊ぶ」に変更。特典一覧を4項目（アンドゥ無制限 / もう1手3回 / 限定テーマ3種 / 買い切り・永続利用）へ差し替え。既存購入者への広告非表示保証を明記。目的・役割／状態／流入経路／エラー処理／実装メモの各セクションを追加</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-07-30</footer>
 </div></body></html>

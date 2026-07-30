@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / ゲーム終了</div>
   <header class="site-header"><h1>ゲーム終了（GameOverView）</h1><p>GameView上のオーバーレイ画面</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: PZ-OVER-01</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.5.0</span><span class="tag">画面ID: PZ-OVER-01</span></div></header>
 
   <h2>UI 構成</h2>
   <table>
@@ -17,35 +17,73 @@
     <tr><td>「GAME OVER」ラベル</td><td>大きく中央表示</td></tr>
     <tr><td>スコア表示</td><td>現在スコア + ベストスコア</td></tr>
     <tr><td>NEW BEST バッジ</td><td>更新時のみ表示</td></tr>
-    <tr><td>Watch Adボタン</td><td>1回限り、リワード広告で救済</td></tr>
+    <tr><td>「もう1手」ボタン</td><td>残り回数がある場合のみ表示。無料は1回/ゲーム、プレミアムは3回/ゲーム</td></tr>
     <tr><td>Restartボタン</td><td>新ゲーム開始</td></tr>
-    <tr><td>Mode Selectボタン</td><td>HomeView へ戻る</td></tr>
-    <tr><td>Shareボタン</td><td>標準シェアシート</td></tr>
+    <tr><td>Shareボタン</td><td>標準シェアシート（スコア50点以上で表示）</td></tr>
+    <tr><td>プレミアム訴求リンク</td><td>未購入時のみ表示</td></tr>
   </table>
+
+  <h2>「もう1手」ボタン（v1.5.0〜）</h2>
+  <table>
+    <tr><th>項目</th><th>広告配信中の仕様</th><th>広告配信停止中（v1.5.0 の現状）</th></tr>
+    <tr><td>ラベル</td><td>広告を見てもう1手</td><td><strong>無料でもう1手</strong></td></tr>
+    <tr><td>アイコン</td><td><code>play.rectangle.fill</code></td><td><strong><code>gift.fill</code></strong></td></tr>
+    <tr><td>挙動</td><td>リワード広告を視聴後に救済</td><td><strong>広告を挟まず即救済</strong></td></tr>
+  </table>
+  <p>
+    広告配信は v1.5.0 で恒久停止したため、現状は常に「無料でもう1手」として動作する。
+    ラベル・アイコン・挙動はいずれも広告配信可否による分岐で、広告を再開すれば元の仕様に戻る。
+  </p>
+
+  <h3>回数上限</h3>
+  <table>
+    <tr><th>ユーザー区分</th><th>1ゲームあたりの上限</th></tr>
+    <tr><td>無料</td><td>1回（v1.4 から変更なし）</td></tr>
+    <tr><td>プレミアム購入者</td><td><strong>3回</strong>（★ v1.5.0 のプレミアム特典）</td></tr>
+  </table>
+  <div class="callout">
+    広告なしで報酬を付与するようになっても、<strong>1ゲームあたりの上限回数は維持</strong>する。
+    上限に達するとボタン自体が表示されなくなる。
+  </div>
+
+  <h2>プレミアム訴求リンク（v1.5.0〜）</h2>
+  <table>
+    <tr><th>項目</th><th>変更前（v1.4 まで）</th><th>変更後（v1.5.0〜）</th></tr>
+    <tr><td>文言</td><td>広告を除去して快適にプレイ</td><td><strong>プレミアムでアンドゥ無制限・もう1手3回</strong></td></tr>
+  </table>
+  <p>未購入時のみ表示され、タップすると Paywall 画面をフルスクリーンで開く。</p>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>Watch Ad</td><td>Rewarded広告 → GameEngine.rescueWithReward() → GameView</td></tr>
+    <tr><td>もう1手</td><td>救済処理 → GameView（プレイ再開）</td></tr>
     <tr><td>Restart</td><td>GameView（リセット）</td></tr>
-    <tr><td>Mode Select</td><td>HomeView</td></tr>
     <tr><td>Share</td><td>UIActivityViewController</td></tr>
+    <tr><td>プレミアム訴求リンク</td><td>PaywallView（フルスクリーンモーダル）</td></tr>
   </table>
 
   <h2>救済機能</h2>
-  <p>「Watch Ad」を1回だけ選択可（hasUsedReward=true で再利用不可）。視聴後にランダムで1セルを消去してゲーム継続。</p>
+  <p>「もう1手」を選択すると、ランダムで1セルを消去してゲームを継続する。残り回数を使い切るとボタンは表示されない。</p>
 
   <h2>CTAボタン デザイン仕様</h2>
-  <p>本画面の主要CTAボタン（Watch Ad / Restart / Mode Select）は、ストリーク報酬モーダル・チュートリアル・テーマ選択の計4画面で共通のボタンデザインを採用している。見た目の統一により画面間で一貫した操作感を実現する。</p>
+  <p>本画面の主要CTAボタン（もう1手 / Restart）は、ストリーク報酬モーダル・チュートリアル・テーマ選択の計4画面で共通のボタンデザインを採用している。見た目の統一により画面間で一貫した操作感を実現する。</p>
   <table>
     <tr><th>項目</th><th>仕様</th></tr>
     <tr><td>デザイン共通化対象</td><td>ゲームオーバー / ストリーク報酬モーダル / チュートリアル / テーマ選択</td></tr>
     <tr><td>枠線・LED ライン不透明度</td><td>全画面で統一（旧ストリーク報酬ボタンの個別値を是正）</td></tr>
   </table>
 
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/v1-5-premium.html">v1.5.0 リリース仕様書「プレミアム（買い切り）」</a></li>
+    <li><a href="../features/ad-control.html">広告制御機能</a></li>
+    <li><a href="paywall.html">Paywall 画面</a></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
-  <tr><td>1.1</td><td>2026-07-14</td><td>CTAボタン共通デザイン仕様セクションを追加（4画面統一・不透明度是正）</td></tr></table>
+  <tr><td>1.1</td><td>2026-07-14</td><td>CTAボタン共通デザイン仕様セクションを追加（4画面統一・不透明度是正）</td></tr>
+  <tr><td>1.2</td><td>2026-07-30</td><td>v1.5.0 対応: リワードボタンを「広告を見てもう1手」→「無料でもう1手」（アイコン gift.fill）に変更し、広告なしで即救済する挙動を記載。回数上限（無料1回 / プレミアム3回）を追加。プレミアム訴求リンクの文言を「プレミアムでアンドゥ無制限・もう1手3回」に更新</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-07-14</footer>
+  <footer class="site-footer">最終更新: 2026-07-30</footer>
 </div></body></html>

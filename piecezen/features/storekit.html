@@ -2,53 +2,103 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
-<title>PieceZen - StoreKit機能</title>
+<title>脳活ピース - プレミアム課金</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / StoreKit機能</div>
-  <header class="site-header"><h1>StoreKit 課金機能</h1><p>広告除去 IAP（買い切り）</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: PZ-FEAT-SK</span></div></header>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">脳活ピース</a> / プレミアム課金</div>
+  <header class="site-header"><h1>プレミアム課金機能</h1><p>買い切りIAP（¥480・非消耗型）。v1.5.0 で「広告除去」から商品内容を差し替え</p>
+  <div class="section-meta"><span class="tag done">v1.5.0</span><span class="tag">機能ID: PZ-FEAT-SK</span></div></header>
 
   <h2>提供商品</h2>
   <table>
-    <tr><th>商品</th><th>Product ID</th><th>形式</th></tr>
-    <tr><td>広告除去</td><td><code>com.happyboy1002.BlockPuzzle.removeAds</code></td><td>非消耗型・買い切り</td></tr>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>商品名</td><td>プレミアム（買い切り）</td></tr>
+    <tr><td>Product ID</td><td><code>com.happyboy1002.BlockPuzzle.removeAds</code></td></tr>
+    <tr><td>形式</td><td>非消耗型・買い切り（¥480）</td></tr>
+    <tr><td>Family Sharing</td><td>対応</td></tr>
+  </table>
+  <div class="callout">
+    <strong>Product ID は v1.5.0 でも変更していない。</strong>
+    据え置いた理由は既存購入者の権利を確実に引き継ぐため。新 Product ID にすると既存購入者が特典を失うか、移行処理が必要になる。
+    そのため<strong>既存購入者は追加課金なしで自動的に新特典を得る</strong>。
+    ID 名に <code>removeAds</code> が残っているのは歴史的経緯であり、現在の商品内容は「広告除去」ではない。
+  </div>
+
+  <h2>プレミアム特典</h2>
+  <table>
+    <tr><th>特典</th><th>無料</th><th>プレミアム</th></tr>
+    <tr><td>アンドゥ（戻す）</td><td>3回 / ゲーム</td><td><strong>回数制限なし</strong>（ボタンの残数表示が <code>∞</code>）</td></tr>
+    <tr><td>「もう1手」（ゲーム終了後の復活）</td><td>1回 / ゲーム</td><td><strong>3回 / ゲーム</strong></td></tr>
+    <tr><td>カラーテーマ</td><td>既存7種すべて</td><td>既存7種 + <strong>限定テーマ3種</strong>（和み・琥珀・若草）</td></tr>
+    <tr><td>広告</td><td>—（現在は全ユーザーに広告なし）</td><td>将来広告を導入しても<strong>表示されない</strong></td></tr>
+  </table>
+  <p>無料側の回数はいずれも従来から変更していない。無料で提供していたものを後から取り上げず、プレミアム側を上に伸ばす設計にしている。</p>
+
+  <h2>商品内容の変遷</h2>
+  <table>
+    <tr><th>版</th><th>商品内容</th><th>背景</th></tr>
+    <tr><td>v1.0〜v1.4</td><td>広告除去（バナー・インタースティシャルの非表示）</td><td>広告収益モデル前提</td></tr>
+    <tr><td>v1.5.0〜</td><td>プレミアム（アンドゥ無制限 / もう1手3回 / 限定テーマ3種）</td><td>広告配信の恒久停止により「広告を消すために払う」価値提案が成立しなくなったため転換</td></tr>
   </table>
 
-  <h2>StoreManager API</h2>
-  <pre><code>@Observable @MainActor
-final class StoreManager {
-    var products: [Product]
-    var purchasedProductIDs: Set&lt;String&gt;
-    var isAdFree: Bool { purchasedProductIDs.contains("com.happyboy1002.BlockPuzzle.removeAds") }
-
-    func loadProducts() async
-    func purchase(_ product: Product) async throws
-    func restorePurchases() async throws
-    func listenForTransactions()
-    func updatePurchasedProducts() async
-}</code></pre>
-
-  <h2>処理フロー</h2>
+  <h2>ユーザーから見た挙動</h2>
+  <h3>購入</h3>
   <ol>
-    <li>App起動時に <code>listenForTransactions()</code> + <code>updatePurchasedProducts()</code> + <code>loadProducts()</code></li>
-    <li>購入時 <code>product.purchase()</code></li>
-    <li>VerificationResult で不正チェック</li>
-    <li>成功で purchasedProductIDs に追加 + transaction.finish()</li>
-    <li>Transaction.updates で自動同期</li>
+    <li>設定画面の「プレミアムを購入する」、またはゲーム終了画面の訴求リンク、または限定テーマのタップから Paywall 画面へ遷移する</li>
+    <li>Paywall で購入ボタンを押すと、システム標準の購入シートが表示される</li>
+    <li>購入が完了すると成功表示が出て、約2秒後に Paywall が自動で閉じる</li>
+    <li>戻った直後からプレミアム特典が反映される（限定テーマの鍵が外れ、アンドゥ残数が <code>∞</code> になる）</li>
   </ol>
+
+  <h3>復元</h3>
+  <ul>
+    <li>設定画面および Paywall の「購入を復元」からいつでも復元できる</li>
+    <li>機種変更・再インストール後も、同じ Apple ID であれば特典が復帰する</li>
+    <li>他端末での購入や Family Sharing による購入も自動的に反映される</li>
+  </ul>
+
+  <h3>購入状態の表示</h3>
+  <table>
+    <tr><th>状態</th><th>設定画面の表示</th></tr>
+    <tr><td>未購入</td><td>「プレミアムを購入する」＋「購入を復元」</td></tr>
+    <tr><td>購入済み</td><td>「プレミアム購入済み」（購入導線は非表示）</td></tr>
+  </table>
 
   <h2>ビジネスルール</h2>
   <ul>
-    <li>isAdFree=true で AdManager の広告表示を全停止</li>
-    <li>復元はいつでも可（restore = AppStore.sync()）</li>
-    <li>Family Sharing 対応</li>
+    <li>買い切りのため月額課金は発生しない。一度の購入で永続利用できる</li>
+    <li>Product ID は変更しない。既存購入者は自動的にプレミアム特典を得る</li>
+    <li>既存7テーマは今後も全ユーザー無料。後から有料化しない</li>
+    <li>プレミアム購入者にはアンドゥの広告視聴を一切要求しない</li>
+    <li>将来広告を導入した場合も、購入者には広告を表示しない（購入時の保証）</li>
+    <li>復元はいつでも可能。未購入でも全機能の基本プレイは制限しない</li>
+  </ul>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>ユーザーに見える対応</th></tr>
+    <tr><td>商品情報の取得に失敗</td><td>エラーアラートを表示。購入は行われない</td></tr>
+    <tr><td>購入がキャンセル・失敗</td><td>エラーアラートを表示し、購入前の状態を保つ（特典は付与しない）</td></tr>
+    <tr><td>復元で対象の購入が見つからない</td><td>エラーアラートを表示。未購入状態のまま継続利用できる</td></tr>
+  </table>
+  <div class="callout">
+    購入検証・トランザクション処理などの内部実装詳細は本仕様書では扱わない（意図的に非記載）。
+  </div>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="v1-5-premium.html">v1.5.0 リリース仕様書「プレミアム（買い切り）」</a></li>
+    <li><a href="../screens/paywall.html">Paywall 画面</a></li>
+    <li><a href="../screens/settings.html">設定画面</a></li>
+    <li><a href="ad-control.html">広告制御機能</a></li>
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+  <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+  <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: 商品内容を「広告除去」から「プレミアム（アンドゥ無制限 / もう1手3回 / 限定テーマ3種）」へ差し替え。Product ID 据え置きの理由と既存購入者への自動適用を明記。ユーザーから見た購入・復元挙動とエラー時の表示を整理。内部実装（トランザクション処理・購入検証）の記載を削除</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-07-30</footer>
 </div></body></html>
