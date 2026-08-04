@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - 記録カレンダー</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / 記録カレンダー</div>
+  <header class="site-header"><h1>記録カレンダー（DailyCalendarView）</h1><p>日別ベストスコアの振り返りと、過去日デイリーへの入口</p>
+  <div class="section-meta"><span class="tag done">v1.4.0</span><span class="tag">画面ID: CR-CAL-01</span><span class="tag">Premium</span></div></header>
+
+  <h2>目的・役割</h2>
+  <p>
+    デイリーチャレンジの日別ベストスコアを月表示で振り返る画面。
+    同時に、プレミアム特典である<strong>過去日デイリー（アーカイブ）のプレイ入口</strong>も兼ねる。
+    「記録の可視化」と「アーカイブの入口」を1画面に統合し、遊ばなかった日が視覚的に分かる状態から
+    そのままプレイへ入れる導線にしている。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>累計サマリー</td><td>「プレイした日」「最高スコア」「連続記録」の3タイル。全期間で集計</td></tr>
+    <tr><td>月ナビゲーション</td><td>前月 / 次月ボタンと「YYYY年M月」表示。第1回の月より前・未来の月へは移動不可（ボタンは無効化＋淡色表示）</td></tr>
+    <tr><td>曜日ヘッダ</td><td>日〜土。VoiceOver では読み上げ対象外</td></tr>
+    <tr><td>カレンダーグリッド</td><td>7列。各セルに日付と、記録があればその日のベストスコアを表示</td></tr>
+    <tr><td>日付セル（記録あり）</td><td>ベストスコアをアクセントカラーで表示。セル背景もアクセント寄りに強調</td></tr>
+    <tr><td>日付セル（未購入・プレイ可能な過去日）</td><td><strong>鍵アイコン</strong>を表示。タップでプレミアム購入画面へ</td></tr>
+    <tr><td>日付セル（本日）</td><td>枠線で強調。日付を太字表示</td></tr>
+    <tr><td>日付セル（未来日）</td><td>淡色表示・タップ不可</td></tr>
+    <tr><td>プレミアム訴求カード</td><td>未購入時のみカレンダー下部に表示。「過去のデイリーに挑戦できます」→ タップで購入画面</td></tr>
+    <tr><td>閉じるボタン</td><td>ナビゲーションバー左。シートを閉じてゲーム画面へ戻る</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示・挙動</th></tr>
+    <tr><td>プレミアム購入済み</td><td>プレイ可能な過去日をタップ → その日のデイリーを開始（シートは閉じる）</td></tr>
+    <tr><td>未購入</td><td>プレイ可能な過去日をタップ → プレミアム購入画面（sheet）。カレンダー下部に訴求カードを表示</td></tr>
+    <tr><td>本日 / 未来日</td><td>アーカイブ対象外。タップしてもプレイは開始しない（未来日はタップ自体を無効化）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>ゲーム画面の「記録を見る」</td><td>本画面（sheet）</td></tr>
+    <tr><td>過去日タップ（購入済み）</td><td>本画面を閉じてゲーム画面でアーカイブ開始</td></tr>
+    <tr><td>過去日タップ（未購入）／訴求カードタップ</td><td>プレミアム購入画面（sheet）</td></tr>
+    <tr><td>「閉じる」</td><td>ゲーム画面へ戻る</td></tr>
+  </table>
+
+  <h2>使用するデータ</h2>
+  <table>
+    <tr><th>データ</th><th>用途</th></tr>
+    <tr><td>日別ベストスコア（日付キー別に保存）</td><td>各セルのスコア表示・累計サマリーの集計</td></tr>
+    <tr><td>デイリーチャレンジの起算日（第1回の公開日）</td><td>アーカイブ対象範囲の下限・月移動の下限</td></tr>
+    <tr><td>連続記録（ストリーク）</td><td>サマリータイルの「連続記録」</td></tr>
+    <tr><td>プレミアム購入状態</td><td>過去日のロック / アンロック判定</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">アーカイブ対象は「第1回の公開日以降・本日より前」。本日と未来日は対象外</li>
+    <li class="done">累計サマリーは起算日から本日までを走査し、記録がある日だけを対象に集計する</li>
+    <li class="done">月移動ボタンは範囲外で <code>disabled</code> にし、透明度でも無効を示す</li>
+    <li class="done">日付セルには VoiceOver 用ラベル（「M月D日、今日、ベストN、タップで挑戦」）を付与</li>
+    <li class="done">月移動ボタンのタップ領域は 44pt 以上を確保</li>
+    <li class="done">アーカイブのプレイ結果はその日のベストのみ更新し、本日ベスト・累計完了数・連続記録には影響させない</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/premium.html">v1.4.0 プレミアム（買い切り）</a></li>
+    <li><a href="premium.html">プレミアム購入画面</a></li>
+    <li><a href="game.html">ゲーム画面</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-08-04</td><td>初版作成（v1.4.0）。記録カレンダー画面を新規追加</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-08-04</footer>
+</div></body></html>

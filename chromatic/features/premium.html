@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - v1.4.0 プレミアム（買い切り）</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / v1.4.0 プレミアム</div>
+
+  <header class="site-header">
+    <h1>v1.4.0 リリース仕様書「プレミアム（買い切り）」</h1>
+    <p>買い切りIAPの商品内容を「広告削除」から「プレミアム」へ差し替え。デイリーチャレンジのアーカイブと記録カレンダーを特典化</p>
+    <div class="section-meta">
+      <span class="tag done">v1.4.0 (build 7)</span>
+      <span class="tag">機能ID: CR-FEAT-PREMIUM</span>
+      <span class="tag">2026-08-04</span>
+    </div>
+  </header>
+
+  <div class="callout">
+    <strong>この版の位置づけ</strong>：AdMob アカウントの恒久停止で「広告を消すために払う」という価値提案が成立しなくなった。
+    そこで買い切りIAP（¥240）の <strong>Product ID は変更せず、商品内容だけを差し替え</strong>、
+    「今日の1回で終わらせない」ための特典へ転換した。<strong>既存購入者は追加課金なしで自動的に新特典を得る</strong>。
+  </div>
+
+  <h2>概要</h2>
+  <table>
+    <tr><th>項目</th><th>変更前</th><th>変更後</th></tr>
+    <tr><td>商品名</td><td>広告削除</td><td><strong>プレミアム（買い切り）</strong></td></tr>
+    <tr><td>Product ID</td><td colspan="2"><code>com.happyboy1002.CHROMATIC.removeads</code>（<strong>変更しない</strong>）</td></tr>
+    <tr><td>価格・形式</td><td colspan="2">¥240・非消耗型（買い切り）</td></tr>
+  </table>
+
+  <h2>プレミアム特典</h2>
+  <table>
+    <tr><th>#</th><th>特典</th><th>内容</th></tr>
+    <tr>
+      <td>1</td>
+      <td>デイリーチャレンジのアーカイブ</td>
+      <td>第1回まで遡って過去日のチャレンジを遊べる。<strong>本日分のデイリーは従来どおり全ユーザー無料</strong></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>記録カレンダー</td>
+      <td>日別ベストスコアを月表示で振り返れる。累計サマリー（プレイした日数・最高スコア・連続記録）も表示</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>広告の非表示保証</td>
+      <td>今後広告を導入しても表示されない（既存購入者への保証）</td>
+    </tr>
+  </table>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/daily-calendar.html">記録カレンダー（CR-CAL-01）</a> — 新規。ホームの「記録を見る」から開く</li>
+    <li><a href="../screens/premium.html">プレミアム購入画面（CR-PREMIUM-01）</a> — 新規。設定の「プレミアムを見る」から開く</li>
+    <li><a href="../screens/settings.html">設定（CR-SET-01）</a> — セクション名・文言をプレミアム訴求へ差し替え</li>
+    <li><a href="../screens/game.html">ゲーム（CR-GAME-01）</a> — 「記録を見る」導線の追加とアーカイブの開始</li>
+  </ul>
+
+  <h2>アーカイブの仕様</h2>
+
+  <h3>対象範囲</h3>
+  <ul>
+    <li>遊べるのは<strong>第1回の公開日以降・本日より前</strong>の日付</li>
+    <li><strong>未来日と本日はアーカイブ対象外</strong>（本日分は通常のデイリーチャレンジとして遊ぶ）</li>
+    <li>カレンダー画面から過去日をタップしてプレイする（記録の可視化とアーカイブの入口を1画面に統合）</li>
+  </ul>
+
+  <h3>問題の再現性</h3>
+  <p>
+    各日のシーケンス（色の出題順）とパネル数は<strong>日付から決まるシード</strong>で生成されるため、
+    いつ遊んでも同じ日には必ず同じ問題になる。過去日の問題を別途保存しておく必要はない。
+  </p>
+
+  <h3>記録の分離（重要）</h3>
+  <div class="callout warn">
+    <strong>アーカイブのプレイ結果は、その日のベストスコアのみ更新する。</strong>
+    毎日プレイの積み重ねを表す指標をアーカイブで水増しできないよう、更新経路を意図的に分けている。
+  </div>
+  <table>
+    <tr><th>対象</th><th>本日分のデイリー</th><th>アーカイブ（過去日）</th></tr>
+    <tr><td>その日のベストスコア</td><td>更新する</td><td><strong>更新する</strong></td></tr>
+    <tr><td>本日のベストスコア</td><td>更新する</td><td>更新しない</td></tr>
+    <tr><td>「本日プレイ済み」判定</td><td>更新する</td><td>更新しない</td></tr>
+    <tr><td>デイリーチャレンジの累計完了数</td><td>加算する</td><td>加算しない</td></tr>
+    <tr><td>連続記録（ストリーク）</td><td>影響する</td><td>影響しない</td></tr>
+    <tr><td>Game Center</td><td colspan="2">送信しない（デイリーは元から送信対象外）</td></tr>
+  </table>
+
+  <h3>未購入ユーザーの見え方</h3>
+  <ul>
+    <li>記録カレンダー自体は開ける（自分の記録は見られる）</li>
+    <li>プレイ可能な過去日には<strong>鍵アイコン</strong>を表示し、タップすると購入画面へ遷移する</li>
+    <li>カレンダー下部にプレミアム訴求カードを表示する</li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant G as ゲーム画面
+  participant C as 記録カレンダー
+  participant P as プレミアム購入画面
+
+  U->>G: 「記録を見る」タップ
+  G->>C: カレンダーを表示（日別ベスト・累計サマリー）
+  U->>C: 過去日をタップ
+  alt プレミアム購入済み
+    C->>G: その日のシード・パネル数でゲーム開始
+    G->>G: 終了時、その日のベストのみ更新
+  else 未購入
+    C->>P: 購入画面を表示
+    U->>P: 購入
+    P-->>C: 購入完了で閉じる（過去日が解放される）
+  end
+  </div>
+
+  <h2>UI 文言の変更（設定画面）</h2>
+  <table>
+    <tr><th>箇所</th><th>変更前</th><th>変更後</th></tr>
+    <tr><td>セクション名</td><td>広告</td><td>プレミアム</td></tr>
+    <tr><td>購入導線</td><td>広告を削除</td><td>プレミアムを見る（購入画面へ遷移）</td></tr>
+    <tr><td>購入済み表示</td><td>広告削除済み</td><td>プレミアム購入済み</td></tr>
+  </table>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>Product ID は変更しない。既存購入者は追加課金なしで新特典を得る</li>
+    <li>本日分のデイリーチャレンジは購入の有無に関わらず無料で遊べる</li>
+    <li>アーカイブで遊べるのは「第1回の公開日以降・本日より前」の日付のみ</li>
+    <li>アーカイブのプレイは、毎日プレイを表す指標（本日ベスト・プレイ済み判定・累計完了数・連続記録）を一切変更しない</li>
+    <li>プレミアム購入者には、今後広告を再開しても広告を表示しない</li>
+  </ul>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">内部のエンタイトルメント名を <code>isAdsRemoved</code> → <code>isPremium</code> にリネーム（Product ID・保存キーは不変のため既存購入者の状態は維持される）</li>
+    <li class="done">シーケンス生成・パネル数決定は元から任意日付を受け取れる設計だったため、UI とゲーティングの追加のみで成立</li>
+    <li class="done">アーカイブ用の結果記録経路を独立させ、本日分の記録更新と混ざらないようにした</li>
+    <li class="done">アーカイブ中はスコアヘッダのラベルに<strong>チャレンジ番号（#N）</strong>を表示し、いつの問題を遊んでいるかを見失わないようにした</li>
+    <li class="done">カレンダーの月移動は「第1回の月」より前と「未来の月」に進めない</li>
+    <li class="done">日付セルには VoiceOver 用のラベル（日付・今日・ベスト・タップで挑戦）を付与</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="storekit.html">StoreKit 課金機能</a></li>
+    <li><a href="ad-control.html">広告制御機能</a></li>
+    <li><a href="v1-2-panel-count.html">v1.2 パネル数選択アップデート</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-08-04</td><td>初版作成（v1.4.0 build 7）。買い切りIAPを「広告削除」から「プレミアム」へ差し替え。デイリーチャレンジのアーカイブ・記録カレンダー・広告非表示保証の3特典と、アーカイブによる記録汚染の防止仕様を記載</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-08-04</footer>
+</div>
+</body>
+</html>

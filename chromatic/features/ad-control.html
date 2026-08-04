@@ -8,36 +8,107 @@
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / 広告制御</div>
-  <header class="site-header"><h1>広告制御機能</h1><p>Banner + Interstitial</p>
-  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">機能ID: CR-FEAT-AD</span></div></header>
+  <header class="site-header"><h1>広告制御機能</h1><p>AppLovin MAX（バナー + インタースティシャル）／配信は App Store 版のみ</p>
+  <div class="section-meta"><span class="tag done">v1.4.0</span><span class="tag">機能ID: CR-FEAT-AD</span><span class="tag">2026-08-04 更新</span></div></header>
+
+  <div class="callout">
+    <strong>現状: 広告は一切配信されていない。</strong>
+    2026-07-30 に AdMob アカウントが「無効なトラフィック」を理由に恒久的に無効化され、再審査請求も却下された。
+    新規アカウント作成を含め AdSense / AdMob は今後一切利用できないため、<strong>AppLovin MAX へ全面移行</strong>した。
+    ただし AppLovin の publisher アカウントは審査中で、<strong>SDK Key と広告ユニットIDは未設定（空）</strong>のため、
+    現時点では広告のリクエスト自体が発生しない。
+  </div>
+
+  <h2>広告基盤</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>ネットワーク</td><td>AppLovin MAX</td></tr>
+    <tr><td>SDK</td><td><code>AppLovinSDK 13.6.3</code>（Swift Package Manager で導入）</td></tr>
+    <tr><td>メディエーション</td><td>アダプタも SPM で追加できるため CocoaPods は導入しない</td></tr>
+    <tr><td>使用フォーマット</td><td><code>MAAdView</code>（アダプティブバナー） / <code>MAInterstitialAd</code></td></tr>
+    <tr><td>ビルド設定</td><td><code>OTHER_LDFLAGS</code> に <code>-ObjC</code> が必須（Objective-C カテゴリを正しくリンクするため）</td></tr>
+    <tr><td>ロード失敗時</td><td>指数バックオフで再試行（上限64秒）。リトライ Task は1本に束ねて並走させない</td></tr>
+  </table>
+
+  <h2>再発防止の設計（最重要）</h2>
+  <p>
+    アカウント無効化の原因は、開発・TestFlight での検証中に本番の広告でインプレッションが発生していたことにある。
+    ネットワークを変えても自己クリック・視聴依頼の禁止という規約は同じであるため、
+    <strong>広告をロード・表示するのは App Store 配信版のみ</strong>に限定した。
+  </p>
+  <table>
+    <tr><th>判定</th><th>内容</th></tr>
+    <tr>
+      <td><code>AdEnvironment.isProduction</code></td>
+      <td>App Store 配信版か。判定は<strong>App Store レシートの種別</strong>（<code>sandboxReceipt</code> かどうか）で行う。TestFlight・Xcode から実機へ直接インストールした場合のレシートは <code>sandboxReceipt</code> になるため、<strong>ビルド構成の設定ミスでは判定が破れない</strong></td>
+    </tr>
+    <tr>
+      <td><code>AdEnvironment.isAdDeliveryAvailable</code></td>
+      <td><strong>SDK Key が設定済み かつ App Store 配信版</strong>のときだけ true。バナーの表示可否・全画面広告の呼び出し・ATT ダイアログ・SDK 初期化のすべてがこの値で分岐する単一スイッチ</td>
+    </tr>
+  </table>
+  <div class="callout warn">
+    AppLovin には AdMob のような「テスト広告ID」の概念がない。
+    そのため<strong>開発中は「広告を出さない」方式</strong>を採用し、レイアウト確認は広告枠のプレースホルダで行う。
+    本番広告での目視確認は行わない。
+  </div>
+  <div class="callout">
+    具体的な SDK Key・広告ユニットIDは本仕様書には記載しない（コード側で管理する）。
+  </div>
 
   <h2>広告構成</h2>
   <table>
-    <tr><th>種類</th><th>表示</th><th>無料/購入</th></tr>
-    <tr><td>Banner</td><td>GameView下部に常時（高さ50pt）</td><td>無料のみ</td></tr>
-    <tr><td>Interstitial</td><td>4ゲームに1回（gameCount % 4 == 0）</td><td>無料のみ</td></tr>
+    <tr><th>種類</th><th>表示条件</th><th>プレミアム購入者</th></tr>
+    <tr>
+      <td>バナー</td>
+      <td>ゲーム画面の最下部に固定（<code>safeAreaInset</code>）。広告フォーマット本来の高さをそのまま使い、固定値でクリップしない</td>
+      <td>非表示</td>
+    </tr>
+    <tr>
+      <td>インタースティシャル</td>
+      <td>ゲーム終了後の「もう一度」「モード選択へ」タップ時。<strong>4ゲームに1回</strong>かつ<strong>前回表示から最低90秒</strong>空ける</td>
+      <td>非表示</td>
+    </tr>
+    <tr>
+      <td>リワード</td>
+      <td colspan="2">CHROMATIC では未導入（報酬型の導線を持たない）</td>
+    </tr>
   </table>
 
-  <h2>AdMob ID（Info.plist）</h2>
+  <h2>広告配信が無効な期間の挙動</h2>
   <table>
-    <tr><th>項目</th><th>値</th></tr>
-    <tr><td>App ID</td><td><code>ca-app-pub-4104853755894501~5069936410</code></td></tr>
-    <tr><td>Banner Unit</td><td><code>ca-app-pub-4104853755894501/1998199290</code></td></tr>
-    <tr><td>Interstitial Unit</td><td><code>ca-app-pub-4104853755894501/7058954281</code></td></tr>
+    <tr><th>対象</th><th>挙動</th><th>理由</th></tr>
+    <tr><td>バナー</td><td><strong>枠ごと非表示</strong>。ビュー自体を配置しないため盤面下に余白が残らない</td><td>広告リクエストを発生させない</td></tr>
+    <tr><td>インタースティシャル</td><td>呼び出さない。ロードもしない</td><td>同上</td></tr>
+    <tr><td>SDK 初期化</td><td>行わない</td><td>起動コストと不要な通信を避ける</td></tr>
+    <tr><td>ATT（トラッキング許可）ダイアログ</td><td>表示しない</td><td>トラッキング許可は広告目的でしか求めていない。広告がない状態で許可を求めると「求める理由がない」状態になり審査リスクになる</td></tr>
+    <tr><td>撮影モード（スクリーンショット自動撮影）</td><td>広告・ATT・通知ダイアログをすべて抑止</td><td>提出用スクショを覆わないため</td></tr>
   </table>
 
-  <h2>InterstitialAdManager API</h2>
-  <pre><code>final class InterstitialAdManager {
-    func loadAd()
-    func showIfReady(completion: @escaping () -> Void)
-    // 広告削除済 or 表示条件未達 → サイレントで完了
-}</code></pre>
-
-  <h2>表示条件</h2>
+  <h2>ATT（トラッキング許可）の要求タイミング</h2>
   <ul>
-    <li>広告削除なし</li>
-    <li>広告ロード済み</li>
-    <li>gameCount % 4 == 0（4ゲームに1回。v1.0〜v1.1 は 2ゲームに1回だったが、UX改善のため緩和）</li>
+    <li>広告配信が有効（<code>isAdDeliveryAvailable == true</code>）であること</li>
+    <li><strong>3ゲーム完了後</strong>のゲームオーバー時（初回ゲームオーバーからの変更）</li>
+    <li>ステータスが <code>notDetermined</code> であること</li>
+    <li>撮影モードでないこと</li>
+  </ul>
+  <p>許可・非許可いずれでも広告配信は可能で、非許可時は非パーソナライズ広告になる。</p>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>広告のロード・表示は App Store 配信版でのみ行う。DEBUG・シミュレーター・TestFlight では一切リクエストしない</li>
+    <li>SDK Key または広告ユニットIDが未設定の間は、広告に関わる処理を一切実行しない（安全側の既定）</li>
+    <li>プレミアム購入者には広告を表示しない。<strong>今後広告を再開した場合も表示しない</strong>（購入時の保証）</li>
+    <li>全画面広告には必ず表示間隔（4ゲームに1回・最低90秒）を設ける</li>
+    <li>バナーはアダプティブサイズの高さをそのまま使い、固定値でクリップしない（広告の一部が隠れるとポリシー違反）</li>
+    <li>広告をボタンやタップ導線に隣接させない（誤クリック誘発の禁止）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="premium.html">v1.4.0 プレミアム（買い切り）</a></li>
+    <li><a href="storekit.html">StoreKit 課金機能</a></li>
+    <li><a href="../screens/game.html">ゲーム画面</a></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -45,7 +116,8 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-15</td><td>インタースティシャル表示頻度を2ゲームに1回から4ゲームに1回に緩和（UX改善）</td></tr>
+    <tr><td>2.0</td><td>2026-08-04</td><td>広告基盤を AdMob から AppLovin MAX へ全面移行（AdMob アカウントが恒久的に利用不可になったため）。SDK・使用フォーマット・ビルド設定・指数バックオフを記載。再発防止設計（<code>AdEnvironment.isAdDeliveryAvailable</code> = SDK Key 設定済み かつ App Store 配信版／レシート種別による判定／テスト広告IDの概念がないため開発中は広告を出さない方式）を追加。配信無効期間の挙動（バナー枠ごと非表示・全画面広告非呼出・SDK 初期化と ATT の抑止）を明文化。仕様書から広告ユニットID・パブリッシャー識別子の記載を削除</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-15</footer>
+  <footer class="site-footer">最終更新: 2026-08-04</footer>
 </div></body></html>

@@ -16,6 +16,19 @@
     <p>学習タイマー / Live Activity / Widget · Bundle ID: <code>com.happyboy1002.StudyStopwatch</code></p>
   </header>
 
+
+  <div class="callout">
+    <p style="margin-top:0"><strong>2026-08-04 広告基盤を AdMob から AppLovin MAX へ全面移行</strong></p>
+    <p>AdMob アカウントが「無効なトラフィック」により恒久的に無効化され、再審査請求も却下された。
+    新規アカウント作成も含めて AdSense / AdMob は今後一切利用できないため、AppLovin MAX（AppLovinSDK 13.6.3 / SPM）へ移行した。</p>
+    <p><strong>再発防止の中枢</strong>: <code>AdEnvironment.isAdDeliveryAvailable</code> =「SDK Key が設定済み」かつ「App Store 配信版である」。
+    停止の原因が開発・TestFlight 検証中の自己インプレッションだったため、<strong>広告のロード・表示は App Store 配信版のみ</strong>に限定し、
+    DEBUG・シミュレーター・TestFlight では一切リクエストしない。判定は App Store レシートの種別で行い、ビルド構成の設定ミスでは破れない。
+    ATT ダイアログも広告配信時のみ表示する。</p>
+    <p style="margin-bottom:0">AppLovin の publisher アカウントは審査中のため <strong>SDK Key と広告ユニットIDは未設定</strong>で、現時点では広告は配信されていない。
+    その間、バナーは枠ごと非表示にし、リワードで与えていた報酬は広告なしで即付与する（1日の上限などの制御は維持）。</p>
+  </div>
+
   <h2>概要</h2>
   <ul class="kv-list">
     <li><span class="k">カテゴリ</span><span class="v">教育</span></li>

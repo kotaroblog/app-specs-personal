@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CHROMATIC - プレミアム購入画面</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / プレミアム購入</div>
+  <header class="site-header"><h1>プレミアム購入画面（PremiumView）</h1><p>買い切りIAPの特典提示と購入・復元</p>
+  <div class="section-meta"><span class="tag done">v1.4.0</span><span class="tag">画面ID: CR-PREMIUM-01</span></div></header>
+
+  <h2>目的・役割</h2>
+  <p>
+    買い切りのプレミアム（¥240）の特典を提示し、購入・復元を行う画面。
+    v1.4.0 で商品内容を「広告削除」から「プレミアム」へ差し替えたことに伴い新規作成した。
+    訴求の軸は「今日の1回で終わらせない」＝<strong>逃した日のデイリーチャレンジに挑戦できること</strong>。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>内容</th></tr>
+    <tr><td>ヘッダ</td><td>アイコン + 「プレミアム」ラベル + 見出し「今日の1回で終わらせない」+ 補足「逃した日のデイリーチャレンジに、いつでも挑戦できます」</td></tr>
+    <tr><td>特典1</td><td><strong>過去のデイリーに挑戦</strong> — 第1回までさかのぼって、逃した日のチャレンジを遊べます</td></tr>
+    <tr><td>特典2</td><td><strong>記録カレンダー</strong> — 日ごとのベストスコアを月表示で振り返れます</td></tr>
+    <tr><td>特典3</td><td><strong>一度の購入で永続利用</strong> — 月額課金なし。今後広告を導入しても表示されません</td></tr>
+    <tr><td>購入ボタン</td><td>「プレミアムを購入」+ ストアから取得した表示価格。処理中はインジケーター表示</td></tr>
+    <tr><td>買い切り表記</td><td>「買い切り・一度きりのお支払い」</td></tr>
+    <tr><td>復元ボタン</td><td>「購入を復元」</td></tr>
+    <tr><td>法務リンク</td><td>利用規約 / プライバシーポリシー（外部リンク）</td></tr>
+    <tr><td>閉じるボタン</td><td>ナビゲーションバー左</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示</th></tr>
+    <tr><td>未購入・商品取得済み</td><td>購入ボタン（価格付き）を活性表示</td></tr>
+    <tr><td>未購入・商品未取得</td><td>購入ボタンを非活性（価格が出せない状態で購入させない）</td></tr>
+    <tr><td>購入処理中</td><td>購入ボタン内にインジケーター。購入・復元とも操作不可</td></tr>
+    <tr><td>購入済み</td><td>チェックマークと「ご購入ありがとうございます」を表示。購入ボタンは出さない</td></tr>
+    <tr><td>エラー発生</td><td>アラートでエラーメッセージを表示。OK で解除</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>起点</th><th>操作</th><th>結果</th></tr>
+    <tr><td>設定画面</td><td>「プレミアムを見る」</td><td>本画面（sheet）</td></tr>
+    <tr><td>記録カレンダー</td><td>ロックされた過去日 / 訴求カードのタップ</td><td>本画面（sheet）</td></tr>
+    <tr><td>本画面</td><td>購入完了</td><td>自動的に閉じて元の画面へ戻る（過去日が解放される）</td></tr>
+    <tr><td>本画面</td><td>「閉じる」</td><td>元の画面へ戻る</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">表示時にストアから商品情報を取得し、価格はストアの表示価格をそのまま使う（アプリ側で価格を書かない）</li>
+    <li class="done">購入状態が購入済みへ変化したら自動で閉じる</li>
+    <li class="done">復元ボタンは購入処理中のみ非活性。過去購入者の機種変更に備えて常設する</li>
+    <li class="done">ダークテーマ固定（アプリ全体のトーンに合わせる）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/premium.html">v1.4.0 プレミアム（買い切り）</a></li>
+    <li><a href="../features/storekit.html">StoreKit 課金機能</a></li>
+    <li><a href="daily-calendar.html">記録カレンダー</a></li>
+    <li><a href="settings.html">設定画面</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-08-04</td><td>初版作成（v1.4.0）。プレミアム購入画面を新規追加</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-08-04</footer>
+</div></body></html>

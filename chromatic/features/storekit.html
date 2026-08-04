@@ -8,33 +8,36 @@
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / StoreKit機能</div>
-  <header class="site-header"><h1>StoreKit 課金機能</h1><p>広告除去 IAP（¥240、買い切り）</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: CR-FEAT-SK</span></div></header>
+  <header class="site-header"><h1>StoreKit 課金機能</h1><p>プレミアム（¥240、買い切り）</p>
+  <div class="section-meta"><span class="tag done">v1.4.0</span><span class="tag">機能ID: CR-FEAT-SK</span></div></header>
 
   <h2>提供商品</h2>
   <table>
     <tr><th>商品</th><th>Product ID</th><th>形式</th></tr>
-    <tr><td>広告削除</td><td><code>com.happyboy1002.CHROMATIC.removeads</code></td><td>非消耗型・買い切り（¥240）</td></tr>
+    <tr><td>プレミアム（v1.3 まで: 広告削除）</td><td><code>com.happyboy1002.CHROMATIC.removeads</code></td><td>非消耗型・買い切り（¥240）</td></tr>
+  </table>
+  <div class="callout">
+    v1.4.0 で商品内容を「広告削除」から「プレミアム」へ差し替えたが、
+    <strong>Product ID・価格・形式は変更していない</strong>。既存購入者は追加課金なしで新特典を得る。
+    特典の内容は <a href="premium.html">v1.4.0 プレミアム（買い切り）</a> を参照。
+  </div>
+
+  <h2>エンタイトルメント</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>内部名</td><td><code>isPremium</code>（v1.3 までは <code>isAdsRemoved</code>。v1.4.0 でリネーム）</td></tr>
+    <tr><td>保存キー</td><td><code>chromatic_ads_removed</code>（<strong>変更しない</strong>。変更すると既存購入者の状態が失われるため）</td></tr>
+    <tr><td>役割</td><td>オフライン時のキャッシュ。起動時に StoreKit の結果で必ず上書きする</td></tr>
   </table>
 
-  <h2>PurchaseManager API</h2>
-  <pre><code>@Observable @MainActor
-final class PurchaseManager {
-    var isAdsRemoved: Bool
-
-    func loadProducts() async
-    func purchase() async throws
-    func restore() async throws
-    func verifyEntitlements() async  // 起動時に呼出（改ざん対策）
-}</code></pre>
-
-  <h2>処理フロー</h2>
-  <ol>
-    <li>App起動時に <code>verifyEntitlements()</code> でStoreKitから最新を取得</li>
-    <li>UserDefaults <code>chromatic_ads_removed</code> を上書き（オフラインキャッシュとして保持）</li>
-    <li>購入時 <code>product.purchase()</code></li>
-    <li>VerificationResult で検証 → transaction.finish()</li>
-  </ol>
+  <h2>提供する操作</h2>
+  <table>
+    <tr><th>操作</th><th>ユーザーから見た挙動</th></tr>
+    <tr><td>商品情報の取得</td><td>購入画面・設定画面にストアの表示価格を出す。取得できるまで購入ボタンは押せない</td></tr>
+    <tr><td>購入</td><td>成功するとプレミアム特典が即座に解放され、購入画面は自動的に閉じる</td></tr>
+    <tr><td>復元</td><td>機種変更・再インストール後に過去の購入を引き継ぐ</td></tr>
+    <tr><td>起動時のエンタイトルメント確認</td><td>アプリ起動のたびに購入状態を最新化する</td></tr>
+  </table>
 
   <h2>改ざん対策</h2>
   <div class="callout warn">
@@ -42,8 +45,19 @@ final class PurchaseManager {
     UserDefaults を直接書き換えても次回起動でリセットされる。
   </div>
 
-  <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <h2>関連</h2>
+  <ul>
+    <li><a href="premium.html">v1.4.0 プレミアム（買い切り）</a></li>
+    <li><a href="../screens/premium.html">プレミアム購入画面</a></li>
+    <li><a href="../screens/settings.html">設定画面</a></li>
+  </ul>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-08-04</td><td>v1.4.0 対応: 商品名を「広告削除」から「プレミアム」へ差し替え（Product ID・価格・形式は不変）。内部エンタイトルメント名を <code>isAdsRemoved</code> → <code>isPremium</code> にリネーム（保存キーは互換のため据え置き）。API 定義の記載をユーザーから見た挙動の記述に置き換え</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-08-04</footer>
 </div></body></html>
