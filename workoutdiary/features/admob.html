@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>WorkoutDiary - AdMob機能</title>
+<title>WorkoutDiary - 広告機能</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / AdMob機能</div>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / 広告機能</div>
   <header class="site-header">
     <h1>広告機能（AppLovin MAX）</h1>
     <p>Banner + Rewarded 広告</p>
@@ -76,8 +76,10 @@ final class RewardedAdManager {
 
   <h2>continuation leak 対策</h2>
   <div class="callout warn">
-    Google AdMob の callback ベースAPI を <code>CheckedContinuation</code> でブリッジ。
-    重複表示・メモリリーク防止のため、callback 実行後に必ず <code>resume</code> + <code>nil</code> 化。
+    AppLovin MAX の delegate ベースAPI を <code>CheckedContinuation</code> でブリッジ。
+    重複表示・メモリリーク防止のため、表示完了時に必ず1度だけ <code>resume</code> + <code>nil</code> 化する。
+    <code>didRewardUser</code> と <code>didHide</code> は MainActor への到達順が保証されないため、
+    報酬フラグはデリゲート内で同期的に確定させる（そうしないと「広告は見たのに報酬が付かない」取りこぼしが起きる）。
   </div>
 
   <h2>ビジネスルール</h2>
@@ -85,13 +87,13 @@ final class RewardedAdManager {
     <li>Banner はプレミアムユーザーには表示しない</li>
     <li>Rewarded はプレミアム判定不要（常時表示可）</li>
     <li>Rewarded 視聴で <code>tempPremiumExpiresAt</code> を保存し時限解放</li>
-    <li>本番リリース時は本番 Ad Unit ID へ切替必須</li>
+    <li>広告のロード・表示は App Store 配信版のみ（<code>AdEnvironment.isAdDeliveryAvailable</code>）</li>
   </ul>
 
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th></tr>
-    <tr><td>Google AdMob SDK v12.0+</td><td>Banner / Rewarded 広告</td></tr>
+    <tr><td>AppLovin MAX SDK（AppLovinSDK 13.6.3 / SPM）</td><td>Banner / Rewarded 広告。<code>OTHER_LDFLAGS</code> に <code>-ObjC</code> が必須</td></tr>
     <tr><td>App Tracking Transparency</td><td>IDFA許可</td></tr>
     <tr><td>Info.plist (NSUserTrackingUsageDescription)</td><td>ATT説明文</td></tr>
   </table>
