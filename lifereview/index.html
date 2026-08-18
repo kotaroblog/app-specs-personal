@@ -32,6 +32,21 @@
     日々の記録は素材集め。アプリの主役を <strong>週次・月次・年次の振り返り（リフレクション）</strong> に据える。
   </div>
 
+  <h2>プライバシー / データの扱い（v1.0 提出時に確定）</h2>
+  <p>広告SDK・解析SDK・外部通信をいずれも持たない。記録・添付写真・プロフィールはすべて端末内にのみ保存し、
+  外部サーバーへ送信しない。アカウント登録も不要。</p>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>App Privacy（ASC 申告）</td><td><strong>データを収集していません</strong>（コード実態と一致）</td></tr>
+    <tr><td><code>PrivacyInfo.xcprivacy</code></td><td>2026-08-19 追加。<code>NSPrivacyTracking: false</code> /
+      収集データ型なし / <code>NSPrivacyAccessedAPICategoryUserDefaults</code> を <code>CA92.1</code>（アプリ自身の設定保存）で宣言。
+      UserDefaults は required reason API に該当するため、未宣言だと提出後に ITMS-91053 の警告対象になる</td></tr>
+    <tr><td>写真ライブラリ権限</td><td><strong>要求しない</strong>。写真添付は SwiftUI PhotosPicker（PHPicker）でプロセス外選択のため、
+      <code>NSPhotoLibraryUsageDescription</code> を宣言していない（意図的。審査メモにも明記）</td></tr>
+    <tr><td>輸出コンプライアンス</td><td><code>ITSAppUsesNonExemptEncryption: false</code>（HTTPS と Keychain のみ）</td></tr>
+    <tr><td>配信</td><td>無料 / 日本のみ（日本語専用UIのため）</td></tr>
+  </table>
+
   <h2>タブ構成（3タブ）</h2>
   <table>
     <tr><th>タブ</th><th>役割</th><th>内容</th></tr>

@@ -29,14 +29,28 @@
     その間、バナーは枠ごと非表示にし、リワードで与えていた報酬は広告なしで即付与する（1日の上限などの制御は維持）。</p>
   </div>
 
+  <div class="callout">
+    <p style="margin-top:0"><strong>2026-08-18 v1.3.1 公開（build 15）</strong></p>
+    <p><strong>v1.3.0 の UI/UX 改善</strong>: タブ名を「レポート」から「<strong>分析</strong>」へ変更し、期間選択をメニュー化。
+    ホームの情報優先順位を整理し科目一覧は3件表示＋展開に変更。カレンダーのクイックアクションを「＋」メニューへ集約。
+    試験日カードに編集ボタンを追加。設定画面を「学習設定」「計測設定」「アプリ設定」の3分類へ再編。
+    外観設定の既定値をシステム準拠にし、Reduce Motion に配慮した。</p>
+    <p><strong>v1.3.1 の是正</strong>: 学習時間の表記を <code>35m</code> 形式から「35分」形式へ統一した。
+    ホームの <code>CompactGoalCard</code> とウィジェットに旧形式が残り、同一画面内で「2時間30分」と「10h30m」が混在していた。
+    週次目標で分の端数が切り捨てられる表示バグ、科目0件時に今日の目標が消える不具合も修正。</p>
+    <p style="margin-bottom:0"><strong>プライバシーポリシーの是正</strong>: アプリ内および公開ページの
+    「Google AdMob を使用して広告を配信しています」という記載を「現在、広告を配信していません」へ修正した。
+    AdMob は撤去済みで AppLovin も SDK Key 未設定のため、事実と異なる記載になっていた。</p>
+  </div>
+
   <h2>概要</h2>
   <ul class="kv-list">
     <li><span class="k">カテゴリ</span><span class="v">教育</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+ / Swift 6.0</span></li>
     <li><span class="k">言語</span><span class="v">日本語のみ</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション + AdMob広告</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（広告は AppLovin MAX へ移行。SDK Key 未設定のため現在は配信なし）</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
-    <li><span class="k">バージョン</span><span class="v">v1.2.1 (build 11)</span></li>
+    <li><span class="k">バージョン</span><span class="v">v1.3.1 (build 15)（2026-08-18 公開）</span></li>
     <li><span class="k">表示名</span><span class="v">学習ストップウォッチ</span></li>
     <li><span class="k">拡張ターゲット</span><span class="v">Live Activity / Widget</span></li>
     <li><span class="k">App Group</span><span class="v"><code>group.com.happyboy1002.StudyStopwatch</code></span></li>
@@ -75,7 +89,7 @@
     <a class="card" href="screens/live-activity.html"><div class="title">Live Activity</div><div class="desc">ロック画面・Dynamic Island</div><div class="meta"><span class="tag">SS-LA-01</span></div></a>
     <a class="card" href="screens/widget.html"><div class="title">Widget</div><div class="desc">ホーム画面ウィジェット</div><div class="meta"><span class="tag">SS-WID-01</span></div></a>
     <a class="card" href="screens/focus-subject-mode.html"><div class="title">フォーカス科目モード</div><div class="desc">今日の1科目をピン留めし、選ぶ疲れをなくす</div><div class="meta"><span class="tag">SS-FOCUS-01</span><span class="tag">v1.1.0</span></div></a>
-    <a class="card" href="screens/grades-tab.html"><div class="title">レポートタブ / 成績セグメント</div><div class="desc">レポートタブ内にセグメント追加。テスト記録の入力・グラフ可視化・履歴一覧（5タブ構成維持）</div><div class="meta"><span class="tag">SS-GRADES-01〜03</span><span class="tag">v1.1.0</span></div></a>
+    <a class="card" href="screens/grades-tab.html"><div class="title">分析タブ / 成績セグメント</div><div class="desc">分析タブ（v1.3.0 で「レポート」から改称）内にセグメント追加。テスト記録の入力・グラフ可視化・履歴一覧（5タブ構成維持）</div><div class="meta"><span class="tag">SS-GRADES-01〜03</span><span class="tag">v1.1.0</span></div></a>
     <a class="card" href="screens/study-plan-sheet.html"><div class="title">学習計画シート</div><div class="desc">総量・終了日から StudyTask を日付自動配分して一括生成</div><div class="meta"><span class="tag">SS-PLAN-01</span></div></a>
     <a class="card" href="screens/task-creation-sheet.html"><div class="title">タスク作成シート</div><div class="desc">やること単体の新規作成・編集（プリセット候補・期限日設定）</div><div class="meta"><span class="tag">SS-TASK-01</span></div></a>
   </div>
@@ -95,7 +109,7 @@
     <a class="card" href="features/weekly-report.html"><div class="title">週次ふりかえりレポート</div><div class="desc">前週（月〜日）の学習実績をスナップショット保存。Premium ユーザーにコーチコメント付きで提示</div><div class="meta"><span class="tag">SS-FEAT-WEEKLY-01</span><span class="tag">v1.2.0</span><span class="tag">Premium</span></div></a>
   </div>
 
-  <footer class="site-footer">最終更新: 2026-06-20</footer>
+  <footer class="site-footer">最終更新: 2026-08-19</footer>
 </div>
 </body>
 </html>
