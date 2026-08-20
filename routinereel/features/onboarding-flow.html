@@ -34,6 +34,7 @@
       <tr><th>Page</th><th>名前</th><th>内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>v1.6</td><td>2026-08-20</td><td><strong>広告基盤の Unity LevelPlay 移行</strong>を反映。ATT の記述を AdMob 前提から LevelPlay 前提へ更新し、ATT ダイアログは広告配信が有効な環境（<code>AdEnvironment.isAdDeliveryAvailable</code>）でのみ表示する点を明記（App Key 未設定の現在は表示しない）。詳細は <a href="ad-control.html">広告制御</a>。</td></tr>
       <tr>
         <td>0</td>
         <td>welcome</td>
@@ -183,7 +184,8 @@
   <ul>
     <li>通知許可・ATT 許可状態は iOS 側で管理。アプリ側で保持するのは Routine の <code>reminderEnabled</code> / <code>reminderTime</code> のみ</li>
     <li>外部送信は行わない（ローカル通知のみ）</li>
-    <li>ATT 拒否時は AdMob を non-personalized モードで初期化（広告は表示される）</li>
+    <li><strong>ATT ダイアログは広告配信が有効な環境でのみ表示する</strong>（<code>AdEnvironment.isAdDeliveryAvailable</code>）。App Key 未設定の現在は表示しない</li>
+    <li>ATT 拒否時は Unity LevelPlay が非パーソナライズ広告へ自動で切り替える（アプリ側の手動フラグ設定は不要）</li>
   </ul>
 
   <h2>リマインダーページの戻る導線（e216de7）</h2>
@@ -217,7 +219,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-15</footer>
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div>
 </body>
 </html>

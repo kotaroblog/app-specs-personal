@@ -18,15 +18,18 @@
 
 
   <div class="callout">
-    <p style="margin-top:0"><strong>2026-08-04 広告基盤を AdMob から AppLovin MAX へ全面移行</strong></p>
-    <p>AdMob アカウントが「無効なトラフィック」により恒久的に無効化され、再審査請求も却下された。
-    新規アカウント作成も含めて AdSense / AdMob は今後一切利用できないため、AppLovin MAX（AppLovinSDK 13.6.3 / SPM）へ移行した。</p>
-    <p><strong>再発防止の中枢</strong>: <code>AdEnvironment.isAdDeliveryAvailable</code> =「SDK Key が設定済み」かつ「App Store 配信版である」。
+    <p style="margin-top:0"><strong>2026-08-20 広告基盤を AppLovin MAX から Unity LevelPlay へ移行</strong></p>
+    <p>AdMob アカウントが「無効なトラフィック」により恒久的に無効化（2026-07-30）され、再審査請求も却下された。
+    その後 AppLovin MAX へ移行したが <strong>publisher アカウントの承認が下りなかった</strong>ため断念し、
+    Unity LevelPlay（LevelPlay 9.6.0 + LevelPlayUnityAdsAdapter 5.10.0 / SPM）へ再移行した。
+    Unity Ads は LevelPlay（メディエーション）経由の bidder として使う。</p>
+    <p><strong>再発防止の中枢</strong>: <code>AdEnvironment.isAdDeliveryAvailable = !appKey.isEmpty &amp;&amp; isProduction</code>
+    （App Key が設定済み かつ App Store 配信版）。
     停止の原因が開発・TestFlight 検証中の自己インプレッションだったため、<strong>広告のロード・表示は App Store 配信版のみ</strong>に限定し、
     DEBUG・シミュレーター・TestFlight では一切リクエストしない。判定は App Store レシートの種別で行い、ビルド構成の設定ミスでは破れない。
-    ATT ダイアログも広告配信時のみ表示する。</p>
-    <p style="margin-bottom:0">AppLovin の publisher アカウントは審査中のため <strong>SDK Key と広告ユニットIDは未設定</strong>で、現時点では広告は配信されていない。
-    その間、バナーは枠ごと非表示にし、リワードで与えていた報酬は広告なしで即付与する（1日の上限などの制御は維持）。</p>
+    ATT ダイアログも同じゲートの内側にあり、広告を配信しない間は表示しない。</p>
+    <p style="margin-bottom:0">RoutineReel は <strong>App Key と広告ユニットIDが未設定</strong>のため、現時点では広告を一切ロードしない。
+    その間、バナーは枠ごと非表示にする。詳細は <a href="features/ad-control.html">広告制御</a> を参照。</p>
   </div>
 
   <h2>概要</h2>
@@ -35,7 +38,7 @@
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語</span></li>
     <li><span class="k">配信地域</span><span class="v">日本（初回）</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（月¥480 / 年¥3,800）+ Google AdMob</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（月¥480 / 年¥3,800）+ 広告（<strong>Unity LevelPlay</strong> / バナー + 書き出し完了後のインタースティシャル）。App Key 未設定のため現在は配信なし</span></li>
     <li><span class="k">ステータス</span><span class="v">撮影・書き出しUX改善バッチ（acf8f50 / abba1b0 / f7bb7b0）反映済み・提出準備中</span></li>
     <li><span class="k">直近バージョン</span><span class="v">撮影UI改善（カメラ準備状態 SetupState / 進捗ドット色＋形状区別 / 状態説明テキスト / トップバー ステップ名主表示 / マイク非遮断バナー） + 完成動画刷新（全画面アウトロ廃止 / ルーティン名タイトルテロップ / ステップ名は各クリップ冒頭2.4秒 / 音声なし書き出しの実挙動修正） + 保存先状態管理（ExportDestination × 工程別進捗文言 / 保存先ごと再試行 / BackAction / 順序依存解消）</span></li>
   </ul>
@@ -90,6 +93,10 @@
     <a class="card" href="features/subscription.html">
       <div class="title">サブスクリプション設計</div>
       <div class="desc">価格戦略・Pro特典・v1.1値上げ計画</div>
+    </a>
+    <a class="card" href="features/ad-control.html">
+      <div class="title">広告制御</div>
+      <div class="desc">Unity LevelPlay・書き出し完了後の全画面広告・App Store 配信版のみに限定する安全機構</div>
     </a>
     <a class="card" href="features/design-system.html">
       <div class="title">DesignSystem</div>
@@ -155,6 +162,7 @@
       <tr><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>2026-08-20</td><td><strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）: 機能仕様書 <a href="features/ad-control.html">features/ad-control.html</a> を新規作成し、広告の表示条件（バナー / 書き出し完了後のインタースティシャル・1日1回・初回スキップ / リワードは実装のみで導線なし）と再発防止設計を集約。onboarding-flow.html の ATT 記述を LevelPlay ベースへ更新。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない</td></tr>
       <tr><td>2026-07-24</td><td><strong>撮影・書き出しUX改善バッチ反映（acf8f50 / abba1b0 / f7bb7b0）</strong>: 新規1ファイル（features/export-save-flow.html）作成。既存5ファイル更新（shooting / preview / video-composition / sns-share-flow / index）。<strong>撮影UI（acf8f50）</strong>: カメラ準備状態 <code>SetupState</code>（idle/preparing/ready/permissionDenied/failed）+ 準備中オーバーレイ・起動失敗時の再試行導線 / 進捗ドットを色＋形状（撮影済み=塗り／スキップ済み=アウトライン）で区別（純粋関数 ShootingProgress・ShootingStepStatus）/ 録画ボタン付近の状態説明テキスト / トップバーに現在のステップ名を主表示 / マイク権限拒否の非遮断バナー / カメラ反転の連打防止。<strong>完成動画（abba1b0）</strong>: 全画面アウトロカード（QR等）廃止→無料版は左上ウォーターマークのみ / 冒頭にルーティン名タイトルテロップ（0〜1.2秒）/ ステップ名・時刻を各クリップ冒頭のみ最大2.4秒に短縮 / テロップタイミングを純粋計算 OverlayTiming に分離 / プレビュー画面タイトル「プレビュー」→「仕上がりを確認」/ 総時間・クリップ数表示 / 音声トグルを肯定形化＋「音声なしで書き出す」の実挙動修正（音声トラック実除去）/ プリセットのステップ名を映像で分かりやすい表現に変更。<strong>保存先UX（f7bb7b0）</strong>: 保存先（ExportDestination）× 工程（ExportOperation）の状態管理で進捗文言を正しく出し分け / 保存失敗時の再試行を失敗した保存先だけに限定 / 戻る操作を BackAction で分岐（保存中は戻る無効化）/ アプリ内保存後の選択肢提示・ExportCompleteView からの仕上がり画面復帰で順序依存解消 / SNSボタン文言を「TikTokを開く」「Instagramを開く」に変更 / VideoSaving プロトコル新設</td></tr>
       <tr><td>2026-07-15</td><td><strong>build69 反映</strong>（機能凍結中・未提出）: 新規2ファイル（screens/preview.html・features/video-completion.html）作成。既存9ファイル更新（home / clip-library / routine-edit / paywall / video-list / onboarding-flow / analytics / testing / index）。主な変更: VideoCompletion @Model 追加（完成実績の単一情報源・creationSessionId 二重計上防止）/ NextRecordingSelector（「次に撮影」CTA 対象選定の安定ソート）/ ClipLibraryCTA.resolvePrimary（状況別主CTA 1択集約）/ ScheduleOutcome.notAuthorized（通知拒否 UI フィードバック）/ ProductLoadState 3状態管理（loading/loaded/failed）/ オンボ完了後撮影直行（F5）/ ATT 遅延を hasSeenFirstValueMoment まで延伸 / Analytics に creation_session_id・entry_source・destination を追加 / VideoListView 文言統一（「アプリ内の動画」）/ テスト 21→92 件（純粋関数化で Product/SwiftUI 非依存）</td></tr>
       <tr><td>2026-07-11</td><td><strong>v1.2.0 (build67) 反映</strong>: 計測イベント 9 種追加（撮影ファネル 3 件 / 動画合成 2 件 / export_failed / paywall_dismissed / purchase_failed / att_result）を analytics.html に追記。週次リマインダー（曜日指定）機能仕様書（features/weekly-reminder.html）を新規作成。続きから撮る導線機能仕様書（features/resume-shooting.html）を新規作成。home.html / shooting.html / clip-library.html / routine-edit.html にそれぞれ v1.2 変更を反映</td></tr>
@@ -172,7 +180,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-24</footer>
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div>
 </body>
 </html>

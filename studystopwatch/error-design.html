@@ -38,7 +38,9 @@ enum AppUpdateError: Error {
     <tr><td>SS-WID-01</td><td>Widget</td><td>AppGroup nil</td><td>Widget空表示</td><td>本体起動で同期</td><td>warning</td></tr>
     <tr><td>SS-NOTIF-01</td><td>権限</td><td>通知許可拒否</td><td>「設定で通知を有効に」</td><td>設定アプリ</td><td>info</td></tr>
     <tr><td>SS-AD-01</td><td>広告</td><td>Banner ロード失敗</td><td>サイレント（高さ0）</td><td>—</td><td>info</td></tr>
-    <tr><td>SS-AD-02</td><td>広告</td><td>Interstitial 未ロード</td><td>サイレント</td><td>—</td><td>info</td></tr>
+    <tr><td>SS-AD-02</td><td>広告</td><td>Interstitial 未ロード</td><td>サイレント（指数バックオフで再ロード）</td><td>—</td><td>info</td></tr>
+    <tr><td>SS-AD-03</td><td>広告</td><td>LevelPlay SDK の初期化失敗</td><td>広告以外の機能は継続。広告はロードしない</td><td>Logger に記録</td><td>error</td></tr>
+    <tr><td>SS-AD-04</td><td>広告</td><td>App Key 未設定</td><td>広告を一切ロードしない（安全側の既定）</td><td>—</td><td>info</td></tr>
     <tr><td>SS-DB-01</td><td>SwiftData</td><td>save失敗</td><td>「データ保存に失敗」</td><td>再試行</td><td>error</td></tr>
     <tr><td>SS-TIMER-01</td><td>タイマー</td><td>24時間境界超え</td><td>サイレントリセット</td><td>—</td><td>info</td></tr>
     <tr><td>SS-UPDATE-01</td><td>更新</td><td>App Store API失敗</td><td>サイレント</td><td>—</td><td>warning</td></tr>
@@ -59,9 +61,10 @@ enum AppUpdateError: Error {
   </div>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>  <tr><td>1.1</td><td>2026-08-20</td><td>広告基盤の <strong>Unity LevelPlay 移行</strong>を反映。SS-AD-03（SDK 初期化失敗）・SS-AD-04（App Key 未設定）を追加し、SS-AD-02 に指数バックオフによる再ロードを明記。詳細は <a href="features/ad-control.html">広告制御</a>。</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div>
 </body>
 </html>

@@ -25,13 +25,14 @@
 
   <h2>「もう1手」ボタン（v1.5.0〜）</h2>
   <table>
-    <tr><th>項目</th><th>広告配信中の仕様</th><th>広告配信停止中（v1.5.0 の現状）</th></tr>
+    <tr><th>項目</th><th>広告配信中の仕様</th><th>広告が配信されない間（現状）</th></tr>
     <tr><td>ラベル</td><td>広告を見てもう1手</td><td><strong>無料でもう1手</strong></td></tr>
     <tr><td>アイコン</td><td><code>play.rectangle.fill</code></td><td><strong><code>gift.fill</code></strong></td></tr>
     <tr><td>挙動</td><td>リワード広告を視聴後に救済</td><td><strong>広告を挟まず即救済</strong></td></tr>
   </table>
   <p>
-    広告配信は v1.5.0 で恒久停止したため、現状は常に「無料でもう1手」として動作する。
+    広告基盤は 2026-08-20 に Unity LevelPlay へ移行したが、ironSource Ads アカウントが承認待ちのため広告はまだ配信されていない。
+    そのため現状は常に「無料でもう1手」として動作する。
     ラベル・アイコン・挙動はいずれも広告配信可否による分岐で、広告を再開すれば元の仕様に戻る。
   </p>
 
@@ -83,7 +84,8 @@
   <h2>変更履歴</h2>
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
   <tr><td>1.1</td><td>2026-07-14</td><td>CTAボタン共通デザイン仕様セクションを追加（4画面統一・不透明度是正）</td></tr>
-  <tr><td>1.2</td><td>2026-07-30</td><td>v1.5.0 対応: リワードボタンを「広告を見てもう1手」→「無料でもう1手」（アイコン gift.fill）に変更し、広告なしで即救済する挙動を記載。回数上限（無料1回 / プレミアム3回）を追加。プレミアム訴求リンクの文言を「プレミアムでアンドゥ無制限・もう1手3回」に更新</td></tr></table>
+  <tr><td>1.2</td><td>2026-07-30</td><td>v1.5.0 対応: リワードボタンを「広告を見てもう1手」→「無料でもう1手」（アイコン gift.fill）に変更し、広告なしで即救済する挙動を記載。回数上限（無料1回 / プレミアム3回）を追加。プレミアム訴求リンクの文言を「プレミアムでアンドゥ無制限・もう1手3回」に更新</td></tr>  <tr><td>1.3</td><td>2026-08-20</td><td>広告基盤の <strong>Unity LevelPlay 移行</strong>を反映。救済リワードの根拠を「v1.5.0 での広告恒久停止」から「LevelPlay 移行後、ironSource Ads アカウント承認待ちで未配信」へ更新（配信が始まれば <code>isAdDeliveryAvailable</code> の分岐で元のリワード仕様に戻る）。表示条件・上限回数は変更なし。</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-07-30</footer>
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div></body></html>

@@ -21,7 +21,7 @@
     <li><span class="k">カテゴリ</span><span class="v">ゲーム / パズル</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+ / Swift 6.0</span></li>
     <li><span class="k">言語</span><span class="v">日本語のみ</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">広告（Banner/Interstitial）+ IAP（広告除去 ¥240）</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">広告（Banner/Interstitial・<strong>Unity LevelPlay</strong>）+ 買い切りIAP ¥240。2026-08-20 に AppLovin MAX から LevelPlay へ移行。<strong>App Key・広告ユニットIDは未設定</strong>のため現在は広告を一切ロードしない</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
     <li><span class="k">配信地域</span><span class="v">日本のみ</span></li>
     <li><span class="k">対応デバイス</span><span class="v">iPhone（縦向き専用）</span></li>
@@ -66,7 +66,7 @@
     <a class="card" href="features/sound.html"><div class="title">サウンド</div><div class="desc">WAVデータ事前生成</div></a>
     <a class="card" href="features/streak.html"><div class="title">ストリーク</div><div class="desc">連続プレイ日数</div></a>
     <a class="card" href="features/game-center.html"><div class="title">Game Center</div><div class="desc">リーダーボード3本</div></a>
-    <a class="card" href="features/ad-control.html"><div class="title">広告制御</div><div class="desc">AppLovin MAX・App Store 配信版のみに限定する安全機構</div></a>
+    <a class="card" href="features/ad-control.html"><div class="title">広告制御</div><div class="desc">Unity LevelPlay・App Store 配信版のみに限定する安全機構</div></a>
     <a class="card" href="features/v1-1-dopamine-update.html">
       <div class="title">v1.1 ドーパミン強化アップデート</div>
       <div class="desc">Daily Challenge・ストリーク強化・Juice演出</div>
@@ -79,7 +79,13 @@
     </a>
   </div>
 
-  <footer class="site-footer">最終更新: 2026-06-15</footer>
+    <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-08-20</td><td>変更履歴セクションを新設。<strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）。マネタイズ表記と <a href="features/ad-control.html">広告制御</a> のカード説明を更新。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない。</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div>
 </body>
 </html>

@@ -13,13 +13,13 @@
 
   <header class="site-header">
     <h1>エラー設計・例外パターン一覧</h1>
-    <p>SwiftData / StoreKit / AdMob / 通知 のエラーハンドリング方針</p>
+    <p>SwiftData / StoreKit / 広告（Unity LevelPlay） / 通知 のエラーハンドリング方針</p>
   </header>
 
   <h2>エラー分類</h2>
   <ul>
     <li><strong>StoreKitエラー</strong>: 購入・復元・検証失敗</li>
-    <li><strong>AdMobエラー</strong>: 広告ロード失敗（サイレント処理）</li>
+    <li><strong>広告エラー</strong>（Unity LevelPlay）: 広告ロード失敗（サイレント処理・指数バックオフで再試行）</li>
     <li><strong>SwiftDataエラー</strong>: 保存失敗・マイグレーション失敗</li>
     <li><strong>権限エラー</strong>: 通知許可・ATT拒否</li>
     <li><strong>ビジネスエラー</strong>: 入力値不正など</li>
@@ -44,6 +44,8 @@
     <tr><td>WD-SK-03</td><td>StoreKit</td><td>pending</td><td>「処理中です」</td><td>承認後に自動更新</td><td>info</td></tr>
     <tr><td>WD-AD-01</td><td>広告</td><td>Banner ロード失敗</td><td>サイレント（高さ0）</td><td>—</td><td>info</td></tr>
     <tr><td>WD-AD-02</td><td>広告</td><td>Rewarded ロード失敗</td><td>「広告を読み込めませんでした」</td><td>再試行</td><td>warning</td></tr>
+    <tr><td>WD-AD-03</td><td>広告</td><td>LevelPlay SDK の初期化失敗</td><td>広告以外の機能は継続。広告はロードしない</td><td>Logger に記録</td><td>error</td></tr>
+    <tr><td>WD-AD-04</td><td>広告</td><td>App Key 未設定</td><td>広告を一切ロードしない（安全側の既定）</td><td>—</td><td>info</td></tr>
     <tr><td>WD-DB-01</td><td>SwiftData</td><td>context.save() 失敗</td><td>「データ保存に失敗しました」</td><td>再試行 / 再起動</td><td>error</td></tr>
     <tr><td>WD-DB-02</td><td>SwiftData</td><td>マイグレーション失敗</td><td>サイレント（旧データ保持）</td><td>—</td><td>error</td></tr>
     <tr><td>WD-NOTIF-01</td><td>権限</td><td>通知許可拒否</td><td>「設定アプリで通知を有効に」</td><td>設定アプリ起動</td><td>info</td></tr>
@@ -79,9 +81,10 @@ func showAd() async -> Bool {
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成（ソースコードからリバース）</td></tr>
+    <tr><td>1.1</td><td>2026-08-20</td><td>広告基盤の <strong>Unity LevelPlay 移行</strong>を反映。「AdMobエラー」を「広告エラー（Unity LevelPlay）」へ改称し、WD-AD-03（SDK 初期化失敗）・WD-AD-04（App Key 未設定）を追加。広告ロードは App Store 配信版かつ SDK 初期化完了後にのみ行う。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div>
 </body>
 </html>

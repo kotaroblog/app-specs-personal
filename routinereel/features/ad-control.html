@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>RoutineReel - 広告制御</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">RoutineReel</a> / 広告制御</div>
+
+  <header class="site-header">
+    <h1>広告制御機能</h1>
+    <p>Unity LevelPlay（バナー + インタースティシャル）／配信は App Store 版のみ</p>
+    <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: RR-FEAT-AD</span></div>
+  </header>
+
+  <div class="callout">
+    <p style="margin-top:0"><strong>現状: 広告は一切配信されていない。</strong></p>
+    <p>AdMob アカウントが「無効なトラフィック」により恒久的に無効化（2026-07-30）され、再審査請求も却下された。
+    その後 AppLovin MAX へ移行したが <strong>publisher アカウントの承認が下りなかった</strong>ため断念し、
+    2026-08-20 に <strong>Unity LevelPlay</strong> へ再移行した。</p>
+    <p style="margin-bottom:0">RoutineReel は <strong>App Key と広告ユニットIDが未設定（空）</strong>のため、広告のリクエスト自体が発生しない。</p>
+  </div>
+
+  <h2>概要</h2>
+  <p>
+    無料ユーザー向けにバナー広告と、書き出し完了後のインタースティシャル広告を配信する。
+    プレミアム会員には表示しない。広告ネットワークは <strong>Unity LevelPlay</strong>（Unity Ads をメディエーション経由の bidder として利用）。
+    リワード広告は実装済みだが、<strong>現バージョンでは表示導線を持たない</strong>。
+  </p>
+
+  <h2>広告基盤の変遷</h2>
+  <table>
+    <tr><th>時期</th><th>基盤</th><th>結果</th></tr>
+    <tr><td>〜2026-07-30</td><td>Google AdMob</td><td>アカウントが恒久的に無効化。AdSense / AdMob は今後一切利用できない</td></tr>
+    <tr><td>2026-07-30 〜 2026-08-20</td><td>AppLovin MAX</td><td>移行完了したが publisher アカウントの承認が下りず断念</td></tr>
+    <tr><td>2026-08-20 〜</td><td><strong>Unity LevelPlay</strong></td><td>移行完了。RoutineReel は<strong>キー未設定</strong>のため広告は一切ロードされない</td></tr>
+  </table>
+  <p>Unity Ads は 2026-04-01 以降、直接統合だと配信性能が落ちるため、<strong>LevelPlay（メディエーション）経由の bidder</strong> として利用する。直接統合は使わない。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/home.html">ホーム</a>（バナー。中央＋ボタンとの誤タップを防ぐため直下に 24pt の非インタラクティブ離隔スペーサーを置く）</li>
+    <li><a href="../screens/preview.html">プレビュー / 書き出し</a>（書き出し完了後のインタースティシャル）</li>
+    <li><a href="../screens/paywall.html">Paywall</a>（プレミアム訴求）</li>
+  </ul>
+
+  <h2>広告を出してよい環境の判定（再発防止の中枢）</h2>
+  <div class="callout">
+    <p style="margin-top:0">AdMob 停止の原因は、<strong>開発中・TestFlight 検証中に本番の広告IDでインプレッションが発生していたこと</strong>だった。
+    ネットワークを変えても同じ規約（自己クリック・他者への視聴依頼の禁止）が適用されるため、同じ事故を構造的に防ぐ。</p>
+    <p style="margin-bottom:0"><code>AdEnvironment.isAdDeliveryAvailable = !appKey.isEmpty &amp;&amp; isProduction</code>
+    （App Key が設定済み かつ App Store 配信版）</p>
+  </div>
+  <table>
+    <tr><th>環境</th><th>広告のロード・表示</th></tr>
+    <tr><td>DEBUG ビルド / シミュレーター / TestFlight</td><td>一切リクエストしない</td></tr>
+    <tr><td>App Store 配信版（App Key 設定済み）</td><td>配信する</td></tr>
+  </table>
+  <ul>
+    <li>判定は <strong>App Store レシートの種別</strong>（<code>sandboxReceipt</code> かどうか）で行う。ビルド構成の設定ミスでは破れない</li>
+    <li>LevelPlay には AdMob のような「テスト広告ID」の概念がないため、<strong>開発中は広告を出さない</strong>方式を採る</li>
+    <li>SDK 初期化自体も配信可能な環境でのみ実行する</li>
+    <li><strong>SDK の初期化完了前は広告をロードしない</strong>（LevelPlay は初期化前の <code>loadAd()</code> が失敗するため）。初期化完了は <code>@Observable</code> な <code>AdReadiness</code> で SwiftUI に伝播する</li>
+    <li><strong>ATT ダイアログも同じゲートの内側</strong>。広告を配信しない間はトラッキング許可を求めない</li>
+  </ul>
+
+  <h2>広告の種類と表示タイミング</h2>
+  <table>
+    <tr><th>種類</th><th>クラス</th><th>表示タイミング</th><th>対象</th></tr>
+    <tr><td>バナー</td><td><code>LPMBannerAdView</code>（アダプティブ）</td><td>ホーム下部。タブバー直上に配置し、直下に 24pt の非インタラクティブ離隔スペーサーを挟む</td><td>無料ユーザーのみ</td></tr>
+    <tr><td>インタースティシャル</td><td><code>LPMInterstitialAd</code></td><td><strong>書き出し完了後（ホーム復帰時）</strong>。1日1回まで・<strong>初回の書き出しはスキップ</strong></td><td>無料ユーザーのみ</td></tr>
+    <tr><td>リワード</td><td><code>LPMRewardedAd</code></td><td><strong>実装のみ・表示導線なし</strong>（透かしなし書き出し1回無料の導線を想定していたが現バージョンでは未使用）</td><td>—</td></tr>
+  </table>
+
+  <h2>インタースティシャルの表示条件（移行後も維持）</h2>
+  <table>
+    <tr><th>条件</th><th>内容</th><th>理由</th></tr>
+    <tr><td>タイミング</td><td>書き出し「完了」でホームに戻る瞬間</td><td>シェア画面（ExportCompleteView）表示前に出すと、TikTok / Reels 投稿ボタン（バイラルループの発火点）を遅らせてしまうため</td></tr>
+    <tr><td>頻度</td><td><strong>1日1回まで</strong></td><td>制作ツールとしての作業導線を阻害しない</td></tr>
+    <tr><td>初回スキップ</td><td>初回の書き出し完了時は表示しない</td><td>最初の成功体験をクリーンに保つ</td></tr>
+    <tr><td>プレミアム</td><td>表示しない</td><td>課金特典</td></tr>
+  </table>
+  <p class="note">
+    ※ 広告が配信できない期間は「初回書き出し済み」フラグも消費しない（App Key 設定後の最初の書き出しをクリーンに保つため）。
+  </p>
+
+  <h2>広告が配信されない間の挙動</h2>
+  <table>
+    <tr><th>対象</th><th>挙動</th></tr>
+    <tr><td>バナー</td><td><strong>枠ごと非表示</strong>（空白を残さない）</td></tr>
+    <tr><td>インタースティシャル</td><td>呼び出さない。ロードもしない。初回書き出しフラグも消費しない</td></tr>
+    <tr><td>リワード</td><td>ロードしない（そもそも表示導線なし）</td></tr>
+    <tr><td>SDK 初期化</td><td>行わない</td></tr>
+    <tr><td>ATT ダイアログ</td><td>表示しない</td></tr>
+  </table>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>広告のロード・表示は <strong>App Store 配信版のみ</strong>。DEBUG・シミュレーター・TestFlight では一切リクエストしない</li>
+    <li>App Key または広告ユニットIDが未設定の間は広告に関わる処理を一切実行しない（安全側の既定）。<strong>RoutineReel は現在この状態</strong></li>
+    <li>SDK の初期化完了前は広告をロードしない</li>
+    <li>プレミアム会員にはバナー・インタースティシャルを表示しない</li>
+    <li>全画面広告は書き出しの完了後にのみ出し、<strong>投稿導線（シェア）を遅延させない</strong></li>
+    <li>バナーはタップ導線に隣接させない（中央＋ボタンとの離隔 24pt を確保する）</li>
+    <li>広告のロード・表示に失敗しても <strong>UX を止めない</strong>（バナーは非表示、全画面はサイレントでスキップ）</li>
+  </ul>
+
+  <h2>技術仕様</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>SDK</td><td><strong>LevelPlay 9.6.0</strong>（SPM: <code>LevelPlay-Swift-Package</code> / プロダクト名 <code>UnityMediationSDK</code>）</td></tr>
+    <tr><td>アダプタ</td><td><strong>LevelPlayUnityAdsAdapter 5.10.0</strong>（プロダクト名 <code>UnityAdsAdapter</code>）。SDK とは別のバージョン体系のため 9.x を指定すると依存解決に失敗する</td></tr>
+    <tr><td>初期化</td><td><code>LPMInitRequestBuilder(appKey:)</code> → <code>LevelPlay.initWith(_:completion:)</code></td></tr>
+    <tr><td>表示</td><td>LevelPlay の <code>showAd</code> は viewController を必須で要求するため、最前面の ViewController を解決して渡す</td></tr>
+    <tr><td>状態管理</td><td>日次カウント・初回書き出し済みフラグは <code>UserDefaults</code> に保持（<code>interstitialDailyCount</code> / <code>interstitialDailyDate</code> / <code>interstitialFirstExportDone</code>）</td></tr>
+    <tr><td>再試行</td><td>ロード失敗時は指数バックオフ（上限64秒）。再試行タスクは1本に束ねて多重実行を防ぐ</td></tr>
+    <tr><td>ビルド設定</td><td><code>OTHER_LDFLAGS</code> に <code>-ObjC</code> が必須</td></tr>
+  </table>
+  <p class="note">※ App Key・広告ユニットIDの実値は本仕様書には記載しない（コード側で管理する）。</p>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>バナーのロード失敗</td><td>枠ごと非表示（空白を残さない）</td></tr>
+    <tr><td>インタースティシャルのロード失敗</td><td>サイレントでスキップ。指数バックオフで再ロード</td></tr>
+    <tr><td>SDK 初期化の失敗</td><td>広告以外の機能は動き続ける。原因調査のため Logger に記録する</td></tr>
+    <tr><td>App Key 未設定</td><td>広告を一切ロードしない（安全側の既定）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0 を SPM で導入。<code>OTHER_LDFLAGS</code> に <code>-ObjC</code> を追加</li>
+    <li class="done"><code>AdEnvironment.isAdDeliveryAvailable</code> で全広告処理を分岐</li>
+    <li class="done">App Store レシートの種別で本番配信版を判定</li>
+    <li class="done">全画面広告のロードは SDK 初期化完了後にのみ行う（初期化完了時にもロードを呼び直して取りこぼしを防ぐ）</li>
+    <li class="done">書き出し完了後の表示条件（1日1回・初回スキップ・プレミアム除外）を維持</li>
+    <li class="done">バナー直下に 24pt の非インタラクティブ離隔スペーサーを配置（v1.1.0 で追加）</li>
+    <li>Unity ダッシュボード（LevelPlay）で App Key と広告ユニットIDを発行して設定する（未設定のため現在は広告なし）</li>
+    <li>リワードの表示導線を作るかは、配信開始後の収益を見てから判断する</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="subscription.html">サブスク課金</a></li>
+    <li><a href="onboarding-flow.html">オンボーディング</a>（ATT の要求タイミング）</li>
+    <li><a href="../screens/home.html">ホーム画面</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-08-20</td><td>初版作成。<strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay）したことを受け、各仕様書に散在していた広告仕様を機能仕様書として独立させた。SDK（LevelPlay 9.6.0 + LevelPlayUnityAdsAdapter 5.10.0 / SPM）・使用クラス（<code>LPMBannerAdView</code> / <code>LPMInterstitialAd</code> / <code>LPMRewardedAd</code>）・再発防止設計（<code>isAdDeliveryAvailable = !appKey.isEmpty &amp;&amp; isProduction</code>／App Store 配信版のみ配信／SDK 初期化完了前はロードしない／ATT も同じゲート）・インタースティシャルの表示条件（書き出し完了後・1日1回・初回スキップ）を記載。リワードは実装のみで表示導線なし。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない。</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
+</div>
+</body>
+</html>

@@ -21,7 +21,7 @@
     <li><span class="k">カテゴリ</span><span class="v">ヘルスケア / フィットネス</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション + 広告</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション + 広告（<strong>Unity LevelPlay</strong> / Banner + Rewarded）。2026-08-20 に AppLovin MAX から移行。<strong>App Key・広告ユニットIDは未設定</strong>のため現在は広告を一切ロードしない</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
     <li><span class="k">リリース時期</span><span class="v">-</span></li>
   </ul>
@@ -75,7 +75,7 @@
   <h2>機能仕様書</h2>
   <div class="card-grid">
     <a class="card" href="features/storekit.html"><div class="title">StoreKit課金</div><div class="desc">月額/年額サブスク</div></a>
-    <a class="card" href="features/admob.html"><div class="title">AdMob広告</div><div class="desc">Banner + Rewarded</div></a>
+    <a class="card" href="features/admob.html"><div class="title">広告機能（Unity LevelPlay）</div><div class="desc">Banner + Rewarded・App Store 配信版のみに限定する安全機構</div></a>
     <a class="card" href="features/notification.html"><div class="title">通知</div><div class="desc">3種類のローカル通知</div></a>
     <a class="card" href="features/achievement.html"><div class="title">実績・ストリーク</div><div class="desc">バッジシステム</div></a>
     <a class="card" href="features/pr-detection.html"><div class="title">PR検出</div><div class="desc">自己ベスト判定</div></a>
@@ -111,9 +111,10 @@
     <tr><td>v1.1.1</td><td>2026-05-24</td><td>種目一覧刷新（ExerciseListView v1.2: タップ→編集直行・スワイプ操作・部位カラー統一・メタ情報・ExerciseStatsCalculator）、Undo Toast システム導入（ToastManager / ToastOverlay / 保留中削除パターン）、ピラミッドセット対応（TemplateSetEntry 新規・TemplateMigrationService・EditTemplateView 全面リライト・AddTemplateEntrySheet）。仕様書: exercise-list v1.2・template-list v1.2・data-model v1.2・routine v1.1 更新。undo-toast.html・exercise-stats.html 新規作成</td></tr>
     <tr><td>v1.1.2候補</td><td>2026-05-27</td><td>種目インライン新規登録（AddWorkoutView: 種目リスト末尾「+ 新しい種目を追加」→ExerciseFormView sheet・initialCategory プリセット・onSaved 自動選択）、ルーティン新規作成導線（TemplateListView: toolbar「+」ボタン・空状態CTA → CreateTemplateView）。仕様書: add-workout v1.3・template-list v1.3 更新。create-template.html 新規作成</td></tr>
     <tr><td>v1.1.2</td><td>2026-06-06</td><td>v1.1.2 正式リリース（build 5）: 「v1.1.2候補」を確定。仕様書: create-template v1.1・add-workout v1.4・template-list v1.4 変更履歴更新。routine v1.2（新規追加/変更ファイル一覧追記）・release-notes v1.1（v1.1.2 の3項目追記）更新</td></tr>
+    <tr><td>-</td><td>2026-08-20</td><td><strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）。<a href="features/admob.html">広告機能</a>・<a href="error-design.html">エラー設計</a>を更新。広告面（バナー + リワードによるシェア機能の一時解放）は変更なし。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-06</footer>
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div>
 </body>
 </html>

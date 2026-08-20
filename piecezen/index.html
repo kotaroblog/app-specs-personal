@@ -25,7 +25,7 @@
     <li><span class="k">カテゴリ</span><span class="v">ゲーム / パズル</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+ / Swift 6.0</span></li>
     <li><span class="k">言語</span><span class="v">日本語のみ</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">広告（Banner/Interstitial/Rewarded） + IAP（広告除去）</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">広告（Banner/Interstitial/Rewarded・<strong>Unity LevelPlay</strong>） + プレミアムIAP。2026-08-20 に AppLovin MAX から LevelPlay へ移行。App Key・広告ユニットIDは設定済みだが ironSource Ads アカウント承認待ちのため現在は未配信</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
     <li><span class="k">リリース時期</span><span class="v">2026年4月</span></li>
     <li><span class="k">バージョン</span><span class="v">v1.4.0 (build 21)</span></li>
@@ -77,7 +77,7 @@
       <div class="meta"><span class="tag">FEAT-V1-5-PREMIUM</span><span class="tag">v1.5.0</span><span class="tag">2026年7月30日</span></div>
     </a>
     <a class="card" href="features/game-logic.html"><div class="title">ゲームロジック</div><div class="desc">配置・消去・スコア・コンボ</div></a>
-    <a class="card" href="features/ad-control.html"><div class="title">広告制御</div><div class="desc">v1.5.0 で配信を恒久停止（仕組みは残置）</div></a>
+    <a class="card" href="features/ad-control.html"><div class="title">広告制御</div><div class="desc">Unity LevelPlay 配信・App Store 配信版のみに限定する安全機構</div></a>
     <a class="card" href="features/storekit.html"><div class="title">StoreKit課金</div><div class="desc">プレミアム（買い切り）IAP</div></a>
     <a class="card" href="features/sound.html"><div class="title">サウンド</div><div class="desc">activePlayers配列で安全再生</div></a>
     <a class="card" href="features/haptic.html"><div class="title">ハプティクス</div><div class="desc">UIFeedbackGenerator</div></a>
@@ -99,7 +99,13 @@
     </a>
   </div>
 
-  <footer class="site-footer">最終更新: 2026-07-14</footer>
+    <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-08-20</td><td>変更履歴セクションを新設。<strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）。マネタイズ表記と <a href="features/ad-control.html">広告制御</a> のカード説明を更新。App Key・広告ユニットID3種は設定済みだが、ironSource Ads アカウント承認待ちのため未配信。</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div>
 </body>
 </html>

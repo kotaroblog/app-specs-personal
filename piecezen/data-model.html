@@ -29,7 +29,7 @@
   <table>
     <tr><th>クラス</th><th>責務</th></tr>
     <tr><td><code>GameEngine</code></td><td>グリッド・配置・ライン消去・スコア・アンドゥ・演出</td></tr>
-    <tr><td><code>AdManager</code></td><td>広告表示制御（v1.5.0 以降は配信停止中。報酬の即付与のみ担当）</td></tr>
+    <tr><td><code>AdManager</code></td><td>広告表示制御（Unity LevelPlay）。広告が配信されない間は報酬の即付与のみ担当</td></tr>
     <tr><td><code>StoreManager</code></td><td>課金。<code>isPremium</code> でプレミアム購入状態を提供（★ v1.5.0 で <code>isAdFree</code> から改称・特典を差し替え）</td></tr>
     <tr><td><code>SoundManager</code></td><td>サウンド再生</td></tr>
     <tr><td><code>HapticManager</code></td><td>ハプティクス</td></tr>
@@ -65,12 +65,15 @@ enum GameState {
     case rescued  // 「もう1手」で救済中
 }</code></pre>
 
-  <h2>広告環境の判定（AdEnvironment・★ v1.5.0 追加）</h2>
+  <h2>広告環境の判定（AdEnvironment・★ v1.5.0 追加 / 2026-08-20 更新）</h2>
   <table>
     <tr><th>プロパティ</th><th>型</th><th>内容</th></tr>
-    <tr><td><code>isAdDeliveryAvailable</code></td><td>Bool</td><td>広告配信が利用可能か。v1.5.0 では <strong>false 固定</strong>（広告の恒久停止）</td></tr>
-    <tr><td><code>isProduction</code></td><td>Bool</td><td>本番の広告ユニットIDを使ってよい環境か。App Store 配信版のみ true</td></tr>
+    <tr><td><code>appKey</code></td><td>String</td><td>Unity LevelPlay の App Key。空なら広告を一切ロードしない（安全側の既定）。※ 実値は仕様書に記載しない</td></tr>
+    <tr><td><code>isAdDeliveryAvailable</code></td><td>Bool</td><td>広告配信が利用可能か。<code>!appKey.isEmpty &amp;&amp; isProduction</code>。広告・ATT の全挙動がこの値で分岐する</td></tr>
+    <tr><td><code>isProduction</code></td><td>Bool</td><td>広告を配信してよい環境か。<strong>App Store 配信版のみ true</strong>（レシート種別で判定）</td></tr>
+    <tr><td><code>isInitialized</code></td><td>Bool</td><td>LevelPlay SDK の初期化が完了したか。<code>@Observable</code> な <code>AdReadiness</code> が保持し、完了時に SwiftUI を再描画させる。広告のロードは true になってから行う</td></tr>
   </table>
+  <p class="note">※ 広告基盤は 2026-08-20 に AppLovin MAX から <strong>Unity LevelPlay</strong>（LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0 / SPM）へ移行。詳細は <a href="features/ad-control.html">広告制御</a> を参照。</p>
 
   <h2>BlockShape 19種類</h2>
   <p>dot / domino2H/V / line3H/V / lShape3A〜3D / line4H/V / square2x2 / tShapeDown/Up / sShape / zShape / bigLShapeA/B / plusShape</p>
@@ -106,7 +109,8 @@ enum GameState {
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-19</td><td>v1.3.0 対応: StatRecord に maxCombo フィールド追加。ColorTheme を6種類に更新（seniorContrast 追加）。AppStorage fontSizeLevel キーを追加</td></tr>
     <tr><td>1.2</td><td>2026-07-14</td><td>v1.4.0 対応: seniorContrast テーマの説明に WCAG 3:1 是正（indigo/blue 明度調整）を追記。fontSizeLevel に OS Dynamic Type 優先ロジックを追記</td></tr>
+    <tr><td>1.3</td><td>2026-08-20</td><td>広告基盤の <strong>Unity LevelPlay 移行</strong>を反映。<code>AdEnvironment</code> の項目に <code>appKey</code> と <code>isInitialized</code>（<code>AdReadiness</code> による初期化完了の伝播）を追加し、<code>isAdDeliveryAvailable</code> を「false 固定（恒久停止）」から <code>!appKey.isEmpty &amp;&amp; isProduction</code> の算出値へ更新。<code>AdManager</code> の説明を LevelPlay ベースに改訂。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-14（v1.2）</footer>
+  <footer class="site-footer">最終更新: 2026-08-20（v1.2）</footer>
 </div></body></html>

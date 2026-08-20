@@ -38,7 +38,7 @@
     <li><span class="k">③Quick Start</span><span class="v">横スクロール4プリセット（<strong>朝5分ルーティン / 夜の整いルーティン / 筋トレ10分ルーティン / 集中45分ルーティン</strong>）<strong>150×220pt カード</strong>（v1.0.6で画面幅2枚並びの見切れを解消）。タップで <strong>連続撮影を即開始（<code>startMode: .shootingSequential</code>、step 0 から全ステップ撮影）</strong>。v1.2.0 で動線を再変更: クリップライブラリ起動（.clipLibrary）→ 連続撮影即開始（.shootingSequential）に変更（Quick Start の名称と行動の一致・初回動画完成摩擦の最小化）。v1.0 で <a href="#preset-rename">プリセット名を検索意図ワードへ刷新</a>（raw value は不変）。<strong>build69 でセクション見出しを「クイックスタート」→「プリセットから選ぶ」に変更</strong>（より直感的な説明に統一）</span></li>
     <li><span class="k">④マイルーティン</span><span class="v">縦並びカード（行末に ellipsis ⋯ ボタンを常設。長押し iOS 標準 <code>.contextMenu</code> でも同一メニューを表示）+ 新規ルーティン作成ボタン。<strong>build69 より「今日 ✓」緑バッジ→「撮影済み ✓」緑バッジに文言変更</strong>（「今日」バッジだと Hero の「今日はもう1本つくれています」（完成動画ベース）と意味が衝突するため。「撮影済み」=クリップ撮影済みだが完成はまだ、という意味を明確化）。build69 よりマイルーティンがない場合の <code>emptyMyRoutinesPlaceholder</code> を削除し、ルーティン作成の入口を「プリセットから選ぶ」チップ + 下部タブ中央＋の2つに集約</span></li>
     <li><span class="k">⑤アプリ内の動画</span><span class="v">recentVideos が存在する場合のみ表示（build69 より見出し「最近の動画」→「アプリ内の動画」に変更。動画がカメラロールのみ保存の場合はここに表示されない、という保存範囲を明示）。<strong>実サムネ画像（VideoStorageService.thumbnailURL）+ 中央 play.circle.fill オーバーレイ</strong>。タップで <a href="#recent-thumb">RecentVideoPlayerSheet</a> を fullScreenCover 起動。見出し横に <a href="#storage-meter">保存メーター</a>（build69 よりバッジ表記「N/3」→「保存 N/3」に変更し保存範囲を明示）</span></li>
-    <li><span class="k">⑥下部</span><span class="v">バナー広告（無料時のみ）+ <strong>24pt 非インタラクティブ離隔スペーサー</strong>（AdMob 誤タップ防止）+ 5タブバー + 中央＋ボタン</span></li>
+    <li><span class="k">⑥下部</span><span class="v">バナー広告（無料時のみ）+ <strong>24pt 非インタラクティブ離隔スペーサー</strong>（バナー誤タップ防止）+ 5タブバー + 中央＋ボタン</span></li>
   </ul>
 
   <h2>遷移一覧（8遷移）</h2>
@@ -47,6 +47,7 @@
       <tr><th>トリガー</th><th>遷移先</th><th>表示方法</th></tr>
     </thead>
     <tbody>
+      <tr><td>v2.1</td><td>2026-08-20</td><td><strong>広告基盤の Unity LevelPlay 移行</strong>を反映（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay）。下部バナーの記述からネットワーク名依存の表記を外し「バナー誤タップ防止」に統一。バナーは <code>LPMBannerAdView</code>（アダプティブ）で、App Key 未設定の現在は枠ごと非表示。24pt 離隔スペーサーは維持。詳細は <a href="../features/ad-control.html">広告制御</a>。</td></tr>
       <tr><td>設定アイコン / 設定タブ</td><td>SettingsView</td><td>sheet</td></tr>
       <tr><td>中央＋ボタン / 新規ルーティン作成ボタン</td><td>PresetSelectView</td><td>sheet</td></tr>
       <tr><td><strong>Quick Start カード（4種）</strong></td><td>ShootingView（<code>startMode: .shootingSequential</code>、step 0 から連続撮影）</td><td>fullScreenCover（item-based）</td></tr>
@@ -346,7 +347,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-15</footer>
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div>
 </body>
 </html>

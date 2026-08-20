@@ -8,44 +8,67 @@
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">脳活ピース</a> / 広告制御</div>
-  <header class="site-header"><h1>広告制御機能</h1><p>広告配信は v1.5.0 で恒久停止（AdEnvironment による環境判定）</p>
-  <div class="section-meta"><span class="tag done">v1.5.0</span><span class="tag">機能ID: PZ-FEAT-AD</span></div></header>
+  <header class="site-header"><h1>広告制御機能</h1><p>Unity LevelPlay による広告配信と、配信環境を App Store 配信版のみに限定する安全機構</p>
+  <div class="section-meta"><span class="tag done">v3.0</span><span class="tag">機能ID: PZ-FEAT-AD</span></div></header>
 
 
   <div class="callout">
-    <p style="margin-top:0"><strong>2026-08-04 広告基盤を AdMob から AppLovin MAX へ全面移行</strong></p>
-    <p>AdMob アカウントが「無効なトラフィック」により恒久的に無効化され、再審査請求も却下された。
-    新規アカウント作成も含めて AdSense / AdMob は今後一切利用できないため、AppLovin MAX（AppLovinSDK 13.6.3 / SPM）へ移行した。</p>
-    <p><strong>再発防止の中枢</strong>: <code>AdEnvironment.isAdDeliveryAvailable</code> =「SDK Key が設定済み」かつ「App Store 配信版である」。
+    <p style="margin-top:0"><strong>2026-08-20 広告基盤を AppLovin MAX から Unity LevelPlay へ移行</strong></p>
+    <p>AdMob アカウントが「無効なトラフィック」により恒久的に無効化（2026-07-30）され、再審査請求も却下された。
+    その後 AppLovin MAX へ移行したが、<strong>publisher アカウントの承認が下りなかった</strong>ため断念し、Unity LevelPlay へ再移行した。</p>
+    <p><strong>再発防止の中枢</strong>: <code>AdEnvironment.isAdDeliveryAvailable = !appKey.isEmpty &amp;&amp; isProduction</code>
+    （App Key が設定済み かつ App Store 配信版）。
     停止の原因が開発・TestFlight 検証中の自己インプレッションだったため、<strong>広告のロード・表示は App Store 配信版のみ</strong>に限定し、
     DEBUG・シミュレーター・TestFlight では一切リクエストしない。判定は App Store レシートの種別で行い、ビルド構成の設定ミスでは破れない。
-    ATT ダイアログも広告配信時のみ表示する。</p>
-    <p style="margin-bottom:0">AppLovin の publisher アカウントは審査中のため <strong>SDK Key と広告ユニットIDは未設定</strong>で、現時点では広告は配信されていない。
-    その間、バナーは枠ごと非表示にし、リワードで与えていた報酬は広告なしで即付与する（1日の上限などの制御は維持）。</p>
+    ATT ダイアログも同じゲートの内側にあり、広告を配信しない間は表示しない。</p>
+    <p style="margin-bottom:0">App Key と広告ユニットID（バナー / インタースティシャル / リワード）は<strong>設定済み</strong>だが、
+    <strong>ironSource Ads アカウントが承認待ち</strong>のため現時点ではまだ広告は配信されていない。
+    その間、バナーは枠ごと非表示にし、リワードで与えていた報酬は広告なしで即付与する（1ゲームあたりの上限は維持）。</p>
   </div>
 
-  <div class="callout">
-    <strong>現状: 広告は一切配信されていない。</strong>
-    2026-07-30、利用していた広告アカウントが「無効なトラフィック」を理由に恒久的に無効化され、再審査請求も却下された。
-    広告収益は永久にゼロであるため、<code>AdEnvironment.isAdDeliveryAvailable = false</code> として全広告を停止している。
-    別の広告ネットワークを導入するまでこの状態を維持する。
-  </div>
+  <h2>広告基盤の変遷</h2>
+  <table>
+    <tr><th>時期</th><th>基盤</th><th>結果</th></tr>
+    <tr><td>〜2026-07-30</td><td>Google AdMob</td><td>アカウントが恒久的に無効化。AdSense / AdMob は今後一切利用できない</td></tr>
+    <tr><td>2026-07-30 〜 2026-08-20</td><td>AppLovin MAX</td><td>移行完了したが publisher アカウントの承認が下りず断念</td></tr>
+    <tr><td>2026-08-20 〜</td><td><strong>Unity LevelPlay</strong></td><td>移行完了。ironSource Ads アカウント承認待ち</td></tr>
+  </table>
+  <p>Unity Ads は 2026-04-01 以降、直接統合だと配信性能が落ちるため、<strong>LevelPlay（メディエーション）経由の bidder</strong> として利用する。直接統合は使わない。</p>
+
+  <h2>技術構成</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>SDK</td><td><strong>LevelPlay 9.6.0</strong>（SPM: <code>LevelPlay-Swift-Package</code> / プロダクト名 <code>UnityMediationSDK</code>）</td></tr>
+    <tr><td>アダプタ</td><td><strong>LevelPlayUnityAdsAdapter 5.10.0</strong>（プロダクト名 <code>UnityAdsAdapter</code>）。SDK とは別のバージョン体系のため 9.x を指定すると依存解決に失敗する</td></tr>
+    <tr><td>対応フォーマット</td><td>バナー（アダプティブ）・インタースティシャル・リワードの3種</td></tr>
+    <tr><td>初期化</td><td><code>LPMInitRequestBuilder(appKey:)</code> → <code>LevelPlay.initWith(_:completion:)</code>。完了は <code>@Observable</code> な <code>AdReadiness</code> で SwiftUI に伝播する</td></tr>
+    <tr><td>ロード開始条件</td><td>広告配信が有効 <strong>かつ SDK 初期化完了後</strong>。LevelPlay は初期化前の <code>loadAd()</code> が失敗するため</td></tr>
+    <tr><td>クラス</td><td>バナー <code>LPMBannerAdView</code>（<code>LPMAdSize.createAdaptive()</code> / 破棄時に <code>destroy()</code> 必須）、全画面 <code>LPMInterstitialAd</code> / <code>LPMRewardedAd</code></td></tr>
+    <tr><td>再試行</td><td>ロード失敗時は指数バックオフ（上限64秒）。再試行タスクは1本に束ねて多重実行を防ぐ</td></tr>
+    <tr><td>ビルド設定</td><td><code>OTHER_LDFLAGS</code> に <code>-ObjC</code> が必須</td></tr>
+    <tr><td>呼び出し側 API</td><td><code>loadInterstitial</code> / <code>showInterstitial</code> / <code>loadRewarded</code> / <code>showRewarded</code> / <code>isRewardedAdReady</code> / <code>shouldShowInterstitial</code> は AdMob 時代から変えていない</td></tr>
+  </table>
 
   <h2>広告環境の判定（AdEnvironment）</h2>
   <table>
     <tr><th>判定</th><th>内容</th></tr>
     <tr>
       <td><code>isAdDeliveryAvailable</code></td>
-      <td>広告配信が利用可能か。<strong>v1.5.0 では false 固定</strong>。広告に関わる全挙動の単一停止スイッチとして機能する</td>
+      <td><code>!appKey.isEmpty &amp;&amp; isProduction</code>。広告に関わる全挙動の単一スイッチとして機能する。App Key 未設定の間は自動的に無効</td>
     </tr>
     <tr>
       <td><code>isProduction</code></td>
-      <td>本番の広告ユニットIDを使ってよい環境か。<strong>App Store 配信版のみ true</strong>。DEBUG ビルド・シミュレーター・TestFlight はすべて Google 公式のテスト広告IDを使う。判定は App Store レシートが <code>sandboxReceipt</code> かどうかで行う</td>
+      <td>広告を配信してよい環境か。<strong>App Store 配信版のみ true</strong>。DEBUG ビルド・シミュレーター・TestFlight はすべて false。判定は App Store レシートが <code>sandboxReceipt</code> かどうかで行う</td>
+    </tr>
+    <tr>
+      <td><code>isInitialized</code></td>
+      <td>LevelPlay SDK の初期化が完了したか。広告のロードはこれが true になってから行う</td>
     </tr>
   </table>
   <p>
-    本番広告を開発者自身が表示・タップすることがアカウント無効化の直接原因になり得るため、
-    広告表示の動作確認は必ずテスト広告で行い、本番広告は App Store 配信版でのみ配信する運用に改めた。
+    本番広告を開発者自身が表示・タップすることがアカウント無効化の直接原因になり得るため、広告は App Store 配信版でのみ配信する。
+    LevelPlay には AdMob のような「テスト広告ID」の概念がないため、<strong>開発中はテスト広告を出すのではなく広告そのものを出さない</strong>方式を採る。
+    レイアウト確認は広告枠のプレースホルダで行う。
   </p>
   <div class="callout">
     具体的な広告ユニットIDおよびパブリッシャー識別子は本仕様書には記載しない（コード側で管理する）。
@@ -53,20 +76,20 @@
 
   <h2>広告構成と停止中の挙動</h2>
   <table>
-    <tr><th>種類</th><th>本来の表示タイミング</th><th>配信停止中（v1.5.0 の現状）</th></tr>
+    <tr><th>種類</th><th>表示タイミング（変更なし）</th><th>広告が配信されない間の挙動</th></tr>
     <tr>
       <td>バナー</td>
-      <td>ゲーム画面下部に常時（未購入時のみ）</td>
+      <td>ゲーム画面下部に常時（未購入時のみ）<br><code>LPMBannerAdView</code>（アダプティブ）</td>
       <td><strong>枠ごと非表示</strong>。高さ0ではなくビュー自体を配置しないため、盤面下に余白が残らない</td>
     </tr>
     <tr>
       <td>インタースティシャル</td>
-      <td>3ゲームに1回、最低90秒間隔（未購入時のみ）</td>
+      <td>3ゲームに1回、最低90秒間隔（未購入時のみ）<br><code>LPMInterstitialAd</code></td>
       <td>呼び出さない。<strong>広告リクエストも発生しない</strong></td>
     </tr>
     <tr>
       <td>リワード（もう1手 / アンドゥ追加）</td>
-      <td>ゲーム終了時の救済・アンドゥ2回目以降</td>
+      <td>ゲーム終了時の救済（復活）・アンドゥ2回目以降<br><code>LPMRewardedAd</code></td>
       <td>広告を挟まず<strong>報酬を即付与</strong>。1ゲームあたりの上限回数は維持</td>
     </tr>
   </table>
@@ -82,7 +105,7 @@
     <tr>
       <td>広告SDKの初期化</td>
       <td>行わない</td>
-      <td>広告リクエストを一切発生させないため</td>
+      <td>広告リクエストを一切発生させないため。起動コストと不要な通信も避ける</td>
     </tr>
   </table>
   <p>アプリ起動時の計測ログは、広告の有無とは独立して従来どおり実行する。</p>
@@ -101,7 +124,8 @@
     <li>リワードで与えていた報酬は広告なしで即付与する。ただし<strong>1ゲームあたりの上限回数は維持</strong>する</li>
     <li>プレミアム購入者には広告を表示しない。<strong>将来別の広告ネットワークを導入した場合も表示しない</strong>（購入時の保証）</li>
     <li>プレミアム購入者にはアンドゥの広告視聴を一切要求しない（アンドゥ無制限が特典のため）</li>
-    <li>本番の広告ユニットIDを使うのは App Store 配信版のみ。それ以外の環境では必ずテスト広告IDを使う</li>
+    <li>広告をロード・表示するのは App Store 配信版のみ。それ以外の環境では広告を一切リクエストしない</li>
+    <li>SDK の初期化完了前は広告をロードしない（LevelPlay は初期化前の <code>loadAd()</code> が失敗するため）</li>
     <li>撮影モード（スクリーンショット自動撮影）では広告・ATT・計測をすべて抑止する</li>
   </ul>
 
@@ -116,7 +140,8 @@
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
   <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
   <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: 広告配信の恒久停止を反映。AdEnvironment（本番IDは App Store 配信版のみ / isAdDeliveryAvailable による全停止）を追加。停止中の挙動（バナー枠ごと非表示・インタースティシャル非呼出・報酬の無条件付与・ATT と SDK 初期化の抑止）と UI 文言変更を記載。仕様書から広告ユニットID・パブリッシャー識別子の記載を削除</td></tr>    <tr><td>2.0</td><td>2026-08-04</td><td><strong>広告基盤を AdMob から AppLovin MAX へ全面移行</strong>（AdMob アカウントが恒久的に無効化され再審査も却下されたため）。<code>AdEnvironment.isAdDeliveryAvailable</code> により<strong>広告のロード・表示を App Store 配信版のみに限定</strong>（DEBUG・シミュレーター・TestFlight では一切リクエストしない）。SDK Key 未設定の間は自動的に無効。配信無効期間はバナーを枠ごと非表示にし、リワードの報酬は広告なしで即付与する。仕様書から広告ユニットIDの実値を削除</td></tr>
+    <tr><td>3.0</td><td>2026-08-20</td><td><strong>広告基盤を AppLovin MAX から Unity LevelPlay へ移行</strong>（AppLovin の publisher アカウント承認が下りなかったため）。SDK を LevelPlay 9.6.0（SPM <code>LevelPlay-Swift-Package</code> / product <code>UnityMediationSDK</code>）+ LevelPlayUnityAdsAdapter 5.10.0（product <code>UnityAdsAdapter</code>）へ差し替え、Unity Ads は LevelPlay 経由の bidder として利用する構成を明記。広告クラスを <code>LPMBannerAdView</code> / <code>LPMInterstitialAd</code> / <code>LPMRewardedAd</code> に更新。判定式を <code>isAdDeliveryAvailable = !appKey.isEmpty &amp;&amp; isProduction</code> と明記し、<strong>SDK 初期化完了前は広告をロードしない</strong>制約を追加。テスト広告IDに関する記述を削除（LevelPlay に該当概念がないため開発中は広告を出さない方式）。App Key と広告ユニットID3種は設定済みだが、ironSource Ads アカウントが承認待ちのため未配信であることを反映。広告面（バナー / インタースティシャル3回に1回・90秒間隔 / リワード復活・Undo）は変更なし。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-04</footer>
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div></body></html>

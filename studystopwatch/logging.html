@@ -38,7 +38,7 @@
     <tr><td><code>Analytics</code></td><td>Firebase Analytics イベント送信（LoggerAnalyticsSink）</td></tr>
     <tr><td><code>InstagramShareService</code></td><td>シェア機能</td></tr>
     <tr><td><code>AppUpdateService</code></td><td>App Store API</td></tr>
-    <tr><td><code>InterstitialAdManager</code></td><td>全画面広告</td></tr>
+    <tr><td><code>InterstitialAdManager</code></td><td>全画面広告（Unity LevelPlay / <code>LPMInterstitialAd</code>）</td></tr>
   </table>
 
   <h2>ログレベル</h2>
@@ -103,9 +103,10 @@
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-12</td><td>v1.2.0計測イベント一覧を追加（grade_lock_shown/tapped・weekly_report_viewed/lock_tapped・return_reminder_scheduled/opened）、カテゴリに WeeklyReport・Analytics を追記</td></tr>
     <tr><td>1.2</td><td>2026-07-03</td><td>premium_lock_shown / premium_lock_tapped（source付き）を追加。purchase_start / purchase_success に source パラメータを追記。旧ロックイベント（grade_lock_*・weekly_report_lock_tapped）の併送・撤去予定を注記</td></tr>
+    <tr><td>1.3</td><td>2026-08-20</td><td>広告基盤の <strong>Unity LevelPlay 移行</strong>を反映。<code>InterstitialAdManager</code> のカテゴリ説明を LevelPlay ベースへ更新。イベント（<code>ad_interstitial_shown</code> 等）の定義は変更なし。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-03</footer>
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div>
 </body>
 </html>

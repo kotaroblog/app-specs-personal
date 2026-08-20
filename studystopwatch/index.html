@@ -18,15 +18,18 @@
 
 
   <div class="callout">
-    <p style="margin-top:0"><strong>2026-08-04 広告基盤を AdMob から AppLovin MAX へ全面移行</strong></p>
-    <p>AdMob アカウントが「無効なトラフィック」により恒久的に無効化され、再審査請求も却下された。
-    新規アカウント作成も含めて AdSense / AdMob は今後一切利用できないため、AppLovin MAX（AppLovinSDK 13.6.3 / SPM）へ移行した。</p>
-    <p><strong>再発防止の中枢</strong>: <code>AdEnvironment.isAdDeliveryAvailable</code> =「SDK Key が設定済み」かつ「App Store 配信版である」。
+    <p style="margin-top:0"><strong>2026-08-20 広告基盤を AppLovin MAX から Unity LevelPlay へ移行</strong></p>
+    <p>AdMob アカウントが「無効なトラフィック」により恒久的に無効化（2026-07-30）され、再審査請求も却下された。
+    その後 AppLovin MAX へ移行したが <strong>publisher アカウントの承認が下りなかった</strong>ため断念し、
+    Unity LevelPlay（LevelPlay 9.6.0 + LevelPlayUnityAdsAdapter 5.10.0 / SPM）へ再移行した。
+    Unity Ads は LevelPlay（メディエーション）経由の bidder として使う。</p>
+    <p><strong>再発防止の中枢</strong>: <code>AdEnvironment.isAdDeliveryAvailable = !appKey.isEmpty &amp;&amp; isProduction</code>
+    （App Key が設定済み かつ App Store 配信版）。
     停止の原因が開発・TestFlight 検証中の自己インプレッションだったため、<strong>広告のロード・表示は App Store 配信版のみ</strong>に限定し、
     DEBUG・シミュレーター・TestFlight では一切リクエストしない。判定は App Store レシートの種別で行い、ビルド構成の設定ミスでは破れない。
-    ATT ダイアログも広告配信時のみ表示する。</p>
-    <p style="margin-bottom:0">AppLovin の publisher アカウントは審査中のため <strong>SDK Key と広告ユニットIDは未設定</strong>で、現時点では広告は配信されていない。
-    その間、バナーは枠ごと非表示にし、リワードで与えていた報酬は広告なしで即付与する（1日の上限などの制御は維持）。</p>
+    ATT ダイアログも同じゲートの内側にあり、広告を配信しない間は表示しない。</p>
+    <p style="margin-bottom:0">StudyStopwatch は <strong>App Key と広告ユニットIDが未設定</strong>のため、現時点では広告を一切ロードしない。
+    その間、バナーは枠ごと非表示にする。詳細は <a href="features/ad-control.html">広告制御</a> を参照。</p>
   </div>
 
   <div class="callout">
@@ -40,7 +43,7 @@
     週次目標で分の端数が切り捨てられる表示バグ、科目0件時に今日の目標が消える不具合も修正。</p>
     <p style="margin-bottom:0"><strong>プライバシーポリシーの是正</strong>: アプリ内および公開ページの
     「Google AdMob を使用して広告を配信しています」という記載を「現在、広告を配信していません」へ修正した。
-    AdMob は撤去済みで AppLovin も SDK Key 未設定のため、事実と異なる記載になっていた。</p>
+    AdMob は撤去済みで、後継の広告基盤（現在は Unity LevelPlay）も App Key 未設定のため、事実と異なる記載になっていた。</p>
   </div>
 
   <h2>概要</h2>
@@ -48,7 +51,7 @@
     <li><span class="k">カテゴリ</span><span class="v">教育</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+ / Swift 6.0</span></li>
     <li><span class="k">言語</span><span class="v">日本語のみ</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（広告は AppLovin MAX へ移行。SDK Key 未設定のため現在は配信なし）</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（広告は <strong>Unity LevelPlay</strong> へ移行。App Key 未設定のため現在は配信なし）</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
     <li><span class="k">バージョン</span><span class="v">v1.3.1 (build 15)（2026-08-18 公開）</span></li>
     <li><span class="k">表示名</span><span class="v">学習ストップウォッチ</span></li>
@@ -100,6 +103,7 @@
     <a class="card" href="features/live-activity.html"><div class="title">Live Activity</div><div class="desc">ActivityKit 連携</div></a>
     <a class="card" href="features/widget-sync.html"><div class="title">Widget同期</div><div class="desc">AppGroup 経由</div></a>
     <a class="card" href="features/subscription.html"><div class="title">サブスク課金</div><div class="desc">StoreKit 2</div></a>
+    <a class="card" href="features/ad-control.html"><div class="title">広告制御</div><div class="desc">Unity LevelPlay・App Store 配信版のみに限定する安全機構</div><div class="meta"><span class="tag">SS-FEAT-AD</span></div></a>
     <a class="card" href="features/notification.html"><div class="title">通知</div><div class="desc">日次リマインダー</div></a>
     <a class="card" href="features/share.html"><div class="title">シェア</div><div class="desc">4種カード + Instagram Stories</div></a>
     <a class="card" href="features/app-update.html"><div class="title">アプリ更新チェック</div><div class="desc">App Store JSON API</div></a>
@@ -109,7 +113,13 @@
     <a class="card" href="features/weekly-report.html"><div class="title">週次ふりかえりレポート</div><div class="desc">前週（月〜日）の学習実績をスナップショット保存。Premium ユーザーにコーチコメント付きで提示</div><div class="meta"><span class="tag">SS-FEAT-WEEKLY-01</span><span class="tag">v1.2.0</span><span class="tag">Premium</span></div></a>
   </div>
 
-  <footer class="site-footer">最終更新: 2026-08-19</footer>
+    <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-08-20</td><td>変更履歴セクションを新設。<strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）。機能仕様書 <a href="features/ad-control.html">広告制御</a> を新規作成し、冒頭の告知とマネタイズ表記を更新。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない。</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div>
 </body>
 </html>

@@ -8,24 +8,37 @@
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CHROMATIC</a> / 広告制御</div>
-  <header class="site-header"><h1>広告制御機能</h1><p>AppLovin MAX（バナー + インタースティシャル）／配信は App Store 版のみ</p>
-  <div class="section-meta"><span class="tag done">v1.4.0</span><span class="tag">機能ID: CR-FEAT-AD</span><span class="tag">2026-08-04 更新</span></div></header>
+  <header class="site-header"><h1>広告制御機能</h1><p>Unity LevelPlay（バナー + インタースティシャル）／配信は App Store 版のみ</p>
+  <div class="section-meta"><span class="tag done">v3.0</span><span class="tag">機能ID: CR-FEAT-AD</span><span class="tag">2026-08-20 更新</span></div></header>
 
   <div class="callout">
     <strong>現状: 広告は一切配信されていない。</strong>
     2026-07-30 に AdMob アカウントが「無効なトラフィック」を理由に恒久的に無効化され、再審査請求も却下された。
-    新規アカウント作成を含め AdSense / AdMob は今後一切利用できないため、<strong>AppLovin MAX へ全面移行</strong>した。
-    ただし AppLovin の publisher アカウントは審査中で、<strong>SDK Key と広告ユニットIDは未設定（空）</strong>のため、
-    現時点では広告のリクエスト自体が発生しない。
+    その後 AppLovin MAX へ移行したが publisher アカウントの承認が下りなかったため、
+    2026-08-20 に <strong>Unity LevelPlay へ再移行</strong>した。
+    CHROMATIC は <strong>App Key と広告ユニットIDが未設定（空）</strong>のため、現時点では広告のリクエスト自体が発生しない。
   </div>
+
+  <h2>広告基盤の変遷</h2>
+  <table>
+    <tr><th>時期</th><th>基盤</th><th>結果</th></tr>
+    <tr><td>〜2026-07-30</td><td>Google AdMob</td><td>アカウントが恒久的に無効化。AdSense / AdMob は今後一切利用できない</td></tr>
+    <tr><td>2026-07-30 〜 2026-08-20</td><td>AppLovin MAX</td><td>移行完了したが publisher アカウントの承認が下りず断念</td></tr>
+    <tr><td>2026-08-20 〜</td><td><strong>Unity LevelPlay</strong></td><td>移行完了。CHROMATIC は<strong>キー未設定</strong>のため広告は一切ロードされない</td></tr>
+  </table>
+  <p>Unity Ads は 2026-04-01 以降、直接統合だと配信性能が落ちるため、<strong>LevelPlay（メディエーション）経由の bidder</strong> として利用する。直接統合は使わない。</p>
 
   <h2>広告基盤</h2>
   <table>
     <tr><th>項目</th><th>内容</th></tr>
-    <tr><td>ネットワーク</td><td>AppLovin MAX</td></tr>
-    <tr><td>SDK</td><td><code>AppLovinSDK 13.6.3</code>（Swift Package Manager で導入）</td></tr>
+    <tr><td>ネットワーク</td><td>Unity LevelPlay（Unity Ads をメディエーション経由の bidder として利用）</td></tr>
+    <tr><td>SDK</td><td><strong>LevelPlay 9.6.0</strong>（SPM: <code>LevelPlay-Swift-Package</code> / プロダクト名 <code>UnityMediationSDK</code>）</td></tr>
+    <tr><td>アダプタ</td><td><strong>LevelPlayUnityAdsAdapter 5.10.0</strong>（プロダクト名 <code>UnityAdsAdapter</code>）。SDK とは別のバージョン体系のため 9.x を指定すると依存解決に失敗する</td></tr>
     <tr><td>メディエーション</td><td>アダプタも SPM で追加できるため CocoaPods は導入しない</td></tr>
-    <tr><td>使用フォーマット</td><td><code>MAAdView</code>（アダプティブバナー） / <code>MAInterstitialAd</code></td></tr>
+    <tr><td>対応フォーマット</td><td>バナー・インタースティシャル・リワードの3種（CHROMATIC はバナーとインタースティシャルのみ使用）</td></tr>
+    <tr><td>使用クラス</td><td><code>LPMBannerAdView</code>（<code>LPMAdSize.createAdaptive()</code> / 破棄時に <code>destroy()</code> 必須） / <code>LPMInterstitialAd</code></td></tr>
+    <tr><td>初期化</td><td><code>LPMInitRequestBuilder(appKey:)</code> → <code>LevelPlay.initWith(_:completion:)</code>。完了は <code>@Observable</code> な <code>AdReadiness</code> で SwiftUI に伝播</td></tr>
+    <tr><td>ロード開始条件</td><td>広告配信が有効 <strong>かつ SDK 初期化完了後</strong>。LevelPlay は初期化前の <code>loadAd()</code> が失敗するため</td></tr>
     <tr><td>ビルド設定</td><td><code>OTHER_LDFLAGS</code> に <code>-ObjC</code> が必須（Objective-C カテゴリを正しくリンクするため）</td></tr>
     <tr><td>ロード失敗時</td><td>指数バックオフで再試行（上限64秒）。リトライ Task は1本に束ねて並走させない</td></tr>
   </table>
@@ -44,16 +57,16 @@
     </tr>
     <tr>
       <td><code>AdEnvironment.isAdDeliveryAvailable</code></td>
-      <td><strong>SDK Key が設定済み かつ App Store 配信版</strong>のときだけ true。バナーの表示可否・全画面広告の呼び出し・ATT ダイアログ・SDK 初期化のすべてがこの値で分岐する単一スイッチ</td>
+      <td><code>!appKey.isEmpty &amp;&amp; isProduction</code>（<strong>App Key が設定済み かつ App Store 配信版</strong>）のときだけ true。バナーの表示可否・全画面広告の呼び出し・ATT ダイアログ・SDK 初期化のすべてがこの値で分岐する単一スイッチ</td>
     </tr>
   </table>
   <div class="callout warn">
-    AppLovin には AdMob のような「テスト広告ID」の概念がない。
+    LevelPlay にも AdMob のような「テスト広告ID」の概念がない。
     そのため<strong>開発中は「広告を出さない」方式</strong>を採用し、レイアウト確認は広告枠のプレースホルダで行う。
     本番広告での目視確認は行わない。
   </div>
   <div class="callout">
-    具体的な SDK Key・広告ユニットIDは本仕様書には記載しない（コード側で管理する）。
+    具体的な App Key・広告ユニットIDは本仕様書には記載しない（コード側で管理する）。
   </div>
 
   <h2>広告構成</h2>
@@ -61,12 +74,12 @@
     <tr><th>種類</th><th>表示条件</th><th>プレミアム購入者</th></tr>
     <tr>
       <td>バナー</td>
-      <td>ゲーム画面の最下部に固定（<code>safeAreaInset</code>）。広告フォーマット本来の高さをそのまま使い、固定値でクリップしない</td>
+      <td><code>LPMBannerAdView</code>。ゲーム画面の最下部に固定（<code>safeAreaInset</code>）。広告フォーマット本来の高さをそのまま使い、固定値でクリップしない</td>
       <td>非表示</td>
     </tr>
     <tr>
       <td>インタースティシャル</td>
-      <td>ゲーム終了後の「もう一度」「モード選択へ」タップ時。<strong>4ゲームに1回</strong>かつ<strong>前回表示から最低90秒</strong>空ける</td>
+      <td><code>LPMInterstitialAd</code>。ゲーム終了後の「もう一度」「モード選択へ」タップ時。<strong>4ゲームに1回</strong>かつ<strong>前回表示から最低90秒</strong>空ける</td>
       <td>非表示</td>
     </tr>
     <tr>
@@ -97,7 +110,8 @@
   <h2>ビジネスルール</h2>
   <ul>
     <li>広告のロード・表示は App Store 配信版でのみ行う。DEBUG・シミュレーター・TestFlight では一切リクエストしない</li>
-    <li>SDK Key または広告ユニットIDが未設定の間は、広告に関わる処理を一切実行しない（安全側の既定）</li>
+    <li>App Key または広告ユニットIDが未設定の間は、広告に関わる処理を一切実行しない（安全側の既定）。<strong>CHROMATIC は現在この状態</strong></li>
+    <li>SDK の初期化完了前は広告をロードしない（LevelPlay は初期化前の <code>loadAd()</code> が失敗するため）</li>
     <li>プレミアム購入者には広告を表示しない。<strong>今後広告を再開した場合も表示しない</strong>（購入時の保証）</li>
     <li>全画面広告には必ず表示間隔（4ゲームに1回・最低90秒）を設ける</li>
     <li>バナーはアダプティブサイズの高さをそのまま使い、固定値でクリップしない（広告の一部が隠れるとポリシー違反）</li>
@@ -117,7 +131,8 @@
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-15</td><td>インタースティシャル表示頻度を2ゲームに1回から4ゲームに1回に緩和（UX改善）</td></tr>
     <tr><td>2.0</td><td>2026-08-04</td><td>広告基盤を AdMob から AppLovin MAX へ全面移行（AdMob アカウントが恒久的に利用不可になったため）。SDK・使用フォーマット・ビルド設定・指数バックオフを記載。再発防止設計（<code>AdEnvironment.isAdDeliveryAvailable</code> = SDK Key 設定済み かつ App Store 配信版／レシート種別による判定／テスト広告IDの概念がないため開発中は広告を出さない方式）を追加。配信無効期間の挙動（バナー枠ごと非表示・全画面広告非呼出・SDK 初期化と ATT の抑止）を明文化。仕様書から広告ユニットID・パブリッシャー識別子の記載を削除</td></tr>
+    <tr><td>3.0</td><td>2026-08-20</td><td><strong>広告基盤を AppLovin MAX から Unity LevelPlay へ移行</strong>（AppLovin の publisher アカウント承認が下りなかったため）。SDK を LevelPlay 9.6.0（SPM <code>LevelPlay-Swift-Package</code> / product <code>UnityMediationSDK</code>）+ LevelPlayUnityAdsAdapter 5.10.0（product <code>UnityAdsAdapter</code>）へ差し替え、Unity Ads は LevelPlay 経由の bidder として利用する構成を明記。使用クラスを <code>LPMBannerAdView</code> / <code>LPMInterstitialAd</code> に更新。判定式を <code>isAdDeliveryAvailable = !appKey.isEmpty &amp;&amp; isProduction</code> と明記し、<strong>SDK 初期化完了前は広告をロードしない</strong>制約を追加。CHROMATIC は <strong>App Key・広告ユニットIDが未設定</strong>のため広告は一切ロードされない。広告面（バナー / インタースティシャル4回に1回・90秒間隔）は変更なし。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-04</footer>
+  <footer class="site-footer">最終更新: 2026-08-20</footer>
 </div></body></html>
