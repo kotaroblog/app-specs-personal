@@ -21,8 +21,8 @@
     <li><span class="k">カテゴリ</span><span class="v">ファイナンス（4+）</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">フリーミアム + サブスク（¥480/月・¥3,600/年）+ AdMob</span></li>
-    <li><span class="k">ステータス</span><span class="v">実装済み・未リリース（フェーズ3完了 / 2026-07-26時点。残: AdMob・fastlane・app-policies・ASC登録）</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">フリーミアム + サブスク（¥480/月・¥3,600/年）+ 広告（<strong>Unity LevelPlay</strong>・未実装）。<strong>AdMob は 2026-07-30 に恒久停止しており使用しない</strong></span></li>
+    <li><span class="k">ステータス</span><span class="v">実装済み・未リリース（フェーズ3完了 / 2026-07-26時点。残: <strong>広告（Unity LevelPlay）</strong>・fastlane・app-policies・ASC登録）</span></li>
     <li><span class="k">リリース予定</span><span class="v">2027-Q1</span></li>
     <li><span class="k">App Store表示名</span><span class="v">ポーカー手帳｜収支・ハンド記録</span></li>
     <li><span class="k">サブタイトル</span><span class="v">負け筋がわかる振り返りノート</span></li>
@@ -84,7 +84,7 @@
     </div>
     <div class="card">
       <div class="title">基盤・リリース実務</div>
-      <div class="desc">Paywall・StoreKit 2・KPIロガーは実装済み。AdMob・fastlane・app-policies は未着手</div>
+      <div class="desc">Paywall・StoreKit 2・KPIロガーは実装済み。広告（Unity LevelPlay）・fastlane・app-policies は未着手</div>
       <div class="meta"><span class="tag warn">一部実装</span></div>
     </div>
   </div>
@@ -258,10 +258,15 @@
         <td style="padding:6px 8px;">2026-07-26</td>
         <td style="padding:6px 8px;">UI/UX改善実装を反映（初回Paywall自動提示の廃止・記録シートのバリデーションと保存失敗通知・Dynamic Type対応）。エラー設計を新規作成し、共通UI・アクセシビリティ方針を追記。実装ステータス（フェーズ3完了）をMVP機能一覧に反映</td>
       </tr>
+      <tr>
+        <td style="padding:6px 8px;">v1.6</td>
+        <td style="padding:6px 8px;">2026-08-23</td>
+        <td style="padding:6px 8px;">広告基盤は 2026-07-30 に <strong>AdMob が恒久停止</strong>（アカウントが「無効なトラフィック」で無効化。再審査請求も却下）となり、AppLovin MAX は publisher アカウントの承認が下りず断念した。現行は <strong>Unity LevelPlay</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリで統一）。 PokerDiary の広告は未実装だが、マネタイズ・ステータス・基盤カードの表記を AdMob から Unity LevelPlay へ更新した。実装時は他アプリと同じ <code>AdEnvironment</code> 方式（広告の配信は App Store 配信版のみ／ATT の表示は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定し審査ビルドでも表示する／<code>PrivacyInfo.xcprivacy</code> は <code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を踏襲する</td>
+      </tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div>
 </body>
 </html>

@@ -75,7 +75,7 @@
   <h2>機能仕様書</h2>
   <div class="card-grid">
     <a class="card" href="features/storekit.html"><div class="title">StoreKit課金</div><div class="desc">月額/年額サブスク</div></a>
-    <a class="card" href="features/admob.html"><div class="title">広告機能（Unity LevelPlay）</div><div class="desc">Banner + Rewarded・App Store 配信版のみに限定する安全機構</div></a>
+    <a class="card" href="features/admob.html"><div class="title">広告機能（Unity LevelPlay）</div><div class="desc">Banner + Rewarded・App Store 配信版のみに限定する安全機構・ATT の表示条件・プライバシーマニフェストの方針</div></a>
     <a class="card" href="features/notification.html"><div class="title">通知</div><div class="desc">3種類のローカル通知</div></a>
     <a class="card" href="features/achievement.html"><div class="title">実績・ストリーク</div><div class="desc">バッジシステム</div></a>
     <a class="card" href="features/pr-detection.html"><div class="title">PR検出</div><div class="desc">自己ベスト判定</div></a>
@@ -112,9 +112,10 @@
     <tr><td>v1.1.2候補</td><td>2026-05-27</td><td>種目インライン新規登録（AddWorkoutView: 種目リスト末尾「+ 新しい種目を追加」→ExerciseFormView sheet・initialCategory プリセット・onSaved 自動選択）、ルーティン新規作成導線（TemplateListView: toolbar「+」ボタン・空状態CTA → CreateTemplateView）。仕様書: add-workout v1.3・template-list v1.3 更新。create-template.html 新規作成</td></tr>
     <tr><td>v1.1.2</td><td>2026-06-06</td><td>v1.1.2 正式リリース（build 5）: 「v1.1.2候補」を確定。仕様書: create-template v1.1・add-workout v1.4・template-list v1.4 変更履歴更新。routine v1.2（新規追加/変更ファイル一覧追記）・release-notes v1.1（v1.1.2 の3項目追記）更新</td></tr>
     <tr><td>-</td><td>2026-08-20</td><td><strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）。<a href="features/admob.html">広告機能</a>・<a href="error-design.html">エラー設計</a>を更新。広告面（バナー + リワードによるシェア機能の一時解放）は変更なし。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない。</td></tr>
+    <tr><td>-</td><td>2026-08-23</td><td><strong>広告基盤を Unity LevelPlay に統一</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: <code>isAdDeliveryAvailable</code>（<code>isProduction</code> を含む）でガードしていたため、sandbox 環境で実行される審査ビルドでは ATT が表示されず、2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed でリジェクトされた。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を明記。 <a href="features/admob.html">広告機能</a>・<a href="error-design.html">エラー設計</a>を更新。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-20</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div>
 </body>
 </html>

@@ -54,7 +54,13 @@ sequenceDiagram
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
-    <tr><td>[StoreKit 2 / AdMob / 等]</td><td>[用途]</td><td>[備考]</td></tr>
+    <tr><td>[StoreKit 2 / Unity LevelPlay / 等]</td><td>[用途]</td><td>[備考]</td></tr>
+    <!-- 広告は Unity LevelPlay（2026-08-20〜。AdMob は 2026-07-30 に恒久停止、AppLovin MAX は承認却下）。
+         広告の配信は App Store 配信版のみ（AdEnvironment.isAdDeliveryAvailable）。
+         ATT ダイアログの表示は配信可否と分離し AdEnvironment.shouldRequestTracking（= !appKey.isEmpty）で判定する
+         （審査は sandbox 環境で実行されるため、配信可否でガードすると審査ビルドで ATT が表示されない）。
+         PrivacyInfo.xcprivacy は NSPrivacyTracking: false ＋ NSPrivacyTrackingDomains キーごと削除。
+         App Key・広告ユニットIDの実値は仕様書に記載しない。 -->
   </table>
 
   <h2>エラー処理</h2>

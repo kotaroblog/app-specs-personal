@@ -49,7 +49,8 @@
     <tr><td>WD-DB-01</td><td>SwiftData</td><td>context.save() 失敗</td><td>「データ保存に失敗しました」</td><td>再試行 / 再起動</td><td>error</td></tr>
     <tr><td>WD-DB-02</td><td>SwiftData</td><td>マイグレーション失敗</td><td>サイレント（旧データ保持）</td><td>—</td><td>error</td></tr>
     <tr><td>WD-NOTIF-01</td><td>権限</td><td>通知許可拒否</td><td>「設定アプリで通知を有効に」</td><td>設定アプリ起動</td><td>info</td></tr>
-    <tr><td>WD-ATT-01</td><td>権限</td><td>ATT拒否</td><td>サイレント</td><td>—</td><td>info</td></tr>
+    <tr><td>WD-ATT-01</td><td>権限</td><td>ATT拒否</td><td>サイレント（LevelPlay が非パーソナライズ広告へ切り替える）</td><td>—</td><td>info</td></tr>
+    <tr><td>WD-ATT-02</td><td>権限</td><td>ATT ダイアログが表示されない（App Key 未設定）</td><td>サイレント。<code>shouldRequestTracking = !appKey.isEmpty</code> による意図した挙動</td><td>—</td><td>info</td></tr>
     <tr><td>WD-INPUT-01</td><td>ビジネス</td><td>重量・レップ未入力</td><td>「入力してください」</td><td>入力促進</td><td>—</td></tr>
     <tr><td>WD-INPUT-02</td><td>ビジネス</td><td>負の値入力</td><td>赤枠 + 警告</td><td>正の値に修正</td><td>—</td></tr>
   </table>
@@ -82,9 +83,10 @@ func showAd() async -> Bool {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成（ソースコードからリバース）</td></tr>
     <tr><td>1.1</td><td>2026-08-20</td><td>広告基盤の <strong>Unity LevelPlay 移行</strong>を反映。「AdMobエラー」を「広告エラー（Unity LevelPlay）」へ改称し、WD-AD-03（SDK 初期化失敗）・WD-AD-04（App Key 未設定）を追加。広告ロードは App Store 配信版かつ SDK 初期化完了後にのみ行う。</td></tr>
+    <tr><td>1.2</td><td>2026-08-23</td><td>広告基盤を <strong>Unity LevelPlay</strong> に統一。<strong>ATT の表示条件変更</strong>（<code>isAdDeliveryAvailable</code> → <code>shouldRequestTracking = !appKey.isEmpty</code>）を反映し、WD-ATT-01 の対応内容を補記、WD-ATT-02（App Key 未設定により ATT を表示しない）を追加。詳細は <a href="features/admob.html">広告機能</a>。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-20</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div>
 </body>
 </html>

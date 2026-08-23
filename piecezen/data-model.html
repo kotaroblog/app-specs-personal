@@ -69,7 +69,8 @@ enum GameState {
   <table>
     <tr><th>プロパティ</th><th>型</th><th>内容</th></tr>
     <tr><td><code>appKey</code></td><td>String</td><td>Unity LevelPlay の App Key。空なら広告を一切ロードしない（安全側の既定）。※ 実値は仕様書に記載しない</td></tr>
-    <tr><td><code>isAdDeliveryAvailable</code></td><td>Bool</td><td>広告配信が利用可能か。<code>!appKey.isEmpty &amp;&amp; isProduction</code>。広告・ATT の全挙動がこの値で分岐する</td></tr>
+    <tr><td><code>isAdDeliveryAvailable</code></td><td>Bool</td><td>広告配信が利用可能か。<code>!appKey.isEmpty &amp;&amp; isProduction</code>。SDK 初期化・広告のロード・広告の表示がこの値で分岐する。<strong>ATT の表示はこの値では判定しない</strong>（2026-08-23 変更）</td></tr>
+    <tr><td><code>shouldRequestTracking</code></td><td>Bool</td><td>ATT ダイアログを表示してよいか。<code>!appKey.isEmpty</code>。審査は sandbox 環境で実行されるため、<code>isProduction</code> を含む <code>isAdDeliveryAvailable</code> でガードすると審査ビルドで ATT が表示されない</td></tr>
     <tr><td><code>isProduction</code></td><td>Bool</td><td>広告を配信してよい環境か。<strong>App Store 配信版のみ true</strong>（レシート種別で判定）</td></tr>
     <tr><td><code>isInitialized</code></td><td>Bool</td><td>LevelPlay SDK の初期化が完了したか。<code>@Observable</code> な <code>AdReadiness</code> が保持し、完了時に SwiftUI を再描画させる。広告のロードは true になってから行う</td></tr>
   </table>
@@ -110,7 +111,8 @@ enum GameState {
     <tr><td>1.1</td><td>2026-05-19</td><td>v1.3.0 対応: StatRecord に maxCombo フィールド追加。ColorTheme を6種類に更新（seniorContrast 追加）。AppStorage fontSizeLevel キーを追加</td></tr>
     <tr><td>1.2</td><td>2026-07-14</td><td>v1.4.0 対応: seniorContrast テーマの説明に WCAG 3:1 是正（indigo/blue 明度調整）を追記。fontSizeLevel に OS Dynamic Type 優先ロジックを追記</td></tr>
     <tr><td>1.3</td><td>2026-08-20</td><td>広告基盤の <strong>Unity LevelPlay 移行</strong>を反映。<code>AdEnvironment</code> の項目に <code>appKey</code> と <code>isInitialized</code>（<code>AdReadiness</code> による初期化完了の伝播）を追加し、<code>isAdDeliveryAvailable</code> を「false 固定（恒久停止）」から <code>!appKey.isEmpty &amp;&amp; isProduction</code> の算出値へ更新。<code>AdManager</code> の説明を LevelPlay ベースに改訂。</td></tr>
+    <tr><td>1.4</td><td>2026-08-23</td><td>広告基盤を <strong>Unity LevelPlay</strong> に統一。<strong>ATT の表示条件変更</strong>に伴い <code>AdEnvironment</code> へ <code>shouldRequestTracking</code>（<code>!appKey.isEmpty</code>）を追加し、<code>isAdDeliveryAvailable</code> の説明から ATT を分離した。詳細は <a href="features/ad-control.html">広告制御</a>。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-20（v1.2）</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div></body></html>

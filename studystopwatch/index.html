@@ -27,9 +27,14 @@
     （App Key が設定済み かつ App Store 配信版）。
     停止の原因が開発・TestFlight 検証中の自己インプレッションだったため、<strong>広告のロード・表示は App Store 配信版のみ</strong>に限定し、
     DEBUG・シミュレーター・TestFlight では一切リクエストしない。判定は App Store レシートの種別で行い、ビルド構成の設定ミスでは破れない。
-    ATT ダイアログも同じゲートの内側にあり、広告を配信しない間は表示しない。</p>
-    <p style="margin-bottom:0">StudyStopwatch は <strong>App Key と広告ユニットIDが未設定</strong>のため、現時点では広告を一切ロードしない。
-    その間、バナーは枠ごと非表示にする。詳細は <a href="features/ad-control.html">広告制御</a> を参照。</p>
+    <strong>ATT ダイアログはこのゲートの外側で判定する</strong>（2026-08-23 変更）。</p>
+    <p style="margin-bottom:0"><strong>2026-08-23 ATT の表示条件を変更</strong>: 従来は ATT の表示も <code>isAdDeliveryAvailable</code> でガードしていたが、
+    この値は <code>isProduction</code> を含むため、TestFlight と同じ sandbox 環境で実行される<strong>審査ビルドでは ATT が原理的に表示されなかった</strong>
+    （2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed によりリジェクト）。
+    広告の「配信可否」と ATT の「表示可否」を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。
+    App Key 未設定＝広告を一切出さない版では表示しないため、Guideline 5.1.2 の懸念も同時に満たす。</p>
+    <p>StudyStopwatch は <strong>App Key と広告ユニットIDが未設定</strong>のため、現時点では広告を一切ロードしない。
+    その間、バナーは枠ごと非表示にし、ATT ダイアログも表示しない。詳細は <a href="features/ad-control.html">広告制御</a> を参照。</p>
   </div>
 
   <div class="callout">
@@ -117,9 +122,10 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-08-20</td><td>変更履歴セクションを新設。<strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）。機能仕様書 <a href="features/ad-control.html">広告制御</a> を新規作成し、冒頭の告知とマネタイズ表記を更新。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない。</td></tr>
+    <tr><td>1.1</td><td>2026-08-23</td><td><strong>広告基盤を Unity LevelPlay に統一</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: <code>isAdDeliveryAvailable</code>（<code>isProduction</code> を含む）でガードしていたため、sandbox 環境で実行される審査ビルドでは ATT が表示されず、2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed でリジェクトされた。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を明記。 詳細は <a href="features/ad-control.html">広告制御</a>。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-20</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div>
 </body>
 </html>

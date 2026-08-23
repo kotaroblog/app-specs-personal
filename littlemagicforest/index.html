@@ -24,7 +24,7 @@
     <li><span class="k">カテゴリ</span><span class="v">ゲーム / パズル</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">無料 + 広告（AdMob）+ 広告除去 IAP ¥240（予定）</span></li>
+    <li><span class="k">マネタイズ</span><span class="v">無料 + 広告（<strong>Unity LevelPlay</strong>）+ 広告除去 IAP ¥240（予定）。<strong>AdMob は 2026-07-30 に恒久停止しており使用しない</strong></span></li>
     <li><span class="k">ステータス</span><span class="v">開発中</span></li>
     <li><span class="k">想定プレイ時間</span><span class="v">1日 5〜10 分の短時間プレイ</span></li>
     <li><span class="k">競合</span><span class="v">2048 / Threes! / Merge Dragons / Monument Valley</span></li>
@@ -175,7 +175,7 @@
       <tr><td>状態管理</td><td>@Observable @MainActor + GameState（SSoT）</td></tr>
       <tr><td>永続化</td><td>UserDefaults 軽量版（進捗 + ベストスコア）</td></tr>
       <tr><td>テスト</td><td>Swift Testing（@Test / #expect）</td></tr>
-      <tr><td>広告 / 課金</td><td>未実装（AdMob + StoreKit 2 予定）</td></tr>
+      <tr><td>広告 / 課金</td><td>未実装（<strong>Unity LevelPlay</strong> + StoreKit 2 予定）。導入時は他アプリと同じ <code>AdEnvironment</code> 方式（配信は App Store 版のみ／ATT は <code>shouldRequestTracking</code> で判定）を踏襲する</td></tr>
     </tbody>
   </table>
 
@@ -318,9 +318,10 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-24</td><td>初版作成（プロジェクト概要・進化チェーン・24ステージ Goal・触感演出・アーキテクチャ・コミット履歴）</td></tr>
+    <tr><td>1.1</td><td>2026-08-23</td><td>広告基盤は 2026-07-30 に <strong>AdMob が恒久停止</strong>（アカウントが「無効なトラフィック」で無効化。再審査請求も却下）となり、AppLovin MAX は publisher アカウントの承認が下りず断念した。現行は <strong>Unity LevelPlay</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリで統一）。 本アプリの広告は未実装だが、予定していた広告基盤の表記を AdMob から Unity LevelPlay へ更新した。導入時は他アプリと同じ <code>AdEnvironment</code> 方式（広告の配信は App Store 配信版のみ／ATT の表示は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定し審査ビルドでも表示する／<code>PrivacyInfo.xcprivacy</code> は <code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を踏襲する。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-24</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div>
 </body>
 </html>

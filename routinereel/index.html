@@ -27,9 +27,14 @@
     （App Key が設定済み かつ App Store 配信版）。
     停止の原因が開発・TestFlight 検証中の自己インプレッションだったため、<strong>広告のロード・表示は App Store 配信版のみ</strong>に限定し、
     DEBUG・シミュレーター・TestFlight では一切リクエストしない。判定は App Store レシートの種別で行い、ビルド構成の設定ミスでは破れない。
-    ATT ダイアログも同じゲートの内側にあり、広告を配信しない間は表示しない。</p>
-    <p style="margin-bottom:0">RoutineReel は <strong>App Key と広告ユニットIDが未設定</strong>のため、現時点では広告を一切ロードしない。
-    その間、バナーは枠ごと非表示にする。詳細は <a href="features/ad-control.html">広告制御</a> を参照。</p>
+    <strong>ATT ダイアログはこのゲートの外側で判定する</strong>（2026-08-23 変更）。</p>
+    <p style="margin-bottom:0"><strong>2026-08-23 ATT の表示条件を変更</strong>: 従来は ATT の表示も <code>isAdDeliveryAvailable</code> でガードしていたが、
+    この値は <code>isProduction</code> を含むため、TestFlight と同じ sandbox 環境で実行される<strong>審査ビルドでは ATT が原理的に表示されなかった</strong>
+    （2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed によりリジェクト）。
+    広告の「配信可否」と ATT の「表示可否」を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。
+    App Key 未設定＝広告を一切出さない版では表示しないため、Guideline 5.1.2 の懸念も同時に満たす。</p>
+    <p>RoutineReel は <strong>App Key と広告ユニットIDが未設定</strong>のため、現時点では広告を一切ロードしない。
+    その間、バナーは枠ごと非表示にし、ATT ダイアログも表示しない。詳細は <a href="features/ad-control.html">広告制御</a> を参照。</p>
   </div>
 
   <h2>概要</h2>
@@ -162,6 +167,7 @@
       <tr><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>2026-08-23</td><td><strong>広告基盤を Unity LevelPlay に統一</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: <code>isAdDeliveryAvailable</code>（<code>isProduction</code> を含む）でガードしていたため、sandbox 環境で実行される審査ビルドでは ATT が表示されず、2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed でリジェクトされた。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を明記。 <a href="features/ad-control.html">features/ad-control.html</a>・<a href="features/onboarding-flow.html">features/onboarding-flow.html</a> を更新</td></tr>
       <tr><td>2026-08-20</td><td><strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）: 機能仕様書 <a href="features/ad-control.html">features/ad-control.html</a> を新規作成し、広告の表示条件（バナー / 書き出し完了後のインタースティシャル・1日1回・初回スキップ / リワードは実装のみで導線なし）と再発防止設計を集約。onboarding-flow.html の ATT 記述を LevelPlay ベースへ更新。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない</td></tr>
       <tr><td>2026-07-24</td><td><strong>撮影・書き出しUX改善バッチ反映（acf8f50 / abba1b0 / f7bb7b0）</strong>: 新規1ファイル（features/export-save-flow.html）作成。既存5ファイル更新（shooting / preview / video-composition / sns-share-flow / index）。<strong>撮影UI（acf8f50）</strong>: カメラ準備状態 <code>SetupState</code>（idle/preparing/ready/permissionDenied/failed）+ 準備中オーバーレイ・起動失敗時の再試行導線 / 進捗ドットを色＋形状（撮影済み=塗り／スキップ済み=アウトライン）で区別（純粋関数 ShootingProgress・ShootingStepStatus）/ 録画ボタン付近の状態説明テキスト / トップバーに現在のステップ名を主表示 / マイク権限拒否の非遮断バナー / カメラ反転の連打防止。<strong>完成動画（abba1b0）</strong>: 全画面アウトロカード（QR等）廃止→無料版は左上ウォーターマークのみ / 冒頭にルーティン名タイトルテロップ（0〜1.2秒）/ ステップ名・時刻を各クリップ冒頭のみ最大2.4秒に短縮 / テロップタイミングを純粋計算 OverlayTiming に分離 / プレビュー画面タイトル「プレビュー」→「仕上がりを確認」/ 総時間・クリップ数表示 / 音声トグルを肯定形化＋「音声なしで書き出す」の実挙動修正（音声トラック実除去）/ プリセットのステップ名を映像で分かりやすい表現に変更。<strong>保存先UX（f7bb7b0）</strong>: 保存先（ExportDestination）× 工程（ExportOperation）の状態管理で進捗文言を正しく出し分け / 保存失敗時の再試行を失敗した保存先だけに限定 / 戻る操作を BackAction で分岐（保存中は戻る無効化）/ アプリ内保存後の選択肢提示・ExportCompleteView からの仕上がり画面復帰で順序依存解消 / SNSボタン文言を「TikTokを開く」「Instagramを開く」に変更 / VideoSaving プロトコル新設</td></tr>
       <tr><td>2026-07-15</td><td><strong>build69 反映</strong>（機能凍結中・未提出）: 新規2ファイル（screens/preview.html・features/video-completion.html）作成。既存9ファイル更新（home / clip-library / routine-edit / paywall / video-list / onboarding-flow / analytics / testing / index）。主な変更: VideoCompletion @Model 追加（完成実績の単一情報源・creationSessionId 二重計上防止）/ NextRecordingSelector（「次に撮影」CTA 対象選定の安定ソート）/ ClipLibraryCTA.resolvePrimary（状況別主CTA 1択集約）/ ScheduleOutcome.notAuthorized（通知拒否 UI フィードバック）/ ProductLoadState 3状態管理（loading/loaded/failed）/ オンボ完了後撮影直行（F5）/ ATT 遅延を hasSeenFirstValueMoment まで延伸 / Analytics に creation_session_id・entry_source・destination を追加 / VideoListView 文言統一（「アプリ内の動画」）/ テスト 21→92 件（純粋関数化で Product/SwiftUI 非依存）</td></tr>
@@ -180,7 +186,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-20</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div>
 </body>
 </html>

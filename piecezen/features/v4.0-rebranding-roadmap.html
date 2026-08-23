@@ -35,6 +35,7 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-13</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-19</td><td>v1.3.0 で先行実装フェーズ完了。アクセシビリティ機能（文字サイズ/高コントラスト）と統計画面リニューアル（脳活記録）をリリース済みとして反映</td></tr>
+    <tr><td>1.2</td><td>2026-08-23</td><td>広告基盤は 2026-07-30 に <strong>AdMob が恒久停止</strong>（アカウントが「無効なトラフィック」で無効化。再審査請求も却下）となり、AppLovin MAX は publisher アカウントの承認が下りず断念した。現行は <strong>Unity LevelPlay</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリで統一）。 「既存資産の活用方針」の広告基盤の行を AdMob 前提から Unity LevelPlay 前提へ更新した。広告配置・IAP など企画内容そのものに変更はない。</td></tr>
   </table>
 
   <!-- ========================================================
@@ -358,7 +359,7 @@
     <tr><td>コードベース（ゲームロジック）</td><td>95%流用。配置・消去・スコア・コンボ・パーフェクト・ハプティクス・サウンド・ストリーク・5テーマはそのまま継承</td></tr>
     <tr><td>Bundle ID（com.happyboy1002.BlockPuzzle）</td><td>維持。ストア上のアプリを同一のまま中身を刷新</td></tr>
     <tr><td>StoreKit IAP（広告除去 ¥480）</td><td>維持。Product ID・価格・機能内容は変更なし</td></tr>
-    <tr><td>AdMob</td><td>維持。Ad Unit ID・広告配置はそのまま</td></tr>
+    <tr><td>広告基盤</td><td>広告配置はそのまま維持。<strong>ネットワークは Unity LevelPlay</strong>（2026-08-20 移行）。本企画の策定時点では AdMob だったが、2026-07-30 に AdMob アカウントが恒久停止したため差し替わっている。Ad Unit ID も LevelPlay 側で再発行済み。詳細は <a href="ad-control.html">広告制御</a></td></tr>
     <tr><td>プライバシーポリシー・利用規約</td><td>「脳活ピース」名で再生成。URL は <code>app-policies/blockpuzzle/</code> 配下を更新（または新規 <code>piecezen/</code> へ移行）</td></tr>
     <tr><td>既存アイコン</td><td>廃棄。シニア向け新規デザインを制作</td></tr>
     <tr><td>既存スクリーンショット</td><td>廃棄。シニア訴求の全新規制作</td></tr>
@@ -434,7 +435,7 @@
     <li><a href="v2.0-review-2026-05.html">v2.0 UXレビュー（GPT-5 / 2026-05-12）</a></li>
   </ul>
 
-  <footer class="site-footer">最終更新: 2026-05-19</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div>
 </body>
 </html>

@@ -85,7 +85,7 @@
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li class="done">scenePhase 監視 → refreshStreakOnLaunch()</li>
-    <li class="done">ATT 要求は<strong>広告配信が有効な場合のみ</strong>、3ゲーム完了後かつ notDetermined 時（初回ゲームオーバー時から変更）</li>
+    <li class="done">ATT 要求は <code>AdEnvironment.shouldRequestTracking</code>（<code>!appKey.isEmpty</code>）が true のとき、3ゲーム完了後かつ notDetermined 時（初回ゲームオーバー時から変更）。<strong>2026-08-23 に判定を <code>isAdDeliveryAvailable</code> から分離</strong>（審査は sandbox 環境で実行されるため、配信可否でガードすると審査担当者に ATT が表示されない）</li>
     <li class="done">Interstitial は4ゲームに1回、かつ前回表示から最低90秒。広告配信が無効な期間はロード・表示とも行わない</li>
     <li class="done">バナーは広告配信が有効かつプレミアム未購入のときのみ配置する（枠ごと非表示にして余白を残さない）</li>
     <li class="done">hasSeenOnboarding=false でOnboardingView (sheet, interactiveDismissDisabled)</li>
@@ -111,7 +111,8 @@
     <tr><td>1.1</td><td>2026-06-15</td><td>wrongAnswerFeedback 状態追加・ATTタイミング変更（初回→3ゲーム後）・インタースティシャル頻度変更（2回→4回に1回）・待機画面主導線整理（START最上部・セレクター順・Daily Challenge下配置）・パネルアクセシビリティ強化（accessibilityIdentifier / .isButton）</td></tr>
     <tr><td>1.3</td><td>2026-06-19</td><td>ゲームオーバー画面UI日本語統一（GAME OVER→ゲームオーバー / ROUND→ラウンド / NEW BEST RECORD!→新記録達成！/ +N FROM BEST→ベスト比 +N / RETRY→もう一度 / MODE SELECT→モード選択へ）・GameOverOverlayViewをScrollView化（小型端末対応）・シェアアイコンボタンにaccessibilityLabel（"結果を共有"）追加</td></tr>
     <tr><td>1.4</td><td>2026-08-04</td><td>v1.4.0 対応: 待機画面に「記録を見る」ボタンを追加（記録カレンダーへの導線）。デイリーチャレンジのアーカイブ（過去日プレイ）を追加し、スピードラベルに <code>#N</code> 表記・その日のベスト表示・記録更新範囲の分離を記載。バナー広告の表示条件を「広告配信が有効 かつ プレミアム未購入」に更新（AppLovin MAX 移行に伴う変更）。インタースティシャルの最低表示間隔90秒を明記</td></tr>
+    <tr><td>1.5</td><td>2026-08-23</td><td><strong>ATT の要求条件を変更</strong>。従来は「広告配信が有効な場合のみ」（<code>isAdDeliveryAvailable</code>）だったが、この値は <code>isProduction</code> を含むため、TestFlight と同じ sandbox 環境で実行される審査ビルドでは ATT が原理的に表示されず、<strong>2026-08-22 に 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed によりリジェクト</strong>された。配信可否と ATT 表示可否を分離し、<code>shouldRequestTracking = !appKey.isEmpty</code> で判定するよう是正。3ゲーム完了後・notDetermined・撮影モードでないという他の条件は変更なし。あわせて広告基盤の記述を Unity LevelPlay に統一。詳細は <a href="../features/ad-control.html">広告制御</a>。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-04</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div></body></html>

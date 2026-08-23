@@ -162,6 +162,10 @@ sequenceDiagram
     <li>利用規約 第7条（アプリ内課金）新設</li>
     <li>PrivacyInfo.xcprivacy 追加（AdMob / StoreKit 対応）</li>
   </ul>
+  <p class="note">※ <code>PrivacyInfo.xcprivacy</code> の記述は v1.0.1 当時（AdMob 使用時）のもの。
+  AdMob は 2026-07-30 に恒久停止し、現行の広告基盤は Unity LevelPlay。
+  現在のマニフェストは <code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> をキーごと削除した構成が正であり、
+  <code>NSPrivacyTracking: true</code> かつドメイン空は ITMS-91064 でリジェクトされる。詳細は <a href="ad-control.html">広告制御</a>。</p>
 
   <h3>v1.1.0 由来（ドーパミン強化）</h3>
   <ul>
@@ -233,9 +237,10 @@ sequenceDiagram
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-19</td><td>初版作成（v1.2.0 審査提出に合わせて新規作成）</td></tr>
+    <tr><td>1.1</td><td>2026-08-23</td><td>本ページは v1.2.0 時点の記録のため本文は変更していないが、<code>PrivacyInfo.xcprivacy</code> の項目に現行方針への注記を追加した（AdMob は 2026-07-30 に恒久停止、現行は Unity LevelPlay。<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除が正）。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-19</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div>
 
 <script>

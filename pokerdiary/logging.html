@@ -18,7 +18,7 @@
 
   <div class="callout">
     ステータス: <strong>実装済み</strong>（2027-Q1リリース目標）。KPIイベント16種と <code>EventLogger</code>・Logger カテゴリは実装済み。
-    AdMob は未実装のため <code>ad</code> カテゴリのみ未使用。
+    広告（<strong>Unity LevelPlay</strong>）は未実装のため <code>ad</code> カテゴリのみ未使用。
   </div>
 
   <h2>基本方針</h2>
@@ -39,7 +39,7 @@ extension Logger {
     static let data = Logger(subsystem: subsystem, category: "data")             // SwiftData保存・取得・マイグレーション
     static let kpi = Logger(subsystem: subsystem, category: "kpi")               // EventLogger（KPI専用）
     static let purchase = Logger(subsystem: subsystem, category: "purchase")     // SubscriptionManager（StoreKit 2）
-    static let ad = Logger(subsystem: subsystem, category: "ad")                 // AdMobバナー
+    static let ad = Logger(subsystem: subsystem, category: "ad")                 // 広告バナー（Unity LevelPlay）
     static let notification = Logger(subsystem: subsystem, category: "notification") // 週次レビュー通知
     static let range = Logger(subsystem: subsystem, category: "range")           // レンジ表・130問データロード（流用系）
     static let share = Logger(subsystem: subsystem, category: "share")           // シェアカードImageRenderer
@@ -120,9 +120,10 @@ Logger.data.info("収支: \(session.profit)円 @\(venue.name)")</code></pre>
     <tr><td>1.0</td><td>2026-07-16</td><td>初版作成（Fable 5設計・企画書v2026-06-11準拠）</td></tr>
     <tr><td>1.1</td><td>2026-07-16</td><td>下書き紐づけ動線のKPIイベント2種を追加</td></tr>
     <tr><td>1.2</td><td>2026-07-26</td><td>記録系イベントを保存成功時のみ発火と明記。paywall_shown の source=onboarding が発生しなくなった旨と、onboarding_completed の発火条件を追記</td></tr>
+    <tr><td>1.3</td><td>2026-08-23</td><td>広告基盤は 2026-07-30 に <strong>AdMob が恒久停止</strong>（アカウントが「無効なトラフィック」で無効化。再審査請求も却下）となり、AppLovin MAX は publisher アカウントの承認が下りず断念した。現行は <strong>Unity LevelPlay</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリで統一）。 PokerDiary の広告は未実装のままだが、<code>ad</code> カテゴリの説明と未使用理由の記述を AdMob から Unity LevelPlay へ更新した。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div>
 </body>
 </html>

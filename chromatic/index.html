@@ -22,6 +22,7 @@
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+ / Swift 6.0</span></li>
     <li><span class="k">言語</span><span class="v">日本語のみ</span></li>
     <li><span class="k">マネタイズ</span><span class="v">広告（Banner/Interstitial・<strong>Unity LevelPlay</strong>）+ 買い切りIAP ¥240。2026-08-20 に AppLovin MAX から LevelPlay へ移行。<strong>App Key・広告ユニットIDは未設定</strong>のため現在は広告を一切ロードしない</span></li>
+    <li><span class="k">審査上の注意</span><span class="v">2026-08-22 に 1.4.0(7) が iPadOS 26.6 の審査で <strong>Guideline 2.1 - Information Needed</strong> でリジェクト。原因は ATT ダイアログを <code>isAdDeliveryAvailable</code> でガードしており、sandbox 環境で動く審査ビルドでは表示されなかったこと。2026-08-23 に <code>shouldRequestTracking</code> へ分離して是正。詳細は <a href="features/ad-control.html">広告制御</a></span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
     <li><span class="k">配信地域</span><span class="v">日本のみ</span></li>
     <li><span class="k">対応デバイス</span><span class="v">iPhone（縦向き専用）</span></li>
@@ -66,7 +67,7 @@
     <a class="card" href="features/sound.html"><div class="title">サウンド</div><div class="desc">WAVデータ事前生成</div></a>
     <a class="card" href="features/streak.html"><div class="title">ストリーク</div><div class="desc">連続プレイ日数</div></a>
     <a class="card" href="features/game-center.html"><div class="title">Game Center</div><div class="desc">リーダーボード3本</div></a>
-    <a class="card" href="features/ad-control.html"><div class="title">広告制御</div><div class="desc">Unity LevelPlay・App Store 配信版のみに限定する安全機構</div></a>
+    <a class="card" href="features/ad-control.html"><div class="title">広告制御</div><div class="desc">Unity LevelPlay・App Store 配信版のみに限定する安全機構・ATT の表示条件・プライバシーマニフェストの方針</div></a>
     <a class="card" href="features/v1-1-dopamine-update.html">
       <div class="title">v1.1 ドーパミン強化アップデート</div>
       <div class="desc">Daily Challenge・ストリーク強化・Juice演出</div>
@@ -83,9 +84,10 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-08-20</td><td>変更履歴セクションを新設。<strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）。マネタイズ表記と <a href="features/ad-control.html">広告制御</a> のカード説明を更新。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない。</td></tr>
+    <tr><td>1.1</td><td>2026-08-23</td><td><strong>広告基盤を Unity LevelPlay に統一</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: <code>isAdDeliveryAvailable</code>（<code>isProduction</code> を含む）でガードしていたため、sandbox 環境で実行される審査ビルドでは ATT が表示されず、2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed でリジェクトされた。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を明記。 詳細は <a href="features/ad-control.html">広告制御</a>・<a href="screens/game.html">ゲーム画面</a>。</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-20</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div>
 </body>
 </html>

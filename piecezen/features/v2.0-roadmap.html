@@ -29,6 +29,7 @@
     <tr><td>1.1</td><td>2026-05-12</td><td>グリッドサイズを 8×8 に確定、SE 音源は別途調達方針を明記</td></tr>
     <tr><td>2.0</td><td>2026-05-12</td><td>GPT-5 UXレビューを反映：コンセプトに"低周波化"を明記。v2.0 スコープに Near Miss / 配置吸着感 / 終了画面再設計 を追加</td></tr>
     <tr><td>3.0</td><td>2026-05-12</td><td><a href="game-design-review-2026-05.html">GPT-5 ゲーム性レビュー</a>を反映：「コア成立済み、メタ継続が弱い」の診断を受け、優先順位を全面再編成。v2.0 を縮小（コアループ磨き）／v2.1 にメタ層集中／v2.2 を触感磨き込みに降格／v2.3 を新設</td></tr>
+    <tr><td>3.1</td><td>2026-08-23</td><td>広告基盤は 2026-07-30 に <strong>AdMob が恒久停止</strong>（アカウントが「無効なトラフィック」で無効化。再審査請求も却下）となり、AppLovin MAX は publisher アカウントの承認が下りず断念した。現行は <strong>Unity LevelPlay</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリで統一）。 本ロードマップ内の「AdMob リワード広告流用」を Unity LevelPlay 前提（<code>LPMRewardedAd</code>）へ更新した。ロードマップの内容そのものに変更はない。詳細は <a href="ad-control.html">広告制御</a>。</td></tr>
   </table>
 
   <h2>1. アップデート目的とコンセプト</h2>
@@ -271,9 +272,9 @@
       <td>v2.3 開発前に <code>project.yml</code> Capability 追加 + Entitlement 設定</td>
     </tr>
     <tr>
-      <td>AdMob リワード広告流用</td>
+      <td>リワード広告の流用（<strong>Unity LevelPlay</strong>）</td>
       <td>ストリーク報酬・スキン解放で活用</td>
-      <td>既存 <code>AdManager.swift</code> のコールバック設計を確認</td>
+      <td>既存 <code>AdManager.swift</code> のコールバック設計を確認。2026-08-20 に AdMob → AppLovin MAX → Unity LevelPlay へ移行済みで、クラスは <code>LPMRewardedAd</code>。詳細は <a href="ad-control.html">広告制御</a></td>
     </tr>
   </table>
 
@@ -308,7 +309,7 @@
     <li><a href="../aso.html">ASOキーワード戦略</a></li>
   </ul>
 
-  <footer class="site-footer">最終更新: 2026-05-12（v3.0）</footer>
+  <footer class="site-footer">最終更新: 2026-08-23（v3.1）</footer>
 </div>
 </body>
 </html>

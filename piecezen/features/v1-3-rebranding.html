@@ -28,6 +28,7 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-19</td><td>初版作成（v1.3.0 審査提出日）</td></tr>
+    <tr><td>1.1</td><td>2026-08-23</td><td>広告基盤は 2026-07-30 に <strong>AdMob が恒久停止</strong>（アカウントが「無効なトラフィック」で無効化。再審査請求も却下）となり、AppLovin MAX は publisher アカウントの承認が下りず断念した。現行は <strong>Unity LevelPlay</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリで統一）。 本ページは v1.3.0 時点の記録のため<strong>当時の AdMob 記述は残し</strong>、その後の移行を示す注記を追加した。現行の広告仕様は <a href="ad-control.html">広告制御</a> が正。</td></tr>
   </table>
 
   <!-- ========================================================
@@ -67,6 +68,7 @@
     <tr><td>IAP</td><td>広告除去 ¥480（<code>com.happyboy1002.BlockPuzzle.removeAds</code>）維持</td></tr>
     <tr><td>AdMob</td><td>維持（Ad Unit ID・広告配置変更なし）</td></tr>
   </table>
+  <p class="note">※ 本ページは v1.3.0 時点の記録。その後 2026-07-30 に AdMob アカウントが恒久停止し、AppLovin MAX（承認却下）を経て 2026-08-20 に <strong>Unity LevelPlay</strong> へ移行している。現行の広告仕様は <a href="ad-control.html">広告制御</a> を参照。</p>
 
   <!-- ========================================================
        3. 主要新機能
@@ -316,7 +318,7 @@ func saveStatRecord(context: ModelContext) {
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
     <tr><td>ShareLink / UIActivityViewController</td><td>脳活記録の家族共有</td><td>ネイティブ Share Sheet。LINE / メッセージ等</td></tr>
     <tr><td>SwiftUI Charts</td><td>週次スコア推移グラフ</td><td>iOS 16+ 標準ライブラリ</td></tr>
-    <tr><td>AdMob</td><td>インタースティシャル広告（3ゲームに1回）</td><td>変更なし</td></tr>
+    <tr><td>AdMob<span class="note">（v1.3.0 当時）</span></td><td>インタースティシャル広告（3ゲームに1回）</td><td>変更なし。<strong>現行は Unity LevelPlay</strong>（2026-08-20 移行）</td></tr>
     <tr><td>StoreKit 2</td><td>広告除去IAP</td><td>変更なし</td></tr>
   </table>
 
@@ -370,7 +372,7 @@ func saveStatRecord(context: ModelContext) {
     <li><a href="../aso.html">ASOキーワード戦略</a>（v4.0 メタデータ）</li>
   </ul>
 
-  <footer class="site-footer">最終更新: 2026-05-19</footer>
+  <footer class="site-footer">最終更新: 2026-08-23</footer>
 </div>
 </body>
 </html>
