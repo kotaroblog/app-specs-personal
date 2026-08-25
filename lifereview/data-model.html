@@ -262,10 +262,19 @@ final class ReflectionSession {
     static func load(type:periodStart:defaults:) -> ReflectionDraft?
     static func save(_:type:defaults:)
     static func clear(type:defaults:)
+
+    // 下書きを再利用してよいかの判定（週次だけ 6 日のずれを許容）
+    private static func isReusable(draftStart:periodStart:type:) -&gt; Bool
 }
 // キー: "reflectionDraft.{weekly|monthly|yearly}"</code></pre>
   <ul class="checklist">
-    <li>種別ごとに1件。<strong>期間（periodStart）が変わった古い下書きは読み込まず破棄</strong>する。</li>
+    <li>種別ごとに1件。再利用の可否は <code>isReusable(draftStart:periodStart:type:)</code> で決める。
+      <strong>週次は開始日のずれが6日以内（＝対象期間が重なる）なら再開可</strong>、<strong>月次・年次は同日一致</strong>。外れた下書きは読み込まずキーごと破棄する。</li>
+    <li><strong>週次だけ許容幅を持つ理由:</strong> 週次の periodStart は「今日−6日」で毎日動くローリング。同日一致で判定すると、
+      夜に保存した下書きが翌朝には消える（中断 → 翌日再開が壊れる）。</li>
+    <li><strong>保存する periodStart は初回保存時の値で固定する</strong>（<code>ReflectionSessionView.draftPeriodStart</code>）。
+      保存のたびに今日基準へ書き換えると、6日以内に開き続けるかぎり下書きが無期限に前へスライドしてしまう。
+      この固定値は下書き専用で、完了保存する <code>ReflectionSession.periodStart</code> にはセッション自身の periodStart を使う。</li>
     <li>内容が空（<code>hasContent == false</code>）なら保存せずクリアする。</li>
     <li>セッション完了時と「全データを削除」時に全種別をクリアする。</li>
   </ul>
@@ -429,6 +438,7 @@ extension Relation {
     <tr><td>1.2</td><td>2026-06-16</td><td>Phase S4 を反映: オンボーディング入力値（birthDate・targetAge）は @AppStorage で管理する方針を補足</td></tr>
     <tr><td>1.3</td><td>2026-06-30</td><td>UserProfile・BucketItem・Relation モデルを追加。ER 図に5モデル全てを反映。各モデルの注意事項・計算ロジックを追記</td></tr>
     <tr><td>1.4</td><td>2026-07-26</td><td>スキーマ変更3件を反映: <code>LogEntry.isHighlight</code> 削除（ハイライトは <code>ReflectionSession.highlightLogIds</code> に一本化）・<code>Relation.currentAge: Int?</code> → <code>birthDate: Date?</code>（残り回数を暦から毎回算出）・<code>ReflectionSession.starSeq</code> 追加（starIndex / survivingHighlightCount も併記）。LogCategory を8種に訂正し、カテゴリ・感情の配色を輝度の階段（和色系）へ全面差し替え。UserProfile に age / isValidTargetAge を追加（目標年齢規則の集約）。週グリッド用トークン weekPast / weekFuture 新設・ヒートマップ輝度値を明記。ReflectionDraft・@AppStorage キー一覧・削除済みログ参照の二段構えを新規追加。オンボーディング入力は @AppStorage ではなく UserProfile（SwiftData）へ保存する実装に合わせて 1.2 の記述を訂正</td></tr>
+    <tr><td>1.5</td><td>2026-08-26</td><td><code>ReflectionDraftStore</code> の再利用判定を更新（コミット <code>4dcdba4</code>）。同日一致から <code>isReusable(draftStart:periodStart:type:)</code> による<strong>期間の重なり判定</strong>へ（週次はずれ6日以内まで再開可／月次・年次は同日一致のまま）。下書きの <code>periodStart</code> を初回保存時の値で固定する仕様と、それが下書き専用である点を追記</td></tr>
   </table>
 
   <script>
@@ -438,7 +448,7 @@ extension Relation {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-08-26</footer>
 </div>
 </body>
 </html>

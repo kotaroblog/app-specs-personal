@@ -52,9 +52,9 @@
   <div class="mermaid">
 flowchart TD
   A["起動: sessionType に ReflectionType を代入"] --> B["init(type:) で period(for:) を確定<br>ReflectionDraftStore.load(type:periodStart:)"]
-  B --> C{"下書きあり かつ<br>periodStart が同じ日"}
+  B --> C{"下書きあり かつ<br>対象期間が重なる<br>（週次: ずれ6日以内 / 月次・年次: 同日）"}
   C -->|あり| D["step / highlightIds / answers / mood / note を復元"]
-  C -->|なし| E["step = 0 で開始<br>期間違いの下書きはキーごと削除"]
+  C -->|なし| E["step = 0 で開始<br>期間が重ならない下書きはキーごと削除"]
   D --> F["onAppear: activeSteps に無い step は 2 へ補正"]
   E --> F
   F --> G["ステップ進行<br>step/highlightIds/answers/mood/note の変化ごとに下書きを保存"]
@@ -93,7 +93,7 @@ flowchart TD
   <p>
     STEP3「問い」だけは内部にさらに問い単位のカーソル（<code>index</code>）を持ち、3問を1画面で送る。
     最終問での「次へ」で STEP4 に進み、最初の問いでの「戻る」で STEP2（または STEP1）へ戻る。
-    移動のたび表示中の回答を <code>answers[index]</code> に確定する。
+    回答は<strong>打鍵のたびに</strong> <code>answers[index]</code> へ確定し、問いの移動時にも確定する（移動まで未確定だと、×で閉じたときに入力中の1問分が消える）。
   </p>
 
   <h2>下書き（中断と再開）</h2>
@@ -103,15 +103,17 @@ flowchart TD
   </p>
   <table>
     <tr><th>タイミング</th><th>処理</th></tr>
-    <tr><td>保存</td><td><code>step</code> / <code>highlightIds</code> / <code>answers</code> / <code>mood</code> / <code>note</code> のいずれかが変わるたび <code>saveDraft()</code>。完了画面に入った後（<code>isCompletion</code>）は保存しない。</td></tr>
+    <tr><td>保存</td><td><code>step</code> / <code>highlightIds</code> / <code>answers</code> / <code>mood</code> / <code>note</code> のいずれかが変わるたび <code>saveDraft()</code>。STEP3 の回答は打鍵ごとに <code>answers</code> へ入るため、下書きも打鍵ごとに更新される。完了画面に入った後（<code>isCompletion</code>）は保存しない。</td></tr>
     <tr><td>空の下書き</td><td><code>ReflectionDraft.hasContent</code> が false（選択・回答・感情・ノートがすべて空）なら保存せずキーを削除する。書いた内容を消してから閉じれば下書きも残らない。</td></tr>
-    <tr><td>復元</td><td><code>init(type:)</code> 内で <code>load(type:periodStart:)</code>。デコードできて <strong>下書きの periodStart が今回の periodStart と同じ日</strong>なら、step を含めて全項目を復元する。</td></tr>
-    <tr><td>期限切れ</td><td>periodStart が一致しない下書きは<strong>読み込まずキーごと削除</strong>する（古い期間の入力を新しい期間に持ち込まない）。</td></tr>
+    <tr><td>復元</td><td><code>init(type:)</code> 内で <code>load(type:periodStart:)</code>。デコードできて <code>isReusable(draftStart:periodStart:type:)</code> が true なら、step と <code>periodStart</code> を含めて全項目を復元する。</td></tr>
+    <tr><td>再利用の判定</td><td><strong>週次は開始日のずれが6日以内（＝対象期間が重なる）なら再開可</strong>。7日ずれると重なりが無くなるので別の週として扱う。<strong>月次・年次は同日一致</strong>（periodStart が月初／年初で固定のため、ずれ＝別の月・年）。</td></tr>
+    <tr><td>期限切れ</td><td>上の判定に外れた下書きは<strong>読み込まずキーごと削除</strong>する（古い期間の入力を新しい期間に持ち込まない）。</td></tr>
+    <tr><td>下書きの periodStart</td><td><strong>初回保存時の値を保持</strong>する（<code>draftPeriodStart</code>）。保存のたびに「今日」基準へ書き換えると、6日以内に開き続けるかぎり下書きが無期限に前へスライドし、何週間も前の入力が「今週の下書き」として生き残る。<strong>この固定値は下書き専用</strong>で、完了保存する <code>ReflectionSession.periodStart</code> にはセッション自身の（今日基準の）periodStart を使う。</td></tr>
     <tr><td>破棄</td><td>完了保存に成功した時のみ <code>clear(type:)</code>。保存失敗時は下書きを残す。</td></tr>
   </table>
   <table>
     <tr><th>種別</th><th>periodStart</th><th>下書きが再開できる範囲</th></tr>
-    <tr><td>weekly</td><td>今日−6日の 0:00</td><td>中断した<strong>その日のうち</strong>（日付が変わると periodStart がずれる）</td></tr>
+    <tr><td>weekly</td><td>今日−6日の 0:00</td><td>中断から<strong>6日以内</strong>（期間が重なるあいだ。中断して翌日に再開できる）</td></tr>
     <tr><td>monthly</td><td>今月の 1日 0:00</td><td>同じ月のあいだ</td></tr>
     <tr><td>yearly</td><td>今年の 1/1 0:00</td><td>同じ年のあいだ</td></tr>
   </table>
@@ -279,6 +281,7 @@ flowchart TD
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（ReflectionSessionView・period計算・保存ロジック）を反映。週次・月次・年次共通設計を記述</td></tr>
     <tr><td>1.1</td><td>2026-06-16</td><td>Phase S4 実装済み: オンボーディング（LR-ONBOARD-01）完了後にセッション起動導線が繋がることを補足。エラー処理のエラーアラートを S4 で実装済みとして更新。</td></tr>
     <tr><td>1.2</td><td>2026-07-26</td><td>本書の軸足を「フローと状態遷移・データの流れ」に変更（画面構成は LR-SESSION-01 に委譲）。①中断を「破棄」から「下書き保存」に変更し、ReflectionDraftStore の保存契機・periodStart 同日判定による復元/期限切れ削除・種別ごとの再開可能範囲を追加。②完了時の保存を insert から <strong>upsert</strong>（同種別・periodStart 差1秒未満なら上書き）に修正し、上書き/新規の判定表を追加。③<code>starSeq</code> の採番（既存最大+1・一度だけ・失敗時は -1 で id 由来フォールバック）と Halton(2,3) による座標決定を追加。④ハイライトの真実源を <code>ReflectionSession.highlightLogIds</code> に一本化（<code>LogEntry.isHighlight</code> 削除）し、生存照合（<code>survivingHighlightCount(in:)</code> / <code>TimelineTally</code>）と記録削除時の cascade cleanup を追加。⑤記録0件時に「選ぶ」を飛ばす <code>activeSteps</code> と STEP 番号の動的採番、古い下書きの step 補正を追加。⑥起動ポイントを2経路（ホーム／軌跡の空状態）に整理し、<code>onCompleted</code> → リマインダー提案の判定タイミングを明記。⑦エラー処理に rollback・照合失敗・採番失敗・下書きデコード失敗・掃除失敗を追加。⑧根拠のない「セッション所要時間」行と、実在しないリンク先（reflect-home.html）を削除。入力上限（回答500字・ノート1000字）、Reduce Motion 時の挙動、STEP3/STEP5 にキーボード「完了」を置かない方針、periodLabel の実表記（M/D – M/D）を追記</td></tr>
+    <tr><td>1.3</td><td>2026-08-26</td><td>提出前の UI/UX 修正（コミット <code>4dcdba4</code>）を反映。①下書きの再利用判定を「periodStart の同日一致」から <code>ReflectionDraftStore.isReusable(draftStart:periodStart:type:)</code> による<strong>期間の重なり判定</strong>へ変更（週次はずれ6日以内まで再開可／月次・年次は同日一致のまま）。週次の再開可能範囲を「中断したその日のうち」から「6日以内（翌日再開が可能）」に訂正し、状態遷移図の判定ノードも書き換え。②下書きの <code>periodStart</code> を<strong>初回保存時の値で固定</strong>する仕様と、その固定値が下書き専用（完了保存するセッションは今日基準の periodStart を使う）である点を追記。③STEP3 の回答確定を「問いの移動時」から<strong>打鍵ごと＋移動時</strong>に変更した旨を追記（下書きと <code>hasAnyInput</code> の取りこぼし防止）</td></tr>
   </table>
 
   <script>
@@ -288,7 +291,7 @@ flowchart TD
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-08-26</footer>
 </div>
 </body>
 </html>

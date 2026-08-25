@@ -123,9 +123,12 @@
   <ul class="checklist">
     <li>3問を<strong>1問ずつ</strong>表示する。問いは「“」「”」だけ amber、本文 moonWhite の明朝20（<code>lineSpacing 19</code>＝読む速度を落とす余白）。</li>
     <li>入力欄は <code>TextEditor</code>（<code>minHeight 112</code>・プレースホルダ「ことばにならなくても、断片で。」）。フォーカス時は枠が goldDim。</li>
-    <li>1問あたり<strong>500文字</strong>で切り詰める（<code>onChange</code> で prefix）。</li>
+    <li>1問あたり<strong>500文字</strong>で切り詰める（<code>onChange</code> で prefix）。切り詰めた場合は <code>onChange</code> がもう一度走るので、確定はそちらに任せる。</li>
     <li>下部に進行ドット（現在 amber・他 warmShadow）と「問い 〔n〕 / 3 ・ 答えたいものだけで」。</li>
-    <li>「次の問いへ」で回答を <code>answers[index]</code> に確定して次の問いへ。最終問の「次へ」で step 3 へ。</li>
+    <li><strong>入力のたびに（打鍵ごとに）<code>answers[index]</code> へ確定する</strong>（<code>onChange</code> → <code>commitCurrent()</code>）。
+      「次の問いへ／戻る」まで未確定にしておくと、×で閉じたときに<strong>入力中の1問分がまるごと消え</strong>、
+      下書きにも <code>hasAnyInput</code>（中断アラートを出すかの判定）にも乗らない。2026-08-25 に是正。</li>
+    <li>「次の問いへ」でも確定してから次の問いへ移り、最終問の「次へ」で step 3 へ進む（移動時の確定は残してある）。</li>
     <li>戻るボタンは、2問目以降なら<strong>前の問い</strong>へ、1問目なら<strong>前のステップ</strong>へ戻る。</li>
   </ul>
 
@@ -174,10 +177,16 @@
     <tr><th>項目</th><th>仕様</th></tr>
     <tr><td>保存先</td><td>端末内の <code>UserDefaults</code>。キーは種別ごと（<code>reflectionDraft.weekly</code> / <code>.monthly</code> / <code>.yearly</code>）。外部送信はしない。</td></tr>
     <tr><td>保存内容</td><td><code>ReflectionDraft</code>（<code>periodStart</code> / <code>step</code> / <code>highlightIds</code> / <code>answers</code> / <code>moodRaw</code> / <code>note</code>）を JSON エンコード。</td></tr>
-    <tr><td>保存タイミング</td><td><code>step</code> / <code>highlightIds</code> / <code>answers</code> / <code>mood</code> / <code>note</code> のいずれかが変わるたび（<code>onChange</code>）。完了画面（<code>isCompletion</code>）では保存しない。</td></tr>
+    <tr><td>保存タイミング</td><td><code>step</code> / <code>highlightIds</code> / <code>answers</code> / <code>mood</code> / <code>note</code> のいずれかが変わるたび（<code>onChange</code>）。step 2 の回答は打鍵ごとに <code>answers</code> へ入るので、<strong>下書きも打鍵ごとに更新される</strong>。完了画面（<code>isCompletion</code>）では保存しない。</td></tr>
     <tr><td>空の下書き</td><td><code>hasContent</code>（選択・回答・感情・ノートのいずれかがある）が false なら保存せずキーを削除する。</td></tr>
     <tr><td>復元</td><td><code>init</code> で読み込み、各 <code>@State</code> の初期値に流し込む。</td></tr>
-    <tr><td>期限切れ判定</td><td>下書きの <code>periodStart</code> が今回の <code>periodStart</code> と<strong>同じ日でなければ破棄</strong>する（週が変われば先週の下書きは復元されない）。</td></tr>
+    <tr><td>期限切れ判定</td><td><code>ReflectionDraftStore.isReusable(draftStart:periodStart:type:)</code> で判定する。
+      <strong>週次は「対象期間が重なる（開始日のずれが6日以内）」なら再開可</strong>。7日ずれると重なりが無くなるので別の週として破棄する。
+      <strong>月次・年次は従来どおり同日一致</strong>（periodStart が月初／年初で固定のため、ずれ＝別の月・年）。破棄時はキーごと削除する。</td></tr>
+    <tr><td>週次だけ許容幅を持つ理由</td><td>週次の対象期間は「今日−6日 〜 今日」の<strong>ローリング</strong>で毎日動く。同日一致で判定していた頃は、
+      夜に保存した下書きが翌朝には別の期間とみなされて消えていた。<strong>中断 → 翌日に再開</strong>はいちばん自然な使い方なので、7日ぶんのずれまでを同じ週の続きとして扱う。</td></tr>
+    <tr><td>保存する periodStart</td><td><strong>初回保存時の値を保持し続ける</strong>（<code>draftPeriodStart</code>）。保存のたびに「今日」基準へ書き換えると、
+      6日以内に開き続けるかぎり下書きが無期限に前へスライドし、何週間も前の回答やハイライトが「今週の下書き」として残り続けてしまう。</td></tr>
     <tr><td>破棄</td><td>振り返りの保存に成功した時点で <code>clear(type:)</code>。</td></tr>
   </table>
 
@@ -216,7 +225,8 @@
   <table>
     <tr><th>状態</th><th>表示・挙動</th></tr>
     <tr><td>通常（step が activeSteps 内）</td><td>プログレスバー表示。各ステップをフェード＋8pxオフセットで切替。</td></tr>
-    <tr><td>下書きあり</td><td><code>init</code> で step・選択・回答・感情・ノートを復元して<strong>途中から再開</strong>する。</td></tr>
+    <tr><td>下書きあり</td><td><code>init</code> で step・選択・回答・感情・ノート・<code>periodStart</code> を復元して<strong>途中から再開</strong>する。</td></tr>
+    <tr><td>週次を翌日に再開</td><td>下書きの <code>periodStart</code> が1日ずれていても<strong>期間が重なるため復元する</strong>（6日以内）。7日以上ずれた下書きは破棄して step 0 から始まる。</td></tr>
     <tr><td>下書きが無効な step を指す</td><td>記録0件の期間で step 1 が復元された場合、<code>onAppear</code> で step 2 に補正する。</td></tr>
     <tr><td>保存中（isSaving: true）</td><td>主 CTA が <code>ProgressView</code> になり、再タップしても <code>finish()</code> が走らない。</td></tr>
     <tr><td>保存成功</td><td>累計件数を取得し、下書きを破棄して完了画面（step 5）へ。<code>onCompleted</code> 発火。</td></tr>
@@ -313,9 +323,10 @@ modelContext.insert(session)
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（ReflectionSessionView + 各 StepView）を反映。週次・月次・年次共通フローを記述</td></tr>
     <tr><td>1.1</td><td>2026-06-16</td><td>Phase S4 実装済み: ナビゲーションバーをダーク天体背景＋明朝タイトルに統一（UINavigationBarAppearance）。セッション内はインライン明朝タイトル表示。</td></tr>
     <tr><td>1.2</td><td>2026-07-26</td><td>ステップ数が5固定でない分岐（記録0件の期間は <code>activeSteps = [0,2,3,4]</code>）と STEP 番号の動的採番を追記。ハイライト更新（<code>LogEntry.isHighlight = true</code>）の記述を削除し <code>highlightLogIds</code> 一本化を明記。中断を「破棄」から「下書きを保存して閉じる」（<code>ReflectionDraftStore</code>・UserDefaults・期間が変わったら破棄）へ書き換え。完了時の upsert（同一期間は上書き・<code>starSeq</code> を保持して星を増やさない）と <code>starSeq</code> 採番／フォールバックを追加。保存失敗時の <code>rollback()</code> ＋保存エラーアラートを追記（「エラーアラートは S3 以降で追加予定」を削除）。プログレスバーの×が<strong>左端</strong>である点を修正し、遷移演出を横スライド0.28秒からフェード＋上方8px 0.35秒へ訂正。各ステップの実装文言・CTA・文字数上限（問い500／気づき1000）・問いの1問ずつ進行・総括感情の再タップ解除・完了画面の構成・LogMood 5色（輝度階段）・Dynamic Type／44pt／Reduce Motion 対応を追記。未使用の mermaid CDN 読み込みを削除し、リンク切れの <code>reflect-home.html</code> を <code>S03_reflect_home.html</code> に修正。上書き（upsert）時の更新範囲を「<code>completedAt</code> のみ」から「内容＋<code>completedAt</code>（<code>id</code> / <code>createdAt</code> / <code>starSeq</code> は保持）」に訂正</td></tr>
+    <tr><td>1.3</td><td>2026-08-26</td><td>提出前の UI/UX 修正（コミット <code>4dcdba4</code>）を反映。①step 2（問い）の回答を<strong>打鍵ごとに <code>answers</code> へ確定</strong>するよう変更（「次へ／戻る」まで未確定だと、×で閉じたときに入力中の1問分が消え、下書きにも <code>hasAnyInput</code> にも乗らなかった）。②下書きの期限切れ判定を「periodStart の同日一致」から <code>isReusable(draftStart:periodStart:type:)</code> による<strong>期間の重なり判定</strong>へ変更（週次は6日以内のずれを許容＝中断して翌日に再開できる／月次・年次は同日一致のまま）。③下書きの <code>periodStart</code> を<strong>初回保存時の値で固定</strong>する仕様（無期限スライドの防止）を追記。④保存タイミングが打鍵ごとになる旨と、500文字切り詰め時の再 <code>onChange</code> による確定を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-08-26</footer>
 </div>
 </body>
 </html>

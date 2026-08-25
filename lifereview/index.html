@@ -22,7 +22,7 @@
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語のみ（ローカライズファイルを持たず、locale も ja_JP 固定）</span></li>
     <li><span class="k">マネタイズ</span><span class="v">v1.0 は無料・広告なし。実ユーザーデータを蓄積後、v1.1 以降で課金/広告を設計</span></li>
-    <li><span class="k">ステータス</span><span class="v"><strong>v1.0.0 (build 1) 提出準備完了・未リリース</strong>（コードレビュー パス5 クリア／スクショ5枚生成済み／残るは Archive とストア入力）</span></li>
+    <li><span class="k">ステータス</span><span class="v"><strong>v1.0.0 (build 1) 提出準備完了・未リリース</strong>（2026-08-25 に全6画面の UI/UX レビューとパス5を再実施し13件修正。ビルド緑（Debug/Release）・ユニット26緑・UIテスト13緑／スクショ5枚生成済み／残るは Archive とストア入力）</span></li>
     <li><span class="k">技術スタック</span><span class="v">Swift 6 / SwiftUI / SwiftData / XcodeGen（2026-06-15 に Flutter から全面移行済み）</span></li>
     <li><span class="k">デザインテーマ</span><span class="v">C案「ダーク天体」— 墨と藍、琥珀の真鍮、明朝×ゴシック二層</span></li>
   </ul>
@@ -111,6 +111,11 @@
       <div class="desc">サマリー4カード・カテゴリ円グラフ・カテゴリ内訳・感情の移ろいグラフ。カテゴリ8色/感情5色は輝度階段で再設計済み（「記録率」は廃止）</div>
       <div class="meta"><span class="tag">LR-TOOLBOX-STATS</span> <span class="tag done">S3更新</span></div>
     </a>
+    <a class="card" href="screens/settings.html">
+      <div class="title">設定</div>
+      <div class="desc">プロフィール編集（目標年齢／生年月日シート）・リマインダー導線・表示トグル・アプリ情報とポリシー3リンク（Safari で開く）・全データ削除</div>
+      <div class="meta"><span class="tag">LR-SETTINGS-01</span> <span class="tag done">新規</span></div>
+    </a>
     <a class="card" href="screens/reminder-settings.html">
       <div class="title">リマインダー設定</div>
       <div class="desc">週次振り返りの曜日・時刻を設定するローカル通知設定画面（端末内完結・サーバー不要）</div>
@@ -184,9 +189,10 @@
     <tr><td>v1.2</td><td>2026-06-16</td><td>Phase S4「仕上げ」実装完了分を反映: オンボーディング画面（LR-ONBOARD-01）新規追加・デザインシステム補足（ナビゲーションUI統一・明朝タイトル）・Launch画面（白フラッシュ抑止）・スクショ自動化パイプライン導入・マネタイズ方針（v1.0無料）・ロードマップS4完了に更新</td></tr>
     <tr><td>v1.3</td><td>2026-06-30</td><td>タブ統合仕様書（LR-S01〜S04）新規追加: オンボーディング・今日タブ・ふりかえりタブ・人生タブの全サブ画面を網羅。データモデル仕様書に UserProfile・BucketItem・Relation を追記（v1.3）。全体仕様書カードの説明文を更新</td></tr>
     <tr><td>v1.4</td><td>2026-07-26</td><td>提出前の実装（S5）に合わせてポータル全体を更新。<strong>Bundle ID の誤記を修正</strong>（<code>com.happyboy1002.lifeReviewApp</code> → <code>com.happyboy1002.LifeReview</code>）。タブ統合版と重複していた旧 <code>onboarding.html</code> / <code>reflect-home.html</code> を削除し、画面仕様書を「タブ単位」「個別画面」の2区分に整理（リンク切れを解消）。ナビゲーションUIの記述を実装に合わせて全面改訂（iOS 26 でタイトルが描画されない問題への対応として <code>minchoNavigationTitle</code> 方式へ、tint を amber から moonWhite へ、明朝フォント名を <code>HiraMinProN-W3</code> に訂正）。Launch 画面を storyboard 方式から <code>UILaunchScreen</code> + カラーセット方式の記述に修正。スクショ自動化を ja-JP 単独・テンプレv2ローカルコピー・再現性設定（<code>ios_version</code> 固定 / <code>erase_simulator</code> / <code>only_testing</code>）に更新。ステータスを「提出準備完了・未リリース」に、技術スタックを「Flutter 移行中」から移行済みに修正。「○年前の今日」を「過去の今日」に訂正</td></tr>
+    <tr><td>v1.5</td><td>2026-08-26</td><td>初回提出直前の UI/UX 修正13件（コミット <code>4dcdba4</code>・2026-08-25）をポータルに反映。<strong>設定画面の単独仕様書 <code>screens/settings.html</code>（LR-SETTINGS-01）を新規作成</strong>し、人生タブ（LR-S04）に埋まっていた設定の記述を移設（子の LR-REMINDER-01 に仕様書があるのに親が無い状態を解消）。更新: 今日タブ（記録フォームの破棄確認・スワイプ抑止・チップの修飾子順・「クリア」の配色）／振り返りセッションと機能仕様（STEP3 回答の打鍵ごと確定・下書きの期間重なり判定で週次の翌日再開が可能に・下書き periodStart の固定）／オンボーディング（現在年齢の常時表示）／人生タブ（残り0回の文言置換・想定年齢到達時の編集保存の免除規則）。ステータス行にテスト実績を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-08-26</footer>
 </div>
 </body>
 </html>

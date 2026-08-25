@@ -60,16 +60,32 @@
   <table>
     <tr><th>要素</th><th>説明</th></tr>
     <tr><td>カテゴリ選択（必須）</td><td><strong>8種</strong>（体験・達成・人間関係・作品・創作・学び・旅・日常の幸せ・<strong>その他</strong>）を LazyVGrid（adaptive minimum 104）のチップで選択。未選択時は「保存」ボタン disabled。チップは <code>minHeight: 44</code>。</td></tr>
-    <tr><td>気持ち選択（任意）</td><td>5種（喜び・充実・穏やか・疲れ・不安）をアイコン＋ラベル縦並びチップで選択（<code>minHeight: 44</code>）。同じチップの再タップでも解除できる。「クリア」ボタンは <code>minHeight: 44</code> + <code>contentShape</code> でタップ領域を確保。</td></tr>
+    <tr><td>気持ち選択（任意）</td><td>5種（喜び・充実・穏やか・疲れ・不安）をアイコン＋ラベル縦並びチップで選択（<code>minHeight: 44</code>）。同じチップの再タップでも解除できる。「クリア」ボタンは <code>minHeight: 44</code> + <code>contentShape</code> でタップ領域を確保し、文字色は <code>AppColors.textMuted</code>（罫線色 <code>outline</code> は面の上で 1.2:1 程度しかなく、ボタンとして読めないため 2026-08-25 に変更）。</td></tr>
     <tr><td>メモ入力（任意）</td><td>TextEditor（minHeight 120）。最大 500 文字想定。<strong>プレースホルダー「今日、心に残ったことを書いてみましょう」</strong>を重ねて表示（<code>allowsHitTesting(false)</code>）。</td></tr>
     <tr><td>写真（任意・最大3枚）</td><td>PhotosPicker（<code>matching: .images</code>・<code>maxSelectionCount</code> は残り枠）。88×88 のサムネイル横スクロール。取り消しの「×」は見た目 20pt のまま<strong>当たり判定を 44pt</strong> に広げる。実体は <code>ImageStore</code> がアプリ内領域へ保存し、パスのみ <code>imagePaths</code> に持つ。</td></tr>
     <tr><td>日付選択（任意）</td><td>DatePicker（in: ...Date()・displayedComponents: .date）。既定は本日。過去日付への記録も可能。</td></tr>
-    <tr><td>ツールバー</td><td>「閉じる」（cancellationAction）・「保存」（confirmationAction）・<strong>キーボード上「完了」</strong>（フォーカス解除）。</td></tr>
+    <tr><td>ツールバー</td><td>「閉じる」（cancellationAction・<code>attemptClose()</code> 経由）・「保存」（confirmationAction・カテゴリ未選択で disabled）・<strong>キーボード上「完了」</strong>（フォーカス解除）。</td></tr>
+    <tr><td>破棄確認（confirmationDialog）</td><td><strong>書きかけがあるときだけ</strong>「書きかけの記録を破棄しますか？」（<code>titleVisibility: .visible</code>／本文「入力した内容は保存されません。」）。選択肢は<strong>「破棄する」（destructive・dismiss）</strong>と<strong>「書き続ける」（cancel・フォームに留まる）</strong>。書きかけが無ければ確認を出さずそのまま閉じる。</td></tr>
+    <tr><td>スワイプで閉じる</td><td><code>.interactiveDismissDisabled(hasChanges)</code>。書きかけがあるあいだは下スワイプでシートを閉じられず、必ず「閉じる」→ 破棄確認の経路を通る。書きかけが無ければ従来どおりスワイプで閉じられる。</td></tr>
     <tr><td>編集モード</td><td>LogEntry を引数に渡すと編集モード（既存値でフォームを初期化）。タイトル「記録を編集」／新規は「新しい記録」。</td></tr>
   </table>
+  <div class="callout warn">
+    <strong>書きかけ判定（<code>hasChanges</code>）— 2026-08-25 追加:</strong>
+    閉じる操作を止めるかどうかは <code>hasChanges</code> ひとつで決める。
+    <ul class="checklist" style="margin-top:8px;">
+      <li><strong>新規:</strong> カテゴリ・気持ち・本文（前後の空白を除いて非空）・未保存の選択済み写真のいずれかが入力されていれば true。</li>
+      <li><strong>編集:</strong> カテゴリ／気持ち／本文／日付／残す写真のパス（<code>keptPaths</code>）が元の <code>LogEntry</code> から変わっているか、新しい写真が選ばれていれば true。</li>
+      <li><strong>本文の比較は <code>entry.content ?? ""</code> と行う。</strong> <code>content: String?</code> をそのまま <code>String</code> と比べると
+        「メモなしの記録」を開いただけで <code>Optional("") != nil</code> が成立し、何も触っていないのに毎回破棄確認が出る。</li>
+    </ul>
+    確認を挟むのは <strong>書きかけがあるときだけ</strong>。空のフォームを閉じるだけで確認が出ると、その確認自体が邪魔になる。
+  </div>
   <ul class="checklist">
     <li>未保存の選択済み写真は <strong>id で管理</strong>する。<code>ForEach(enumerated(), id: \.offset)</code> の index で消すと、2枚の「×」を同時にタップされたとき縮んだ配列に古い index が適用されて範囲外クラッシュする。</li>
     <li>保存手順: 新規画像をディスクへ書く → SwiftData を更新 → <code>save()</code> 成功後に<strong>取り消された旧画像を削除</strong>。save 失敗時は書き込んだ新規ファイルを掃除して <code>rollback()</code>。</li>
+    <li><strong>チップの <code>frame(minHeight: 44)</code> は <code>background</code> より前に置く。</strong>
+      後ろに置くと塗りの Capsule / RoundedRectangle が内容高（約36pt）で、枠の Capsule / RoundedRectangle が 44pt で描かれ、
+      塗りと枠がずれて上下が浮いて見える（<code>SelectableChip</code> / <code>MoodChip</code> の両方で 2026-08-25 に是正）。</li>
     <li>チップの文字色に<strong>カテゴリ色を使わない</strong>（暗い色が night2 面で本文可読性に届かないため）。識別は色罫（不透明度 0.4／選択時 lineWidth 2）＋面 0.14 が担う。</li>
   </ul>
 
@@ -106,6 +122,8 @@
     <tr><td>記録あり</td><td>直近 3 件の LogCardView を表示。同月日の過去記録があれば「過去の今日」セクション（最大5件）も表示。</td></tr>
     <tr><td>UserProfile 未設定 / 表示設定 OFF</td><td>残り時間ミニカードを非表示。CTA と記録セクションのみ。</td></tr>
     <tr><td>LogFormView 表示中</td><td>.sheet でオーバーレイ表示。背後のタブはそのまま残る。</td></tr>
+    <tr><td>LogFormView: 書きかけなし</td><td>「閉じる」・下スワイプとも確認なしで即閉じる。</td></tr>
+    <tr><td>LogFormView: 書きかけあり</td><td>下スワイプは無効（<code>interactiveDismissDisabled</code>）。「閉じる」で破棄確認ダイアログを表示し、「破棄する」を選んだときだけ閉じる。</td></tr>
   </table>
 
   <h2>遷移</h2>
@@ -116,6 +134,9 @@
     <tr><td>LogCardView タップ</td><td>LogDetailView を NavigationLink push</td></tr>
     <tr><td>LogDetailView 内「編集」</td><td>LogFormView（編集モード）を .sheet で表示</td></tr>
     <tr><td>LogDetailView 内「削除」→ 確認</td><td>ハイライト参照を掃除 → 記録を削除 → 画像ファイル削除 → dismiss（前画面へ）</td></tr>
+    <tr><td>LogFormView「閉じる」（書きかけなし）</td><td>そのまま dismiss（記録は作られない）</td></tr>
+    <tr><td>LogFormView「閉じる」（書きかけあり）</td><td>破棄確認 →「破棄する」で dismiss ／「書き続ける」でフォームに留まる</td></tr>
+    <tr><td>LogFormView を下スワイプ（書きかけあり）</td><td>閉じない（<code>interactiveDismissDisabled(hasChanges)</code>）</td></tr>
     <tr><td>写真サムネイルタップ</td><td>PhotoViewer を fullScreenCover で表示</td></tr>
     <tr><td>残り時間ミニカードをタップ</td><td>LifeTimelineScreen（人生の週グリッド全画面）へ NavigationLink push</td></tr>
   </table>
@@ -185,9 +206,10 @@ private static let onThisDayLimit = 5
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-30</td><td>初版作成。ソースコード（TodayView / LogFormView / LogDetailView / RemainingTimeMiniView / WeekGridView）を元に実装済み仕様を記述</td></tr>
     <tr><td>1.1</td><td>2026-07-26</td><td>画面構成の変更を反映: 残り時間ミニを最下部へ移動＋<code>showLifeCountdown</code> で非表示可・ナビバー「+」廃止・主CTAを LineButton 化・「今日は○件残しました」追加・「○年前の今日」→「過去の今日」（最大5件）・「記録カレンダー ›」導線（44pt）追加。LogFormView にカテゴリ8種／写真添付（最大3枚）／メモのプレースホルダー／キーボード「完了」を追記。LogDetailView に写真表示と<strong>削除時の cascade cleanup</strong> を追記。データモデルから <code>isHighlight</code> を削除。共通部品（screenBackground / minchoNavigationTitle）・Dynamic Type・44pt タップ領域を追記</td></tr>
+    <tr><td>1.2</td><td>2026-08-26</td><td>提出前の UI/UX 修正（コミット <code>4dcdba4</code>）を反映。LogFormView に<strong>書きかけの破棄確認</strong>（<code>hasChanges</code> が真のときだけ「書きかけの記録を破棄しますか？」／「破棄する」「書き続ける」）と <code>interactiveDismissDisabled(hasChanges)</code> による下スワイプ抑止を追記し、<code>hasChanges</code> の判定規則（新規＝いずれか入力済み／編集＝元の値から変化。本文は <code>entry.content ?? ""</code> と比較する）を明記。カテゴリ／気持ちチップの <code>minHeight: 44</code> を <code>background</code> より<strong>前</strong>に置く規則（塗りと枠のズレ是正）と、「クリア」ボタンの文字色を <code>outline</code> から <code>textMuted</code> に変更した旨を追記。状態・遷移の表に閉じる操作の分岐を追加</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-08-26</footer>
 </div>
 </body>
 </html>

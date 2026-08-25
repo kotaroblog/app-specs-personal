@@ -93,47 +93,43 @@
   <h3>大切な人（RelationsListView）</h3>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>List + RelationRow</td><td>Relation を createdAt 降順で一覧表示。各行: 名前（<code>scaledFont(17, weight: .semibold)</code>・onSurface）＋続柄（12.5pt・textMuted・任意）＋残り会える回数「あと○回」（<strong>onSurfaceVariant</strong>・13.5pt medium monospacedDigit）＋「年○回」（11pt・textMuted）。行全体が Button で、タップすると編集シート。行は <code>.accessibilityElement(children: .combine)</code> でひとまとめに読み上げる。</td></tr>
+    <tr><td>List + RelationRow</td><td>Relation を createdAt 降順で一覧表示。各行: 名前（<code>scaledFont(17, weight: .semibold)</code>・onSurface）＋続柄（12.5pt・textMuted・任意）＋残り会える回数（<strong>1回以上のときだけ</strong>「あと○回」・onSurfaceVariant・13.5pt medium monospacedDigit／<strong>0回のときは「想定の年齢を迎えました」</strong>・12pt・textMuted・右寄せ2行）＋「年○回」（11pt・textMuted）。行全体が Button で、タップすると編集シート。行は <code>.accessibilityElement(children: .combine)</code> でひとまとめに読み上げる。</td></tr>
     <tr><td>残り回数計算</td><td><code>relation.remainingMeetings(from:)</code> = <code>max(0, targetAge - currentAge(from: now)) × meetingsPerYear</code>。<strong>年齢は生年月日から毎回算出</strong>する（<code>Relation+Life.swift</code>。<code>now:</code> を注入できるのでテストが実行日に依存しない）。生年月日が未設定なら nil を返し「年○回」（12.5pt）のみ表示。</td></tr>
     <tr><td>フッター（算出根拠）</td><td>List の Section footer に「『あと○回』は、生年月日・想定年齢・会う頻度から算出した目安です。生年月日を登録すると、時間の経過に合わせて数が減っていきます。」（caption・textMuted）。</td></tr>
     <tr><td>スワイプ削除</td><td>.onDelete → 確認ダイアログ「削除しますか？／この操作は取り消せません。」（削除 destructive／キャンセル）を経由して実行。</td></tr>
     <tr><td>EmptyStateView</td><td>未登録時: person.2 アイコン＋「まだ登録がありません」＋「大切な人をまだ登録していません」＋「大切な人を追加」CTA ボタン。</td></tr>
     <tr><td>追加・編集（RelationEditSheet）</td><td>名前（必須）・続柄（任意）・<strong>生年月日（Toggle「生年月日を設定」＋ ホイール DatePicker・上限は今日）</strong>・想定年齢（数値入力 + Stepper・1〜120）・会う頻度（Stepper・年1〜365回）。<strong>生年月日 ON のときだけ</strong>「現在 ○歳」行と想定年齢行が現れる。新規追加時の初期値は 生年月日=およそ55歳前・想定年齢80歳・会う頻度 年2回。数値入力はキーボード上の「完了」でフォーカス解除できる。編集時は既存インスタンスを上書きし、作成日は保持する。</td></tr>
-    <tr><td>バリデーション</td><td><code>Relation.isValidTargetAge(targetAge, birthDate:now:)</code>（= <code>targetAge &gt; 現在年齢</code>）。不正なら「想定年齢は、現在の年齢（○歳）より大きい値にしてください。」を amber の Label で表示し保存を無効化。名前が空白のみのときも保存不可。生年月日 OFF のときは常に有効。</td></tr>
+    <tr><td>バリデーション</td><td><code>Relation.isValidTargetAge(targetAge, birthDate:now:)</code>（= <code>targetAge &gt; 現在年齢</code>）。不正なら「想定年齢は、現在の年齢（○歳）より大きい値にしてください。」を amber の Label で表示し保存を無効化。名前が空白のみのときも保存不可。生年月日 OFF のときは常に有効。<br><strong>免除規則（2026-08-25 追加）:</strong> 編集中の相手について<strong>想定年齢と生年月日をどちらも変更していない</strong>場合は、既に想定年齢に達していても保存を許す。<strong>片方でも変更したら通常の判定に戻す</strong>（想定年齢だけを同一性の条件にすると、生年月日を後ろへずらして「想定年齢 &lt; 現在年齢」の不整合を保存できてしまう）。</td></tr>
   </table>
   <div class="callout warn">
     <strong>Relation のスキーマ変更（2026-07-26）:</strong> <code>currentAge: Int?</code> を廃止し <code>birthDate: Date?</code> に変更した。
     「現在の年齢」を保存していると<strong>登録した瞬間の年齢が固定され、1年経っても「あと○回」が減らない</strong>——この機能の価値そのものが時間とともに嘘になる。
     生年月日ピッカーは <code>.wheel</code>（オンボーディング・設定の生年月日シートと統一。数十年さかのぼるのに月送り前提の <code>.compact</code> は使わない）。
   </div>
+  <div class="callout warn">
+    <strong>想定年齢に達した相手の扱い（2026-08-25）</strong>
+    <ul class="checklist" style="margin-top:8px;">
+      <li><strong>「あと0回」と表示しない。</strong> 存命の相手に 0 という数字を出すのは、このアプリで最も強い断定になる。
+        数字をやめ「想定の年齢を迎えました」という静かな一文に置き換え、想定年齢の見直しへ促す。</li>
+      <li><strong>その状態でも編集を保存できる。</strong> 従来はバリデーションに引っかかって保存自体ができず、
+        「会う頻度だけ直したい」ときに<strong>想定年齢の変更を強制されて詰む</strong>状態だった。
+        免除するのは「想定年齢も生年月日も触っていない」ときだけに限る。</li>
+    </ul>
+  </div>
 
   <h3>設定（SettingsView）</h3>
+  <p>
+    右上の歯車から push する画面。<strong>詳細は単独仕様書 <a href="settings.html">設定（LR-SETTINGS-01）</a> に分離した</strong>ため、
+    ここではタブから見た概要だけを置く（記述を二重に持たない）。
+  </p>
   <table>
-    <tr><th>セクション</th><th>項目</th><th>説明</th></tr>
-    <tr><td>プロフィール</td><td>目標年齢</td><td>UserProfile が存在するときだけ出るセクション。タップで TargetAgeSheet（数値入力 44pt bold amber + Stepper）を .sheet 表示。Stepper の下限は <code>min(現在年齢 + 1, 120)</code>（現在年齢が 120 以上でも不正な Range を作らないため頭打ちにする）。不正値のときは「現在○歳より大きい年齢にしてください。」を表示し保存を無効化。保存で UserProfile.targetAge を更新。</td></tr>
-    <tr><td>プロフィール</td><td>生年月日</td><td>タップで BirthDateSheet（<strong>DatePicker <code>.wheel</code></strong>・上限は今日）を .sheet 表示。保存で UserProfile.birthDate を更新。</td></tr>
-    <tr><td>通知</td><td>リマインダー</td><td>NavigationLink → ReminderSettingsView（LR-REMINDER-01）。現在の設定サマリー（「オフ」または「日 21:00」形式）を右に表示。</td></tr>
-    <tr><td><strong>表示</strong></td><td>残り時間と人生の週を表示</td><td>Toggle（<code>@AppStorage("showLifeCountdown")</code>・<strong>既定 ON</strong>）。直下に説明文「気持ちが重く感じるときは、いつでも非表示にできます。」（caption・textMuted）。OFF にすると<strong>人生タブのカウントダウン・週グリッド</strong>と<strong>今日タブの残り時間ミニ（＋そこから開く「人生の週」全画面への導線）</strong>が同時に消える（両画面が同じキーを見ている）。</td></tr>
-    <tr><td>アプリ情報</td><td>バージョン</td><td><code>Bundle.main.infoDictionary</code> の <code>CFBundleShortVersionString</code> と <code>CFBundleVersion</code> から「1.0.0 (1)」形式で組み立てる。前者が取れなければ「—」、後者が空ならバージョンのみ。</td></tr>
-    <tr><td>アプリ情報</td><td>プライバシーポリシー / 利用規約 / サポート・お問い合わせ</td><td><code>Link</code> → <code>app-policies</code> の各 URL（<code>https://kotaroblog.github.io/app-policies/lifereview/…</code>）。URL 生成は force unwrap せず <code>if let</code> で分岐し、作れなければ行自体を出さない。</td></tr>
-    <tr><td>危険操作</td><td>全データを削除</td><td>destructive ロールのボタン。確認アラート「全データを削除しますか？／記録・大切な人・やりたいことリスト・振り返り・添付写真・プロフィールと表示設定・通知予約まで、すべてのデータが削除されます。この操作は取り消せません。」経由で実行。</td></tr>
+    <tr><th>セクション</th><th>概要</th></tr>
+    <tr><td>プロフィール</td><td>目標年齢（TargetAgeSheet）・生年月日（BirthDateSheet）。<strong>UserProfile があるときだけ出る。</strong></td></tr>
+    <tr><td>通知</td><td>リマインダー → <a href="reminder-settings.html">ReminderSettingsView（LR-REMINDER-01）</a>。右に「オフ」/「日 21:00」のサマリー。</td></tr>
+    <tr><td>表示</td><td>「残り時間と人生の週を表示」トグル（<code>showLifeCountdown</code>・既定 ON）。<strong>OFF にすると人生タブのカウントダウン・週グリッドと、今日タブの残り時間ミニが同時に消える</strong>（両画面が同じキーを見ている）。</td></tr>
+    <tr><td>アプリ情報</td><td>バージョン表示と、app-policies へのリンク3本（プライバシーポリシー／利用規約／サポート・お問い合わせ・Safari で開く）。</td></tr>
+    <tr><td>危険操作</td><td>全データを削除（確認アラート経由。SwiftData 5モデル＋画像＋通知予約＋下書き＋ @AppStorage を消し、オンボーディングへ戻る）。</td></tr>
   </table>
-  <div class="callout warn">
-    <strong>BirthDateSheet のバリデーション追加（2026-07-26）:</strong>
-    オンボーディングと目標年齢シートは「目標年齢 &gt; 現在年齢」を既に拒否していたのに、<strong>生年月日シートだけ無検査だった</strong>。
-    そこからだけ生年月日を後ろにずらして<strong>目標年齢 ≦ 現在年齢（残り 0年0ヶ月・進捗 100% で固まる状態）</strong>を作れてしまう。
-    判定を <code>UserProfile.isValidTargetAge(_:birthDate:now:)</code> に集約し、3画面が同じ規則を共有するようにした。
-    不正時は「この生年月日だと現在○歳になり、目標年齢（○歳）を超えてしまいます。先に目標年齢を上げてください。」を表示し、保存を無効化する。
-  </div>
-  <h4>「全データを削除」で消えるもの</h4>
-  <ul class="checklist">
-    <li>SwiftData 5モデル（LogEntry / UserProfile / Relation / BucketItem / ReflectionSession）</li>
-    <li>添付画像ファイル（<code>ImageStore.deleteAll()</code>）</li>
-    <li>予約済みの週次通知（<code>NotificationService.cancelWeekly()</code>）</li>
-    <li>未完了の振り返り下書き（全種別 <code>ReflectionDraftStore.clear</code>）</li>
-    <li>@AppStorage（<code>SettingsView.resettableDefaultsKeys</code>: reminder系4キー + showLifeCountdown）</li>
-    <li>最後に <code>onboardingCompleted = false</code>。失敗時は <code>rollback()</code> + エラーアラート。</li>
-  </ul>
 
   <h2>状態</h2>
   <table>
@@ -143,6 +139,7 @@
     <tr><td>BucketListView: 未登録</td><td>EmptyStateView（checklist アイコン・「まだ何もありません」・「やりたいことを追加」CTA）。</td></tr>
     <tr><td>RelationsListView: 未登録</td><td>EmptyStateView（person.2 アイコン・「まだ登録がありません」・「大切な人を追加」CTA）。</td></tr>
     <tr><td>Relation: 生年月日なし</td><td>「あと○回」は出さず「年○回」のみ。編集シートでも「現在 ○歳」と想定年齢の入力欄は出さない（バリデーションも常に有効扱い）。</td></tr>
+    <tr><td>Relation: 想定年齢に到達（残り0回）</td><td>「あと0回」ではなく<strong>「想定の年齢を迎えました」</strong>を表示。編集シートは、想定年齢と生年月日を変更しないかぎり保存できる。</td></tr>
     <tr><td>設定: UserProfile なし</td><td>「プロフィール」セクション（目標年齢・生年月日）ごと表示しない。通知・表示・アプリ情報・全データ削除は常に出る。</td></tr>
     <tr><td>設定: 全データ削除実行</td><td>削除後に onboardingCompleted=false → オンボーディング画面へ戻る。失敗時は rollback してエラーアラート「データを削除できませんでした。もう一度お試しください。」。</td></tr>
   </table>
@@ -244,6 +241,7 @@
   <ul>
     <li><a href="../index.html">LifeReview アプリトップ</a></li>
     <li><a href="../data-model.html">データモデル（UserProfile・BucketItem・Relation）</a></li>
+    <li><a href="settings.html">設定（LR-SETTINGS-01）</a></li>
     <li><a href="reminder-settings.html">リマインダー設定（LR-REMINDER-01）</a></li>
     <li><a href="S02_today.html">今日タブ（LR-S02）</a></li>
     <li><a href="S03_reflect_home.html">ふりかえりタブ（LR-S03）</a></li>
@@ -254,9 +252,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-30</td><td>初版作成。ソースコード（LifeView / CountdownView / WeekGridView / BucketListView / RelationsListView / SettingsView）を元に実装済み仕様を記述</td></tr>
     <tr><td>1.1</td><td>2026-07-26</td><td>Relation のスキーマ変更（<code>currentAge: Int?</code> → <code>birthDate: Date?</code>。年齢と「あと○回」を毎回暦から算出し、時間の経過で減るようにした）と、生年月日ホイール・<code>isValidTargetAge</code> によるバリデーション・算出根拠フッターを追記。バケットリストと大切な人のスワイプ削除に確認ダイアログを追加した旨、バケット行のタップ領域分離（チェック44pt／テキストで編集）を追記。<strong>誤記を修正: CountdownView の ThinProgressBar は amber ではなく <code>textBody.opacity(0.5)</code>（金は週グリッドの「今週」1点のみ）、進捗パーセントは切り捨てではなく四捨五入。</strong>設定歯車が金→月白（アプリ全体 tint を moonWhite に統一）である旨、BirthDateSheet のバリデーション追加、設定「表示 → 残り時間と人生の週を表示」が今日タブの残り時間ミニにも効くこと、アプリ情報のリンク名（サポート・お問い合わせ）とバージョン表記の組み立て、全データ削除アラートの正確な文言を反映。週グリッドのサマリー配色・凡例サイズ・Canvas 描画条件、LifeTimelineScreen（今日タブからの全画面表示）を追記。共通部品（<code>screenBackground()</code> による背景＋粒の一括適用・<code>minchoNavigationTitle(_:)</code> の自前描画）、Dynamic Type（<code>scaledFont</code>・TargetAgeSheet の固定44ptだけ例外）、44pt を追記</td></tr>
+    <tr><td>1.2</td><td>2026-08-26</td><td>提出前の UI/UX 修正（コミット <code>4dcdba4</code>）を反映。①大切な人の残り回数が 0 のとき<strong>「あと0回」を出さず「想定の年齢を迎えました」</strong>に置き換えた仕様を追記。②想定年齢に達した相手でも<strong>想定年齢・生年月日を変更していなければ編集を保存できる</strong>免除規則を追記（変更した場合は従来どおり「想定年齢 &gt; 現在年齢」を要求する）。③<strong>設定（SettingsView）の詳細を単独仕様書 <a href="settings.html">LR-SETTINGS-01</a> へ移設</strong>し、本書は概要とタブ内導線のみを持つ形に整理（子の LR-REMINDER-01 に仕様書があるのに親が無い状態を解消。ポリシーリンクの外部遷移アイコン追加・シェブロンの配色修正は移設先に記述）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-08-26</footer>
 </div>
 </body>
 </html>

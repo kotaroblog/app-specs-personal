@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - 設定</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / 設定</div>
+
+  <header class="site-header">
+    <h1>設定（SettingsView）</h1>
+    <p>人生タブ右上の歯車から開く設定画面。プロフィール編集・通知・表示切替・アプリ情報・全データ削除を集約する。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">実装済</span>
+      <span class="tag">画面ID: LR-SETTINGS-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    アプリの前提（生年月日・目標年齢）と、体験の強度（残り時間と人生の週を出すかどうか）、
+    通知、法務まわりの外部リンク、そして<strong>全データ削除</strong>を一箇所に集めた画面。
+    テーマはダーク固定のため配色の切替は持たない（将来プレミアムで検討）。
+  </p>
+  <div class="callout">
+    <strong>この画面の位置づけ:</strong> 人生タブ（<a href="S04_life.html">LR-S04</a>）の NavigationStack に push される。
+    子として <a href="reminder-settings.html">リマインダー設定（LR-REMINDER-01）</a> を持ち、
+    プロフィール編集は2つの <code>.sheet</code>（TargetAgeSheet / BirthDateSheet）で行う。
+  </div>
+  <div class="callout warn">
+    <strong>設定歯車は金ではなく月白:</strong> アプリ全体の tint を <code>AppColors.moonWhite</code> に統一している。
+    金をグローバル tint にすると歯車・トグル・ピッカーが軒並み金になり「1画面1点の金」が構造的に破れる
+    （トグル ON 時は面塗りにもなり、金の面禁止にも反する）。
+  </div>
+
+  <h2>UI 構成（List・セクション順）</h2>
+  <table>
+    <tr><th>セクション</th><th>項目</th><th>説明</th></tr>
+    <tr><td>プロフィール</td><td>目標年齢</td><td><strong>UserProfile が存在するときだけ出る</strong>セクション。値（「○歳」）＋シェブロン。タップで TargetAgeSheet を <code>.sheet</code> 表示。</td></tr>
+    <tr><td>プロフィール</td><td>生年月日</td><td>値（<code>ymd</code>）＋シェブロン。タップで BirthDateSheet を <code>.sheet</code> 表示。</td></tr>
+    <tr><td>通知</td><td>リマインダー</td><td>NavigationLink → <a href="reminder-settings.html">ReminderSettingsView（LR-REMINDER-01）</a>。右に現在のサマリー（<code>reminderEnabled</code> が false なら「オフ」、true なら「日 21:00」形式＝<code>JapaneseWeekday.symbol</code> ＋ <code>%02d:%02d</code>）。</td></tr>
+    <tr><td>表示</td><td>残り時間と人生の週を表示</td><td>Toggle（<code>@AppStorage("showLifeCountdown")</code>・<strong>既定 ON</strong>）。直下に説明文「気持ちが重く感じるときは、いつでも非表示にできます。」（caption・textMuted）。OFF にすると<strong>人生タブのカウントダウン・週グリッド</strong>と<strong>今日タブの残り時間ミニ（＋そこから開く「人生の週」全画面への導線）</strong>が同時に消える（両画面が同じキーを見ている）。</td></tr>
+    <tr><td>アプリ情報</td><td>バージョン</td><td><code>Bundle.main.infoDictionary</code> の <code>CFBundleShortVersionString</code> と <code>CFBundleVersion</code> から「1.0.0 (1)」形式で組み立てる。前者が取れなければ「—」、後者が空ならバージョンのみ。タップ不可（シェブロンなし）。</td></tr>
+    <tr><td>アプリ情報</td><td>プライバシーポリシー / 利用規約 / サポート・お問い合わせ</td><td><code>Link</code> → <code>app-policies</code> の各 URL（<code>https://kotaroblog.github.io/app-policies/lifereview/…</code>）。行の右端に<strong>外部遷移アイコン <code>arrow.up.forward</code></strong>（caption semibold・textMuted）を置き、<code>.accessibilityHint("Safariで開きます")</code> を付ける。URL 生成は force unwrap せず <code>if let</code> で分岐し、作れなければ<strong>行自体を出さない</strong>。</td></tr>
+    <tr><td>危険操作</td><td>全データを削除</td><td>destructive ロールのボタン。確認アラート経由で実行（下記）。</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <strong>2026-08-25 の変更（押せることが見えていなかった2箇所）</strong>
+    <ul class="checklist" style="margin-top:8px;">
+      <li><strong>ポリシー3リンクに外部遷移アイコンを追加。</strong> それまでは値なしの <code>row(title, "")</code> をそのまま <code>Link</code> で包んでいたため、
+        <strong>見た目が普通のテキスト行と区別できず</strong>、タップできること・Safari に出ることの手がかりがゼロだった。</li>
+      <li><strong>タップ可能行のシェブロンを <code>outline</code> から <code>textMuted</code> へ。</strong> 罫線色（outline）は surface の面上でコントラスト比 約1.2:1 しかなく、
+        シェブロンが事実上見えていなかった。罫線用のトークンを前景（アイコン・文字）に使わない。</li>
+    </ul>
+  </div>
+
+  <h3>プロフィール編集シート</h3>
+  <table>
+    <tr><th>シート</th><th>内容</th></tr>
+    <tr><td>TargetAgeSheet（目標年齢）</td><td>数値 TextField（<strong>44pt bold amber</strong>・<code>numberPad</code>・monospacedDigit・入力は 1〜120 にクランプ）＋ Stepper。Stepper の下限は <code>min(現在年齢 + 1, 120)</code>（現在年齢が 120 以上でも不正な Range を作らないため頭打ちにする）。キーボード上に「完了」。保存で <code>UserProfile.targetAge</code> を更新。</td></tr>
+    <tr><td>BirthDateSheet（生年月日）</td><td>DatePicker <code>.wheel</code>（上限は今日）。オンボーディング・大切な人の編集シートと同じホイール（数十年さかのぼるのに月送り前提の <code>.compact</code> は使わない）。保存で <code>UserProfile.birthDate</code> を更新。</td></tr>
+    <tr><td>共通</td><td>ツールバーは「閉じる」（cancellationAction）／「保存」（confirmationAction・不正時 disabled）。保存失敗時は <code>modelContext.rollback()</code> ＋「保存できませんでした。もう一度お試しください。」のアラート。</td></tr>
+  </table>
+  <table>
+    <tr><th>シート</th><th>バリデーション</th><th>不正時の文言</th></tr>
+    <tr><td>TargetAgeSheet</td><td><code>UserProfile.isValidTargetAge(value, birthDate: profile.birthDate)</code></td><td>「現在○歳より大きい年齢にしてください。」（amber の Label）</td></tr>
+    <tr><td>BirthDateSheet</td><td><code>UserProfile.isValidTargetAge(profile.targetAge, birthDate: value)</code></td><td>「この生年月日だと現在○歳になり、目標年齢（○歳）を超えてしまいます。先に目標年齢を上げてください。」</td></tr>
+  </table>
+  <div class="callout warn">
+    <strong>BirthDateSheet のバリデーションを後から足した理由（2026-07-26）:</strong>
+    オンボーディングと目標年齢シートは「目標年齢 &gt; 現在年齢」を既に拒否していたのに、<strong>生年月日シートだけ無検査だった</strong>。
+    そこからだけ生年月日を後ろにずらして<strong>目標年齢 ≦ 現在年齢（残り 0年0ヶ月・進捗 100% で固まる状態）</strong>を作れてしまう。
+    判定を <code>UserProfile.isValidTargetAge(_:birthDate:now:)</code> に集約し、3画面が同じ規則を共有するようにした。
+  </div>
+
+  <h3>全データを削除</h3>
+  <p>
+    確認アラート「<strong>全データを削除しますか？</strong>／記録・大切な人・やりたいことリスト・振り返り・添付写真・プロフィールと表示設定・通知予約まで、
+    すべてのデータが削除されます。この操作は取り消せません。」（削除 destructive ／ キャンセル）を必ず経由する。
+  </p>
+  <ul class="checklist">
+    <li>SwiftData 5モデル（LogEntry / UserProfile / Relation / BucketItem / ReflectionSession）を種別ごとに <code>try modelContext.delete(model:)</code> → 最後に <code>save()</code>。</li>
+    <li>添付画像ファイル（<code>ImageStore.deleteAll()</code>）。</li>
+    <li>予約済みの週次通知（<code>NotificationService.shared.cancelWeekly()</code>）。</li>
+    <li>未完了の振り返り下書き（全種別 <code>ReflectionDraftStore.clear(type:)</code>）。</li>
+    <li>@AppStorage（<code>SettingsView.resettableDefaultsKeys</code>: reminder 系4キー ＋ <code>showLifeCountdown</code>）。</li>
+    <li>最後に <code>onboardingCompleted = false</code> → アプリのルートが RootTabView から OnboardingView に切り替わる。</li>
+    <li><strong>ファイル・通知・下書きの掃除は <code>save()</code> 成功後に行う。</strong> 失敗時は <code>rollback()</code> ＋「データを削除できませんでした。もう一度お試しください。」のアラートで、データは元のまま残る。</li>
+  </ul>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>UserProfile あり</td><td>全セクションを表示（プロフィール／通知／表示／アプリ情報／全データ削除）。</td></tr>
+    <tr><td>UserProfile なし</td><td>「プロフィール」セクション（目標年齢・生年月日）ごと表示しない。通知・表示・アプリ情報・全データ削除は常に出る。</td></tr>
+    <tr><td>リマインダー オフ</td><td>「リマインダー」行の値は「オフ」。</td></tr>
+    <tr><td>リマインダー オン</td><td>「リマインダー」行の値は「日 21:00」形式（曜日記号＋時刻）。</td></tr>
+    <tr><td>URL を生成できない</td><td>該当のポリシー行を描画しない（force unwrap しない）。</td></tr>
+    <tr><td>編集シートの入力が不正</td><td>「保存」を disabled にし、シート内に amber の警告 Label を表示。</td></tr>
+    <tr><td>保存・削除に失敗</td><td><code>rollback()</code> したうえでエラーアラートを表示。画面には留まる。</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>人生タブ ナビバーの歯車（gearshape）</td><td>SettingsView へ NavigationLink push（この画面の入口）</td></tr>
+    <tr><td>「目標年齢」タップ</td><td>TargetAgeSheet を <code>.sheet</code> で表示</td></tr>
+    <tr><td>「生年月日」タップ</td><td>BirthDateSheet を <code>.sheet</code> で表示</td></tr>
+    <tr><td>「リマインダー」タップ</td><td>ReminderSettingsView へ NavigationLink push</td></tr>
+    <tr><td>ポリシー3リンクのいずれかをタップ</td><td><strong>アプリ外（Safari）</strong>で app-policies の該当ページを開く</td></tr>
+    <tr><td>「全データを削除」→ 確認アラート「削除」</td><td>全削除 → <code>onboardingCompleted = false</code> → ルートが OnboardingView に切り替わる</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>// SettingsView
+@Environment(\.modelContext) private var modelContext
+@Query private var profiles: [UserProfile]        // 先頭1件だけを使う（常に1件想定）
+
+@AppStorage("onboardingCompleted") private var onboardingCompleted = false
+@AppStorage("reminderEnabled")     private var reminderEnabled = false
+@AppStorage("reminderWeekday")     private var reminderWeekday = 1
+@AppStorage("reminderHour")        private var reminderHour = 21
+@AppStorage("reminderMinute")      private var reminderMinute = 0
+@AppStorage("showLifeCountdown")   private var showLifeCountdown = true
+
+// 全データ削除でリセットする AppStorage キー（テストからも参照できるよう公開）
+static let resettableDefaultsKeys = [
+    "reminderEnabled", "reminderWeekday", "reminderHour", "reminderMinute", "showLifeCountdown",
+]
+
+// UserProfile（SwiftData @Model）
+//   var birthDate: Date
+//   var targetAge: Int
+//   func currentAge(from:) -> Int
+//   static func age(of:at:) -> Int
+//   static func isValidTargetAge(_:birthDate:now:) -> Bool   // オンボーディング / 目標年齢 / 生年月日の3画面で共有
+</code></pre>
+
+  <h2>アクセシビリティ対応</h2>
+  <ul class="checklist">
+    <li>ポリシー3リンクに <code>.accessibilityHint("Safariで開きます")</code>。アプリ外に出ることを操作前に伝える。</li>
+    <li>タップ可能行のシェブロン・外部遷移アイコンは <code>textMuted</code>（罫線色 <code>outline</code> は面上で 1.2:1 程度しかなく、手がかりとして機能しない）。</li>
+    <li><strong>Dynamic Type:</strong> 行のラベル・値は <code>scaledFont</code> で追従する。<strong>例外は TargetAgeSheet の数値 TextField（44pt 固定）</strong>——TextField には <code>minimumScaleFactor</code> が効かず、追従させると最大文字サイズで3桁が横にはみ出す。値は Stepper でも変えられ 44pt は既に十分大きいため据え置く。</li>
+    <li>破壊的操作（全データ削除）は destructive ロール ＋ 確認アラートの二段構え。</li>
+    <li>ナビタイトルは <code>minchoNavigationTitle("設定")</code>（principal に自前描画・<code>accessibilityHidden(true)</code>）。</li>
+  </ul>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>List は <code>.scrollContentBackground(.hidden)</code> ＋ 各セクション <code>.listRowBackground(AppColors.surface)</code> ＋ <code>screenBackground()</code> で C案の面に揃える。</li>
+    <li><code>row(_:_:showChevron:enabled:)</code> が行の共通レイアウト。ポリシー行だけは値を持たないため <code>row</code> を使わず、専用の <code>policyLink(_:_:)</code> で「タイトル ＋ Spacer ＋ 外部遷移アイコン」を組む。</li>
+    <li>プロフィール編集シートは <code>UserProfile</code> を直接更新して <code>save()</code>。失敗時は <code>rollback()</code> ＋ エラーアラート。</li>
+    <li><code>resetAppStorage(defaults:)</code> は <code>UserDefaults</code> を引数で受けるので、テストから専用 suite を渡して検証できる。</li>
+    <li>この画面には広告・解析・課金がひとつも無い。外部通信はポリシー3リンク（Safari 遷移）だけで、アプリ自身は何も送信しない。</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../index.html">LifeReview アプリトップ</a></li>
+    <li><a href="S04_life.html">人生タブ（LR-S04・この画面の入口）</a></li>
+    <li><a href="reminder-settings.html">リマインダー設定（LR-REMINDER-01）</a></li>
+    <li><a href="S01_onboarding.html">オンボーディング（LR-S01・同じバリデーションを共有）</a></li>
+    <li><a href="../data-model.html">データモデル（UserProfile）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-08-26</td><td>初版作成。それまで人生タブ（LR-S04）の一節として書かれていた設定画面の仕様を単独の仕様書に切り出した（子である LR-REMINDER-01 に仕様書があるのに親が無い状態を解消するため）。あわせて 2026-08-25 の UI/UX 修正（コミット <code>4dcdba4</code>）を反映: <strong>ポリシー3リンクに外部遷移アイコン <code>arrow.up.forward</code> と「Safariで開きます」のヒントを追加</strong>、<strong>タップ可能行のシェブロンを <code>outline</code> から <code>textMuted</code> へ変更</strong>（罫線色は面上で約1.2:1 しかなく、押せる手がかりが見えていなかった）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-08-26</footer>
+</div>
+</body>
+</html>

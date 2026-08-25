@@ -42,11 +42,19 @@
     <tr><td>フィーチャーリスト</td><td>VStack + HStack 箇条書き</td><td>「週・月・年の節目で、立ち止まって振り返る」「日々の出来事を、素材としてひとつずつ残す」「人生の時間を、静かに俯瞰する」3行。<strong>主役が振り返りであることが伝わる順序</strong>（記録は素材集め）。各行先頭に細線（12px × 0.75px・warmShadow2）。</td></tr>
     <tr><td>入力ヒントテキスト</td><td>Text</td><td>「生年月日と目標年齢は、人生の週と\nこれからの時間の計算にだけ使います。\n入力内容はこの端末内に保存されます。」（12pt・textMuted）</td></tr>
     <tr><td>入力カード</td><td>VStack（RoundedRectangle cornerRadius 16・surface 面・cardBorder 1px 枠）</td><td>生年月日 DatePicker（<code>.wheel</code>・in: ...Date()）と目標年齢 Stepper（40...120・既定 80）を縦並びで格納。中間に cardBorder 1px セパレーター。目標年齢の値は <strong>moonWhite</strong> 16pt semibold monospacedDigit。</td></tr>
+    <tr><td>現在年齢の表示</td><td>Text（12pt・textMuted・中央寄せ）</td><td>生年月日ピッカーの<strong>直下に「現在 ○歳」を常時表示</strong>する（<code>UserProfile.age(of: birthDate)</code>）。ホイールを回すたびに更新される。VoiceOver 用に <code>.accessibilityLabel("現在の年齢 ○歳")</code> を持つ。</td></tr>
     <tr><td>バリデーション文言</td><td>Text（caption・textMuted）</td><td>目標年齢が現在年齢以下のとき、カード内に「現在の年齢（○歳）より上に設定してください」を表示。</td></tr>
     <tr><td>はじめるボタン（主CTA）</td><td>LineButton（safeAreaInset .bottom）</td><td><strong>金は面で塗らない</strong>——night2 の面＋goldDim 細罫＋amber 文字（15pt semibold・minHeight 52pt）。押下時のみ night3 に沈む。無効時は opacity 0.45。</td></tr>
     <tr><td>保存エラーアラート</td><td>.alert</td><td>UserProfile の save 失敗時に表示。rollback 後に再試行を促すメッセージ。</td></tr>
   </table>
 
+  <div class="callout warn">
+    <strong>2026-08-25 の変更（現在年齢の常時表示）:</strong>
+    以前は「現在 ○歳」をバリデーション失敗時のメッセージ内でしか出していなかった。
+    生年月日の初期値は<strong>今日から30年前</strong>で、ホイールを一度も回さなくても「はじめる」が押せてしまう。
+    そのまま確定されると<strong>人生の週・残り時間・進捗がすべて誤った数字</strong>になり、しかも本人は気づけない。
+    ピッカー直下に年齢を常時置き、確定前の自己確認を促す。
+  </div>
   <div class="callout warn">
     <strong>2026-07-26 の変更:</strong> CTA を「amber ソリッド面のボタン」から共通部品 <code>LineButton</code>（線のボタン）へ統一した。
     金を面で塗らないのは C案の絶対規律（金は線と一字のみ・1画面1点）。同じ理由で区切り罫・フィーチャー行頭の細線も goldDim から warmShadow2 に落とし、
@@ -56,8 +64,8 @@
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示・挙動</th></tr>
-    <tr><td>初期表示</td><td>生年月日の初期値は<strong>今日から30年前</strong>（<code>Calendar.date(byAdding: .year, value: -30)</code>）。目標年齢は 80 歳。</td></tr>
-    <tr><td>入力中</td><td>DatePicker のホイール操作で日付が更新される。Stepper 操作で目標年齢が 40〜120 の範囲でインクリメント／デクリメント。</td></tr>
+    <tr><td>初期表示</td><td>生年月日の初期値は<strong>今日から30年前</strong>（<code>Calendar.date(byAdding: .year, value: -30)</code>）。目標年齢は 80 歳。ピッカー直下に「現在 30歳」が出ている状態から始まる。</td></tr>
+    <tr><td>入力中</td><td>DatePicker のホイール操作で日付が更新され、直下の「現在 ○歳」も同時に更新される。Stepper 操作で目標年齢が 40〜120 の範囲でインクリメント／デクリメント。</td></tr>
     <tr><td>目標年齢が不正</td><td><code>UserProfile.isValidTargetAge(targetAge, birthDate:)</code> が false のとき、CTA を <code>disabled</code> + opacity 0.45 にし、カード内にバリデーション文言を表示する。</td></tr>
     <tr><td>保存成功</td><td>UserProfile を modelContext に insert + save → isCompleted = true → fullScreenCover が閉じてメインタブへ遷移。</td></tr>
     <tr><td>保存失敗</td><td>modelContext.rollback() 後に保存エラーアラートを表示。OK タップで再試行可能。</td></tr>
@@ -123,7 +131,7 @@ private var isTargetAgeValid: Bool {
 
   <h2>アクセシビリティ対応</h2>
   <ul class="checklist">
-    <li>DatePicker に <code>.accessibilityLabel("生年月日")</code> を付与。</li>
+    <li>DatePicker に <code>.accessibilityLabel("生年月日")</code> を付与。直下の年齢表示は <code>.accessibilityLabel("現在の年齢 ○歳")</code>（「現在 ○歳」のままでは読み上げが素っ気ないため文言を分ける）。</li>
     <li>Stepper に <code>.accessibilityLabel("目標年齢")</code> + <code>.accessibilityValue("\(targetAge)歳")</code> を付与。</li>
     <li>本文・ラベルは <code>scaledFont</code>、ヒーロー文は <code>AppFont.mincho(_:relativeTo:)</code> で <strong>Dynamic Type に追従</strong>する。</li>
     <li>CTA は固定高ではなく <code>minHeight: 52</code>（LineButton 側）。大きな文字サイズでも文字が切れない。</li>
@@ -154,9 +162,10 @@ private var isTargetAgeValid: Bool {
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-30</td><td>初版作成。ソースコード（OnboardingView.swift）を元に実装済み仕様を記述</td></tr>
     <tr><td>1.1</td><td>2026-07-26</td><td>CTA を LineButton（金は線・面禁止）に統一・区切り罫とフィーチャー細線を warmShadow2 に変更・フィーチャー文言と順序を更新（振り返りが主役）・生年月日の初期値を「30年前」に訂正・目標年齢バリデーション（UserProfile.isValidTargetAge）と CTA 無効化を追記・Dynamic Type 対応とグレインを追記。旧仕様書 <code>onboarding.html</code>（S4 世代・重複）を廃止し本書に一本化</td></tr>
+    <tr><td>1.2</td><td>2026-08-26</td><td>提出前の UI/UX 修正（コミット <code>4dcdba4</code>）を反映。生年月日ピッカーの直下に<strong>「現在 ○歳」を常時表示</strong>する仕様を追記（従来はバリデーション失敗時のみ。既定値=30年前のまま確定されると人生の週・残り時間・進捗がすべて誤った数字になるため、確定前の自己確認を促す）。UI 構成表・状態表・アクセシビリティ（<code>accessibilityLabel("現在の年齢 ○歳")</code>）に反映</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-08-26</footer>
 </div>
 </body>
 </html>
