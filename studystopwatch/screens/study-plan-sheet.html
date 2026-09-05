@@ -15,7 +15,7 @@
     <h1>学習計画シート（StudyPlanSheet）</h1>
     <p>タスクを日付に自動配分する学習計画生成シート</p>
     <div class="section-meta">
-      <span class="tag done">v1.0</span>
+      <span class="tag done">v1.1</span>
       <span class="tag">画面ID: SS-PLAN-01</span>
     </div>
   </header>
@@ -24,7 +24,25 @@
   <p>
     教材タイトル・総量・終了日を入力すると「1日あたり何ページ/問」を計算し、
     StudyTask として自動配分・一括生成するモーダルシート。
-    カレンダー画面のツールバー「計画」ボタンから呼び出される。
+    「試験日から逆算して今日やる分が決まる」という<strong>このアプリの中心価値を実際に成立させている画面</strong>。
+  </p>
+
+  <h2>到達経路（v1.1 で拡張）</h2>
+  <div class="callout warn">
+    <strong>🔴 主導線は「試験日を保存した直後の提案」。</strong>
+    v1.0 ではこのシートへの入口が<strong>カレンダー画面のツールバー「＋」メニューの2番目だけ</strong>で、
+    中心価値を担う画面がメニューの中に埋没していた。試験日を保存しても計画作成には繋がらなかった。
+    v1.1（2026-09-05・SS-001）で、<strong>計画を作る動機がいちばん高い瞬間＝試験日を入れた直後</strong>に提案を出す経路を追加した。
+    従来のメニュー経路も残すが、これを主導線と誤認しないこと。
+  </div>
+  <table>
+    <tr><th>経路</th><th>操作</th><th>備考</th></tr>
+    <tr><td><strong>試験日保存直後の提案（主導線）</strong><span class="tag">v1.1</span></td><td><a href="home.html">ホーム</a>または<a href="calendar.html">カレンダー</a>から <code>ExamDateSetupSheet</code> で試験日を保存 → シートが閉じきる → アラート「学習計画を作りますか？」→「作る」</td><td>アラート本文は「試験日までの残り日数から、1日にやる分を割り出します。」。「あとで」を選ぶと何もしない。<strong>ホーム・カレンダーの両方が入口</strong></td></tr>
+    <tr><td>カレンダーのツールバーメニュー（従来経路）</td><td><a href="calendar.html">カレンダー画面</a>右上「＋」→「学習計画を作成」</td><td>v1.0 からある経路。メニュー内の2番目</td></tr>
+  </table>
+  <p>
+    どちらの経路から開いても<strong>シートの内容・初期値は同じ</strong>（終了日の初期値は <code>settings?.examDate</code>、未設定なら今日+30日）。
+    試験日保存直後に開いた場合は、いま保存した試験日がそのまま終了日の初期値になる。
   </p>
 
   <h2>UI 構成</h2>
@@ -58,9 +76,13 @@
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>「学習計画を作る」タップ（生成完了）</td><td>シートを閉じる（CalendarScreen に戻る）</td></tr>
+    <tr><td>「学習計画を作る」タップ（生成完了）</td><td>シートを閉じる（<strong>呼び出し元の画面</strong>に戻る。カレンダー経由ならカレンダー、ホームの提案経由ならホーム）</td></tr>
     <tr><td>「キャンセル」タップ</td><td>シートを閉じる（変更破棄）</td></tr>
   </table>
+  <div class="callout info">
+    v1.1 でホームからも開くようになったため、<strong>「閉じたらカレンダーに戻る」前提で書かないこと</strong>。
+    生成された StudyTask はカレンダー・今日タブで確認する。
+  </div>
 
   <h2>使用するデータモデル</h2>
   <pre><code>// 生成されるタスク
@@ -93,11 +115,15 @@
     <li class="done">生成した StudyTask は modelContext.insert で一括登録後 <code>try modelContext.save()</code></li>
     <li class="done">試験日（<code>settings?.examDate</code>）が設定済みの場合、終了日の初期値として使用（init() では SwiftData 未ロードのため <code>nil</code> を渡し、onAppear で上書き）</li>
     <li class="done"><code>titleFocused = true</code> を onAppear で設定してキーボードを自動表示</li>
+    <li class="done"><strong>v1.1</strong> 呼び出し元は <code>CalendarScreen</code> と <code>HomeView</code>（<code>ExamPlanFlow</code> ViewModifier 経由）の2箇所。どちらも <code>StudyPlanSheet()</code> を引数なしで提示する（初期値はシート内で <code>settings?.examDate</code> から解決するため、呼び出し側から渡す必要はない）</li>
+    <li class="done"><strong>v1.1</strong> 提案アラートを出す側は、<code>ExamDateSetupSheet</code> の <code>onSaved</code> でフラグを立て、<code>sheet(onDismiss:)</code> で提示する。シートが閉じるアニメーション中に提示すると黙って捨てられる余地がある</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
-    <li><a href="calendar.html">カレンダー画面（呼び出し元）</a></li>
+    <li><a href="calendar.html">カレンダー画面（呼び出し元・従来経路）</a></li>
+    <li><a href="home.html">ホーム画面（呼び出し元・試験日保存直後の提案）</a></li>
+    <li><a href="../flow.html">画面遷移図（試験日設定 → 学習計画作成）</a></li>
     <li><a href="task-creation-sheet.html">タスク作成シート（単体タスク追加）</a></li>
     <li><a href="../features/task-list.html">やることリスト機能仕様書</a></li>
     <li><a href="../data-model.html">データモデル</a></li>
@@ -107,9 +133,10 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-20</td><td>初版作成（UI/UX改善: 入力ガイド・単位プリセット候補追加を含む）</td></tr>
+    <tr><td>1.1</td><td>2026-09-05</td><td>到達経路の拡張を反映（SS-001）: 従来のカレンダーのツールバーメニューに加え、<strong>試験日を保存した直後の提案アラートからも開く</strong>ようになった（ホーム・カレンダーの両方が入口）。「到達経路」セクションを新設し、主導線が保存直後の提案であることを明記。閉じたときの戻り先が呼び出し元依存になった点、呼び出し元が2箇所になった点を実装メモに追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-20</footer>
+  <footer class="site-footer">最終更新: 2026-09-05</footer>
 </div>
 </body>
 </html>
