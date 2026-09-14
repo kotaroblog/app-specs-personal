@@ -43,11 +43,15 @@ sequenceDiagram
   TG->>TG: GKNoise 2枚（起伏・バイオーム）でColumn生成
   TG->>TG: バイオーム判定・ブロック配置・水/洞窟/鉱石/植生
   TG-->>CM: Chunk を返す
+  CM->>CM: scanChunkDecorations で装飾ブロックを1パス走査（y→z→x）
+  CM->>SC: 松明・植生クロスの SCNNode を生成して追加
+  CM->>CM: 若芽（wheat）セルを成長タイマー再登録キューへ積む
   CM->>MM: メッシュ生成を依頼（バックグラウンドキュー）
   MM->>MM: Greedy Meshing + AO 計算
   MM-->>SC: SCNGeometry を返す
   SC-->>P: applyPendingGeometries で次フレーム反映
   CM->>CM: 範囲外チャンクをアンロード（dirtyなら先に保存）
+  CM->>SC: 装飾ノードをチャンク別インデックス経由で引いて破棄
   </div>
 
   <h2>ビジネスルール</h2>
@@ -109,6 +113,9 @@ sequenceDiagram
     <li>Greedy Meshing は ChunkMesher.buildGeometry に集約。1チャンクにつき opaque/water 最大2枚の SCNGeometry に結合する</li>
     <li>メッシュ生成はバックグラウンドキュー（meshQueue）で非同期実行し、完成分を applyPendingGeometries がレンダーループから毎フレーム引き取って SCNNode に適用する</li>
     <li>植生（花・草・キノコ・松明）は greedy mesh結合済みジオメトリとは別の独立ノードとして管理し、種別ごとにジオメトリ/マテリアルを共有する（高密度配置によるノード数爆発を防ぐため）</li>
+    <li>チャンクロード時の装飾ブロック走査は <code>scanChunkDecorations(in:)</code> の1パスに集約する。松明・植生・若芽は同一セルに同居しない排他的なブロックのため、1回の走査で switch 振り分けできる（種別ごとに 16×64×16 の全走査を独立に回さない）</li>
+    <li>装飾走査のループ順は y→z→x とし、x を最内に置く。<code>Chunk.blocks</code> は <code>y * sizeX * sizeZ + z * sizeX + x</code> の並びのため、この順序が連続アクセスになる</li>
+    <li>装飾ノードは <code>decorationKeysByChunk</code>（チャンク座標 → ワールド座標キー集合）で逆引きできるようにし、アンロード時は該当チャンク分のキーだけを引いて破棄する（松明ノード辞書・植生ノード辞書の全キー走査はしない）。松明と植生は同居しないためインデックス1本で両方を引ける</li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -116,6 +123,7 @@ sequenceDiagram
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
     <tr><td>2.0</td><td>2026-07-05</td><td>実装との大幅な乖離を解消する全面改訂。バイオーム構成（2→3種）・高さ帯・鉱石埋蔵深度・洞窟条件・植生（花/草/キノコ/サボテン）・永続化方式（SwiftData）を実装どおりに修正</td></tr>
+    <tr><td>2.1</td><td>2026-09-14</td><td>チャンクロードのシーケンス図に未記載だった装飾ブロック走査・装飾ノード生成・若芽の成長タイマー再登録工程を追記。装飾走査の1パス統合（ループ順 y→z→x）と、アンロード時のチャンク別逆引きインデックスを実装メモに追加（内部設計の変更のみでゲーム仕様の変更なし）</td></tr>
   </table>
 
   <script>
@@ -125,7 +133,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-07-05</footer>
+  <footer class="site-footer">最終更新: 2026-09-14</footer>
 </div>
 </body>
 </html>
