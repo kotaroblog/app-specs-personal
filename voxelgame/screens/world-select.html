@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>VoxelGame - ワールド選択</title>
+<title>CraftFrontier - ワールド選択</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">VoxelGame</a> / ワールド選択</div>
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / ワールド選択</div>
 
   <header class="site-header">
     <h1>ワールド選択画面</h1>
@@ -26,7 +26,7 @@
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
     <tr><td>タイトル</td><td>Text</td><td>「CRAFTFRONTIER」（等幅極太フォント）+「ワールドを選択してください」</td></tr>
-    <tr><td>ワールド一覧</td><td>ScrollView + カード行</td><td>最終プレイ日時の降順（@Query）で並べる。各行は地球アイコン・ワールド名・シード値・最終プレイ日時・累計プレイ時間・累積探索距離バッジを表示</td></tr>
+    <tr><td>ワールド一覧</td><td>ScrollView + カード行</td><td>最終プレイ日時の降順（@Query）で並べる。各行は地球アイコン・ワールド名・シード値・最終プレイ日時・累計プレイ時間・累積探索距離バッジ・<strong>累計設置ブロック数バッジ（cube アイコン＋「N個」）</strong>を表示</td></tr>
     <tr><td>行内メニュー（︙アイコン）</td><td>Menu</td><td>「名前を変更」「シードをコピー」「削除」の3アクション（左スワイプ削除ではない）</td></tr>
     <tr><td>新規ワールド作成ボタン</td><td>Button</td><td>「新しいワールドを作成」（緑背景・下部固定）。タップでワールド作成シートを表示</td></tr>
     <tr><td>ワールド作成シート</td><td>Sheet（Form）</td><td>ワールド名入力・シード値入力（空欄でランダム生成）・「作成」ボタン</td></tr>
@@ -53,7 +53,7 @@
   </table>
 
   <h2>使用するデータモデル</h2>
-  <p>詳細は<a href="../data-model.html">データモデル（WorldRecord）</a>を参照。チャンクデータはドキュメントディレクトリの独自ファイルではなく SwiftData の ChunkRecord/ChestRecord に保存される。</p>
+  <p>累計設置ブロック数バッジは <code>WorldRecord.placedBlockCount</code> を読むだけで、集計は行わない（詳細は<a href="../features/work-card.html">作品カード</a>）。ワールドへ入らなくても「どれだけ積み上げたか」が一覧で分かるようにするためのバッジである。詳細は<a href="../data-model.html">データモデル（WorldRecord）</a>を参照。チャンクデータはドキュメントディレクトリの独自ファイルではなく SwiftData の ChunkRecord/ChestRecord に保存される。</p>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
@@ -67,6 +67,7 @@
   <ul>
     <li><a href="../data-model.html">データモデル（WorldRecord）</a></li>
     <li><a href="gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+    <li><a href="../features/work-card.html">作品カード</a></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -74,9 +75,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
     <tr><td>2.0</td><td>2026-07-05</td><td>実装との乖離を解消する改訂。削除UI（スワイプ→行内メニュー）・タイトル名（CRAFTFRONTIER）・統計バッジ・データモデル記載（SwiftData）を実装どおりに修正</td></tr>
+    <tr><td>2.1</td><td>2026-09-17</td><td>建築特化への転換を反映。ワールド行に累計設置ブロック数バッジを追加した旨を追記し、作品カードへのリンクを追加</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-05</footer>
+  <footer class="site-footer">最終更新: 2026-09-17</footer>
 </div>
 </body>
 </html>

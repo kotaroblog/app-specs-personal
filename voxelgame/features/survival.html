@@ -4,138 +4,53 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>VoxelGame - サバイバルシステム</title>
+<title>CraftFrontier - サバイバルシステム（廃止済み）</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">VoxelGame</a> / サバイバルシステム</div>
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / サバイバルシステム（廃止済み）</div>
 
   <header class="site-header">
-    <h1>サバイバルシステム</h1>
-    <p>HP・空腹・ダメージ・食料・死亡・ベッドのゲームプレイ基盤</p>
+    <h1>サバイバルシステム（廃止済み）</h1>
+    <p>HP・空腹・ダメージ・食料・死亡は 2026-09-16 の建築特化への転換で実装から削除された</p>
     <div style="margin-top:8px;">
-      <span class="tag">機能ID: VG-FEAT-SURVIVAL</span>
+      <span class="tag warn">廃止済み</span>
+      <span class="tag">旧機能ID: VG-FEAT-SURVIVAL</span>
     </div>
   </header>
 
-  <h2>概要</h2>
-  <p>サバイバルモード時のゲームプレイルールを定義する。序盤の食料確保手段（動物狩り）が整う前の飢餓死を避けるカジュアル方針で、空腹の減少・飢餓ダメージとも間隔を緩和している。クリエイティブモード時はこのシステム全体が無効化される。</p>
-
-  <h2>関連画面</h2>
-  <ul>
-    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
-  </ul>
-
-  <h2>処理フロー</h2>
-  <div class="mermaid">
-sequenceDiagram
-  participant Loop as レンダーループ（毎フレーム）
-  participant Player
-  participant HUD
-  participant Scene
-
-  Loop->>Player: 75秒ごとに hunger -= 1
-  Player->>Player: hunger=0 なら 6秒ごとに hp -= 1（下限なし・死亡し得る）
-  Loop->>Player: ダメージイベント（落下・ゾンビ・溶岩・サボテン）
-  Player->>Player: hp を減算し damageFlash 発火
-  Player->>HUD: hp / hunger を変化時のみ通知
-  HUD->>HUD: バーを再描画
-  alt hp が 0 以下
-    Player->>Scene: 死亡処理（isDying=true）
-    Scene->>Scene: 環境音停止・所持品半減
-    Scene->>HUD: 死亡オーバーレイ表示（死因つき）
-    HUD->>Player: 「復活する」タップでリスポーン（hp=20/hunger=20）
-  end
+  <div class="callout danger">
+    <strong>この機能は存在しない。</strong>2026-09-16 にアプリの方向をサバイバル型から建築特化へ全面転換し、体力・空腹・ダメージ・死亡・食料に関する仕組みはコードから完全に削除された。このページは「かつて何があり、なぜ無くなったか」を残すための記録で、現行仕様は含まない。現行の遊びの筋は<a href="objectives.html">目標ガイド</a>・<a href="work-card.html">作品カード</a>・<a href="building-assist.html">建築支援操作</a>を参照すること。
   </div>
 
-  <h2>ビジネスルール</h2>
+  <h2>転換の理由</h2>
+  <p>「自分の作品・アートを作る」という作り手の動機と、サバイバル型の実装（戦闘・生存）の方向がズレていたため転換した。設計の核心は「<strong>達成感の源泉は危険を越えることではなく、不可逆な投資（量と時間）が目に見えること</strong>」（Fable 5.1、2026-09-16）。これに伴い、危険とその回避を支えていたシステム一式が不要になった。</p>
 
-  <h3>HP</h3>
-  <ul>
-    <li>最大値: 20</li>
-    <li>自然回復: hunger が 18 以上かつ HP が最大未満の場合、3 秒ごとに +1 HP</li>
-    <li>永続化: WorldRecord.hp に保存。死亡画面のまま退出すると 0 が保存され得るため、復元側で 0 以下なら 20 に補正する</li>
-    <li>無敵時間は無い（連続ヒットで即座に減り続ける）</li>
-    <li>ダメージ源と量:</li>
-  </ul>
+  <h2>削除された内容</h2>
   <table>
-    <tr><th>ダメージ源</th><th>ダメージ量</th><th>備考</th></tr>
-    <tr><td>落下</td><td>Int((落下距離 - 3.5) × 3)</td><td>3.5m 以下は無効</td></tr>
-    <tr><td>空腹（hunger=0）</td><td>6 秒ごとに 1 HP</td><td>下限なし。0 まで減ると死亡する（カジュアル方針の緩和値。HP20→0 で120秒）</td></tr>
-    <tr><td>ゾンビ攻撃</td><td>3 HP</td><td>攻撃間隔1.5秒・攻撃半径1.4m。ノックバック付き</td></tr>
-    <tr><td>溶岩（lava）接触</td><td>1 秒ごとに 4 HP</td><td>接触中のみ。ブロックは isSolid のまま（上に立てる）で通り抜けはしない</td></tr>
-    <tr><td>サボテン（cactus）接触</td><td>1 秒ごとに 1 HP</td><td></td></tr>
-  </table>
-  <p>初めて Y&lt;12（溶岩の生成深度）へ到達したとき、「この深さには溶岩がある。足元に注意！」を一度だけトースト表示する（WorldRecord.hasSeenLavaWarning で永続化）。</p>
-
-  <h3>空腹</h3>
-  <ul>
-    <li>最大値: 20</li>
-    <li>減少速度: 移動量に関わらず 75 秒ごとに 1 減少（カジュアル方針）</li>
-    <li>hunger が 0 になると 6 秒ごとに 1 HP ダメージ（下限なし、死亡し得る）</li>
-    <li>永続化: WorldRecord.hunger に保存</li>
-  </ul>
-
-  <h3>食料</h3>
-  <p>「食べる」操作は所持している食料のうち、回復量が小さい順に自動で1つ消費する（複数所持していても選択はできない）。</p>
-  <table>
-    <tr><th>食料</th><th>満腹度回復量</th><th>備考</th></tr>
-    <tr><td>mushroom（キノコ）</td><td>+2</td><td></td></tr>
-    <tr><td>chickenMeat（鶏肉）</td><td>+4</td><td></td></tr>
-    <tr><td>bread（パン）</td><td>+6</td><td>小麦3個からクラフト</td></tr>
-    <tr><td>pork（豚肉）</td><td>+8</td><td></td></tr>
-    <tr><td>beef（牛肉）</td><td>+8</td><td></td></tr>
-    <tr><td>goldenApple（金のリンゴ）</td><td>+8 かつ HP 全回復</td><td>非常食。手前の食料があるうちは消費されない</td></tr>
-  </table>
-  <ul>
-    <li>食料はいずれも満腹度のみ回復する（金のリンゴのみ例外的に HP も全回復）</li>
-    <li>「食べる」ボタンは所持食料が1個以上ある場合のみ表示</li>
-    <li>HP・満腹度はそれぞれの最大値を超えない</li>
-  </ul>
-
-  <h3>死亡</h3>
-  <ul>
-    <li>hp が 0 以下になった初回のみ死亡処理を発火（クリエイティブ時は不死）</li>
-    <li>環境音（虫・風・洞窟ドローン・雨）を一括停止し、死亡SE + エラー触覚を発火</li>
-    <li>所持品の各スタックを整数半減する（チェスト内は無傷）</li>
-    <li>死因（lastDamageSource）を死亡オーバーレイに表示: 「高所から落下した」「飢えで力尽きた」「ゾンビに倒された」「溶岩に焼かれた」「サボテンに触れた」</li>
-    <li>死亡オーバーレイは自動復活ではなく、「復活する」（スポーン地点で hp=20・hunger=20 リスポーン）と「終了して戻る」の2ボタンで手動操作する</li>
-    <li>死亡中はレンダーループが早期returnし、昼夜サイクル・モブ更新・採掘進行が停止する</li>
-  </ul>
-
-  <h3>ベッド</h3>
-  <ul>
-    <li>昼夜を問わずベッドを操作するとスポーン地点を変更できる（永続化）。再入場時は保存済みのスポーン地点へ正確に復元される</li>
-    <li>夜間（sunFactor &lt; 0.2 相当）に操作した場合のみ、追加で dayTime を朝（sunFactor≈0.81）までスキップする</li>
-    <li>ベッド設置は目標ガイド「ベッドを作って置く」の達成条件（WorldRecord.hasPlacedBed）を兼ねる</li>
-  </ul>
-
-  <h2>外部連携</h2>
-  <table>
-    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
-    <tr><td>モブ AI（VG-FEAT-MOBAI）</td><td>ゾンビ攻撃ダメージの受け取り</td><td>MobManager.update が mobDamage を返し、レンダーループで player.hp に反映</td></tr>
-    <tr><td>クリエイティブモード（VG-FEAT-CREATIVE）</td><td>全サバイバルロジックの無効化</td><td>!creative ガードで各ダメージ・空腹処理をスキップ</td></tr>
-    <tr><td>目標ガイド（screens/gameplay.html）</td><td>ベッド設置・金のリンゴクラフト等の進行フラグ共有</td><td>WorldRecord の hasXxx フラグ群</td></tr>
+    <tr><th>削除されたもの</th><th>備考</th></tr>
+    <tr><td>体力（HP）・自然回復・被弾演出</td><td>HUD の HP バーごと削除。WorldRecord の hp 列も廃止</td></tr>
+    <tr><td>空腹（満腹度）・飢餓ダメージ</td><td>空腹バー・「食べる」ボタンごと削除。WorldRecord の hunger 列も廃止</td></tr>
+    <tr><td>落下・溶岩・サボテンの接触ダメージ</td><td>溶岩・サボテンはブロックとしては存在するが、触れてもダメージは無い</td></tr>
+    <tr><td>死亡・死亡オーバーレイ・復活・所持品半減</td><td>死ぬ手段が無くなったため、リスポーン導線ごと不要になった</td></tr>
+    <tr><td>食料アイテム（鶏肉・豚肉・牛肉・パン・金のリンゴ）</td><td>Block の rawValue 16〜18・31・33 は欠番として残す（他ブロックの値をずらさないため）</td></tr>
+    <tr><td>敵対モブ（ゾンビ）と戦闘</td><td>詳細は<a href="mob-ai.html">動物（景観モブ）</a>を参照</td></tr>
   </table>
 
-  <h2>エラー処理</h2>
-  <table>
-    <tr><th>発生条件</th><th>対応</th></tr>
-    <tr><td>新規ワールドのスポーン地点が水中・空中になる</td><td>初回チャンクロード後に地表へスナップ補正する（水没時は周辺の乾いた地表を探索）</td></tr>
-    <tr><td>HP が保存されない旧セーブを読み込む</td><td>デフォルト値 20 で復元（軽量マイグレーション対応）</td></tr>
-  </table>
+  <h2>削除の副作用として入れた補正</h2>
+  <ul>
+    <li><strong>クリエイティブの降下に下限クランプを追加</strong>: 落下ダメージ・死亡・リスポーンが無くなったため、下限が無いと Y&lt;0 まで降りて世界が消え、画面上に復帰手段が無いまま詰む。飛行時の Y は 0〜63 にクランプする</li>
+    <li><strong>溶岩の事前警告トースト（hasSeenLavaWarning）は列としては残存</strong>するが、溶岩に接触ダメージが無いため初見保護としての意味は薄れている</li>
+    <li><strong>ベッド</strong>はスポーン地点の変更・夜スキップの設備としてブロック自体は残るが、死亡復帰の起点ではなくなった</li>
+  </ul>
 
-  <h2>実装メモ</h2>
-  <ul class="checklist">
-    <li>hp・hunger の更新は Coordinator.renderer(_:updateAtTime:)（SceneKitレンダースレッド）で行い、変化時のみ DispatchQueue.main.async で GameInput へミラー反映する</li>
-    <li>環境ダメージ（溶岩・サボテン）は接触中のみ進む1秒周期タイマー（starvationTimer と同型のパターン）で実装</li>
-    <li>落下ダメージは Player.move 内、lastGroundedY との差分（着地検知）で計算する</li>
-    <li>死亡時の所持品半減は Dictionary の各値を整数除算2で処理する</li>
-    <li>チャンクの定期保存（30秒ごと）とインベントリの5秒ごと保存は別経路のため、ハードクラッシュ時に軽微な不整合が起き得る点は既知（チェスト⇄所持品間の移動に伴う不整合は即時保存化により解消済み）</li>
-    <li>アプリがバックグラウンドへ移行する際、チャンク・インベントリ・HP・空腹等の保存が完了するまで実行時間の猶予を確保する設計となっており、移行直後の強制終了時でも直近の編集が失われにくい</li>
-    <li>チェストと所持品間でアイテムを移動するたびに所持品側も即座に保存される（以前は最大5秒の遅延があり、強制終了時にアイテムが消失・複製するリスクがあった）</li>
+  <h2>関連</h2>
+  <ul>
+    <li><a href="objectives.html">目標ガイド（現行の進行導線）</a></li>
+    <li><a href="work-card.html">作品カード（現行の達成感の受け皿）</a></li>
+    <li><a href="mob-ai.html">動物（景観モブ）</a></li>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -144,16 +59,10 @@ sequenceDiagram
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
     <tr><td>2.0</td><td>2026-07-05</td><td>実装との大幅な乖離を解消する全面改訂。HP自然回復間隔・ダメージ計算式・空腹減少方式・食料回復量・死亡演出（手動復活）・ベッド昼夜条件・環境接触ダメージ（溶岩/サボテン）・HP永続化を実装どおりに修正</td></tr>
     <tr><td>2.1</td><td>2026-07-13</td><td>保存の信頼性向上：バックグラウンド移行時の保存猶予確保・チェスト⇄所持品移動の即時保存化を追記。ベッドのスポーン地点が再入場時に正確に復元されるよう修正した旨を記録</td></tr>
+    <tr><td>3.0</td><td>2026-09-17</td><td><strong>廃止</strong>。2026-09-16 の建築特化への転換で体力・空腹・ダメージ・死亡・食料が実装から削除されたため、内容を全削除して転換の記録ページに置き換えた。index.html の機能一覧からは外し「廃止済み仕様」からのみ参照する</td></tr>
   </table>
 
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
-    });
-  </script>
-
-  <footer class="site-footer">最終更新: 2026-07-13</footer>
+  <footer class="site-footer">最終更新: 2026-09-17</footer>
 </div>
 </body>
 </html>

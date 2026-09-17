@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>VoxelGame - データモデル</title>
+<title>CraftFrontier - データモデル</title>
 <link rel="stylesheet" href="../assets/css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">VoxelGame</a> / データモデル</div>
+  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">CraftFrontier</a> / データモデル</div>
 
   <header class="site-header">
     <h1>データモデル</h1>
@@ -19,6 +19,7 @@
 
   <h2>概要</h2>
   <p>永続化は<strong>100% SwiftData</strong>（デフォルトの SQLite ストア）で完結しており、独自のバイナリファイル I/O は行わない。モデルは <code>WorldRecord</code>・<code>ChunkRecord</code>・<code>ChestRecord</code> の3つで、いずれも <code>worldID</code>（UUID）でワールドごとに分離する。ゲームロジック自体は SceneKit のレンダースレッド上で動くランタイムクラス（<code>Player</code>・<code>Mob</code> 等）が保持し、変化があったときだけ SwiftData モデルへ書き戻す。</p>
+  <p>2026-09-16 の建築特化への転換で、<strong>体力・満腹度に関する列が消え、代わりに「これまでに置いた量」を記録する列が加わった</strong>。保存したい対象が「生き延びた状態」から「積み上げた投資」へ移ったためである。</p>
 
   <h2>ER 図</h2>
   <div class="mermaid">
@@ -30,8 +31,10 @@ erDiagram
     String name
     Int seed
     Date lastPlayedAt
-    Int hp
-    Int hunger
+    Int placedBlockCount
+    Data placedByBlockData
+    Data dailyPlacedData
+    Date firstPlacedAt
     Data inventoryData
   }
   ChunkRecord {
@@ -57,18 +60,24 @@ erDiagram
     <tr><td>name / seed</td><td>String / Int</td><td>ワールド名・地形生成シード</td></tr>
     <tr><td>createdAt / lastPlayedAt</td><td>Date</td><td>作成日時・最終プレイ日時（一覧の並び順に使用）</td></tr>
     <tr><td>totalPlayTime</td><td>TimeInterval</td><td>累計プレイ時間</td></tr>
-    <tr><td>exploredDistance</td><td>Double</td><td>累積移動距離。目標「探索を広げる」の判定に使用</td></tr>
+    <tr><td>exploredDistance</td><td>Double</td><td>累積移動距離。ワールド選択画面のバッジに表示する（目標ガイドの判定条件からは外れた）</td></tr>
     <tr><td>spawnX / spawnY / spawnZ</td><td>Float</td><td>スポーン座標。既定 (8, 62, 8)。ベッド使用で更新される</td></tr>
     <tr><td>inventoryData / unlockedToolsData</td><td>Data / Data</td><td>所持品・解放済みツールのシリアライズ</td></tr>
     <tr><td>selectedToolRaw</td><td>String</td><td>選択中ツール（既定 "hand"）</td></tr>
-    <tr><td>hunger</td><td>Int</td><td>満腹度（最大20）</td></tr>
-    <tr><td>hp</td><td>Int</td><td>HP（最大20）。死亡画面のまま退出すると 0 が保存され得るため、復元側で 0 以下なら 20 に補正する</td></tr>
-    <tr><td>hasPlacedFurnace</td><td>Bool</td><td>かまど設置履歴（目標「かまどを作る」の巻き戻り防止。かまどは設置で所持数が0に戻るため）</td></tr>
-    <tr><td>hasCraftedTorch / hasPlacedBed / hasSmeltedGlass / hasCraftedGoldenApple</td><td>Bool</td><td>目標ガイドの進行フラグ。いずれも一度 true になったら戻らない</td></tr>
-    <tr><td>hasCompletedAllObjectives</td><td>Bool</td><td>全16目標達成済みか（達成トーストを一度だけ出すため）</td></tr>
-    <tr><td>hasSeenLavaWarning</td><td>Bool</td><td>溶岩の事前警告トーストを表示済みか（初見保護、ワールドごとに一度）</td></tr>
+    <tr><td><strong>placedBlockCount</strong></td><td>Int</td><td>プレイヤーが設置した累計ブロック数。目標6「自由に建てる」の進行度に使う。🔴 <strong>権威ではなく非正規化キャッシュ</strong>で、真の権威は placedByBlockData（内訳）。sum(内訳) == この値 という不変条件を PlacementTally.apply 経由の2箇所だけが守る</td></tr>
+    <tr><td><strong>placedByBlockData</strong></td><td>Data</td><td>種別ごとの設置累計（例: 石レンガ62個）。inventoryData と同じバイト形式で直列化する</td></tr>
+    <tr><td><strong>dailyPlacedData</strong></td><td>Data</td><td>日別の設置数（epochDay → 設置数）。直近730日を超える古い日は保存時に切り捨てる</td></tr>
+    <tr><td><strong>firstPlacedAt</strong></td><td>Date?</td><td>初めて設置した日時。作品カードの制作日数の起点（既定 nil）</td></tr>
+    <tr><td>hasPlacedFurnace</td><td>Bool</td><td>かまど設置履歴（目標4の巻き戻り防止。かまどは設置で所持数が0に戻るため）</td></tr>
+    <tr><td>hasSmeltedGlass</td><td>Bool</td><td>ガラス精錬履歴（目標5の判定）</td></tr>
+    <tr><td>hasPlacedBed</td><td>Bool</td><td>ベッド設置履歴。目標ガイドの条件からは外れたが列としては存続</td></tr>
+    <tr><td>hasCompletedAllObjectives</td><td>Bool</td><td>全6目標を達成済みか（達成トーストを一度だけ出すため）</td></tr>
+    <tr><td>hasSeenLavaWarning</td><td>Bool</td><td>溶岩の事前警告トーストを表示済みか（接触ダメージ廃止後も列は存続）</td></tr>
     <tr><td>hasSavedProgress</td><td>Bool</td><td>一度でも進行状態を保存したか。false なら新規ワールド扱いで初期在庫を使う</td></tr>
   </table>
+  <div class="callout warn">
+    <strong>廃止された列</strong>: <code>hp</code>（体力）・<code>hunger</code>（満腹度）・<code>hasCraftedTorch</code>・<code>hasCraftedGoldenApple</code>。いずれも 2026-09-16 の建築特化への転換で、対応する仕組み（体力・空腹・16段階の目標ガイド）ごと削除した。
+  </div>
 
   <h2>ChunkRecord（SwiftData @Model）</h2>
   <table>
@@ -86,45 +95,69 @@ erDiagram
     <tr><td>slotsData</td><td>チェスト内アイテムのシリアライズ（形式は下記インベントリと同じ）</td></tr>
   </table>
 
-  <h2>Block（UInt8 enum・全34種）</h2>
-  <p>rawValue が UInt8 として <code>blocksData</code> / <code>inventoryData</code> に直接書き込まれる。列 0〜33 を使用済み（アトラス列数は将来の拡張余地を見て40列確保）。</p>
+  <h2>Block（UInt8 enum）</h2>
+  <p>rawValue が UInt8 として <code>blocksData</code> / <code>inventoryData</code> に直接書き込まれる。最大 rawValue は 37（金ブロック）。<strong>建築特化への転換で削除した食料アイテムの rawValue（16〜18・31・33）は欠番のまま残す</strong>（他ブロックの値をずらさないため。旧セーブに残っていてもデコード時に air へ倒れる）。アトラス列数は将来の拡張余地を見て40列確保している。</p>
   <table>
     <tr><th>値</th><th>名前</th><th>カテゴリ</th><th>備考</th></tr>
     <tr><td>0</td><td>air</td><td>-</td><td>透明・衝突なし</td></tr>
     <tr><td>1</td><td>grass</td><td>地形</td><td>上面が緑、側面が土</td></tr>
     <tr><td>2</td><td>dirt</td><td>地形</td><td></td></tr>
-    <tr><td>3</td><td>stone</td><td>地形</td><td></td></tr>
+    <tr><td>3</td><td>stone</td><td>地形</td><td>建材の主素材。ホットバー固定枠</td></tr>
     <tr><td>4</td><td>sand</td><td>地形</td><td>水辺・砂漠に生成。精錬でガラスに変換可</td></tr>
     <tr><td>5</td><td>snow</td><td>地形</td><td>山岳バイオーム高所</td></tr>
-    <tr><td>6</td><td>wood</td><td>自然</td><td>木の幹</td></tr>
+    <tr><td>6</td><td>wood</td><td>自然</td><td>木の幹。板材の材料</td></tr>
     <tr><td>7</td><td>brick</td><td>建築</td><td>石の精錬で入手</td></tr>
     <tr><td>8</td><td>leaves</td><td>自然</td><td>半透明、衝突なし</td></tr>
-    <tr><td>9</td><td>water</td><td>液体</td><td>半透明。泳げる（blocksMovement=false）</td></tr>
-    <tr><td>10</td><td>coalOre</td><td>鉱石</td><td></td></tr>
+    <tr><td>9</td><td>water</td><td>液体</td><td>半透明。泳げる（blocksMovement=false）。設置不可</td></tr>
+    <tr><td>10</td><td>coalOre</td><td>鉱石</td><td>精錬の燃料</td></tr>
     <tr><td>11</td><td>ironOre</td><td>鉱石</td><td></td></tr>
-    <tr><td>12</td><td>goldOre</td><td>鉱石</td><td></td></tr>
+    <tr><td>12</td><td>goldOre</td><td>鉱石</td><td>金インゴット→金ブロックの起点</td></tr>
     <tr><td>13</td><td>diamondOre</td><td>鉱石</td><td>深部にのみ生成</td></tr>
-    <tr><td>14</td><td>lava</td><td>液体</td><td>接触ダメージ4/秒。破壊不可</td></tr>
-    <tr><td>15</td><td>cactus</td><td>自然</td><td>砂漠バイオーム、接触ダメージ1/秒</td></tr>
-    <tr><td>16</td><td>chickenMeat</td><td>食料</td><td>満腹度+4</td></tr>
-    <tr><td>17</td><td>pork</td><td>食料</td><td>満腹度+8</td></tr>
-    <tr><td>18</td><td>beef</td><td>食料</td><td>満腹度+8</td></tr>
-    <tr><td>19</td><td>torch</td><td>光源</td><td>クロス表示ノード。松明クラフトで入手</td></tr>
+    <tr><td>14</td><td>lava</td><td>液体</td><td>破壊不可・設置不可。<strong>接触ダメージは廃止</strong></td></tr>
+    <tr><td>15</td><td>cactus</td><td>自然</td><td>砂漠バイオーム。<strong>接触ダメージは廃止</strong></td></tr>
+    <tr><td>16〜18</td><td><s>chickenMeat / pork / beef</s></td><td>欠番</td><td>食料の廃止により削除（rawValue は再利用しない）</td></tr>
+    <tr><td>19</td><td>torch</td><td>光源</td><td>クロス表示ノード。松明クラフトで入手。ホットバー固定枠</td></tr>
     <tr><td>20</td><td>chest</td><td>機能</td><td>タップでチェストシートを開く</td></tr>
     <tr><td>21</td><td>bed</td><td>機能</td><td>タップでスポーン変更。夜なら朝までスキップ</td></tr>
     <tr><td>22</td><td>furnace</td><td>機能</td><td>タップでかまどシートを開く</td></tr>
-    <tr><td>23</td><td>ironIngot</td><td>素材</td><td>かまどで鉄鉱石から精錬</td></tr>
-    <tr><td>24</td><td>goldIngot</td><td>素材</td><td>かまどで金鉱石から精錬。金のリンゴの材料</td></tr>
+    <tr><td>23</td><td>ironIngot</td><td>素材</td><td>かまどで鉄鉱石から精錬。鉄のツルハシの材料</td></tr>
+    <tr><td>24</td><td>goldIngot</td><td>素材</td><td>かまどで金鉱石から精錬。金ブロックの材料</td></tr>
     <tr><td>25</td><td>farmland</td><td>農業</td><td>耕地ブロック</td></tr>
-    <tr><td>26</td><td>wheat</td><td>農業</td><td>未成熟の小麦（若芽）</td></tr>
-    <tr><td>27</td><td>wheatMature</td><td>農業</td><td>成熟した小麦（収穫可能）</td></tr>
+    <tr><td>26</td><td>wheat</td><td>農業</td><td>未成熟の小麦（若芽）。初期所持3個</td></tr>
+    <tr><td>27</td><td>wheatMature</td><td>農業</td><td>成熟した小麦。設置不可（成長システムの結果としてのみ存在する）</td></tr>
     <tr><td>28</td><td>flower</td><td>装飾</td><td>平原の地表装飾。設置可能</td></tr>
     <tr><td>29</td><td>tallGrass</td><td>装飾</td><td>平原の地表装飾。設置可能</td></tr>
-    <tr><td>30</td><td>mushroom</td><td>食料/装飾</td><td>満腹度+2で食用可。設置可能</td></tr>
-    <tr><td>31</td><td>bread</td><td>食料</td><td>満腹度+6。小麦3個からクラフト</td></tr>
-    <tr><td>32</td><td>glass</td><td>建築</td><td>設置可能な固体ブロック（磨りガラス風）。砂の精錬で入手</td></tr>
-    <tr><td>33</td><td>goldenApple</td><td>食料</td><td>満腹度+8かつHP全回復の非常食。金インゴット2+小麦1からクラフト</td></tr>
+    <tr><td>30</td><td>mushroom</td><td>装飾</td><td>平原の地表装飾。設置可能（食用の用途は廃止）</td></tr>
+    <tr><td>31</td><td><s>bread</s></td><td>欠番</td><td>食料の廃止により削除</td></tr>
+    <tr><td>32</td><td>glass</td><td>建築</td><td>砂の精錬で入手。ホットバー固定枠</td></tr>
+    <tr><td>33</td><td><s>goldenApple</s></td><td>欠番</td><td>食料の廃止により削除</td></tr>
+    <tr><td><strong>34</strong></td><td>stoneBricks（石レンガ）</td><td>建築</td><td>石4→4。壁・床の主役。ホットバー固定枠</td></tr>
+    <tr><td><strong>35</strong></td><td>polishedStone（磨き石）</td><td>建築</td><td>石2→2。のっぺりした面。窓枠や縁取りに</td></tr>
+    <tr><td><strong>36</strong></td><td>planks（板材）</td><td>建築</td><td>木1→4。木造の壁・床。ホットバー固定枠</td></tr>
+    <tr><td><strong>37</strong></td><td>goldBlock（金ブロック）</td><td>建築</td><td>金インゴット4→1。金インゴットの出口となる高コストな装飾用建材（2026-09-17 追加）</td></tr>
   </table>
+  <p>ブロックは <code>isSolid</code> / <code>blocksMovement</code> / <code>rendersAsBlock</code> / <code>isRaycastTarget</code> / <code>occludesNeighborFaces</code> に加え、<strong><code>isPlaceable</code></strong>（プレイヤーが設置できるか）を持つ。isPlaceable は設置プレビュー（ゴースト）・設置処理・スポイト・クリエイティブの所持品一覧が共通で参照する単一のゲートで、水・溶岩・成熟小麦は除外される。</p>
+
+  <h2>PlacementTally（設置の集計・ランタイム値型）</h2>
+  <pre><code>struct PlacementTally: Equatable {
+    private(set) var total: Int                 // 累計設置数（キャッシュ）
+    private(set) var byBlock: [Block: Int]      // 種別ごとの設置累計（権威）
+    private(set) var byDay: [Int: Int]          // epochDay → 設置数
+    private(set) var firstPlacedAt: Date?       // 初回設置日時
+
+    mutating func apply(block: Block, delta: Int, day: Int, now: Date)
+}
+</code></pre>
+  <ul>
+    <li>更新経路は <code>apply(block:delta:day:now:)</code> の1本だけ。これにより <code>sum(byBlock) == total</code> と <code>sum(byDay) == total</code> の不変条件を守る</li>
+    <li>delta は +1（設置）または -1（1手アンドゥでの取り消し）のみ。<strong>通常の破壊では減らない</strong></li>
+    <li>day は 2026-01-01 00:00:00 UTC 起点の経過日数（epochDay）。タイムゾーン変更・サマータイムで日付境界が動かないよう UTC 固定</li>
+    <li>アンドゥでは「取り消した日」ではなく「元の操作をした日」の枠から引く</li>
+    <li>SceneKit 非依存の純粋値型で単体テスト可能（PlacementTallyTests）。詳細は<a href="features/work-card.html">作品カード</a></li>
+  </ul>
+
+  <h2>SessionStats（セッション統計・保存対象外）</h2>
+  <p>ワールド入場〜退出の1セッション分の操作ログ。<strong>ワールドデータには保存せず</strong>、退出時に Logger へ1行ダンプするためだけに存在する揮発性の値。所持品シートを開いた回数・スポイト回数・アンドゥ回数・種別ごとの選択回数・夜間の秒数と設置数を持つ。狙いは「ホットバーが足りない」「操作が誤爆しやすい」を体感でなく数字で判定できるようにすること（2026-09-19 の実機検証用）。</p>
 
   <h2>Player（ランタイムクラス・SwiftData対象外）</h2>
   <pre><code>final class Player {
@@ -134,9 +167,8 @@ erDiagram
     var velocityY: Float = 0
     var grounded: Bool = false
     var fly: Bool = false             // クリエイティブのフライ
-    var isInWater: Bool = false
-    var isThirdPerson: Bool = true    // 既定は三人称視点
-    var hp: Int = 20
+    private(set) var isInWater: Bool = false
+    var isThirdPerson: Bool           // 毎フレーム GameInput から同期（既定は一人称）
 
     // 定数
     let moveSpeed: Float = 6          // m/s
@@ -147,18 +179,27 @@ erDiagram
     let halfH: Float = 0.9            // AABB半高さ（全高1.8）
 }
 </code></pre>
-  <p>位置・時刻・天候・モブは WorldRecord に保存されない（毎回スポーン地点・正午・晴れから再開）。HP・満腹度・所持品・解放ツール・進行フラグのみが永続化対象。</p>
+  <ul>
+    <li><strong>hp は廃止</strong>（体力・ダメージ・死亡の仕組みごと削除）</li>
+    <li>視点モードの権威は <code>GameInput.isThirdPerson</code>（既定 false ＝ 一人称）で、レンダーループが毎フレーム Player へ同期する</li>
+    <li>クリエイティブの昇降は 6 m/s で、Y を 0〜63（Chunk.sizeY-1）にクランプする。落下死が無くなったため、下限が無いと世界の下へ抜けて詰むのを防ぐ目的がある</li>
+    <li>位置・時刻・天候・動物は WorldRecord に保存されない（毎回スポーン地点・正午・晴れから再開）</li>
+  </ul>
 
-  <h2>GameInput（UI状態、@MainActor）</h2>
+  <h2>GameInput（UI状態、ObservableObject）</h2>
   <p>SwiftUI 側から参照される <code>@Published</code> の集合。レンダースレッドとの橋渡しは「値が変化したときだけ <code>DispatchQueue.main.async</code> でミラー反映する」規約で統一されている。主なカテゴリ:</p>
   <table>
     <tr><th>カテゴリ</th><th>代表的なプロパティ</th></tr>
-    <tr><td>プレイヤー状態</td><td>playerHP, hunger, selectedBlock, selectedTool, unlockedTools, inventory</td></tr>
-    <tr><td>UI表示制御</td><td>showCrafting, showSettings, showChest, showInventory, showFurnace, isDead, deathCause, toastMessage</td></tr>
-    <tr><td>進行フラグ</td><td>hasPlacedFurnace, hasCraftedTorch, hasPlacedBed, hasSmeltedGlass, hasCraftedGoldenApple, hasCompletedAllObjectives, hasSeenLavaWarning</td></tr>
-    <tr><td>パフォーマンス計測</td><td>showPerf, perfFPS, perfMemoryMB, perfChunkCount, perfGenSeconds（設定シートのトグルで表示切替、既定OFF）</td></tr>
-    <tr><td>設定</td><td>lookSensitivity, masterVolume, joystickDeadZone, miningButtonBoost, graphicsQuality</td></tr>
-    <tr><td>視点・演出</td><td>isThirdPerson（既定true）, damageFlash, breakProgress, isWorldReady, weather</td></tr>
+    <tr><td>プレイヤー状態</td><td>selectedBlock, selectedTool, unlockedTools, inventory（初期値は torch2 / chest1 / wheat3）</td></tr>
+    <tr><td>建築支援</td><td>canUndo（アンドゥ可否）, tally（PlacementTally のミラー）, breakProgress</td></tr>
+    <tr><td>UI表示制御</td><td>showCrafting, showSettings, showChest, showInventory, showFurnace, showMenu, showWorkCard, toastMessage, goalBannerTitle / goalBannerHint</td></tr>
+    <tr><td>進行フラグ</td><td>hasPlacedFurnace, hasPlacedBed, hasSmeltedGlass, hasCompletedAllObjectives, hasSeenLavaWarning</td></tr>
+    <tr><td>探索HUD</td><td>dayPhaseLabel, compassLabel, altitudeLabel, biomeLabel, beacons, waypointPosition</td></tr>
+    <tr><td>パフォーマンス計測</td><td>showPerf, perfFPS, perfMemoryMB, perfChunkCount, perfGenSeconds（既定OFF）</td></tr>
+    <tr><td>設定</td><td>lookSensitivity, masterVolume, joystickDeadZone, miningButtonBoost, leftHandedControls, controlSize, graphicsQuality</td></tr>
+    <tr><td>視点</td><td>isThirdPerson（既定 false＝一人称）, tpsDistance（near5m / medium12m / far25m、既定 medium）</td></tr>
+    <tr><td>実験的設定（検証用）</td><td>debugFieldOfView（既定62）, debugDayLengthMinutes（既定10）, debugRainEnabled（既定true）。UserDefaults には保存しない</td></tr>
+    <tr><td>その他</td><td>isCreative, weather, isWorldReady, sleepFade, sessionStats（@Published ではない内部計測）</td></tr>
   </table>
 
   <h2>インベントリ / チェストのシリアライズ形式</h2>
@@ -166,20 +207,37 @@ erDiagram
   <table>
     <tr><th>形式</th><th>構造</th><th>個数上限</th></tr>
     <tr><td>旧形式</td><td>[rawValue: UInt8, count: UInt8] の2バイトペアの並び</td><td>255</td></tr>
-    <tr><td>新形式</td><td>先頭に 0xFF、以降 [rawValue: UInt8, countLo: UInt8, countHi: UInt8] の3バイトペア（UInt16 リトルエンディアン）</td><td>65535</td></tr>
+    <tr><td>新形式</td><td>先頭に 0xFF、以降 [rawValue: UInt8, countLo: UInt8, countHi: UInt8] の3バイト組（UInt16 リトルエンディアン）</td><td>65535</td></tr>
   </table>
-  <p>0xFF は Block の最大 rawValue（33）と衝突しないため、先頭バイトだけで安全に新旧を判別できる。デコードは常に両形式に対応し、エンコードは常に新形式で書く。</p>
+  <p>0xFF は Block の最大 rawValue（37）と衝突しないため、先頭バイトだけで安全に新旧を判別できる。デコードは常に両形式に対応し、エンコードは常に新形式で書く。<strong>種別ごとの設置累計（placedByBlockData）も同じ形式を再利用する</strong>。</p>
 
-  <h2>マイグレーション方針</h2>
+  <h3>日別設置数（dailyPlacedData）の形式</h3>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>マジックバイト</td><td>0xFE（インベントリの 0xFF と衝突しない）</td></tr>
+    <tr><td>レコード</td><td>[epochDayLo, epochDayHi, countLo, countHi] の4バイト固定長（いずれも UInt16 リトルエンディアン）</td></tr>
+    <tr><td>epochDay</td><td>2026-01-01 起点の経過日数（UInt16 で約179年分をカバー）</td></tr>
+    <tr><td>保持期間</td><td>直近730日（約2年）分まで。730日で 730×4＝2920 バイト</td></tr>
+    <tr><td>クランプ</td><td>count は 65535 まで。0 件の日は書き出さない</td></tr>
+  </table>
+
+  <h2>スキーマ版管理・マイグレーション方針</h2>
   <div class="callout warn">
-    SwiftData の <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する（実績: hp・hasCraftedTorch 等はすべてデフォルト値付きで軽量マイグレーション済み）。新しい Block を追加する場合は既存 rawValue を変更せず末尾に追加する。<code>.modelContainer(for:)</code> はコンテナ生成失敗時にフォールバックがなく起動クラッシュになるため、スキーマ変更は「デフォルト値付きプロパティの追加のみ」に限定する運用とする。
+    現状は <code>VoxelSchemaV1</code>（1.0.0）のみで移行ステージは無く、軽量マイグレーションに任せている。軽量マイグレーションが効くのは「デフォルト値つきプロパティの追加・削除」など情報を失わない変更に限られるため、<strong>各 @Model の全プロパティにデフォルト値を置く</strong>。ボクセルゲームではワールドが積み上げた成果そのもので、1回の全損が致命傷になる。
   </div>
+  <ul>
+    <li>列の追加だけで済むならデフォルト値つきで足すだけでよい（V1 のまま）。実績: placedBlockCount・placedByBlockData・dailyPlacedData・firstPlacedAt は全てデフォルト値つきで追加した</li>
+    <li>型変更・リネーム・データ加工が必要なら、先に現行の型定義をコピーして V1 内へ固定し、新定義を V2 として作る（V1 が現行型を参照したまま書き換えると移行の起点が失われる）</li>
+    <li>新しい Block を追加する場合は既存 rawValue を変更せず末尾に追加する。削除した Block の rawValue は欠番として再利用しない</li>
+    <li>永続ストアの生成に失敗した場合は<strong>メモリ内ストアで起動する</strong>（失敗は Logger に残す）。ここで停止するとアプリが二度と開けず、ワールドの吸い出し手段まで失われるため「起動はする／このセッションの保存はされない」側に倒している</li>
+  </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
     <tr><td>2.0</td><td>2026-07-05</td><td>実装との大幅な乖離を解消する全面改訂。永続化方式（バイナリファイル→SwiftData 3モデル）・Block一覧（28→34種）・WorldRecord/GameInputの実フィールド・インベントリのシリアライズ形式変更を反映</td></tr>
+    <tr><td>3.0</td><td>2026-09-17</td><td>建築特化への転換を反映する改訂。WorldRecord から hp / hunger / hasCraftedTorch / hasCraftedGoldenApple を削除し、placedBlockCount・placedByBlockData・dailyPlacedData・firstPlacedAt を追加。Block 一覧に建材4種（34〜37）を追加し食料5種を欠番として明記。PlacementTally・SessionStats・日別設置数の直列化形式・スキーマ版管理（VoxelSchemaV1）の節を新設。GameInput の視点・実験的設定・ホットバー関連プロパティを更新</td></tr>
   </table>
 
   <script>
@@ -189,7 +247,7 @@ erDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-07-05</footer>
+  <footer class="site-footer">最終更新: 2026-09-17</footer>
 </div>
 </body>
 </html>

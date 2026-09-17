@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - 作品カード</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / 作品カード</div>
+
+  <header class="site-header">
+    <h1>作品カード</h1>
+    <p>「これまでに置いた量」を数字で振り返るカード。設置の集計（PlacementTally）を含む</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-WORKCARD</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>ワールドに積み上げた投資量（量と時間）を1枚で見せる振り返り画面。建築特化への転換（2026-09-16）における設計の核心「達成感の源泉は危険を越えることではなく、<strong>不可逆な投資が目に見えること</strong>」をそのまま UI にした機能である。カード自体は<strong>何も集計しない</strong>（WorldRecord の列を読むだけで、4つ目の権威を作らない）。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（メニュー → 作品カード）</a></li>
+    <li><a href="../screens/world-select.html">ワールド選択画面（累計設置数バッジ）</a></li>
+  </ul>
+
+  <h2>表示内容</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th><th>データ元</th></tr>
+    <tr><td>ワールド名</td><td>見出しとして表示</td><td>WorldRecord.name</td></tr>
+    <tr><td>これまでに置いたブロック</td><td>累計設置数（大きな数字）</td><td>PlacementTally.total</td></tr>
+    <tr><td>制作日数</td><td>「制作N日目」。初回設置日を1日目とする</td><td>WorldRecord.firstPlacedAt</td></tr>
+    <tr><td>よく使った材料</td><td>種別ごとの設置数の上位3種（色チップ＋名前＋個数）</td><td>PlacementTally.byBlock</td></tr>
+    <tr><td>直近の設置数</td><td>直近14日の日別設置数を棒グラフ表示（最大値で正規化、高さ40pt）。データがある日だけ棒を出す</td><td>PlacementTally.byDay</td></tr>
+  </table>
+  <ul>
+    <li>まだ何も置いていない場合は制作日数・内訳・棒グラフを出さない（累計0のみ）</li>
+    <li>ワールド選択画面の各行には累計設置数バッジ（cube アイコン＋「N個」）を表示し、入らなくても積み上げが見える</li>
+    <li>VoiceOver 向けに「これまでに置いたブロック N個、制作M日目」を1要素にまとめて読み上げる</li>
+  </ul>
+
+  <h2>集計ルール（PlacementTally）</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant Scene as GameSceneView（renderスレッド）
+  participant Tally as PlacementTally（値型ミラー）
+  participant Input as GameInput
+  participant Store as WorldRecord
+
+  U->>Scene: ブロックを設置
+  Scene->>Tally: apply(block:delta:+1, day: epochDay, now:)
+  Tally-->>Scene: total / byBlock / byDay / firstPlacedAt を更新
+  Scene->>Input: メインスレッドへ tally をミラー
+  Input-->>U: 目標6の進捗・作品カードへ反映
+  Scene->>Store: 定期保存で placedBlockCount 等へ書き戻し
+  </div>
+
+  <table>
+    <tr><th>ルール</th><th>内容</th></tr>
+    <tr><td>加算</td><td>プレイヤーが設置したときに +1。クリエイティブでも数える</td></tr>
+    <tr><td>減算</td><td><strong>1手アンドゥで設置を取り消したときのみ</strong> -1。通常の破壊では減らない（「これまでに置いた」量なので壊しても消えない）</td></tr>
+    <tr><td>アンドゥの日付</td><td>「取り消した日」ではなく<strong>元の操作をした日</strong>の枠から引く。日をまたいでアンドゥしても sum(byDay) == total を保つため</td></tr>
+    <tr><td>不変条件</td><td>sum(byBlock.values) == total かつ sum(byDay.values) == total。これを守るため更新経路は <code>apply(block:delta:day:now:)</code> の1つに限定する（countPlacedBlock / undoLastEdit の2箇所だけが呼ぶ）</td></tr>
+    <tr><td>権威</td><td>権威は byBlock（内訳）。<code>WorldRecord.placedBlockCount</code> は目標6が毎フレーム読むための非正規化キャッシュ</td></tr>
+    <tr><td>初回設置日</td><td>delta &gt; 0 のとき firstPlacedAt が nil なら現在時刻を記録する（以後変えない）</td></tr>
+    <tr><td>保持期間</td><td>日別は直近730日（約2年）分までを保存し、それより古い日は保存時に切り捨てる</td></tr>
+  </table>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td><a href="objectives.html">目標ガイド（VG-FEAT-OBJECTIVES）</a></td><td>目標6「自由に建てる」の進捗</td><td>tally.total と objectiveBuildTarget=100 を比較する</td></tr>
+    <tr><td><a href="building-assist.html">建築支援操作（VG-FEAT-BUILD-ASSIST）</a></td><td>1手アンドゥによる減算</td><td>設置の取り消しのみが tally を減らす</td></tr>
+    <tr><td>WorldRecord（SwiftData）</td><td>累計・内訳・日別・初回設置日の永続化</td><td>詳細は<a href="../data-model.html">データモデル</a></td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>旧セーブで total と内訳の合計が食い違う</td><td>復元専用イニシャライザは total を独立して受け取り、復元時点の値をそのまま信用する（一致チェックはしない）</td></tr>
+    <tr><td>日別データの epochDay が UInt16 の範囲外</td><td>その日はエンコード対象から除外する</td></tr>
+    <tr><td>累計が 65535 を超える</td><td>直列化時に 65535 でクランプする（内訳・日別とも UInt16）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>PlacementTally</code> は SceneKit 非依存の純粋値型で、シミュレーターなしで単体テストできる（PlacementTallyTests）</li>
+    <li>epochDay は 2026-01-01 00:00:00 UTC 起点の経過日数。タイムゾーン変更・サマータイムで日付境界が動かないよう UTC 固定にしている</li>
+    <li>カードは <code>GameInput.tally</code>（メインスレッドのミラー）と WorldRecord を読むだけで、自前の集計を持たない</li>
+    <li>カード本体は ScrollView + AdaptiveMaxHeight(standard: 320) でラップし、最大文字サイズでも全項目へ到達できる</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../data-model.html">データモデル（WorldRecord / PlacementTally）</a></li>
+    <li><a href="objectives.html">目標ガイド</a></li>
+    <li><a href="building-assist.html">建築支援操作</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-17</td><td>初版作成。建築特化への転換で追加した作品カードと設置の集計（PlacementTally）を記載</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-09-17</footer>
+</div>
+</body>
+</html>

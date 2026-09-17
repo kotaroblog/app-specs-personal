@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - 目標ガイド</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / 目標ガイド</div>
+
+  <header class="site-header">
+    <h1>目標ガイド</h1>
+    <p>「素材を集めて建てる」までを最短で通すための6段階ガイド</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-OBJECTIVES</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>ゲームプレイ画面の上部に「いま何をすればよいか」を1件だけ表示する進行ガイド。2026-09-16 の建築特化への転換で、サバイバル型の16段階（終着点はダイヤの剣と討伐）から<strong>建築特化の6段階</strong>へ作り直した。終着点は「実際に積んだ量」（設置ブロック数100個）で、危険を越えたことではなく<strong>不可逆な投資（量と時間）が目に見えること</strong>を達成感の源泉に置く設計に合わせている。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+  </ul>
+
+  <h2>6段階の定義</h2>
+  <table>
+    <tr><th>順</th><th>タイトル</th><th>達成条件</th><th>進捗表示</th><th>操作ヒント / 場所ヒント</th></tr>
+    <tr><td>1</td><td>木を集める</td><td>木を5個所持</td><td>所持数 / 5</td><td>木に近づいて画面を押し続ける（赤い「壊す」でも可）／ 木のある平原・森へ</td></tr>
+    <tr><td>2</td><td>石を集める</td><td>石を10個所持</td><td>所持数 / 10</td><td>足元を数マス掘り、灰色の石を「壊す」／ 地面を掘り下げる</td></tr>
+    <tr><td>3</td><td>石のツルハシを作る</td><td>stonePickaxe が解放済み</td><td>10 / 10（固定）</td><td>左上「クラフト」→石のツルハシ</td></tr>
+    <tr><td>4</td><td>かまどを作る</td><td>かまど所持 or 設置履歴あり</td><td>石の所持数 / 8</td><td>石を8集め「クラフト」→かまど→地面に設置</td></tr>
+    <tr><td>5</td><td>ガラスを作る</td><td>ガラス精錬履歴あり（hasSmeltedGlass）</td><td>なし（バーを出さない）</td><td>かまどに照準を合わせてタップ→砂を精錬。窓や明かり取りに使える／ 砂は砂漠・浜辺で採れる</td></tr>
+    <tr><td>6</td><td>自由に建てる</td><td>累計設置ブロック数 ≥ 100（objectiveBuildTarget）</td><td>累計設置数 / 100</td><td>集めた材料で好きなものを建てる。壊せば材料は戻る／ 見晴らしのいい場所へ</td></tr>
+  </table>
+  <div class="callout">
+    100 は「小屋が1軒建つ」量の目安（壁1面 5×3＝15 ブロック × 四方＋屋根・床で 100 前後）。🔴 M1（2026-10末）で実際に建てて実測し、快く終えられる量に調整する。
+  </div>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+stateDiagram-v2
+  [*] --> 目標1: 石のツルハシ未解放・木&lt;5・石&lt;10
+  目標1 --> 目標2: 木を5個集めた（または石を掘り始めた）
+  目標2 --> 目標3: 石を10個集めた
+  目標3 --> 目標4: 石のツルハシを解放
+  目標4 --> 目標5: かまどを所持または設置
+  目標5 --> 目標6: 砂をガラスへ精錬
+  目標6 --> 達成: 累計設置 100 個
+  達成 --> [*]: ガイド非表示（hasCompletedAllObjectives）
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>判定は「ツール解放状態」と「永続フラグ（設置・精錬の履歴）」を第一キーにした if の連なりで行い、厳密なステートマシンにはしない。採掘中に素材を持ち直す等の<strong>揺り戻しは許容</strong>する</li>
+    <li>かまど（設置で所持数0に戻る）とガラス（精錬後に消費し得る）は所持数だと巻き戻るため、<code>hasPlacedFurnace</code> / <code>hasSmeltedGlass</code> の履歴フラグで判定する</li>
+    <li>表示は常に1件。全6段階を達成すると nil になりガイド自体が消える（<code>hasCompletedAllObjectives</code> で達成トーストは一度だけ）</li>
+    <li>クリエイティブモード中は非表示（目標はサバイバル側の導線）</li>
+    <li>達成チャイムは order が<strong>増えたときだけ</strong>鳴らす（揺り戻しでは鳴らさない）</li>
+    <li>達成時は上部中央に <code>GoalBanner</code>（「目標達成！ 次は『○○』」＋操作ヒント）を数秒表示する</li>
+    <li>レビュー依頼は目標6へ進んだ瞬間に端末ごと一度だけ要求する（チャイム・バナーと重ならないよう約2秒置いてから。実際に表示するかは StoreKit 側が判断する）。ワールド再開時の初回表示（直前の order が nil）は達成ではないため出さない</li>
+  </ul>
+
+  <h3>表示形式</h3>
+  <table>
+    <tr><th>状態</th><th>表示</th></tr>
+    <tr><td>展開（既定）</td><td>アイコン＋タイトル＋進捗数＋進捗バー（136×6pt）＋操作ヒント＋場所ヒント</td></tr>
+    <tr><td>折りたたみ</td><td>アイコン＋進捗数のみの小チップ（情報量を最小化）</td></tr>
+    <tr><td>一時展開</td><td>目標が進んだ直後に<strong>6秒だけ</strong>自動展開。畳んでいる人にも「次に何をどうするか」を一度は見せる。ユーザーの畳んだ設定自体は書き換えない</td></tr>
+  </table>
+  <ul>
+    <li>既定は展開（初見ではアイコンだけでは何をすべきか読めないため）。畳んだ選択は UserDefaults キー <code>voxel_objectiveExpanded</code> に記憶する</li>
+    <li>一時展開中に折りたたみ操作をした場合は、まず一時展開だけを解除する（見えている状態と操作結果を一致させる）</li>
+    <li>一時展開には世代トークンを持たせ、目標が連続で進んだとき古い自動折りたたみが新しい展開を消さないようにする</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>GameInput.inventory / unlockedTools</td><td>目標1〜4の進捗判定</td><td>所持数・解放ツールを参照するのみ</td></tr>
+    <tr><td>WorldRecord.hasPlacedFurnace / hasSmeltedGlass</td><td>目標4・5の巻き戻り防止</td><td>一度 true になったら戻らない</td></tr>
+    <tr><td><a href="work-card.html">作品カード（VG-FEAT-WORKCARD）</a></td><td>目標6の進捗＝累計設置ブロック数</td><td>権威は PlacementTally。ガイドはキャッシュ値 <code>tally.total</code> を読むだけ</td></tr>
+    <tr><td>StoreKit（requestReview）</td><td>目標6到達時のレビュー依頼</td><td>端末ごと一度だけ要求する</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>素材を消費して所持数が条件未満に戻る</td><td>揺り戻しとして許容し、達成チャイムは鳴らさない（order 増加時のみ発火）</td></tr>
+    <tr><td>目標が連続で2段進む</td><td>一時展開の世代トークンで後発の展開を優先する</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>目標の算出は ContentView の <code>currentObjective</code>（computed property）。毎フレームではなく SwiftUI の再評価タイミングで計算される</li>
+    <li>しきい値 <code>objectiveBuildTarget = 100</code> は GameObjectives.swift のトップレベル定数で一元管理する</li>
+    <li>🔴 P3（2027-01〜02）で「最初の設計図」を5段目へ差し込み、6段目を設計図の完成に置き換える計画がコード側コメントに記載されている（現時点では未実装）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+    <li><a href="work-card.html">作品カード</a></li>
+    <li><a href="crafting.html">クラフト</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-17</td><td>初版作成。建築特化への転換（2026-09-16）で6段階に作り直した目標ガイドを、ゲームプレイ画面仕様書から機能仕様書として独立させた</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-09-17</footer>
+</div>
+</body>
+</html>

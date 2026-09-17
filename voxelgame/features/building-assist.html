@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - 建築支援操作</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / 建築支援操作</div>
+
+  <header class="site-header">
+    <h1>建築支援操作</h1>
+    <p>設置プレビュー（ゴースト）・スポイト・1手アンドゥ・視点パッドの3分岐・ホットバー構成</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-BUILD-ASSIST</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>建築では1手ごとの位置合わせが作業のほぼ全てになる。そのため「置く前に結果を見せる」「見えているブロックを指して選ぶ」「置き間違いを1手戻す」の3つを揃え、右親指1本で採掘・設置・視点を捌けるようにジェスチャーを整理した。いずれも建築特化への転換（2026-09-16〜09-17）で追加した操作である。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+  </ul>
+
+  <h2>設置プレビュー（ゴースト）</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>表示</td><td>「いま置いたらどこに出るか」を一辺0.98の半透明立方体で先に見せる。深度バッファの読み書きをせず常に手前へ描画する（枠線ハイライトと同じ扱い）</td></tr>
+    <tr><td>色</td><td>置ける場所は<strong>選択中ブロックの色</strong>、置けない場所は<strong>赤</strong></td></tr>
+    <tr><td>非表示条件</td><td>選択中が設置不可アイテム／サバイバルで所持数0／チェスト・かまど・ベッドを狙っている（タップが「開く」になるため）</td></tr>
+    <tr><td>判定の共通化</td><td>置ける／置けないの判定は実際の設置処理と同じ判定を使い、プレビューと結果が食い違わないようにする</td></tr>
+  </table>
+  <p>枠線ハイライトだけでは「どのブロックを狙っているか」しか分からず、置いた結果がどの面に出るかは指で隠れて読めない。押す前に結果と可否が分かることで、積み直しの手戻りを減らす。</p>
+
+  <h2>スポイト</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>起動</td><td>ホットバー直下の独立したスポイトボタン（eyedropper）。左利き配置時は左寄せ</td></tr>
+    <tr><td>動作</td><td>照準先のブロックをそのまま選択中ブロックに取り込む。軽い触覚フィードバックと「○○を選んだ」トースト</td></tr>
+    <tr><td>拒否1</td><td>設置できないブロック（水・溶岩・成熟小麦など）は「それは選べません」</td></tr>
+    <tr><td>拒否2</td><td>サバイバルで所持数0のときは「○○は持っていません」（選べてもゴーストが出ず「選んだのに何も起きない」状態になるため、理由を言ってから選択しない）</td></tr>
+  </table>
+  <p>クリエイティブでは設置しても在庫が減らず所持数が増えないため、所持数で絞る所持品シートだけでは地形素材（草・砂・雪・木・葉 等）を選べない期間があった。「見えているものを指して選ぶ」が、画面を増やさずにこの穴を塞ぐ最短経路になっている（所持品シートのクリエイティブ全ブロック表示と併用）。</p>
+  <p>ボタン配置をホットバー内でも操作クラスタ内でもなく独立行にしているのは、ホットバーに入れると可視幅370ptのうち52ptを食って固定枠が1つ減り、操作クラスタに足すと5つ目のボタンとして誤爆源になるため。</p>
+
+  <h2>1手アンドゥ</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>深さ</td><td>1手のみ（履歴を積まない。履歴化は保存形式とメモリに波及するため）</td></tr>
+    <tr><td>対象</td><td>直前の「設置」または「破壊」。実行すると履歴は空になる</td></tr>
+    <tr><td>対象外</td><td>チェスト・かまど・ベッドなど付随状態（中身／履歴フラグ）を持つもの</td></tr>
+    <tr><td>松明</td><td>光源ノードを伴うため removeTorch / placeTorch を経由して戻す（setBlock だけだとノードが孤立する・光源が復元されない）</td></tr>
+    <tr><td>在庫</td><td>設置の取り消しでは材料を1個返し、破壊の取り消しでは材料を1個消費する（クリエイティブでは増減しない）</td></tr>
+    <tr><td>集計</td><td>設置の取り消しのみ <a href="work-card.html">PlacementTally</a> を -1。日付は「元々設置した日」から引く</td></tr>
+    <tr><td>ボタン活性</td><td>戻せる操作がある間だけ有効（GameInput.canUndo）。位置は「壊す」の左</td></tr>
+  </table>
+  <h3>戻せない条件と文言</h3>
+  <table>
+    <tr><th>条件</th><th>表示</th></tr>
+    <tr><td>履歴なし／置いたものが既に掘られている／掘った跡が既に埋まっている</td><td>「戻せる操作がありません」</td></tr>
+    <tr><td>破壊を取り消したいが材料が足りない</td><td>「○○が足りず戻せない」</td></tr>
+    <tr><td>対象チャンクがアンロード済み（離れすぎている）</td><td>「その場所から離れすぎていて戻せません」。書き込めたことを確認してから在庫を減らすため、材料だけ消える不具合は起きない</td></tr>
+  </table>
+
+  <h2>視点パッドの3分岐操作</h2>
+  <p>画面右58%の視点パッド上の1本指ジェスチャーを、状態機械で「視点ドラッグ」「押し続けて壊す」「タップで置く・使う」に判別する。SwiftUI にも SceneKit にも依存しない純粋ロジックで、シミュレーターなしで単体テストできる（LookPadGestureTests）。</p>
+  <div class="mermaid">
+stateDiagram-v2
+  [*] --> idle
+  idle --> pending: 指が触れた（移動量は溜めるだけ）
+  pending --> looking: 12pt（moveSlop）を超えて移動
+  pending --> breaking: 0.22秒（holdDelay）押し続け
+  pending --> idle: それ以前に離した → タップ（置く・使う）
+  looking --> idle: 指を離す（採掘へは移らない）
+  breaking --> idle: 指を離す → 採掘終了
+  </div>
+  <table>
+    <tr><th>閾値</th><th>値</th><th>根拠</th></tr>
+    <tr><td>moveSlop</td><td>12pt</td><td>UILongPressGestureRecognizer の allowableMovement（10pt）をわずかに上回る。親指の転がりを拾わず、HIG の最小タップ領域44ptよりは十分小さい</td></tr>
+    <tr><td>holdDelay</td><td>0.22秒</td><td>意図的なスワイプは50〜80msで動き始めるため220msの静止は「押し続け」と断定できる。離散操作の遅延知覚（250ms）とシステムの touch and hold（0.5秒）のいずれとも衝突しない</td></tr>
+  </table>
+  <ul>
+    <li>判定保留中の移動量は視点へ反映せず内部に溜める。<strong>タップではカメラが1ミリも動かない</strong>ため、チェスト・かまど・ベッドを狙ってタップするのが確実に成立する</li>
+    <li>ドラッグに確定した瞬間に溜めた移動量をまとめて反映するので、先頭に死に領域ができず1:1の追従感を保つ</li>
+    <li>採掘に確定した後も移動は視点へ反映し、狙いながら掘れる</li>
+    <li>いったん視点ドラッグに確定したジェスチャーは、途中で指を止めても採掘へは移らない（暴発防止）</li>
+  </ul>
+
+  <h2>ホットバー（5枠）</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>固定枠</td><td>石 / 板材 / 石レンガ / ガラス / 松明 の5枠</td></tr>
+    <tr><td>追加枠</td><td>固定枠外を選んでいる間だけ、区切り線の右に選択中ブロックの枠を出す（タップで所持品シートを開く）</td></tr>
+    <tr><td>所持品ボタン</td><td>右端に常設（44pt）</td></tr>
+    <tr><td>枠数の根拠</td><td>390pt 端末では可視幅370pt。1枠44pt＋間隔6＋所持品44 で5枠=294pt、追加枠（区切り5＋間隔12＋枠44＝61）込みで355pt に収まる。6枠にすると405ptで溢れ横スクロールが常態化する（旧8枠は追加枠なしでも444ptで既に溢れていた）</td></tr>
+    <tr><td>選定方針</td><td>「スポイトで拾えないもの」を優先。地形素材は世界に転がっていてスポイトで拾えるため固定枠に置かない。🔴 M1（2026-10末）で実際に建てて決め直す</td></tr>
+  </table>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td><a href="work-card.html">作品カード（VG-FEAT-WORKCARD）</a></td><td>設置・アンドゥの集計反映</td><td>設置 +1／設置の取り消し -1</td></tr>
+    <tr><td><a href="creative.html">クリエイティブモード（VG-FEAT-CREATIVE）</a></td><td>在庫チェックの回避・全ブロック選択</td><td>ゴースト・スポイト・アンドゥとも在庫条件を外す</td></tr>
+    <tr><td><a href="mining.html">採掘演出（VG-FEAT-MINING）</a></td><td>押し続け判定からの採掘開始・終了</td><td>ひび割れ・破片パーティクルは採掘演出側</td></tr>
+    <tr><td>セッション統計（内部計測）</td><td>スポイト回数・アンドゥ回数・所持品シートを開いた回数など</td><td>ワールドには保存せず、退出時に Logger へ1行出力するのみ（ユーザー向け機能ではない）</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>アンドゥ対象のチャンクが未読み込み</td><td>書き込み結果を検証し、失敗したら在庫を減らさずトーストで通知する</td></tr>
+    <tr><td>選択中ブロックが設置不可・在庫切れ</td><td>ゴーストを出さない（押しても何も起きない状態を見た目で先に伝える）</td></tr>
+    <tr><td>VoiceOver で長押しができない</td><td>「壊す」ボタンは1回目で採掘開始・2回目で停止するトグル方式に切り替わる</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>ゴースト・ハイライトは SCNNode を使い回し、毎フレームのマテリアル差し替えを避けるため直近の選択ブロックを記憶して差分時のみ更新する</li>
+    <li>アンドゥ履歴（LastEdit）は enum で <code>placed(x,y,z,block,day)</code> / <code>broke(x,y,z,block,day)</code> の2ケースのみ保持する</li>
+    <li>スポイト・アンドゥの要求は GameInput の requestXxx / consumeXxx パターンでレンダースレッドへ渡す</li>
+    <li>視点パッドの状態機械 <code>LookPadGestureMachine</code> は Equatable な値型で、Effect（beginBreaking / endBreaking / use）と lookDelta を返すだけに徹する</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+    <li><a href="work-card.html">作品カード</a></li>
+    <li><a href="objectives.html">目標ガイド</a></li>
+    <li><a href="mining.html">採掘演出</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-17</td><td>初版作成。設置プレビュー・スポイト・1手アンドゥ・視点パッド3分岐・ホットバー5枠を記載</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-09-17</footer>
+</div>
+</body>
+</html>

@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>VoxelGame - クリエイティブモード</title>
+<title>CraftFrontier - クリエイティブモード</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">VoxelGame</a> / クリエイティブモード</div>
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / クリエイティブモード</div>
 
   <header class="site-header">
     <h1>クリエイティブモード</h1>
-    <p>フライ・無限ブロック・無敵を有効にしてワールドを自由に建築・探索できるモード</p>
+    <p>飛行・無限ブロック・全ブロック選択でワールドを自由に建築できるモード</p>
     <div style="margin-top:8px;">
       <span class="tag">機能ID: VG-FEAT-CREATIVE</span>
     </div>
   </header>
 
   <h2>概要</h2>
-  <p>クリエイティブモードはサバイバルシステムをすべて無効化し、自由な建築・探索に特化したモードである。HUD の切り替えボタンでサバイバルと随時トグルできる。</p>
+  <p>素材の採取を挟まずに建てることへ特化したモード。メニューの「モード」行から確認ダイアログを挟んでサバイバルと随時トグルできる。建築特化への転換で体力・空腹・ダメージが無くなったため、両モードの差は<strong>飛行・在庫消費・採掘速度・ブロック選択肢・目標ガイドの表示</strong>に整理された。</p>
 
   <h2>関連画面</h2>
   <ul>
@@ -29,61 +29,75 @@
 
   <h2>ビジネスルール</h2>
 
-  <h3>クリエイティブモード時に有効になる挙動</h3>
+  <h3>クリエイティブ時に変わる挙動</h3>
   <table>
     <tr><th>項目</th><th>動作</th></tr>
-    <tr><td>HUD 表示</td><td>HP バー・空腹バーを非表示にし「∞」を表示</td></tr>
-    <tr><td>重力</td><td>無効（プレイヤーが空中に浮遊できる）</td></tr>
-    <tr><td>フライ</td><td>有効。ジャンプボタン長押しで上昇、離すと停止</td></tr>
-    <tr><td>ブロック破壊速度</td><td>0.05 秒（即時に近い）</td></tr>
+    <tr><td>HUD 表示</td><td>天気アイコンの隣に「∞」を表示する</td></tr>
+    <tr><td>重力</td><td>無効（飛行状態になる）</td></tr>
+    <tr><td>昇降</td><td>ジャンプボタンを<strong>上下ドラッグ化</strong>し、上へ引けば上昇・下へ引けば降下する（6 m/s、死点6pt）。クリエイティブ中はジャンプ要求を無視する</td></tr>
+    <tr><td>高度のクランプ</td><td>Y を <strong>0〜63</strong> にクランプする。落下死・リスポーンが無くなったため、下限が無いと世界の下へ抜けて復帰手段が無いまま詰む。上限は世界の高さ（64）に合わせ、昇りすぎて迷子になるのを防ぐ</td></tr>
+    <tr><td>ブロック破壊速度</td><td>0.05 秒（ブロック種別・ツールに関わらず一定）</td></tr>
     <tr><td>ブロック設置</td><td>所持数を消費しない（無限インベントリ）</td></tr>
-    <tr><td>ダメージ</td><td>HP・空腹ダメージ・落下ダメージ・モブダメージ・溶岩ダメージすべて無効</td></tr>
+    <tr><td>所持品シート</td><td><strong>設置可能な全ブロックを表示</strong>し、個数は出さない（設置しても在庫が減らないため所持数で絞ると地形素材を選べない）。並び順は建材 → 地形 → 鉱石 → 設備・装飾</td></tr>
+    <tr><td>スポイト・ゴースト</td><td>在庫の有無を問わず有効（サバイバルでは所持数0だと選択・プレビューを拒否する）</td></tr>
+    <tr><td>クラフト</td><td>所持数チェックを回避するため素材が0でもクラフトできる</td></tr>
+    <tr><td>目標ガイド</td><td>非表示（進行導線はサバイバル側の機能のため）</td></tr>
   </table>
 
-  <h3>クリエイティブモード時に変わらない挙動</h3>
+  <h3>クリエイティブ時も変わらない挙動</h3>
   <ul>
-    <li>ブロックの設置・破壊・インベントリ確認は可能</li>
-    <li>チャンクのロード・アンロードは通常通り動作する</li>
-    <li>モブは存在するが、ゾンビもプレイヤーを攻撃しない（将来対応。現状は攻撃するが HP が減らない）</li>
-    <li>ベッド・チェスト・かまどは操作可能</li>
-    <li>天気・時間変更は可能</li>
+    <li>チャンクのロード・アンロード、昼夜サイクル、天候の変化</li>
+    <li>チェスト・かまど・ベッドの操作</li>
+    <li>動物の徘徊（もともとプレイヤーと相互作用しない景観要素）</li>
+    <li>設置の集計（作品カードの累計にはクリエイティブでの設置も数える）</li>
+    <li>1手アンドゥ（在庫の増減だけが行われない）</li>
   </ul>
 
   <h3>モード切り替え</h3>
   <ul>
-    <li>HUD 右上の切り替えボタンでサバイバル / クリエイティブをいつでもトグルできる</li>
-    <li>クリエイティブ → サバイバルへの切り替え時、hp=20・hunger=20 でリセットする（不利な状態でサバイバルに戻ることを防ぐ）</li>
-    <li>切り替えは即時反映（アニメーションなし）</li>
+    <li>メニュー → 「モード」行 → 確認ダイアログで切り替える（誤タップの影響が大きいためワンクッション置く）</li>
+    <li>切り替えは即時反映し、トーストで現在のモードを伝える</li>
+    <li>ダイアログの文言はサバイバル方向が「素材を集めて作る必要があります」、クリエイティブ方向が「飛行・無敵・資源無限になります」</li>
   </ul>
 
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
-    <tr><td>GameInput.isCreativeMode</td><td>モードフラグ。全システムから参照される</td><td>@Observable のため変更が UI・ゲームループに即時伝播</td></tr>
-    <tr><td>サバイバルシステム（VG-FEAT-SURVIVAL）</td><td>isCreativeMode=true の場合は全処理をスキップ</td><td></td></tr>
-    <tr><td>クラフト（VG-FEAT-CRAFTING）</td><td>isCreativeMode=true 時は素材消費なし</td><td>現状は消費あり、将来修正予定</td></tr>
+    <tr><td>GameInput.isCreative</td><td>モードフラグ。全システムから参照される</td><td>@Published＋レンダースレッド用ミラー（stateLock 保護）</td></tr>
+    <tr><td><a href="building-assist.html">建築支援操作（VG-FEAT-BUILD-ASSIST）</a></td><td>在庫チェックの回避</td><td>ゴースト・スポイト・アンドゥの分岐</td></tr>
+    <tr><td><a href="crafting.html">クラフト（VG-FEAT-CRAFTING）</a></td><td>採掘時間 0.05 秒の一元管理・素材消費の回避</td><td></td></tr>
   </table>
 
   <h2>エラー処理</h2>
   <table>
     <tr><th>発生条件</th><th>対応</th></tr>
-    <tr><td>モード切り替え後に重力フラグが残留してプレイヤーが落下しない</td><td>モード切り替え時に Player.velocity.y = 0 でリセットする</td></tr>
+    <tr><td>降下し続けて世界の下へ抜ける</td><td>Y を 0 でクランプする</td></tr>
+    <tr><td>サバイバルへ戻した直後に空中にいる</td><td>重力が戻り通常の落下を行う（落下ダメージは廃止済みのため不利益はない）</td></tr>
   </table>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li>ゲームループ内で isCreativeMode を参照し、物理演算の重力適用を条件分岐で切り替える</li>
-    <li>フライ上昇速度は通常ジャンプ（5 m/s）と同等の上向き速度を velocity.y に毎フレーム加算する</li>
-    <li>クリエイティブ時の採掘時間は MiningConfig.creativeMiningTime = 0.05 として一元管理する</li>
+    <li>レンダーループで isCreative のミラーを参照し、player.fly と昇降入力の適用を分岐する</li>
+    <li>昇降は velocity ではなく position.y を直接クランプ付きで更新する（6 m/s × dt）</li>
+    <li>クリエイティブ時の採掘時間は miningDuration の先頭で 0.05 を返す形で一元管理する</li>
+    <li>所持品シートの全ブロック表示は isPlaceable のみを条件にし、手動の並び順に入れ忘れたブロックも末尾に拾う</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="building-assist.html">建築支援操作</a></li>
+    <li><a href="work-card.html">作品カード</a></li>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
   </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
+    <tr><td>2.0</td><td>2026-09-17</td><td>建築特化への転換を反映する全面改訂。HP・空腹・ダメージ無効の記述を削除し、昇降の上下ドラッグ化とY0〜63クランプ・所持品シートの全ブロック表示（地形素材を選べなかった欠陥の修正）・スポイト/ゴーストの在庫条件回避・モード切替の確認ダイアログを追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-27</footer>
+  <footer class="site-footer">最終更新: 2026-09-17</footer>
 </div>
 </body>
 </html>

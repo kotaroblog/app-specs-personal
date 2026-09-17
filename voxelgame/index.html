@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>VoxelGame - Specs</title>
+<title>CraftFrontier - Specs</title>
 <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
@@ -12,26 +12,30 @@
   <div class="breadcrumb"><a href="../">← Felix App Specs</a></div>
 
   <header class="site-header">
-    <h1>VoxelGame</h1>
-    <p>Swift 6 / SwiftUI / SceneKit 製の レトロボクセル・サバイバルゲーム · Bundle ID: 未定</p>
+    <h1>CraftFrontier</h1>
+    <p>Swift 6 / SwiftUI / SceneKit 製の レトロボクセル・<strong>建築</strong>ゲーム（旧称 VoxelGame） · Bundle ID: 未定</p>
   </header>
 
   <h2>概要</h2>
+  <p>素材を集め、自分の作品を建てるためのボクセルゲーム。2026-09-16 に<strong>サバイバル型から建築特化へ全面転換</strong>し、戦闘・体力・空腹・死亡を廃止した。「自分の作品・アートを作る」という作り手の動機と、サバイバル実装（戦闘・生存）の方向がズレていたためである。設計の核心は「<strong>達成感の源泉は危険を越えることではなく、不可逆な投資（量と時間）が目に見えること</strong>」（Fable 5.1、2026-09-16）で、目標ガイドの終着点も作品カードの表示も「これまでに置いた量」に置き換えている。</p>
   <ul class="kv-list">
-    <li><span class="k">カテゴリ</span><span class="v">ゲーム / アドベンチャー</span></li>
+    <li><span class="k">カテゴリ</span><span class="v">ゲーム / シミュレーション（建築）</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語</span></li>
     <li><span class="k">マネタイズ</span><span class="v">未定</span></li>
-    <li><span class="k">ステータス</span><span class="v">開発中</span></li>
+    <li><span class="k">ステータス</span><span class="v">開発中（M1 判定ゲートは 2026-10末）</span></li>
     <li><span class="k">リリース予定</span><span class="v">未定</span></li>
-    <li><span class="k">技術スタック</span><span class="v">Swift 6 / SwiftUI / SceneKit / GameplayKit / SwiftData</span></li>
+    <li><span class="k">技術スタック</span><span class="v">Swift 6 / SwiftUI / SceneKit / SwiftData</span></li>
   </ul>
+  <div class="callout warn">
+    本ポータルの内容は<strong>2026-09-17 時点の実装</strong>を反映したもの。P2 以降（階段・ハーフブロック等）で機能・画面構成が変わる見込みがあるため、将来の拡張予定は原則として書かない。
+  </div>
 
   <h2>全体仕様書</h2>
   <div class="card-grid">
     <a class="card" href="data-model.html">
       <div class="title">データモデル</div>
-      <div class="desc">SwiftData モデル・ゲーム内データ構造</div>
+      <div class="desc">SwiftData モデル・Block 一覧・設置の集計・スキーマ版管理</div>
     </a>
   </div>
 
@@ -51,19 +55,24 @@
 
   <h2>機能仕様書</h2>
   <div class="card-grid">
-    <a class="card" href="features/terrain.html">
-      <div class="title">地形生成</div>
-      <div class="desc">Perlin ノイズによるバイオーム・チャンク生成</div>
-      <div class="meta"><span class="tag">VG-FEAT-TERRAIN</span></div>
+    <a class="card" href="features/objectives.html">
+      <div class="title">目標ガイド</div>
+      <div class="desc">建築特化の6段階ガイド（終着点は設置100個）</div>
+      <div class="meta"><span class="tag">VG-FEAT-OBJECTIVES</span></div>
     </a>
-    <a class="card" href="features/survival.html">
-      <div class="title">サバイバルシステム</div>
-      <div class="desc">HP・空腹・死亡・食料・ベッド</div>
-      <div class="meta"><span class="tag">VG-FEAT-SURVIVAL</span></div>
+    <a class="card" href="features/building-assist.html">
+      <div class="title">建築支援操作</div>
+      <div class="desc">設置プレビュー・スポイト・1手アンドゥ・視点パッド3分岐</div>
+      <div class="meta"><span class="tag">VG-FEAT-BUILD-ASSIST</span></div>
+    </a>
+    <a class="card" href="features/work-card.html">
+      <div class="title">作品カード</div>
+      <div class="desc">これまでに置いた量の振り返りと設置の集計</div>
+      <div class="meta"><span class="tag">VG-FEAT-WORKCARD</span></div>
     </a>
     <a class="card" href="features/crafting.html">
       <div class="title">クラフト</div>
-      <div class="desc">ツールレシピ・採掘速度テーブル</div>
+      <div class="desc">ツール・建材レシピ・精錬・採掘速度テーブル</div>
       <div class="meta"><span class="tag">VG-FEAT-CRAFTING</span></div>
     </a>
     <a class="card" href="features/mining.html">
@@ -73,18 +82,33 @@
     </a>
     <a class="card" href="features/creative.html">
       <div class="title">クリエイティブモード</div>
-      <div class="desc">フライ・無限ブロック・無敵</div>
+      <div class="desc">飛行・無限ブロック・全ブロック選択</div>
       <div class="meta"><span class="tag">VG-FEAT-CREATIVE</span></div>
     </a>
-    <a class="card" href="features/mob-ai.html">
-      <div class="title">モブ AI</div>
-      <div class="desc">パッシブ・ゾンビの行動ロジック</div>
-      <div class="meta"><span class="tag">VG-FEAT-MOBAI</span></div>
+    <a class="card" href="features/terrain.html">
+      <div class="title">地形生成</div>
+      <div class="desc">Perlin ノイズによるバイオーム・チャンク生成</div>
+      <div class="meta"><span class="tag">VG-FEAT-TERRAIN</span></div>
     </a>
     <a class="card" href="features/graphics.html">
       <div class="title">グラフィック設定</div>
-      <div class="desc">画質プリセット・昼夜サイクル</div>
+      <div class="desc">画質プリセット・視点と画角・昼夜サイクル・実験的設定</div>
       <div class="meta"><span class="tag">VG-FEAT-GRAPHICS</span></div>
+    </a>
+    <a class="card" href="features/mob-ai.html">
+      <div class="title">動物（景観モブ）</div>
+      <div class="desc">鶏・牛・豚の徘徊。殴れない・壊せない景観要素</div>
+      <div class="meta"><span class="tag">VG-FEAT-MOBAI</span></div>
+    </a>
+  </div>
+
+  <h2>廃止済み仕様（参考）</h2>
+  <p>転換前の仕組みで、現在は実装に存在しない。経緯を追うためだけに残している。</p>
+  <div class="card-grid">
+    <a class="card" href="features/survival.html">
+      <div class="title">サバイバルシステム（廃止済み）</div>
+      <div class="desc">体力・空腹・ダメージ・死亡・食料。2026-09-16 に削除</div>
+      <div class="meta"><span class="tag warn">廃止済み</span></div>
     </a>
   </div>
 
@@ -97,9 +121,10 @@
     <tr><td>1.3</td><td>2026-07-05</td><td>クラフト（v2.0）・地形生成（v2.0）を実装に合わせて全面改訂</td></tr>
     <tr><td>1.4</td><td>2026-07-05</td><td>グラフィック設定（v2.0）・モブAI（v2.0）を実装に合わせて全面改訂</td></tr>
     <tr><td>1.5</td><td>2026-07-05</td><td>ワールド選択（v2.0）・ゲームプレイ（v2.0）を実装に合わせて全面改訂。全仕様書ファイルの実装乖離解消が完了</td></tr>
+    <tr><td>2.0</td><td>2026-09-17</td><td>建築特化への転換（2026-09-16）を反映する全面改訂。アプリ名を CraftFrontier に統一し概要を建築特化へ更新。目標ガイド・建築支援操作・作品カードの3本を新設、モブAIを「動物（景観モブ）」へ書き換え、サバイバルシステムを廃止済みとして機能一覧から分離。データモデル（v3.0）・クラフト（v3.0）・グラフィック設定（v3.0）・ゲームプレイ（v3.0）・クリエイティブ（v2.0）・ワールド選択（v2.1）を同時更新</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-05</footer>
+  <footer class="site-footer">最終更新: 2026-09-17</footer>
 </div>
 </body>
 </html>

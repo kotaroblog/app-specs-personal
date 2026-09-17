@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>VoxelGame - クラフト</title>
+<title>CraftFrontier - クラフト</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">VoxelGame</a> / クラフト</div>
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / クラフト</div>
 
   <header class="site-header">
     <h1>クラフト</h1>
@@ -21,7 +21,7 @@
   </header>
 
   <h2>概要</h2>
-  <p>クラフトは素材を即時消費する2系統に分かれる。<strong>ツールレシピ</strong>はアイテム化せず「解放フラグ（Set&lt;Tool&gt;への追加）」を得る方式で、耐久値・重複所持・喪失の概念がない。<strong>アイテムレシピ</strong>は素材からブロック（アイテム）を生成する。精錬（かまど）は時間ゼロの即時変換で、作業台等の設置物クラフトには時間経過が一切ない。</p>
+  <p>クラフトは素材を即時消費する2系統に分かれる。<strong>ツールレシピ</strong>はアイテム化せず「解放フラグ（Set&lt;Tool&gt;への追加）」を得る方式で、耐久値・重複所持・喪失の概念がない。<strong>アイテムレシピ</strong>は素材からブロック（アイテム）を生成する。精錬（かまど）は時間ゼロの即時変換で、作業台等の設置物クラフトには時間経過が一切ない。2026-09-16 の建築特化への転換で、<strong>戦闘用（剣）と食料（パン・金のリンゴ）のレシピを削除し、代わりに見た目を作り分けるための建材レシピを足した</strong>。</p>
 
   <h2>関連画面</h2>
   <ul>
@@ -51,28 +51,41 @@ sequenceDiagram
 
   <h2>ツールレシピ一覧（素材消費 → Tool を解放）</h2>
   <table>
-    <tr><th>ツール</th><th>必要素材</th><th>攻撃力</th><th>採掘ティア</th></tr>
-    <tr><td>woodPickaxe（木のツルハシ）</td><td>初期解放（レシピなし）</td><td>5</td><td>1</td></tr>
-    <tr><td>stonePickaxe（石のツルハシ）</td><td>石 10個</td><td>5</td><td>2</td></tr>
-    <tr><td>ironPickaxe（鉄のツルハシ）</td><td>鉄インゴット 5個</td><td>5</td><td>3</td></tr>
-    <tr><td>diamondPickaxe（ダイヤのツルハシ）</td><td>ダイヤ鉱石 5個</td><td>5</td><td>4</td></tr>
-    <tr><td>woodSword（木の剣）</td><td>木 5個</td><td>8</td><td>0</td></tr>
-    <tr><td>ironSword（鉄の剣）</td><td>鉄インゴット 3個</td><td>12</td><td>0</td></tr>
-    <tr><td>diamondSword（ダイヤの剣）</td><td>ダイヤ鉱石 3個</td><td>20</td><td>0</td></tr>
+    <tr><th>ツール</th><th>必要素材</th><th>採掘ティア</th></tr>
+    <tr><td>hand（素手）</td><td>初期解放（レシピなし）</td><td>0</td></tr>
+    <tr><td>woodPickaxe（木のツルハシ）</td><td>初期解放（レシピなし）</td><td>1</td></tr>
+    <tr><td>stonePickaxe（石のツルハシ）</td><td>石 10個</td><td>2</td></tr>
+    <tr><td>ironPickaxe（鉄のツルハシ）</td><td>鉄インゴット 5個</td><td>3</td></tr>
+    <tr><td>diamondPickaxe（ダイヤのツルハシ）</td><td>ダイヤ鉱石 5個</td><td>4</td></tr>
   </table>
-  <p>鉄のツルハシは<strong>鉄鉱石ではなく鉄インゴットを要求</strong>する。これにより「鉄鉱石を採掘 → かまどで精錬（石炭消費）→ 鉄インゴットでクラフト」という精錬・燃料消費を必ず経由する進行になる。剣は採掘ティア0（素手と同格）に固定し、剣による高速採掘の抜け道を防いでいる。</p>
+  <p>鉄のツルハシは<strong>鉄鉱石ではなく鉄インゴットを要求</strong>する。これにより「鉄鉱石を採掘 → かまどで精錬（石炭消費）→ 鉄インゴットでクラフト」という精錬・燃料消費を必ず経由する進行になる。</p>
+  <div class="callout warn">
+    <strong>剣（木/鉄/ダイヤ）は 2026-09-16 の建築特化への転換で全廃した。</strong>攻撃対象（敵対モブ）が無くなり、攻撃力というパラメータ自体が存在しない。ツール進行は<strong>掘削速度の差</strong>としてのみ残る。
+  </div>
 
   <h2>アイテムレシピ一覧（素材消費 → ブロック/アイテムを生成）</h2>
   <table>
-    <tr><th>アイテム</th><th>必要素材</th><th>生成数</th></tr>
-    <tr><td>ベッド</td><td>木 3個</td><td>1</td></tr>
-    <tr><td>かまど</td><td>石 8個</td><td>1</td></tr>
-    <tr><td>松明</td><td>木 1個 + 石炭 1個</td><td>4</td></tr>
-    <tr><td>チェスト</td><td>木 8個</td><td>1</td></tr>
-    <tr><td>パン</td><td>小麦 3個</td><td>1</td></tr>
-    <tr><td>金のリンゴ</td><td>金インゴット 2個 + 小麦 1個</td><td>1</td></tr>
+    <tr><th>アイテム</th><th>必要素材</th><th>生成数</th><th>区分</th></tr>
+    <tr><td>ベッド</td><td>木 3個</td><td>1</td><td>設備</td></tr>
+    <tr><td>かまど</td><td>石 8個</td><td>1</td><td>設備</td></tr>
+    <tr><td>松明</td><td>木 1個 + 石炭 1個</td><td>4</td><td>設備（光源）</td></tr>
+    <tr><td>チェスト</td><td>木 8個</td><td>1</td><td>設備</td></tr>
+    <tr><td>石レンガ</td><td>石 4個</td><td>4</td><td>建材（2026-09-16 追加）</td></tr>
+    <tr><td>磨き石</td><td>石 2個</td><td>2</td><td>建材（2026-09-16 追加）</td></tr>
+    <tr><td>板材</td><td>木 1個</td><td>4</td><td>建材（2026-09-16 追加）</td></tr>
+    <tr><td>金ブロック</td><td>金インゴット 4個</td><td>1</td><td>建材（2026-09-17 追加）</td></tr>
   </table>
-  <p>パンは小麦の消費先を作るため、金のリンゴは金インゴットのデッドエンド（採って精錬しても使い道がなかった）を解消するために追加された。</p>
+  <p>建材3種（石レンガ・磨き石・板材）は、見た目を作り分けられないと「箱」しか建たないため、石と木からの派生として追加した。石レンガは壁・床の主役、磨き石はのっぺりした面で窓枠や縁取り、板材は木造の壁・床を想定する。</p>
+  <p>金ブロックは<strong>金インゴットの出口</strong>。旧・金のリンゴが唯一の消費先だったため、その削除で金鉱石→精錬まで進める動機が無いデッドエンドになっていた。4個で1個という高コストな比率にし、「高コストな建材＝目に見える投資」という設計の核心に乗せている（Fable 5.1、2026-09-17）。</p>
+
+  <h3>廃止されたレシピ</h3>
+  <table>
+    <tr><th>レシピ</th><th>状態</th><th>理由</th></tr>
+    <tr><td>パン（小麦3個 → 1個）</td><td>削除</td><td>食料と満腹度の仕組みごと廃止したため（<a href="survival.html">サバイバルシステム（廃止済み）</a>）</td></tr>
+    <tr><td>金のリンゴ（金インゴット2＋小麦1）</td><td>削除</td><td>同上。消費先としての役割は金ブロックが引き継いだ</td></tr>
+    <tr><td>剣3種（木/鉄/ダイヤ）</td><td>削除</td><td>攻撃対象が無くなったため</td></tr>
+    <tr><td>松明（木1＋石炭1 → 4個）</td><td><strong>存続</strong></td><td>夜間の建築に必要な光源。ホットバー固定枠にも入っている</td></tr>
+  </table>
 
   <h2>かまど精錬レシピ一覧</h2>
   <table>
@@ -85,7 +98,7 @@ sequenceDiagram
   <p>燃料は石炭のみで木材は燃料にならない。かまどは設置済みブロックをタップして開き、所持していなくてもワールドに1つあれば精錬可能。</p>
 
   <h2>採掘速度テーブル（秒）</h2>
-  <p>採掘は「不可」ではなく「採掘ティア（tool.miningTier）による時間の段階的短縮」で表現される。tier: 素手/剣=0、木Pick=1、石Pick=2、鉄Pick=3、ダイヤPick=4。どのブロックも理論上は素手で時間をかければ掘れる（溶岩を除く）。</p>
+  <p>採掘は「不可」ではなく「採掘ティア（tool.miningTier）による時間の段階的短縮」で表現される。tier: 素手=0、木Pick=1、石Pick=2、鉄Pick=3、ダイヤPick=4。どのブロックも理論上は素手で時間をかければ掘れる（溶岩を除く）。剣が廃止されたいま、ツールの違いは<strong>掘削速度だけ</strong>に集約されている。</p>
   <table>
     <tr><th>ブロック分類</th><th>tier 0</th><th>tier 1</th><th>tier 2</th><th>tier 3</th><th>tier 4</th></tr>
     <tr><td>dirt/sand/grass/leaves/snow/water/cactus/torch/farmland/wheat/植生3種</td><td>0.3s（tier不問固定）</td><td>0.3s</td><td>0.3s</td><td>0.3s</td><td>0.3s</td></tr>
@@ -100,7 +113,7 @@ sequenceDiagram
 
   <h2>ビジネスルール</h2>
   <ul>
-    <li>ツールは「アイテム」ではなく <code>Set&lt;Tool&gt;</code> への解放フラグ。耐久値・重複所持・死亡時の喪失は無い（死亡時のインベントリ半減はブロック/アイテムのみが対象）</li>
+    <li>ツールは「アイテム」ではなく <code>Set&lt;Tool&gt;</code> への解放フラグ。耐久値・重複所持は無い（死亡そのものが無くなったため、死亡時の喪失という概念も存在しない）</li>
     <li>木のツルハシのみクラフト不要で最初から解放済み（<code>unlockedTools</code> の初期値）</li>
     <li>同じツールを重複クラフトする概念自体が存在しない（解放済みツールは選択画面から除外される）</li>
     <li>クリエイティブモード時はクラフトUIの操作自体は可能。所持数チェックが回避されるため素材が0でもクラフト可能</li>
@@ -112,7 +125,8 @@ sequenceDiagram
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
     <tr><td>GameInput.inventory</td><td>素材の確認・消費</td><td>クラフト・精錬実行時に参照・更新する</td></tr>
     <tr><td>GameInput.unlockedTools</td><td>ツール解放状態の管理</td><td><code>Set&lt;Tool&gt;</code> へ追加。WorldRecord.unlockedToolsData に永続化</td></tr>
-    <tr><td>目標ガイド（screens/gameplay.html）</td><td>松明クラフト・ガラス精錬・金のリンゴクラフトの達成判定</td><td>WorldRecord の hasCraftedTorch 等のフラグ</td></tr>
+    <tr><td><a href="objectives.html">目標ガイド（VG-FEAT-OBJECTIVES）</a></td><td>石のツルハシ解放・かまど設置・ガラス精錬の達成判定</td><td>unlockedTools と WorldRecord の hasPlacedFurnace / hasSmeltedGlass</td></tr>
+    <tr><td><a href="building-assist.html">建築支援操作（VG-FEAT-BUILD-ASSIST）</a></td><td>建材の選択・設置</td><td>ホットバー固定枠は石・板材・石レンガ・ガラス・松明</td></tr>
   </table>
 
   <h2>エラー処理</h2>
@@ -126,6 +140,7 @@ sequenceDiagram
     <li>レシピはコード内ハードコード配列（Recipe/ItemRecipe/SmeltRecipe）で、データファイル分離はしていない</li>
     <li>採掘進行度は breakTargetX/Y/Z（シングルターゲット）+ breakProgress で管理し、レンダーループで deltaTime を積算する</li>
     <li>破壊されたブロックのアイテムドロップは breakBlock 内で inventory[block] += 1 相当の加算を行う（松明・チェスト・農作物は個別のドロップロジック）</li>
+    <li>所持品シートのクリエイティブ表示は建材 → 地形 → 鉱石 → 設備・装飾の手動順で並べる。rawValue 順にすると後から足した建材（石レンガ34・磨き石35・板材36・金ブロック37）が末尾へ落ちて見つけにくいため</li>
     <li>設置可否は「植生・小麦・松明ではない、かつ rendersAsBlock」の単一ゲートで判定する</li>
   </ul>
 
@@ -134,6 +149,7 @@ sequenceDiagram
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
     <tr><td>2.0</td><td>2026-07-05</td><td>実装との大幅な乖離を解消する全面改訂。ツール解放レシピ・アイテムレシピ4種・精錬レシピ4種・採掘速度テーブルを実装どおりに修正</td></tr>
+    <tr><td>3.0</td><td>2026-09-17</td><td>建築特化への転換を反映。剣3種・パン・金のリンゴのレシピを削除し、建材レシピ4種（石レンガ・磨き石・板材・金ブロック）を追加。攻撃力列を廃止してツール進行を掘削速度差のみに整理。目標ガイドの連携先を6段階版へ差し替え</td></tr>
   </table>
 
   <script>
@@ -143,7 +159,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-07-05</footer>
+  <footer class="site-footer">最終更新: 2026-09-17</footer>
 </div>
 </body>
 </html>
