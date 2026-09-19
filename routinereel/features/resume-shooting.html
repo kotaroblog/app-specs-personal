@@ -95,6 +95,7 @@ sequenceDiagram
   <ul class="kv-list">
     <li><span class="k">変更理由</span><span class="v">続き撮影では既存ステップのクリップも動画に含めたい。プレビュー直行では既存クリップが自動で含まれない</span></li>
     <li><span class="k">自動選択</span><span class="v">今回の続き撮影で追加されたクリップが ClipGenerateView で自動選択済み状態になる（全ステップ完了扱いで全クリップが揃う場合は全件自動選択）</span></li>
+    <li><span class="k">前回以前のクリップの扱い</span><span class="v"><code>unshotSteps</code> は「クリップが1本もないステップ」を残りとみなすため、<strong>前回以前に撮ったステップは撮影済み扱いのまま残り、その古いクリップが自動選択されたままになる</strong>。ClipGenerateView 側で <code>Routine.isStaleClip(_:)</code> により該当クリップをオレンジ強調＋件数警告で明示する（8aa8afc）。自動選択の挙動そのものは変えていない（気づける状態にするに留める）。詳細は <a href="../screens/clip-library.html">クリップライブラリ</a></span></li>
   </ul>
 
   <h2>ビジネスルール</h2>
@@ -102,6 +103,7 @@ sequenceDiagram
     <li><strong>部分撮影中の判定は常に最新</strong> — <code>Routine.isPartiallyShot</code> は computed property のためスナップショットを持たない。クリップの削除・追加が即時反映される</li>
     <li><strong>「最初から撮り直す」は既存クリップを削除しない</strong> — 新たな連続撮影を開始するが、既存クリップは明示的に削除しない（ユーザーがクリップライブラリで確認・削除できる）</li>
     <li><strong>全ステップ未撮影 or 全完了の場合は従来どおり</strong> — <code>isPartiallyShot == false</code> の場合、「続きから撮る」UI は表示されず従来の「全ステップを連続で撮影」CTA を表示する</li>
+    <li><strong>撮影済み判定に日付は含まない</strong> — <code>unshotSteps</code> / <code>isPartiallyShot</code> は「クリップの有無」のみで判定し、いつ撮ったかは見ない。撮影日の新旧は <code>Routine.latestClipDay</code> / <code>Routine.isStaleClip(_:)</code> という別の判定軸で扱い、素材選択画面の表示にのみ使う（撮影対象の決定には影響しない）</li>
     <li><strong>判定対象はホームでは先頭ルーティンのみ</strong> — ホームの「撮影の続き」カードは先頭ルーティン（<code>routines.first</code>）に限定する。複数の部分撮影中ルーティンへの対応は今後の課題</li>
   </ul>
 
@@ -130,6 +132,7 @@ sequenceDiagram
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.1</td><td>2026-09-19</td><td>8aa8afc 反映: unshotSteps が「クリップの有無」のみで撮影済みを判定するため、前回以前に撮ったステップの古いクリップが ClipGenerateView で自動選択されたまま残る点を明文化。撮影日の新旧は Routine.latestClipDay / isStaleClip(_:) という別軸で扱い、素材選択画面の表示にのみ使う（撮影対象の決定には影響しない）ことをビジネスルールに追記</td></tr>
     <tr><td>1.0</td><td>2026-07-11</td><td>初版作成。v1.2 での続きから撮る導線の仕様を記載</td></tr>
   </table>
 
@@ -140,7 +143,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-07-11</footer>
+  <footer class="site-footer">最終更新: 2026-09-19</footer>
 </div>
 </body>
 </html>

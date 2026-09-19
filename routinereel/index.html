@@ -80,7 +80,8 @@
     </a>
     <a class="card" href="screens/clip-library.html">
       <div class="title">クリップライブラリ（ClipLibraryView）</div>
-      <div class="desc">ステップ別クリップ管理・状況別主CTA 1択集約（ClipLibraryCTA.resolvePrimary）</div>
+      <div class="desc">ステップ別クリップ管理・状況別主CTA 1択集約（ClipLibraryCTA.resolvePrimary）・素材選択の前回以前クリップ明示 / サムネ直トリム</div>
+      <div class="meta"><span class="tag">2026-09-19</span></div>
     </a>
     <a class="card" href="screens/preview.html">
       <div class="title">プレビュー・書き出し（PreviewView）</div>
@@ -167,6 +168,7 @@
       <tr><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
+      <tr><td>2026-09-19</td><td><strong>素材選択画面（ClipGenerateView）の改善反映（8aa8afc）</strong>: 既存2ファイル更新（<a href="screens/clip-library.html">screens/clip-library.html</a> v2.0・<a href="features/resume-shooting.html">features/resume-shooting.html</a> v1.1）。<strong>前回以前のクリップの明示</strong>: <code>Routine.latestClipDay</code> / <code>Routine.isStaleClip(_:)</code> を追加し、最終撮影日と別の日に撮られた素材の撮影日テキストをオレンジ強調（11pt semibold）＋選択状況カード末尾に「前回以前に撮ったクリップが N 件選ばれています。」の警告を表示。判定は「今日かどうか」ではなく「最後に撮った日と同じ日か」（前日撮影→翌日仕上げを誤検出しないため）。<strong>自動選択の挙動そのものは変更しておらず、混入を防ぐのではなく気づける状態にしただけ</strong>。<strong>サムネからの直接トリム</strong>: 選択中クリップのサムネ左上に scissors ボタン（見た目26pt・タップ領域44pt / Button 入れ子を避け ZStack 横並び）を追加し ClipPlayerView をシート表示。プレビュー→ライブラリの往復を除去（合成の再生成待ちは未解消）</td></tr>
       <tr><td>2026-08-23</td><td><strong>広告基盤を Unity LevelPlay に統一</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: <code>isAdDeliveryAvailable</code>（<code>isProduction</code> を含む）でガードしていたため、sandbox 環境で実行される審査ビルドでは ATT が表示されず、2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed でリジェクトされた。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を明記。 <a href="features/ad-control.html">features/ad-control.html</a>・<a href="features/onboarding-flow.html">features/onboarding-flow.html</a> を更新</td></tr>
       <tr><td>2026-08-20</td><td><strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）: 機能仕様書 <a href="features/ad-control.html">features/ad-control.html</a> を新規作成し、広告の表示条件（バナー / 書き出し完了後のインタースティシャル・1日1回・初回スキップ / リワードは実装のみで導線なし）と再発防止設計を集約。onboarding-flow.html の ATT 記述を LevelPlay ベースへ更新。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない</td></tr>
       <tr><td>2026-07-24</td><td><strong>撮影・書き出しUX改善バッチ反映（acf8f50 / abba1b0 / f7bb7b0）</strong>: 新規1ファイル（features/export-save-flow.html）作成。既存5ファイル更新（shooting / preview / video-composition / sns-share-flow / index）。<strong>撮影UI（acf8f50）</strong>: カメラ準備状態 <code>SetupState</code>（idle/preparing/ready/permissionDenied/failed）+ 準備中オーバーレイ・起動失敗時の再試行導線 / 進捗ドットを色＋形状（撮影済み=塗り／スキップ済み=アウトライン）で区別（純粋関数 ShootingProgress・ShootingStepStatus）/ 録画ボタン付近の状態説明テキスト / トップバーに現在のステップ名を主表示 / マイク権限拒否の非遮断バナー / カメラ反転の連打防止。<strong>完成動画（abba1b0）</strong>: 全画面アウトロカード（QR等）廃止→無料版は左上ウォーターマークのみ / 冒頭にルーティン名タイトルテロップ（0〜1.2秒）/ ステップ名・時刻を各クリップ冒頭のみ最大2.4秒に短縮 / テロップタイミングを純粋計算 OverlayTiming に分離 / プレビュー画面タイトル「プレビュー」→「仕上がりを確認」/ 総時間・クリップ数表示 / 音声トグルを肯定形化＋「音声なしで書き出す」の実挙動修正（音声トラック実除去）/ プリセットのステップ名を映像で分かりやすい表現に変更。<strong>保存先UX（f7bb7b0）</strong>: 保存先（ExportDestination）× 工程（ExportOperation）の状態管理で進捗文言を正しく出し分け / 保存失敗時の再試行を失敗した保存先だけに限定 / 戻る操作を BackAction で分岐（保存中は戻る無効化）/ アプリ内保存後の選択肢提示・ExportCompleteView からの仕上がり画面復帰で順序依存解消 / SNSボタン文言を「TikTokを開く」「Instagramを開く」に変更 / VideoSaving プロトコル新設</td></tr>
@@ -186,7 +188,7 @@
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-23</footer>
+  <footer class="site-footer">最終更新: 2026-09-19</footer>
 </div>
 </body>
 </html>

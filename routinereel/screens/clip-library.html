@@ -205,13 +205,51 @@
     <li><span class="k">ボタン</span><span class="v">「閉じる」（role: .destructive）/ 「キャンセル」</span></li>
   </ul>
 
+  <h2>ClipGenerateView: 前回以前に撮ったクリップの明示（v2.0 / 8aa8afc）</h2>
+  <p><code>Routine.unshotSteps</code> は「クリップが1本もないステップ」を残りとみなすため、前回撮ったステップは撮影済み扱いのまま残り、<code>ClipGenerateView.initializeSelections()</code> の自動選択でも前回のクリップが選ばれたままになる。これに気づかず合成すると、別の日に撮った素材が混ざった動画ができてしまう。素材選択画面でそれを判別できるようにした。</p>
+  <ul class="kv-list">
+    <li><span class="k"><code>Routine.latestClipDay</code></span><span class="v">このルーティンで最後に撮影した日（カレンダー日）。<code>clips.map(\.recordedAt).max()</code> を <code>Calendar.current.startOfDay(for:)</code> で丸めた値。クリップが1本も無ければ <code>nil</code></span></li>
+    <li><span class="k"><code>Routine.isStaleClip(_:)</code></span><span class="v">最終撮影日と<strong>別の日</strong>に撮られたクリップなら <code>true</code>（＝前回以前の素材）。<code>latestClipDay == nil</code> のときは <code>false</code></span></li>
+    <li><span class="k">判定基準（重要）</span><span class="v">🔴 <strong>「今日かどうか」ではなく「最後に撮った日と同じ日か」で判定する。</strong>前日に撮って翌日に仕上げる作り方を誤検出しないため</span></li>
+    <li><span class="k">判定の単一情報源</span><span class="v"><code>Routine.isStaleClip(_:)</code> のみ。View 側は独自の日付判定ロジックを持たない（<code>Routine.unshotSteps</code> / <code>isPartiallyShot</code> と同じ方針）</span></li>
+  </ul>
+  <p>素材選択画面の表示は以下のとおり。</p>
+  <table>
+    <thead>
+      <tr><th>箇所</th><th>通常（最終撮影日と同じ日）</th><th>前回以前（isStaleClip == true）</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>サムネ下の撮影日テキスト</td><td>10pt light / <code>designsTertiaryText</code></td><td><strong>11pt semibold / <code>designsAccentOrange</code></strong></td></tr>
+      <tr><td>VoiceOver ラベル</td><td>「10月4日」（日付のみ）</td><td>「前回以前の撮影: 10月4日」</td></tr>
+    </tbody>
+  </table>
+  <ul class="kv-list">
+    <li><span class="k">選択状況カードの警告</span><span class="v">前回以前の素材が<strong>1件以上選ばれている場合だけ</strong>、選択状況カード（selectionStatusCard）の末尾に警告三角アイコン（<code>exclamationmark.triangle.fill</code> 12pt / accentOrange）＋「<strong>前回以前に撮ったクリップが N 件選ばれています。日付を確かめてください。</strong>」（12pt medium / primaryText）を表示。0件なら行ごと非表示</span></li>
+    <li><span class="k">N の計算</span><span class="v">選択中のクリップ（<code>selections</code> の値）のうち <code>routine.isStaleClip(_:)</code> が <code>true</code> のものの件数（<code>staleSelectionCount</code>）</span></li>
+    <li><span class="k">🔴 自動選択の挙動</span><span class="v"><strong>変更していない。</strong>前回以前のクリップは従来どおり自動選択され得る。本仕様は混入を<strong>防ぐ</strong>ものではなく、ユーザーが<strong>気づける状態にした</strong>だけである（選び直すかどうかはユーザーの判断に委ねる）</span></li>
+    <li><span class="k">関連</span><span class="v"><a href="../features/resume-shooting.html">続きから撮る導線</a>（<code>unshotSteps</code> の定義と自動選択の仕様）</span></li>
+  </ul>
+
+  <h2>ClipGenerateView: サムネから直接トリム編集を開く（v2.0 / 8aa8afc）</h2>
+  <p>従来は1本トリムするだけでもプレビューまで進んでからライブラリ画面へ戻る往復が必要で、最低7タップかかっていた。素材選択画面から直接 <code>ClipPlayerView</code> を開けるようにして往復を除去した。</p>
+  <ul class="kv-list">
+    <li><span class="k">トリムボタン</span><span class="v">選択中のクリップのサムネ<strong>左上</strong>に <code>scissors</code> アイコン（13pt semibold / primaryText）を白丸背景＋<code>designsCardShadow</code> で表示。<code>offset(x: -9, y: -9)</code> でサムネ角にかける</span></li>
+    <li><span class="k">表示条件</span><span class="v"><strong>選択中のクリップのみ</strong>。未選択のクリップにはトリムボタンを出さない</span></li>
+    <li><span class="k">タップ動作</span><span class="v"><code>editingClip</code> にクリップをセット → <code>.sheet(item:)</code> で <code>ClipPlayerView(clip:storage:)</code> をシート表示</span></li>
+    <li><span class="k">タップ領域</span><span class="v"><strong>見た目 26pt・タップ領域 44pt</strong>（26pt の circle の外側に 44pt の frame を重ね <code>.contentShape(Rectangle())</code> で拡張）。既存の「ClipPlayerView トリムハンドル 44pt 化（v1.1.0）」と同じ方針</span></li>
+    <li><span class="k">🔴 実装上の注意</span><span class="v"><strong>Button の入れ子はタップが親に吸われるため、選択トグルのボタンとトリムボタンは <code>ZStack(alignment: .topLeading)</code> で横並びに配置している</strong>（トリムボタンを選択ボタンの overlay に入れてはいけない）</span></li>
+    <li><span class="k">VoiceOver</span><span class="v">「[ステップ名]のクリップをトリムする」。選択トグル側のラベル（「選択中: …」/「…のクリップを選ぶ」）とは独立した要素として読み上げられる</span></li>
+    <li><span class="k">🔴 解消していない点</span><span class="v"><strong>合成の再生成待ちそのものは解消していない。</strong>トリム後に動画を作り直す必要はある（短縮したのは「トリム画面にたどり着くまでの往復」のみ）</span></li>
+    <li><span class="k">関連</span><span class="v">本ページ「ClipPlayerView トリムハンドルタップ領域 44pt 化（v1.1.0）」</span></li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table>
     <thead>
       <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     </thead>
     <tbody>
-      <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。warm white背景、撮影Capsuleボタン化、サムネ拡大、「動画を作る」CTA を Home CTA 統一スタイルへ</td></tr>
+      <tr><td>v2.0</td><td>2026-09-19</td><td>8aa8afc 反映: Routine.latestClipDay / Routine.isStaleClip(_:) を追加し、素材選択画面（ClipGenerateView）で前回以前に撮ったクリップを判別できるようにした。判定は「今日かどうか」ではなく「最後に撮った日と同じ日か」（前日撮影→翌日仕上げを誤検出しないため）。該当クリップの撮影日テキストを 11pt semibold / accentOrange に切り替え、選択状況カード末尾に「前回以前に撮ったクリップが N 件選ばれています。日付を確かめてください。」の警告を追加（VoiceOver ラベルも出し分け）。自動選択の挙動そのものは変更しておらず、混入を防ぐのではなく気づける状態にしただけ。あわせて選択中サムネ左上に scissors のトリムボタン（見た目26pt・タップ領域44pt / ZStack 横並び配置）を追加し、ClipPlayerView をシートで直接開けるようにした（プレビュー→ライブラリの往復を除去。合成の再生成待ちは未解消）</td></tr>
       <tr><td>v1.9</td><td>2026-07-15</td><td>build69 反映: 主 CTA を ClipLibraryCTA.resolvePrimary で状況別に 1 択へ集約（クリップ 0 件→「全ステップを撮影」、一部撮影済み→「残り N ステップを撮影」+副「今あるクリップで動画を作る」、全完了→「動画を作る」）。「最初から撮り直す」を右上 … メニューへ退避し「全ステップを撮り直す」に改称（既存クリップは削除せず新規追加。非破壊的操作）</td></tr>
       <tr><td>v1.8</td><td>2026-07-13</td><td>52c8a94 反映: 連続撮影中にスキップ（「後で撮る」）が発生した場合（hasSkippedSteps == true）の着地点が ClipGenerateView になることを明文化。続きから撮る（resumeShooting）完了後と同じ動線に統一。ClipGenerateView スキップ着地時も最新クリップが自動選択済みで表示される</td></tr>
       <tr><td>v1.7</td><td>2026-07-11</td><td>v1.2 反映: 部分撮影中（isPartiallyShot == true）の場合、冒頭の撮影 CTA を「残りのNステップを続けて撮影」（主役）+「最初から撮り直す」（副 CTA）に切り替え（従来の「全ステップを連続で撮影」一択から変更）。続き撮影完了後はプレビュー直行ではなく ClipGenerateView（最新クリップ自動選択済み）に遷移し既存クリップ込みで動画生成できる設計に変更</td></tr>
@@ -221,10 +259,11 @@
       <tr><td>v1.3</td><td>2026-06-30</td><td>v1.1.0 反映 (#3): ShootingStyleTip (TipKit) を画面冒頭に追加（最大3回表示）。オンボーディングから削除した撮影スタイル解説をクリップライブラリで文脈表示に移行</td></tr>
       <tr><td>v1.2</td><td>2026-06-16</td><td>ClipRoutineSelectSheet 追加（596896d）: クリップタブで 2件以上のルーティンがある場合にルーティン選択シートを表示（暗黙の先頭選択を廃止）。ClipGenerateView に選択状況カードを追加: 「選択済み X/Y」+ プログレスバー + 未選択ステップ名 + 生成ボタン文言分岐（全選択 → 「動画を作成する」/ 一部 → 「選択したクリップで作成」）</td></tr>
       <tr><td>v1.1</td><td>2026-06-10</td><td>CreateSessionView 新設で作成セッションを集約（commit 3a32a6c, 2026-06-06）。NavigationStack(path:) + ShootingView 用 fullScreenCover を内包し、ClipGenerate / Preview / ExportComplete をコールバック駆動化。ShootingView 完了時の PreviewView 自動 push 責務も CreateSessionView へ移管。ClipLibrary 冒頭に「全ステップを連続撮影」ボタンを追加</td></tr>
+      <tr><td>v1.0</td><td>2026-05-21</td><td>初版（Home UI統一）。warm white背景、撮影Capsuleボタン化、サムネ拡大、「動画を作る」CTA を Home CTA 統一スタイルへ</td></tr>
     </tbody>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-15</footer>
+  <footer class="site-footer">最終更新: 2026-09-19</footer>
 </div>
 </body>
 </html>
