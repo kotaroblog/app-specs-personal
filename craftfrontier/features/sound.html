@@ -76,13 +76,14 @@ sequenceDiagram
   <table>
     <tr><th>カテゴリ</th><th>対象ブロック</th><th>明るさ（合成音の <code>tone</code>）</th></tr>
     <tr><td>ガラス</td><td>ガラス</td><td>0.24（最も明るい）</td></tr>
-    <tr><td>石</td><td>石・レンガ・鉱石・石材加工物・かまど</td><td rowspan="4" style="vertical-align:middle;">表の並び順に段階的にこもっていく</td></tr>
-    <tr><td>木</td><td>原木・板材・作業台・チェスト・ベッド・松明</td></tr>
-    <tr><td>砂</td><td>砂</td></tr>
-    <tr><td>土・草</td><td>土・草・耕地・キノコ</td></tr>
+    <tr><td>石</td><td>石・レンガ・鉱石・石材加工物・かまど</td><td>0.18</td></tr>
+    <tr><td>木</td><td>原木・板材・作業台・チェスト・ベッド・松明</td><td>0.14</td></tr>
+    <tr><td>砂</td><td>砂</td><td>0.11</td></tr>
+    <tr><td>土・草</td><td>土・草・耕地・キノコ</td><td>0.10</td></tr>
     <tr><td>葉・雪</td><td>葉・雪・花・草・小麦</td><td>0.07（最もこもる）</td></tr>
   </table>
   <p><code>tone</code> は合成音の3段ローパスの係数で、小さいほどこもる。差し替え素材を使う場合は素材そのものの音色が使われる。</p>
+  <p>この順序は「硬い素材ほど明るい」という直感に沿わせたもので、<strong>硬い順に単調でなければならない</strong>（逆転すると葉がガラスより明るい、といった破綻になる）。単調性はテストで固定している。</p>
 
   <div class="callout warn">
     <strong>音量は素材で変えない。</strong>柔らかい素材ほど音を小さくすると、「音色が違う」ではなく単に「聞こえない」になる。素材の違いは音色（明るさ）だけで表現する。
@@ -229,6 +230,7 @@ sequenceDiagram
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-09-26</td><td>効果音システムの初版</td></tr>
+    <tr><td>1.0.1</td><td>2026-09-26</td><td>素材ごとの <code>tone</code> の実値と、硬い順に単調でなければならない制約を追記</td></tr>
   </table>
 
   <script>
