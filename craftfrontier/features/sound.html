@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - 効果音システム</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / 効果音システム</div>
+
+  <header class="site-header">
+    <h1>効果音システム</h1>
+    <p>打撃音・足音・環境音の鳴らし分け、素材差し替え、ピッチ・音量の揃え方、中断からの復帰</p>
+    <div class="section-meta">
+      <span class="tag">機能ID: CF-F05</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>ブロックを壊す・置く、歩く、ジャンプする、クラフトが完了する、といった操作に音を返す。あわせて雨・夜・風・洞窟のループ環境音を鳴らす。</p>
+  <p>音源は <strong>音声ファイル（差し替え素材）とコード生成の合成音の二段構え</strong>で、素材が無いものは合成音で鳴る。素材の音色・音量・ピッチは、素材ごとの録音差がそのままゲーム内の差にならないよう、読み込み時と再生時に揃える。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/S01_game_main.html">ゲームメイン（CF-S01）</a> — 採掘・設置・移動・クラフトなど、効果音の発生源はすべてこの画面にある</li>
+  </ul>
+
+  <h2>1. 音源の決定（合成音と差し替え素材の二段構え）</h2>
+  <p>従来はすべてコードで波形を生成していた（サイン波・ホワイトノイズ・1極ローパス3段）。現在は音声ファイルが置かれていればそれを優先し、無ければ従来の合成音へ倒れる。</p>
+
+  <div class="callout">
+    <strong>なぜ二段構えにするか</strong>：素材が揃ったものから順に差し替えられる。全部そろうまで差し替えを待つ必要がなく、途中の状態でも音が欠けない。
+  </div>
+
+  <h3>探索順</h3>
+  <table>
+    <tr><th>順</th><th>探すもの</th><th>例（石を壊す音）</th></tr>
+    <tr><td>1</td><td>連番つきの素材（複数あればその中からランダムに1本）</td><td><code>break_stone_1</code> 〜 <code>break_stone_4</code></td></tr>
+    <tr><td>2</td><td>番号なしの素材</td><td><code>break_stone</code></td></tr>
+    <tr><td>3</td><td>素材カテゴリを問わない汎用素材</td><td><code>break</code></td></tr>
+    <tr><td>4</td><td>合成音（フォールバック）</td><td>コード生成の波形</td></tr>
+  </table>
+
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>対応拡張子</td><td><code>wav</code> → <code>caf</code> → <code>m4a</code> → <code>mp3</code> の順に探す</td></tr>
+    <tr><td>読み込み時の変換</td><td>44.1kHz ステレオへ変換して保持する。オーディオエンジンがこの形式で接続されているため、他の形式のまま接続できない</td></tr>
+  </table>
+
+  <h3>再生までの流れ</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant G as ゲーム処理
+  participant S as 効果音サービス
+  participant C as 素材キャッシュ
+  participant E as オーディオエンジン
+
+  G->>S: 効果音を要求（種類・素材カテゴリ・距離）
+  S->>C: 素材を探す（連番→番号なし→汎用）
+  alt 素材あり
+    C-->>S: 44.1kHz ステレオへ変換済みのバッファ（RMS 正規化済み）
+  else 素材なし
+    S->>S: 合成音を生成（素材カテゴリの tone を適用）
+  end
+  S->>S: 再生ピッチを微ランダム化（音の種類ごとの幅）
+  S->>E: 空いているプレイヤへ送出（4本のラウンドロビン）
+  E-->>G: 発音
+  </div>
+
+  <h2>2. 素材別の音色（ImpactMaterial）</h2>
+  <p>打撃音（壊す・置く・足音）を6カテゴリで鳴らし分ける。</p>
+  <table>
+    <tr><th>カテゴリ</th><th>対象ブロック</th><th>明るさ（合成音の <code>tone</code>）</th></tr>
+    <tr><td>ガラス</td><td>ガラス</td><td>0.24（最も明るい）</td></tr>
+    <tr><td>石</td><td>石・レンガ・鉱石・石材加工物・かまど</td><td rowspan="4" style="vertical-align:middle;">表の並び順に段階的にこもっていく</td></tr>
+    <tr><td>木</td><td>原木・板材・作業台・チェスト・ベッド・松明</td></tr>
+    <tr><td>砂</td><td>砂</td></tr>
+    <tr><td>土・草</td><td>土・草・耕地・キノコ</td></tr>
+    <tr><td>葉・雪</td><td>葉・雪・花・草・小麦</td><td>0.07（最もこもる）</td></tr>
+  </table>
+  <p><code>tone</code> は合成音の3段ローパスの係数で、小さいほどこもる。差し替え素材を使う場合は素材そのものの音色が使われる。</p>
+
+  <div class="callout warn">
+    <strong>音量は素材で変えない。</strong>柔らかい素材ほど音を小さくすると、「音色が違う」ではなく単に「聞こえない」になる。素材の違いは音色（明るさ）だけで表現する。
+  </div>
+  <div class="callout warn">
+    <strong>ブロック → カテゴリの対応表には <code>default</code> を置かない。</strong>全ケースを列挙しておくと、ブロックを追加したときにコンパイルエラーで気づける。<code>default</code> があると、対応を書き忘れたブロックが黙って石の音で鳴り続ける。
+  </div>
+
+  <h3>足音の素材</h3>
+  <p>現在入っている足音の素材は <strong>土（汎用）・草・石・木・砂・水中</strong> の6種。素材が無いカテゴリは合成音で鳴る。</p>
+
+  <h2>3. 再生ピッチの微ランダム化</h2>
+  <p>同じ音が続いたときの単調さを消すため、鳴らすたびに再生レートをわずかにずらす。</p>
+  <table>
+    <tr><th>音</th><th>レート範囲</th></tr>
+    <tr><td>足音</td><td>±6%</td></tr>
+    <tr><td>壊す・置く</td><td>±5%</td></tr>
+    <tr><td>ジャンプ・着水・水中移動</td><td>±3%</td></tr>
+    <tr><td>クラフト完了・目標達成・精錬・就寝</td><td>1.0 固定</td></tr>
+    <tr><td>モブの鳴き声</td><td>1.0 固定</td></tr>
+  </table>
+
+  <div class="callout">
+    <strong>音程が意味を持つ音は固定する。</strong>クラフト完了や目標達成のような「知らせる音」は音程そのものがサインなので、揺らすと音痴な楽器になる。
+  </div>
+  <div class="callout warn">
+    <strong>ピッチ変更器はプレイヤ1本につき専用に持つ</strong>（効果音プレイヤ4本それぞれに挿入）。共有すると、鳴っている途中の音のピッチまで次の再生で書き換わる。
+  </div>
+  <p>幅の決め方：<strong>鳴る回数の多さで決める</strong>。連打されるものほど広く振らないと単調さが残り、逆に広げすぎると素材ごとの音色の差が埋もれる。</p>
+
+  <h2>4. 音量の正規化</h2>
+  <p>差し替え素材は録音レベルがばらつくため、読み込み時に用途ごとの基準 RMS へ揃える。</p>
+  <table>
+    <tr><th>対象</th><th>基準 RMS</th></tr>
+    <tr><td>壊す</td><td>0.0340</td></tr>
+    <tr><td>置く</td><td>0.0262</td></tr>
+    <tr><td>足音・水中移動</td><td>0.0087</td></tr>
+    <tr><td>モブの鳴き声</td><td>0.045</td></tr>
+    <tr><td>ジャンプ</td><td>0.0197</td></tr>
+    <tr><td>完了・達成を知らせる音</td><td>0.0443</td></tr>
+    <tr><td>ループ環境音</td><td>揃えない（素材ごとの厚みに意味があるため手で合わせる）</td></tr>
+  </table>
+
+  <div class="callout danger">
+    <strong>ピークが 1.0 を超える手前で頭打ちにする。</strong>超えるとクリップして歪む。「音量を揃えたら割れた」は、原因が正規化処理側にあるため後から気づきにくく直しにくい壊れ方になる。
+  </div>
+  <div class="callout warn">
+    <strong>モブの音量は種類で変えない。</strong>遠近は距離減衰（<code>max(0.15, 1 − 距離 / 16)</code>・16m 超は鳴らさない）が表現している。そこへ素材ごとの録音レベルの違いが乗ると「牛だけいつもうるさい」になる。
+  </div>
+
+  <h2>5. 環境音（ループ）</h2>
+  <table>
+    <tr><th>種類</th><th>ON 条件</th></tr>
+    <tr><td>雨</td><td>天候が雨のとき</td></tr>
+    <tr><td>夜</td><td>太陽高度 <code>sunFactor &lt; 0.15</code>。1日10分のうち<strong>約5.5分（55%）</strong>が夜にあたる</td></tr>
+    <tr><td>昼の風</td><td>夜と対で切り替える（昼 ON / 夜 OFF）</td></tr>
+    <tr><td>洞窟</td><td>プレイヤーの <code>y &lt; 24</code></td></tr>
+  </table>
+
+  <div class="callout warn">
+    <strong>ON/OFF の状態は音の管理側が保持する。</strong>中断から復帰したとき、呼び出し元（描画ループ）から見ると状態は変わっていないので鳴らし直しの指示が来ない。音の管理側が「いま何が ON だったか」を覚えていないと、効果音は戻るのに環境音だけ戻らない状態になる。
+  </div>
+  <div class="callout">
+    <strong>ループ素材は先頭と末尾がつながるものを使う。</strong>末尾を先頭へクロスフェードして継ぎ目を消す。
+  </div>
+
+  <h2>6. 中断からの復帰</h2>
+  <div class="callout danger">
+    <strong>オーディオエンジンは一度止まると自力では戻らない。</strong>再生系はすべて「エンジンが動いていること」を前提に始まるので、止まったあとは例外も出さずに<strong>無音のまま</strong>になり、音が出ていないことに気づけない。電話・アラーム・他アプリの再生・イヤホンの抜き差しで実際に起きる。
+  </div>
+
+  <h3>復帰のきっかけと処理</h3>
+  <table>
+    <tr><th>きっかけ</th><th>処理</th></tr>
+    <tr><td>オーディオセッションの割り込み終了</td><td rowspan="3" style="vertical-align:middle;">エンジンが止まっていれば鳴らし直す。ループ環境音も保持していた ON/OFF 状態へ戻す</td></tr>
+    <tr><td>出力先の変更（イヤホンの抜き差しなど）</td></tr>
+    <tr><td>メディアサービスのリセット</td></tr>
+    <tr><td>フォアグラウンド復帰</td><td>同上（同じ復旧処理を通す）</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <strong>フォアグラウンド復帰の通知は View 層で受けて、音の管理側を呼ぶ。</strong>音の管理は画面を知らない層なので、そこへ <code>UIApplication</code>（UIKit）を持ち込まない。依存は View → Service の一方向を保つ。
+  </div>
+
+  <h2>7. 再生の仕組み</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>同時発音</td><td>効果音プレイヤ4本のラウンドロビン</td></tr>
+    <tr><td>スレッド</td><td>再生系はロックで直列化する。描画スレッドと UI スレッドの双方から呼ばれるため</td></tr>
+    <tr><td>足音の間隔</td><td>0.45 秒</td></tr>
+    <tr><td>水中</td><td>足音ではなく水中移動音が鳴る</td></tr>
+    <tr><td>鳥のさえずり</td><td>昼のみ 20〜45 秒ごと</td></tr>
+    <tr><td>モブの鳴き声</td><td>4〜12 秒ごと（16m 以内。16m 超は鳴らさない）</td></tr>
+  </table>
+
+  <h2>8. 音の検証方法</h2>
+  <div class="callout danger">
+    <strong>耳が最も敏感な 2〜4kHz のエネルギーを、同じ音量に揃えてから比較する。</strong>揃えずに比べると「良くなった」のか「音量が上がっただけ」なのかを区別できない。
+  </div>
+  <div class="callout warn">
+    <strong>音量（RMS）は全チャンネルで測る。</strong>左右で波形の違うステレオ素材をモノラル化してから測ると打ち消しが起きて小さく出る。実際にこれで、環境音を +2.2dB 大きいまま入れてしまったことがある。<br>
+    モノラル化してよいのは<strong>周波数の偏りを見るときだけ</strong>。
+  </div>
+  <p>測定スクリプトはアプリのリポジトリ側 <code>tools/</code> に置いている（<code>measure_impact_sound.py</code> / <code>measure_ambient_sound.py</code> / <code>measure_sound_assets.py</code>）。</p>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>素材が無い音は必ず合成音で鳴る。音が欠ける状態を作らない</li>
+    <li>素材の違いは<strong>音色</strong>で表現する。音量では表現しない</li>
+    <li>遠近は距離減衰のみで表現する。素材ごとの録音レベル差を遠近の表現に混ぜない</li>
+    <li>知らせる音（完了・達成）はピッチを固定する</li>
+    <li>音の良し悪しは、音量を揃えた状態で 2〜4kHz のエネルギーを比べて判定する</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>AVAudioEngine</td><td>効果音・環境音の再生</td><td>44.1kHz ステレオで接続。効果音プレイヤ4本＋ループ用</td></tr>
+    <tr><td>AVAudioUnitVarispeed</td><td>再生ピッチの微ランダム化</td><td>効果音プレイヤ1本につき専用に1つ挿入する</td></tr>
+    <tr><td>AVAudioSession</td><td>割り込み・出力先変更・メディアサービスリセットの検知</td><td>いずれもエンジン復旧のきっかけとして購読する</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>差し替え素材が見つからない</td><td>探索順に従って番号なし → 汎用 → 合成音へ倒す。エラー表示はしない</td></tr>
+    <tr><td>素材の読み込み・形式変換に失敗した</td><td>その音は合成音で鳴らす。ゲーム進行は止めない</td></tr>
+    <tr><td>正規化でピークが 1.0 を超える</td><td>1.0 手前で頭打ちにしてクリップを防ぐ</td></tr>
+    <tr><td>割り込み・出力先変更・メディアサービスリセットでエンジンが停止した</td><td>通知を受けて再起動し、ループ環境音を元の ON/OFF 状態へ戻す</td></tr>
+    <tr><td>フォアグラウンド復帰時にエンジンが停止していた</td><td>同上（View 層が通知を受けて音の管理側へ委譲する）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>ブロック → 素材カテゴリの対応に <code>default</code> を書かない（追加漏れをコンパイルエラーで検出するため）</li>
+    <li>ピッチ変更器はプレイヤごとに専用に持つ（共有すると再生中の音のピッチが書き換わる）</li>
+    <li>ループ環境音の ON/OFF 状態は音の管理側で保持する（復帰時に呼び出し元からは再指示が来ない）</li>
+    <li>音の管理側に UIKit を import しない。ライフサイクル通知は View 層で受けて委譲する</li>
+    <li>RMS 測定は全チャンネルで行う。モノラル化は周波数分析のときだけ</li>
+    <li>素材の入手元・ライセンスはアプリのリポジトリ側で管理する（本仕様書には記載しない）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>効果音システムの初版</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-09-26</footer>
+</div>
+</body>
+</html>
