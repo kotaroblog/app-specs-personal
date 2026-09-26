@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - ロギング方針</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">BookSpark</a> / ロギング方針</div>
+
+  <header class="site-header">
+    <h1>ロギング方針</h1>
+    <p>os.log / Logger の subsystem・category と、実在する出力箇所（コミット 17e9969 を grep した結果）</p>
+  </header>
+
+  <h2>基本方針</h2>
+  <div class="callout">
+    <strong><code>print()</code> は禁止</strong>。<code>Logger</code>（os.log）を使用する（CLAUDE.md 準拠）。17e9969 時点でアプリターゲットに <code>print(</code> は 0 件。
+  </div>
+
+  <h2>subsystem と category</h2>
+  <p>subsystem は全箇所で文字列リテラル <code>"com.happyboy1002.BookSpark"</code>（<code>Bundle.main.bundleIdentifier</code> ではない）。
+  共通の <code>extension Logger</code> は持たず、各型が <code>private static let logger</code> を1つずつ持つ。</p>
+  <table>
+    <tr><th>category</th><th>定義している型</th><th>ファイル</th><th>対象</th></tr>
+    <tr><td><code>Notification</code></td><td><code>NotificationService</code></td><td><code>Services/NotificationService.swift</code></td><td>通知許可・通知登録</td></tr>
+    <tr><td><code>StoreKit</code></td><td><code>StoreKitManager</code></td><td><code>Store/StoreKitManager.swift</code></td><td>商品取得・復元</td></tr>
+    <tr><td><code>OCR</code></td><td><code>PhotoPreviewView</code></td><td><code>Views/Camera/PhotoPreviewView.swift</code></td><td>ページ写真の文字認識</td></tr>
+  </table>
+
+  <h2>出力箇所の一覧</h2>
+  <table>
+    <tr><th>category</th><th>レベル</th><th>メッセージ</th><th>条件</th><th>privacy</th></tr>
+    <tr><td>Notification</td><td><code>.error</code></td><td>通知許可の取得に失敗: {error}</td><td><code>requestAuthorization</code> が例外</td><td>.public</td></tr>
+    <tr><td>Notification</td><td><code>.info</code></td><td>通知が拒否されているため登録しません</td><td>期限通知の登録時に許可状態が <code>.denied</code></td><td>—</td></tr>
+    <tr><td>Notification</td><td><code>.error</code></td><td>通知の登録に失敗 ({identifier}): {error}</td><td><code>UNUserNotificationCenter.add</code> が例外</td><td>.public（identifier は <code>action-&lt;UUID&gt;</code> 等で個人情報を含まない）</td></tr>
+    <tr><td>StoreKit</td><td><code>.error</code></td><td>商品取得失敗: {error}</td><td><code>Product.products(for:)</code> が例外</td><td>指定なし（既定 = 非公開扱い）</td></tr>
+    <tr><td>StoreKit</td><td><code>.error</code></td><td>復元失敗: {error}</td><td><code>AppStore.sync()</code> が例外</td><td>指定なし（既定 = 非公開扱い）</td></tr>
+    <tr><td>OCR</td><td><code>.info</code></td><td>OCR に失敗: {error}</td><td><code>OCRService.performOCR</code> が例外</td><td>.public</td></tr>
+  </table>
+  <div class="callout warn">
+    StoreKit の2行は補間値に <code>privacy:</code> を付けていないため、実機で Xcode を繋いでいない状態の Console.app ではエラー内容が <code>&lt;private&gt;</code> と表示される。原因調査が必要になったら <code>.public</code> を付けるか、デバッガ接続下で見る。
+  </div>
+
+  <h2>ログを出していない失敗（17e9969 時点）</h2>
+  <p>次の失敗は画面表示のみ、または表示もログも無い。追加するなら category を増やさず上記3つか、新たに <code>Data</code> / <code>Network</code> を切る。</p>
+  <table>
+    <tr><th>失敗</th><th>現状</th></tr>
+    <tr><td>Google Books の書誌取得失敗</td><td>画面表示のみ（<a href="error-design.html">BS-ERR-003</a>）</td></tr>
+    <tr><td>カレンダー登録の失敗</td><td>画面表示のみ（BS-ERR-011）</td></tr>
+    <tr><td>購入の失敗・承認待ち・結果不明</td><td>画面表示のみ（BS-ERR-012〜015）</td></tr>
+    <tr><td>SwiftData の保存失敗</td><td>表示・ログともに無し（BS-ERR-024）</td></tr>
+  </table>
+
+  <h2>ログレベルの使い分け（このアプリで実際に使っているもの）</h2>
+  <table>
+    <tr><th>レベル</th><th>用途</th><th>例</th></tr>
+    <tr><td><code>.info</code></td><td>想定内で、利用者の操作は止めない</td><td>OCR 失敗・通知拒否による登録スキップ</td></tr>
+    <tr><td><code>.error</code></td><td>API が例外を返した</td><td>通知許可・通知登録・商品取得・復元の失敗</td></tr>
+  </table>
+  <p><code>.debug</code> / <code>.notice</code> / <code>.fault</code> は使っていない。</p>
+
+  <h2>プライバシー対応</h2>
+  <div class="callout warn">
+    本のタイトル・メモ本文・アクション文言・OCR テキストは<strong>ログに出さない</strong>（現状どの行も出していない）。
+    通知の本文にはアクション文言が入るが、ログには通知 ID（UUID）しか出さない。
+  </div>
+
+  <h2>確認方法</h2>
+  <p>macOS の Console.app でデバイスを選び、<code>subsystem:com.happyboy1002.BookSpark</code> でフィルタする。category で絞る場合は <code>category:Notification</code> などを追加する。</p>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを grep し、実在する Logger のみ記載）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-09-26</footer>
+</div>
+</body>
+</html>

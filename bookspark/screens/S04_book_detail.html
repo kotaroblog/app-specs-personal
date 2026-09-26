@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - 本の詳細</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / 本の詳細</div>
+
+  <header class="site-header">
+    <h1>本の詳細（BookDetailView）</h1>
+    <p>1冊分のメモと、全メモを横断したアクション一覧。アクションの完了・期限の引き直し・カレンダー登録はここで行う。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">実装済</span>
+      <span class="tag">画面ID: BS-S04</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    書いたメモを見返し、<strong>アクションを片づける</strong>画面。アクションは「流れた → 期限の近い順 → 完了」で固定の順に並べ、
+    やり残しが常に一番上に来るようにする。本の読書ステータス（読書中／読了）の切り替え、書き出し、本の削除もここに置く。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ヘッダー</td><td>BookDetailHeader</td><td>表紙 52×70（なければアクセント色グラデーション＋タイトル先頭2文字）・書名・著者・チップ「メモ N件」「アクション 完了数/全数」</td></tr>
+    <tr><td>読書ステータス</td><td>Menu + Picker（44pt）</td><td>ラベル「読書中 ▾」／「読了 ▾」。▾ の見た目どおりメニューで選ばせる（トグルではない）</td></tr>
+    <tr><td>メモ セクション</td><td>MemoRow の列</td><td>新しい順。サムネイル 36pt（写真なしはテキストアイコン）・1行目（要点1行目 → なければアクション1件目 → なければ「メモ」、2行まで）・日付「M月d日」・「…」メニュー（削除）。長押しでも削除。<strong>タップしても開かない</strong>（保存後のメモ編集は無い）</td></tr>
+    <tr><td>アクション セクション</td><td>ActionItem の列</td><td><code>book.sortedActions</code> の順（流れた → 期限内 → 完了）。下表</td></tr>
+    <tr><td>メモを追加</td><td>FAB（右下・44pt・<code>square.and.pencil</code>）</td><td>ダイアログ「メモを追加」: 撮影して書く／書くだけ／キャンセル</td></tr>
+    <tr><td>その他</td><td>ToolbarItem Menu（右上「…」）</td><td>「テキストで書き出す」／「この本を削除」（破壊的）</td></tr>
+  </table>
+
+  <h3>アクション行（ActionItem）</h3>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>チェック</td><td>見た目 16pt・当たり判定 44pt。<code>ActionService.setDone</code> で完了／未完了を切り替え（通知も連動）。流れたアクションにも付けられる</td></tr>
+    <tr><td>文言</td><td>タップでその場編集。改行キーまたはフォーカスが外れた時点で確定（空・変更なしは無視）。完了済みは取り消し線＋薄色</td></tr>
+    <tr><td>期限チップ</td><td>未完了のときだけ「M/d まで」。流れたら暖色の文字＋「流れた」バッジ。タップで「期限を選ぶ」シート</td></tr>
+    <tr><td>カレンダー</td><td>未完了かつ未登録なら <code>calendar.badge.plus</code>（タップで登録シート）。登録済みなら <code>calendar.badge.checkmark</code>（操作不可）</td></tr>
+    <tr><td>「…」メニュー</td><td>「期限を変える」／「削除」。長押しの contextMenu にも同じ項目。<strong>アクションの削除は確認なしで即時</strong></td></tr>
+  </table>
+
+  <h3>期限を選ぶシート（DueDatePickerSheet）</h3>
+  <p>プリセット（今日／明日／3日後／1週間）＋ グラフィカルな DatePicker（今日以降のみ）＋「この日にする」。選んだ日の 23:59 を期限にする。
+  流れた期限を引き直すときは、初期値を今日に寄せる。</p>
+
+  <h3>カレンダー登録シート（CalendarSheet・medium）</h3>
+  <ul>
+    <li>日付の初期値 = 期限日、時刻の初期値 = 9:00。注記「この日に変えると、アクションの期限も同じ日になります」</li>
+    <li>「カレンダーに登録」で既定カレンダーに「[BookSpark] {アクション}」を30分の予定として作成（書き込みのみの権限を要求）</li>
+    <li>成功: 「カレンダーに登録しました（削除はカレンダー側で）」を出し 1.5 秒後に閉じる。期限をその日に付け替え、通知許可が未決定ならここで求める</li>
+    <li>失敗: 「カレンダーへの登録に失敗しました」（<a href="../error-design.html">BS-ERR-011</a>）</li>
+  </ul>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>メモなし</td><td>メモ欄「撮影するか、そのまま書いて1ページ分を残しましょう」</td></tr>
+    <tr><td>アクションなし</td><td>アクション欄「メモを書くとアクションがここに並びます」</td></tr>
+    <tr><td>データあり</td><td>メモ一覧＋アクション一覧</td></tr>
+    <tr><td>最初の1冊の直後</td><td>出現と同時に「書くだけ」のメモ編集を開く（<code>AppRouter.pendingFirstMemoBookID</code> がこの本のとき）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>メモを追加 → 書くだけ</td><td><a href="S05_memo_editor.html">メモ編集（BS-S05）</a>（写真なし）fullScreenCover</td></tr>
+    <tr><td>メモを追加 → 撮影して書く</td><td>カメラ → 撮影プレビュー → メモ編集（写真あり）</td></tr>
+    <tr><td>「…」→ テキストで書き出す（Pro）</td><td>書き出しシート（<a href="../features/F04_export.html">BS-F04</a>）</td></tr>
+    <tr><td>「…」→ テキストで書き出す（無料）</td><td><a href="S07_paywall.html">Paywall（BS-S07）</a>・理由 general</td></tr>
+    <tr><td>読書ステータス → 読書中（読了から・無料枠超過）</td><td>Paywall・理由 bookLimit。ステータスは変わらない</td></tr>
+    <tr><td>「…」→ この本を削除 → 削除</td><td>本棚へ戻る</td></tr>
+    <tr><td>戻る</td><td><a href="S02_bookshelf.html">本棚（BS-S02）</a></td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>let book: Book
+book.memos                      // 新しい順に並べて表示
+book.sortedActions              // 流れた（期限昇順）→ 期限内（期限昇順）→ 完了（完了時刻降順）
+Action.state / dueDate / isDone / calendarEventID
+ActionService.shared            // setDone / updateText / changeDueDate / delete / deleteMemo / deleteBook</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>アクションの状態変更は必ず <code>ActionService</code> を通す（View から <code>isDone.toggle()</code> や <code>NotificationService</code> を直接呼ばない）。規則は <a href="../features/F01_deadline_action.html">BS-F01</a></li>
+    <li>読書ステータスの切り替え: 読書中 → 読了は常に可。<strong>読了 → 読書中は無料枠を判定</strong>（読了で枠を空けて戻す抜け道を塞ぐ）</li>
+    <li>メモ削除・本の削除は確認アラートを出し、<code>ActionService.deleteMemo</code> / <code>deleteBook</code> で配下の通知を解除してから消す</li>
+    <li>ScrollView の中なので swipeActions は使わず、「…」メニュー（44pt）と contextMenu の両方を出す</li>
+    <li>アクション一覧は本の全メモを横断する。どのメモから生まれたアクションかは表示しない</li>
+    <li>ヘッダーの「アクション N/M」は完了 ÷ 全件で、週次の「達成率」とは別物（<a href="../glossary.html">用語集</a>）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル（sortedActions の並び規則）</a></li>
+    <li><a href="../features/F01_deadline_action.html">期限つきアクション（BS-F01）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <footer class="site-footer">
+    最終更新: 2026-09-26
+  </footer>
+</div>
+</body>
+</html>

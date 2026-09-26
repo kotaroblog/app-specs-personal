@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - 期限つきアクション</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / 期限つきアクション</div>
+
+  <header class="site-header">
+    <h1>期限つきアクション</h1>
+    <p>アクションに期限を持たせ、過ぎたら「流れた」にする。状態変更と期限通知2通の登録／解除を ActionService に集約する。</p>
+    <div class="section-meta">
+      <span class="tag done">実装済</span>
+      <span class="tag">機能ID: BS-F01</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    記録するだけのアプリは失敗しえないので続かない、という反省から v1.0 に入れた中核機能。
+    アクションは作成時に必ず期限（既定3日後）を持ち、未完了のまま期限を過ぎると<strong>流れた</strong>になる。
+    流れたは週次レビューで数えられ、本棚のヘッダーにも常に出る。
+    状態を変える操作はすべて <code>ActionService</code> を通し、通知の登録・解除が状態とずれないようにする。
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/S05_memo_editor.html">メモ編集（BS-S05）</a> — 作成と期限の初期値</li>
+    <li><a href="../screens/S04_book_detail.html">本の詳細（BS-S04）</a> — 完了・文言変更・期限変更・カレンダー登録・削除</li>
+    <li><a href="../screens/S02_bookshelf.html">本棚（BS-S02）</a> — 期限内／流れたの件数</li>
+    <li><a href="../screens/S06_weekly_review.html">週次レビュー（BS-S06）</a> — 達成／流れたの集計</li>
+  </ul>
+
+  <h2>期限の規則（DueDateRules）</h2>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>期限の実体</td><td>選んだ日の <strong>23:59:00</strong>（ローカル時刻）。<code>endOfDay(offsetDays:from:)</code></td></tr>
+    <tr><td>既定</td><td>3日後の 23:59（<code>defaultOffsetDays = 3</code>）。メモ編集で行を追加した時刻が基準</td></tr>
+    <tr><td>プリセット</td><td>今日（0）／明日（1）／3日後（3）／1週間（7）＋「日付を指定」</td></tr>
+    <tr><td>過去日</td><td>選べない（DatePicker の範囲が今日以降）。流れた期限を引き直すときは初期値を今日に寄せる</td></tr>
+    <tr><td>期限なし</td><td>選べない。作成経路では必ず期限が入る</td></tr>
+  </table>
+
+  <h2>状態遷移</h2>
+  <div class="mermaid">
+stateDiagram-v2
+  [*] --> open : メモ保存で作成
+  open --> overdue : 期限日の23時59分を過ぎる（時間経過のみ）
+  open --> done : チェック
+  overdue --> done : チェック
+  overdue --> open : 期限を今日以降に付け替え
+  done --> open : チェックを外す（期限前）
+  done --> overdue : チェックを外す（期限後）
+  open --> [*] : 削除
+  overdue --> [*] : 削除
+  done --> [*] : 削除
+  </div>
+  <p>状態は保存しない。<code>isDone</code> と <code>dueDate</code> と現在時刻から毎回計算する（<code>Action.state(at:)</code>）。</p>
+
+  <h2>ActionService の操作と通知の扱い</h2>
+  <table>
+    <tr><th>操作</th><th>データの変化</th><th>通知</th></tr>
+    <tr><td><code>scheduleAll(for: memo)</code></td><td>—（メモ保存直後に呼ぶ）</td><td>配下の未完了・期限ありアクションすべてに2通を登録</td></tr>
+    <tr><td><code>setDone(action, true)</code></td><td><code>isDone = true</code>・<code>completedAt = now</code></td><td>2通とも解除</td></tr>
+    <tr><td><code>setDone(action, false)</code></td><td><code>isDone = false</code>・<code>completedAt = nil</code></td><td>解除してから再登録（まだ間に合う分だけ）</td></tr>
+    <tr><td><code>updateText(action, text)</code></td><td>前後の空白を削った文言に変更。空・同一なら何もしない</td><td>未完了なら解除 → 再登録（本文に文言が入るため）</td></tr>
+    <tr><td><code>changeDueDate(action, date)</code></td><td><code>dueDate</code> を変更</td><td>未完了なら解除 → 再登録</td></tr>
+    <tr><td><code>delete(action)</code></td><td>アクションを削除</td><td>2通とも解除</td></tr>
+    <tr><td><code>deleteMemo(memo)</code></td><td>メモと配下のアクションを削除（cascade）</td><td>配下の全アクションの2通を解除</td></tr>
+    <tr><td><code>deleteBook(book)</code></td><td>本・メモ・アクションを削除（cascade）</td><td>配下の全アクションの2通を解除</td></tr>
+  </table>
+
+  <h2>通知2通のトリガー時刻</h2>
+  <table>
+    <tr><th>通知</th><th>ID</th><th>本文</th><th>時刻の決め方</th></tr>
+    <tr><td>期限当日</td><td><code>action-{UUID}</code></td><td>「{アクション}」は今日までです</td><td>期限日の 9:00。それが既に過ぎていたら<strong>いまから1時間後</strong>。それも期限（23:59）を越えるなら登録しない</td></tr>
+    <tr><td>流れた</td><td><code>action-{UUID}-overdue</code></td><td>「{アクション}」は流れました。期限を引き直しますか？</td><td>期限翌日の 9:00。既に過ぎていたら登録しない</td></tr>
+  </table>
+  <p>例: 22:30 に期限「今日」のアクションを作る → 当日通知は 23:30、流れた通知は翌 9:00。23:10 に作る → 当日通知なし（0:10 は期限超え）、流れた通知のみ。</p>
+  <p>通知の許可・週次通知・タップ時の挙動は <a href="F03_notification.html">BS-F03</a>。</p>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant E as MemoEditorView
+  participant VM as MemoEditorViewModel
+  participant AS as ActionService
+  participant NS as NotificationService
+
+  U->>E: 保存する
+  E->>NS: requestPermissionIfNeeded()（未決定のときだけ）
+  E->>VM: save(book, photoData, ocrText, context)
+  VM-->>E: Memo（Action は期限つきで作成済み）
+  E->>AS: scheduleAll(for: memo)
+  AS->>NS: scheduleDueReminder(id, text, dueDate) × 件数
+  NS->>NS: 拒否なら登録しない／当日・翌日の2通を登録
+  E-->>U: 閉じて本の詳細へ
+
+  U->>AS: チェック（本の詳細）
+  AS->>AS: action.setDone(true, now)
+  AS->>NS: cancelActionReminder(id)
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>1メモにつきアクションは最大3件。空の行と同じ文言の重複は保存時に落とす</li>
+    <li>流れたの判定は <code>dueDate &lt; now</code>。期限は 23:59:00 なので、期限日の 23:59 以降は流れた</li>
+    <li>流れたは終端ではない。後から完了にすれば「達成」（完了した週に数える）、期限を引き直せば「期限内」に戻る</li>
+    <li>本の詳細での並びは 流れた（期限昇順）→ 期限内（期限昇順）→ 完了（完了時刻降順）（<a href="../data-model.html">データモデル</a>）</li>
+    <li>カレンダーに登録すると、予定の日がそのままアクションの期限になる（<code>changeDueDate</code> を通す）。カレンダー側の予定を消してもアプリ側は変わらない</li>
+    <li>View から <code>action.isDone.toggle()</code> や <code>NotificationService</code> を直接呼ばない</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>UserNotifications</td><td>期限当日・流れた の通知</td><td><code>UNCalendarNotificationTrigger</code>（年月日時分・繰り返しなし）。登録前に同じ ID の保留分を消す</td></tr>
+    <tr><td>EventKit</td><td>アクションをカレンダーの予定にする</td><td>書き込みのみの権限（<code>requestWriteOnlyAccessToEvents</code>）。予定は30分・既定カレンダー・タイトル「[BookSpark] {アクション}」</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>通知が拒否されている</td><td>登録しない（info ログ）。状態変更自体は行う</td></tr>
+    <tr><td>通知の登録に失敗</td><td>error ログのみ</td></tr>
+    <tr><td>カレンダー登録に失敗・権限拒否</td><td>シート内に「カレンダーへの登録に失敗しました」。期限は変えない</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>通知の登録先は <code>ActionReminderScheduling</code> protocol で差し替え可能（テストでモックを注入するため）。本番は <code>NotificationReminderScheduler</code></li>
+    <li>純粋関数 <code>DueDateRules</code>（期限・通知時刻）と <code>Action.state(at:)</code>・<code>Book.sortedActions(at:)</code> は基準時刻を引数で渡せ、ユニットテストで検証済み（<code>DueDateRulesTests</code> / <code>ActionStateTests</code> / <code>ActionServiceTests</code> / <code>BookSortedActionsTests</code>）</li>
+    <li>保留中のローカル通知には iOS の件数上限（64件）があるが、アプリ側で件数を管理していない（未完了アクション1件につき最大2件＋週次1件）</li>
+    <li><code>Action.reminderDate</code> はカレンダー予定の日時を記録するだけで、通知時刻には使っていない</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-09-26</footer>
+</div>
+</body>
+</html>

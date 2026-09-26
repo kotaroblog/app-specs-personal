@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - メモ編集</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / メモ編集</div>
+
+  <header class="site-header">
+    <h1>メモ編集（MemoEditorView）</h1>
+    <p>1ページ分を自分の言葉で残す画面。写真ありでもなしでも同じ画面を使い、アクションには必ず期限を付ける。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">実装済</span>
+      <span class="tag">画面ID: BS-S05</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    アプリの中核の入力画面。要点（最大3）・アクション（最大3・期限つき）・フレーズ（任意）を<strong>本人が書く</strong>。
+    写真は任意で、撮った場合も OCR の結果は「読み取ったテキスト」として参考に出すだけ（要点やアクションへ自動では入れない）。
+  </p>
+
+  <h2>入口（2通り）</h2>
+  <table>
+    <tr><th>入口</th><th>経路</th><th>画面の違い</th></tr>
+    <tr><td>書くだけ</td><td>本の詳細 → メモを追加 →「書くだけ」／オンボの最初の1冊の直後</td><td>写真・参考欄・「撮り直す」なし</td></tr>
+    <tr><td>撮影して書く</td><td>本の詳細 → メモを追加 →「撮影して書く」→ カメラ（CameraView）→ 撮影プレビュー（PhotoPreviewView）→「この写真で書く」</td><td>写真帯・参考欄（読めた場合）・「撮り直す」あり</td></tr>
+  </table>
+  <h3>カメラと撮影プレビュー</h3>
+  <ul>
+    <li>カメラは <code>UIImagePickerController</code>（標準コントロール）。左上の × と標準の「キャンセル」のどちらでも閉じる。カメラの無い端末ではフォトライブラリ選択になる</li>
+    <li>撮影プレビューは写真を全画面表示し、「撮り直す」／「この写真で書く」の2択。ブレ・ピンボケの確認用</li>
+    <li>「この写真で書く」を押すと<strong>OCR の完了を待たずに</strong>メモ編集を開き、OCR はバックグラウンドで走る。読めた時点で参考欄が現れる</li>
+  </ul>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ヘッダー</td><td>Text</td><td>「メモを残す」（明朝系 18pt）＋「『{書名}』のメモ」</td></tr>
+    <tr><td>写真帯</td><td>Image（高さ72pt）</td><td>写真ありのときだけ</td></tr>
+    <tr><td>読み取ったテキスト</td><td>DisclosureGroup</td><td>OCR テキストが空でないときだけ。<strong>既定は閉じている</strong>。展開するとテキスト選択（コピー）可</td></tr>
+    <tr><td>要点まとめ 📝</td><td>カード</td><td>「n/3」表示。番号付きの複数行 TextField（1〜3行、プレースホルダー「このページの要点」）・行ごとの ×（32pt）・3件未満なら「＋追加」（44pt）</td></tr>
+    <tr><td>アクション ⚡</td><td>カード</td><td>「n/3」表示。番号付き TextField（プレースホルダー「今日か明日にできること」）・× ・各行の下に<strong>期限チップ</strong>「M/d まで」</td></tr>
+    <tr><td>期限チップ</td><td>Menu</td><td>今日／明日／3日後／1週間／日付を指定（→ 期限を選ぶシート）。<strong>「期限なし」は選べない</strong>。既定は3日後の 23:59</td></tr>
+    <tr><td>印象的なフレーズ</td><td>カード（黒背景）</td><td>TextField（1〜4行・明朝系イタリック、プレースホルダー「心に残った一文（任意）」）</td></tr>
+    <tr><td>撮り直す</td><td>Button</td><td>撮影から来たときだけ。編集を閉じてカメラに戻る（書いた内容は破棄）</td></tr>
+    <tr><td>固定フッター</td><td>safeAreaInset（bottom）</td><td>「保存する」（常に見える）・ヒント／エラー文・「やめる」</td></tr>
+    <tr><td>キーボードの「完了」</td><td>keyboard toolbar</td><td>どの入力欄からでもキーボードを閉じる</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>初期表示</td><td>空の要点1行・空のアクション1行（期限は3日後）を用意し、0.35 秒後に要点1行目へフォーカス</td></tr>
+    <tr><td>保存できない</td><td>要点・アクションのどちらにも文字が無い。「保存する」をグレーで無効化し「要点かアクションを1つ書くと保存できます」</td></tr>
+    <tr><td>保存できる</td><td>要点かアクションに1文字以上。フレーズだけでは保存できない</td></tr>
+    <tr><td>保存中</td><td>「保存する」を無効化（二重保存防止）</td></tr>
+    <tr><td>保存失敗（空と判定）</td><td>暖色で「要点かアクションを1つ以上書いてください」</td></tr>
+    <tr><td>書きかけで閉じる</td><td>確認「書きかけを破棄しますか？」（破棄する／書き続ける）。要点・アクション・フレーズのどれかに文字があるとき</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>保存する</td><td>保存して、カメラ・プレビューを含むカバーをまとめて閉じる → <a href="S04_book_detail.html">本の詳細（BS-S04）</a></td></tr>
+    <tr><td>やめる（何も書いていない）</td><td>そのまま閉じる → 本の詳細</td></tr>
+    <tr><td>やめる → 破棄する</td><td>閉じる → 本の詳細</td></tr>
+    <tr><td>撮り直す</td><td>カメラ</td></tr>
+    <tr><td>期限チップ →「日付を指定」</td><td>期限を選ぶシート</td></tr>
+  </table>
+
+  <h2>保存処理</h2>
+  <ol>
+    <li>通知許可が<strong>未決定のときだけ</strong>ここで許可を求める（期限つきのアクションを作る直前が最も文脈のある場面のため）</li>
+    <li>写真を JPEG（品質 0.7）に変換</li>
+    <li><code>MemoEditorViewModel.save</code>: 要点とアクションを正規化（前後の空白を削る・空行を落とす・同じ文言の重複を落とす・3件で打ち切る）。フレーズは空なら nil。Memo と Action を作って <code>context.save()</code></li>
+    <li><code>ActionService.scheduleAll(for: memo)</code> で配下の全アクションの期限通知を登録（<a href="../features/F01_deadline_action.html">BS-F01</a>）</li>
+    <li>カバーを閉じる</li>
+  </ol>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Observable @MainActor final class MemoEditorViewModel {
+    static let maxSummaryCount = 3
+    static let maxActionCount = 3
+    var summary: [SummaryDraft]    // id + text
+    var actions: [ActionDraft]     // id + text + dueDate（非 Optional）
+    var phrase: String
+    var canSave: Bool              // 要点かアクションに1つでも文字があれば true
+}
+// 保存先: Memo(book:photoData:ocrText:) / Action(memo:text:dueDate:)</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>入力本文は 15pt（<code>MemoEditorFont.body</code>）。小さいと書く気が失せるため</li>
+    <li>行は <code>Identifiable</code> な Draft で持ち、<code>id</code> で削除する（index バインディングで削除するとクラッシュしうる経路を除去済み）</li>
+    <li>OCR は Vision の <code>VNRecognizeTextRequest</code>（日本語・英語・accurate）。<code>OCRService.validate</code>（30文字以上・平均信頼度 0.3 以上）は<strong>定義はあるが呼ばれていない</strong>。読めたものはそのまま参考欄に出す</li>
+    <li>OCR 失敗は画面に出さずログのみ（category <code>OCR</code>・info）</li>
+    <li>保存後のメモを開き直して編集する画面は無い</li>
+    <li>スクリーンショット撮影モード（<code>-uiTestSnapshot</code>）では初期フォーカスを当てない</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="../features/F01_deadline_action.html">期限つきアクション（BS-F01）</a></li>
+    <li><a href="../features/F03_notification.html">通知（BS-F03）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <footer class="site-footer">
+    最終更新: 2026-09-26
+  </footer>
+</div>
+</body>
+</html>

@@ -9,62 +9,147 @@
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../">← Felix App Specs</a></div>
+  <div class="breadcrumb"><a href="../">← Personal App Specs</a></div>
 
   <header class="site-header">
     <h1>BookSpark</h1>
-    <p>読書メモアプリ · Bundle ID: <code>com.happyboy1002.BookSpark</code></p>
+    <p>読んだ知識を、行動に変える読書メモ · Bundle ID: <code>com.happyboy1002.BookSpark</code></p>
   </header>
 
   <h2>概要</h2>
   <ul class="kv-list">
     <li><span class="k">カテゴリ</span><span class="v">ブック</span></li>
-    <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
+    <li><span class="k">対応OS</span><span class="v">iOS 18.0+（iPhone のみ・縦固定・ライト固定）</span></li>
     <li><span class="k">言語</span><span class="v">日本語</span></li>
-    <li><span class="k">マネタイズ</span><span class="v">未定</span></li>
-    <li><span class="k">ステータス</span><span class="v">開発中</span></li>
+    <li><span class="k">マネタイズ</span><span class="v"><strong>買い切り ¥600</strong>（非消耗型 <code>com.happyboy1002.BookSpark.pro</code>）。広告なし。<br>
+      無料＝読書中 2 冊まで（読了は数えない）／Pro＝冊数無制限・テキスト書き出し・週次レビューの 8 週推移</span></li>
+    <li><span class="k">ステータス</span><span class="v">開発中（実装完了・ASC 未登録）。Debug/Release ビルド緑・ユニットテスト 77 件</span></li>
     <li><span class="k">リリース時期</span><span class="v">未定</span></li>
+    <li><span class="k">技術スタック</span><span class="v">Swift 6 / SwiftUI / SwiftData / XcodeGen / StoreKit 2 / Vision / AVFoundation / EventKit</span></li>
+    <li><span class="k">仕様の基準</span><span class="v"><code>ios-apps/BookSpark</code> コミット <code>17e9969</code>（仕様書と食い違う場合はコードが正）</span></li>
   </ul>
+
+  <div class="callout">
+    <strong>コンセプト:</strong>「読んだ知識を、行動に変える」。<br>
+    本を登録 → ページを撮る（任意）→ <strong>要点（最大3）・アクション（最大3、期限つき・既定3日後）・フレーズ</strong>を自分で書く →
+    期限を過ぎた未完了は<strong>「流れた」</strong>→ 週次レビューで<strong>達成／流れた</strong>を数える。<br>
+    記録するだけのアプリは「失敗しえない」ので続かない。アクションに期限を持たせ、失敗が見える形にしたのが v1.0 の核。
+  </div>
+
+  <div class="callout warn">
+    <strong>AI は使わない。</strong>要点もアクションも本人が書く。OCR は端末内の Vision で走らせ、メモ編集画面に「読み取ったテキスト」として参考表示するだけ（品質判定で止めない）。<br>
+    旧設計（Claude API による AI 整理・月額サブスク）は 2026-09-26 に撤去済み。本ポータルの旧版もその前提だったため全面的に作り直した。
+  </div>
+
+  <h2>プライバシー / データの扱い</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>通信</td><td><strong>Google Books API のみ</strong>（ISBN から書名・著者・表紙画像を取得）。アカウント登録なし・自前サーバーなし</td></tr>
+    <tr><td>保存先</td><td>本・メモ・アクションは SwiftData で端末内に保存。表紙とページ写真は外部ストレージ属性（<code>@Attribute(.externalStorage)</code>）</td></tr>
+    <tr><td><code>PrivacyInfo.xcprivacy</code></td><td><code>NSPrivacyTracking: false</code> / 収集データ型なし / UserDefaults を <code>CA92.1</code> で宣言</td></tr>
+    <tr><td>権限</td><td>カメラ（バーコード読取・ページ撮影）／通知（期限・週次）／カレンダー書き込みのみ（アクションを予定に登録するとき）</td></tr>
+    <tr><td>輸出コンプライアンス</td><td><code>ITSAppUsesNonExemptEncryption: false</code></td></tr>
+  </table>
 
   <h2>全体仕様書</h2>
   <div class="card-grid">
     <a class="card" href="flow.html">
       <div class="title">画面遷移図</div>
-      <div class="desc">全画面の遷移マップ</div>
+      <div class="desc">オンボ → 本棚 → 本詳細 → メモ編集、通知タップ → 週次レビュー、無料枠超過 → Paywall</div>
     </a>
     <a class="card" href="data-model.html">
       <div class="title">データモデル</div>
-      <div class="desc">SwiftDataモデルの構造とER図</div>
+      <div class="desc">Book / Memo / Action・導出状態（期限内／完了／流れた）・アクションの並び規則</div>
     </a>
     <a class="card" href="error-design.html">
       <div class="title">エラー設計</div>
-      <div class="desc">例外パターン一覧と表示方針</div>
+      <div class="desc">OCR・書誌取得・権限3種・購入・無料枠超過の表示と復帰経路</div>
     </a>
     <a class="card" href="logging.html">
       <div class="title">ロギング方針</div>
-      <div class="desc">os.log カテゴリとログレベル</div>
-    </a>
-    <a class="card" href="aso.html">
-      <div class="title">ASOキーワード戦略</div>
-      <div class="desc">App Store最適化の方針</div>
+      <div class="desc">os.log のカテゴリ3種（Notification / StoreKit / OCR）と出力箇所</div>
     </a>
     <a class="card" href="glossary.html">
       <div class="title">用語集・ドメイン辞書</div>
-      <div class="desc">ドメイン用語の正典</div>
+      <div class="desc">要点・アクション・期限・流れた・決着・達成率・無料枠・Pro の定義</div>
     </a>
   </div>
 
   <h2>画面仕様書</h2>
   <div class="card-grid">
-    <p style="color: var(--color-text-soft); font-size: 0.9rem;">画面仕様書は順次追加予定。</p>
+    <a class="card" href="screens/S01_onboarding.html">
+      <div class="title">オンボーディング</div>
+      <div class="desc">ウォークスルー3ページ＋スキップ → 最初の1冊。登録したらメモ編集へ直行</div>
+      <div class="meta"><span class="tag">BS-S01</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="screens/S02_bookshelf.html">
+      <div class="title">本棚</div>
+      <div class="desc">ホーム。期限内／流れたチップ・本カード・空状態・シートの排他制御</div>
+      <div class="meta"><span class="tag">BS-S02</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="screens/S03_book_entry.html">
+      <div class="title">本の登録（バーコード／手動）</div>
+      <div class="desc">カメラ権限3状態の案内・書誌取得・登録時の無料枠判定</div>
+      <div class="meta"><span class="tag">BS-S03</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="screens/S04_book_detail.html">
+      <div class="title">本の詳細</div>
+      <div class="desc">読書中／読了メニュー・メモ一覧・アクション（流れた→期限順→完了）・書き出し・削除</div>
+      <div class="meta"><span class="tag">BS-S04</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="screens/S05_memo_editor.html">
+      <div class="title">メモ編集</div>
+      <div class="desc">撮影して書く／書くだけ。要点・期限つきアクション・フレーズ・OCR 参考欄・固定フッター保存</div>
+      <div class="meta"><span class="tag">BS-S05</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="screens/S06_weekly_review.html">
+      <div class="title">週次レビュー</div>
+      <div class="desc">今週の達成／流れた・達成率（分母0は表示を切替）・定型のひとこと・8週推移（Pro）</div>
+      <div class="meta"><span class="tag">BS-S06</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="screens/S07_paywall.html">
+      <div class="title">Paywall</div>
+      <div class="desc">買い切り1本。価格は displayPrice・復元・規約リンク・無料枠超過の説明</div>
+      <div class="meta"><span class="tag">BS-S07</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="screens/S08_settings.html">
+      <div class="title">設定</div>
+      <div class="desc">プラン・復元・統計・通知の状態・法的情報・サポート</div>
+      <div class="meta"><span class="tag">BS-S08</span> <span class="tag done">実装済</span></div>
+    </a>
   </div>
 
   <h2>機能仕様書</h2>
   <div class="card-grid">
-    <p style="color: var(--color-text-soft); font-size: 0.9rem;">機能仕様書は順次追加予定。</p>
+    <a class="card" href="features/F01_deadline_action.html">
+      <div class="title">期限つきアクション</div>
+      <div class="desc">期限・流れた・完了時刻と、通知2通の登録／解除規則（ActionService）</div>
+      <div class="meta"><span class="tag">BS-F01</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="features/F02_entitlement.html">
+      <div class="title">無料枠と Pro</div>
+      <div class="desc">読書中2冊の判定規則・判定を通す4箇所・購入／復元</div>
+      <div class="meta"><span class="tag">BS-F02</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="features/F03_notification.html">
+      <div class="title">通知</div>
+      <div class="desc">期限当日 9:00／翌日 9:00／週次 日曜 20:00・許可の求め方・コールド起動時の遷移</div>
+      <div class="meta"><span class="tag">BS-F03</span> <span class="tag done">実装済</span></div>
+    </a>
+    <a class="card" href="features/F04_export.html">
+      <div class="title">テキスト書き出し</div>
+      <div class="desc">本1冊分のメモとアクションをプレーンテキストに（Pro）</div>
+      <div class="meta"><span class="tag">BS-F04</span> <span class="tag done">実装済</span></div>
+    </a>
   </div>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>v1.0 設計（AI なし・買い切り・期限つきアクション）に合わせて全面的に作り直し。旧版（AI 整理・サブスク前提、リンク先ページ未作成）を置き換え、全体仕様書5本・画面仕様書8本・機能仕様書4本を新規作成</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-09-26</footer>
 </div>
 </body>
 </html>

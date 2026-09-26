@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - エラー設計</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">BookSpark</a> / エラー設計</div>
+
+  <header class="site-header">
+    <h1>エラー設計・例外パターン一覧</h1>
+    <p>例外の分類と、ユーザーへの表示・復帰経路（コミット 17e9969 の実装どおり）</p>
+  </header>
+
+  <h2>エラー分類の方針</h2>
+  <ul>
+    <li><strong>参考機能の失敗は黙る</strong>: OCR・表紙画像は「あれば添える」機能。失敗しても画面を止めず、何も出さずに先へ進める</li>
+    <li><strong>ビジネスエラー</strong>（無料枠・Pro 限定）: エラー表示ではなく Paywall を開き、理由を一言添える</li>
+    <li><strong>ネットワークエラー</strong>: 書誌取得のみ。見つからない場合と区別せず、再スキャンと手動登録の2つの出口を出す</li>
+    <li><strong>権限エラー</strong>: カメラ（バーコード）は3状態で案内し設定アプリへ誘導。通知は画面を止めず、設定画面に状態を出す</li>
+    <li><strong>課金エラー</strong>: 購入失敗・承認待ち・結果不明・価格取得失敗を、それぞれ別の文言で Paywall 内に出す</li>
+  </ul>
+
+  <h2>エラー一覧</h2>
+  <table>
+    <tr><th>エラーID</th><th>分類</th><th>発生条件</th><th>ユーザー表示</th><th>復帰経路</th><th>ロギング</th></tr>
+
+    <tr><td>BS-ERR-001</td><td>参考機能</td><td>OCR の失敗（画像を読めない・認識結果なし・Vision の例外）</td>
+      <td>なし。メモ編集の「読み取ったテキスト」欄が出ないだけ</td>
+      <td>そのまま要点・アクションを手で書く</td><td>info（OCR）</td></tr>
+    <tr><td>BS-ERR-002</td><td>参考機能</td><td>OCR の精度が低い</td>
+      <td>読めたテキストをそのまま参考欄に出す（品質判定で止めない）</td>
+      <td>不要。参考欄は既定で閉じている</td><td>なし</td></tr>
+
+    <tr><td>BS-ERR-003</td><td>ネットワーク</td><td>書誌取得の失敗（通信不可・応答の解析失敗・該当なし）。ISBN 以外の EAN を読んだ場合も該当なしになる</td>
+      <td>バーコード画面に警告アイコンと「書籍情報が見つかりませんでした」</td>
+      <td>「もう一度スキャン」／「手動で登録する」</td><td>なし</td></tr>
+    <tr><td>BS-ERR-004</td><td>参考機能</td><td>書誌は取れたが表紙画像の取得に失敗</td>
+      <td>なし。表紙なしで登録され、タイトル先頭2文字のプレースホルダーになる</td>
+      <td>不要</td><td>なし</td></tr>
+
+    <tr><td>BS-ERR-005</td><td>権限</td><td>バーコード読取でカメラが未決定</td>
+      <td>読み込み中表示のまま OS の許可ダイアログ</td>
+      <td>許可 → プレビュー開始／拒否 → BS-ERR-006</td><td>なし</td></tr>
+    <tr><td>BS-ERR-006</td><td>権限</td><td>バーコード読取でカメラが拒否・制限</td>
+      <td>黒画面にせず「カメラを許可すると読み取れます」「設定アプリの「BookSpark」からカメラをオンにしてください」</td>
+      <td>「設定を開く」（設定アプリ）／「手動で登録する」</td><td>なし</td></tr>
+    <tr><td>BS-ERR-007</td><td>権限</td><td>ページ撮影でカメラが拒否・制限</td>
+      <td>アプリ独自の案内は無く、<code>UIImagePickerController</code> の OS 標準表示に任せる</td>
+      <td>左上 × または標準の「キャンセル」で閉じ、「書くだけ」で続ける。カメラの無い端末（シミュレーター）ではフォトライブラリ選択に切り替わる</td><td>なし</td></tr>
+    <tr><td>BS-ERR-008</td><td>権限</td><td>通知が拒否されている</td>
+      <td>その場では何も出さない。設定画面の通知行に「未許可」</td>
+      <td>設定画面の通知行 → 設定アプリ。拒否中は期限通知を登録しない</td><td>info（Notification）</td></tr>
+    <tr><td>BS-ERR-009</td><td>権限</td><td>通知許可リクエスト自体が例外</td>
+      <td>なし（未許可として扱う）</td><td>同上</td><td>error（Notification）</td></tr>
+    <tr><td>BS-ERR-010</td><td>システム</td><td>通知の登録に失敗</td>
+      <td>なし</td><td>次回の変更操作・次回起動（週次）で再登録される</td><td>error（Notification）</td></tr>
+    <tr><td>BS-ERR-011</td><td>権限</td><td>カレンダー（書き込みのみ）が拒否、またはイベント保存に失敗</td>
+      <td>カレンダー登録シート内に赤字「カレンダーへの登録に失敗しました」。<strong>権限拒否と保存失敗は区別しない</strong></td>
+      <td>シートは開いたまま。× で閉じる。期限は変更されない（期限の付け替えは登録成功時のみ）。設定アプリへの誘導は無い</td><td>なし</td></tr>
+
+    <tr><td>BS-ERR-012</td><td>課金</td><td>購入処理が例外（ストア側エラー、検証に通らない取引を含む）</td>
+      <td>Paywall 内に「購入できませんでした: {エラー内容}」</td>
+      <td>購入ボタンを再度押せる</td><td>なし</td></tr>
+    <tr><td>BS-ERR-013</td><td>課金</td><td>ユーザーが購入をキャンセル</td>
+      <td>なし</td><td>Paywall にとどまる</td><td>なし</td></tr>
+    <tr><td>BS-ERR-014</td><td>課金</td><td>承認待ち（ファミリー共有の「承認と購入のリクエスト」等）</td>
+      <td>「承認待ちです。承認されると自動で反映されます」</td>
+      <td>Paywall は開いたまま。承認後は取引更新の監視で自動反映される（閉じていても反映）</td><td>なし</td></tr>
+    <tr><td>BS-ERR-015</td><td>課金</td><td>購入結果が不明（将来の未知ケース）</td>
+      <td>「購入の結果を確認できませんでした。しばらくしてからお試しください」</td>
+      <td>時間をおいて購入／復元</td><td>なし</td></tr>
+    <tr><td>BS-ERR-016</td><td>課金</td><td>商品情報（価格）の取得失敗</td>
+      <td>購入ボタンを出さず「価格を取得できませんでした」＋「再試行」。取得中は「価格を取得中…」で購入ボタンを無効化</td>
+      <td>「再試行」</td><td>error（StoreKit）</td></tr>
+    <tr><td>BS-ERR-017</td><td>課金</td><td>復元で購入が見つからない／復元処理の失敗</td>
+      <td>Paywall: 「復元できる購入が見つかりませんでした」（インライン）<br>設定: アラート「復元可能な購入が見つかりませんでした」。<strong>処理失敗と「見つからない」は同じ文言</strong></td>
+      <td>再度「購入を復元」</td><td>処理失敗のみ error（StoreKit）</td></tr>
+
+    <tr><td>BS-ERR-018</td><td>ビジネス</td><td>無料プランで読書中が 2 冊の状態で、本を追加・登録・読了から読書中へ戻そうとした</td>
+      <td>Paywall を開き、上部に「無料は読書中2冊まで。読了にすると枠が空きます」</td>
+      <td>購入する／「あとで」で閉じて既存の本を読了にする（または削除する）</td><td>なし</td></tr>
+    <tr><td>BS-ERR-019</td><td>ビジネス</td><td>無料プランで書き出し・8週推移を使おうとした</td>
+      <td>Paywall（理由の一言なし）</td><td>購入する／「あとで」</td><td>なし</td></tr>
+    <tr><td>BS-ERR-020</td><td>入力</td><td>メモ編集で要点もアクションも空</td>
+      <td>「保存する」を無効化し「要点かアクションを1つ書くと保存できます」。保存処理が空と判定した場合は「要点かアクションを1つ以上書いてください」</td>
+      <td>1行書く。フレーズだけでは保存できない</td><td>なし</td></tr>
+    <tr><td>BS-ERR-021</td><td>入力</td><td>手動登録でタイトルか著者が空白のみ</td>
+      <td>「登録する」を無効化（グレー）</td><td>入力する</td><td>なし</td></tr>
+    <tr><td>BS-ERR-022</td><td>誤操作</td><td>書きかけのメモを閉じようとした（要点・アクション・フレーズのどれかに文字がある）</td>
+      <td>確認「書きかけを破棄しますか？」</td><td>「破棄する」／「書き続ける」</td><td>なし</td></tr>
+    <tr><td>BS-ERR-023</td><td>誤操作</td><td>本・メモの削除</td>
+      <td>アラート「この本を削除しますか？ メモとアクションもすべて削除されます」／「このメモを削除しますか？ このメモのアクションもすべて削除されます」</td>
+      <td>「キャンセル」。<strong>アクション単体の削除は確認なしで即時</strong></td><td>なし</td></tr>
+    <tr><td>BS-ERR-024</td><td>システム</td><td>SwiftData の保存失敗</td>
+      <td>なし。メモ保存の明示 <code>save()</code> は <code>try?</code> で結果を捨てており、本の登録は自動保存に任せている</td>
+      <td>なし（未対応）</td><td>なし（未対応）</td></tr>
+  </table>
+
+  <h2>Swift エラー型</h2>
+  <div class="callout">
+    アプリ共通のエラー enum は持たず、Service ごとに <code>LocalizedError</code> を定義する。購入結果は例外ではなく <code>PurchaseOutcome</code> で返し、画面が文言を出し分ける。
+  </div>
+  <table>
+    <tr><th>型</th><th>ケース</th><th>画面での扱い</th></tr>
+    <tr><td><code>GoogleBooksService.GoogleBooksError</code></td><td><code>invalidURL</code> / <code>bookNotFound</code></td><td>画面は型を見ずに固定文言「書籍情報が見つかりませんでした」</td></tr>
+    <tr><td><code>OCRService.OCRError</code></td><td><code>invalidImage</code> / <code>noResults</code></td><td>ログのみ</td></tr>
+    <tr><td><code>StoreKitManager.StoreError</code></td><td><code>failedVerification</code>（「購入の検証に失敗しました」）</td><td>BS-ERR-012 の {エラー内容} に入る</td></tr>
+    <tr><td><code>StoreKitManager.PurchaseOutcome</code></td><td><code>success</code> / <code>cancelled</code> / <code>pending</code> / <code>unknown</code></td><td>BS-ERR-013〜015 と成功（Paywall を閉じる）</td></tr>
+  </table>
+
+  <h2>UI 表示パターン</h2>
+  <table>
+    <tr><th>重要度</th><th>表示形式</th><th>このアプリでの例</th></tr>
+    <tr><td>なし</td><td>表示しない（ログのみ／何もしない）</td><td>OCR 失敗・表紙取得失敗・通知拒否</td></tr>
+    <tr><td>低</td><td>インラインメッセージ</td><td>メモ保存のヒント・Paywall の購入結果・カレンダー登録失敗</td></tr>
+    <tr><td>中</td><td>画面内の差し替え（空状態／案内ビュー）</td><td>書誌取得失敗・カメラ拒否・価格取得失敗</td></tr>
+    <tr><td>高</td><td>アラート／確認ダイアログ</td><td>本・メモの削除、書きかけの破棄、設定画面の復元結果</td></tr>
+    <tr><td>—</td><td>Paywall シート</td><td>無料枠超過・Pro 限定機能</td></tr>
+  </table>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-09-26</footer>
+</div>
+</body>
+</html>

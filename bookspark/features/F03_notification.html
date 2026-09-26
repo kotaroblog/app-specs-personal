@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - 通知</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / 通知</div>
+
+  <header class="site-header">
+    <h1>通知</h1>
+    <p>ローカル通知3種（期限当日・流れた・週次）の登録規則、許可の求め方、タップ時の遷移。</p>
+    <div class="section-meta">
+      <span class="tag done">実装済</span>
+      <span class="tag">機能ID: BS-F03</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    期限つきアクションは、期限が来たことを知らせないと「知らないうちに流れた」だけになる。
+    そのため期限当日の朝に1通、流れた翌朝に1通を出し、週末に振り返りを促す週次通知を1通繰り返す。
+    すべて端末内のローカル通知（<code>UNUserNotificationCenter</code>）で、サーバーは使わない。
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/S05_memo_editor.html">メモ編集（BS-S05）</a> — 許可を求める場面（保存直前）</li>
+    <li><a href="../screens/S04_book_detail.html">本の詳細（BS-S04）</a> — 完了・期限変更・カレンダー登録で再登録／解除</li>
+    <li><a href="../screens/S06_weekly_review.html">週次レビュー（BS-S06）</a> — 週次通知のタップ先</li>
+    <li><a href="../screens/S08_settings.html">設定（BS-S08）</a> — 許可状態の表示と設定アプリへの導線</li>
+  </ul>
+
+  <h2>通知の種類</h2>
+  <table>
+    <tr><th>種類</th><th>ID</th><th>本文（タイトルは常に「BookSpark」）</th><th>時刻</th><th>繰り返し</th></tr>
+    <tr><td>期限当日</td><td><code>action-{UUID}</code></td><td>「{アクション}」は今日までです</td><td>期限日の <strong>9:00</strong>。過ぎていたら今から1時間後、それも期限を越えるなら出さない</td><td>なし</td></tr>
+    <tr><td>流れた</td><td><code>action-{UUID}-overdue</code></td><td>「{アクション}」は流れました。期限を引き直しますか？</td><td>期限翌日の <strong>9:00</strong>。過ぎていたら出さない</td><td>なし</td></tr>
+    <tr><td>週次</td><td><code>weekly-review</code></td><td>今週の振り返りができますよ</td><td>毎週<strong>日曜 20:00</strong></td><td>あり</td></tr>
+  </table>
+  <p>いずれもサウンドは既定。アプリ前面にいるときもバナー＋サウンドで出す（<code>willPresent</code> で <code>[.banner, .sound]</code>）。</p>
+
+  <h2>登録・解除のタイミング</h2>
+  <table>
+    <tr><th>契機</th><th>処理</th></tr>
+    <tr><td>アプリ起動（毎回）</td><td>週次通知を登録し直す（同じ ID の保留分を消してから追加）</td></tr>
+    <tr><td>メモ保存</td><td>配下の未完了アクションに期限当日・流れた の2通を登録</td></tr>
+    <tr><td>完了にする／削除（アクション・メモ・本）</td><td>該当アクションの2通を解除</td></tr>
+    <tr><td>完了を外す／文言変更／期限変更（カレンダー登録を含む）</td><td>解除してから、未完了なら再登録</td></tr>
+  </table>
+  <p>アクションの規則の全体は <a href="F01_deadline_action.html">BS-F01</a>。</p>
+
+  <h2>許可の求め方</h2>
+  <ul>
+    <li>起動時・オンボーディングでは求めない</li>
+    <li><strong>メモの「保存する」を押した直後（保存処理の前）</strong>と、<strong>カレンダー登録に成功した直後</strong>に、許可状態が <code>.notDetermined</code> のときだけ OS のダイアログを出す（要求する種類は alert / sound / badge）</li>
+    <li>拒否されたら以後は求めない。期限通知の登録時に <code>.denied</code> を見て登録をやめ、info ログを残す</li>
+    <li>利用者が状態を確認・変更する場所は設定画面の「通知」行（設定アプリへ移動）</li>
+  </ul>
+
+  <h2>タップ時の遷移（コールド起動を含む）</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant OS as iOS
+  participant AD as AppDelegate
+  participant ND as NotificationDelegate
+  participant R as AppRouter
+  participant BS as BookShelfView
+
+  U->>OS: 週次通知をタップ
+  OS->>AD: didFinishLaunching（コールド起動時）
+  AD->>OS: UNUserNotificationCenter.delegate = ND
+  OS->>ND: didReceive(response)
+  ND->>ND: ID が weekly-review か確認
+  ND->>R: pendingWeeklyReview = true
+  BS->>R: onAppear または onChange で確認
+  BS->>BS: activeSheet = .weeklyReview
+  BS->>R: pendingWeeklyReview = false
+  BS-->>U: 週次レビューを表示
+  </div>
+  <ul>
+    <li>デリゲートは画面を直接開かず、<code>AppRouter</code>（<code>@Observable</code> の共有オブジェクト）にフラグを立てるだけ。本棚が出現していなければ、出現した時点で拾う</li>
+    <li>期限当日・流れた の通知はタップしてもアプリが開くだけで、特定の本・アクションへは遷移しない</li>
+  </ul>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>通知の時刻は「期限日の朝9時」に揃える。当日作成で9時を過ぎていても、期限までに1時間以上あれば1時間後に知らせる</li>
+    <li>流れた通知は、期限を引き直すきっかけとして翌朝に1回だけ出す</li>
+    <li>週は月曜始まりなので、週次通知（日曜 20:00）はその週の最後の夜に来る</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>UserNotifications</td><td>ローカル通知の許可・登録・解除・受信</td><td><code>UNCalendarNotificationTrigger</code>。期限系は年月日時分・1回、週次は曜日時分・繰り返し</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>許可リクエストの例外</td><td>未許可として扱う。error ログ（category <code>Notification</code>）</td></tr>
+    <tr><td>通知が拒否されている</td><td>期限通知を登録しない。info ログ</td></tr>
+    <tr><td>登録の例外</td><td>error ログ（通知 ID を .public で出す）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>週次通知は許可状態を確認せずに登録を試みる（期限通知は <code>.denied</code> なら登録しない）</li>
+    <li>スクリーンショット撮影モードでは起動時の週次通知の登録と StoreKit の確認を行わない</li>
+    <li>通知 ID をアクションの UUID から作るので、同じアクションを登録し直しても重複しない</li>
+    <li>設定画面のフッター文言は期限系2通のみを説明している</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-09-26</footer>
+</div>
+</body>
+</html>

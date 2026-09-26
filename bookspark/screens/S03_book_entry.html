@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - 本の登録</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / 本の登録</div>
+
+  <header class="site-header">
+    <h1>本の登録（BarcodeScannerView / ManualBookEntryView）</h1>
+    <p>バーコードで書誌を引くか、手で入力して本を1冊登録する。登録の瞬間に無料枠を判定する。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">実装済</span>
+      <span class="tag">画面ID: BS-S03</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    本を作る唯一の経路。バーコードは速いが失敗しうる（カメラ拒否・書誌が無い）ので、
+    どの失敗状態からも<strong>「手動で登録する」に抜けられる</strong>ようにしている。
+    本棚（BS-S02）とオンボーディング（BS-S01）の両方から同じ画面を使う。
+  </p>
+
+  <h2>UI 構成: バーコードスキャン</h2>
+  <p>NavigationStack のシート。タイトル「バーコードスキャン」、左上に ×（閉じる）。</p>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>カメラプレビュー</td><td>UIViewControllerRepresentable（AVCaptureSession）</td><td>EAN-13 / EAN-8 を検出。最初の1件だけ受け付け、セッションを止めて書誌取得へ。プレビュー枠はレイアウト変更に追従</td></tr>
+    <tr><td>書誌の確認</td><td>VStack</td><td>表紙（高さ160pt、取れた場合のみ）・書名・著者・「この本を登録する」・「もう一度スキャン」</td></tr>
+    <tr><td>取得中</td><td>ProgressView</td><td>「書籍情報を取得中...」</td></tr>
+    <tr><td>取得失敗</td><td>VStack</td><td>警告アイコン・「書籍情報が見つかりませんでした」・「もう一度スキャン」・「手動で登録する」</td></tr>
+    <tr><td>カメラ拒否</td><td>VStack</td><td>カメラアイコン・「カメラを許可すると読み取れます」・「設定アプリの「BookSpark」からカメラをオンにしてください」・「設定を開く」・「手動で登録する」</td></tr>
+  </table>
+
+  <h2>UI 構成: 手動登録</h2>
+  <p>NavigationStack のシート。タイトル「手動登録」、左上に ×（閉じる）。</p>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>タイトル</td><td>TextField（必須）</td><td>プレースホルダー「本のタイトル」</td></tr>
+    <tr><td>著者</td><td>TextField（必須）</td><td>プレースホルダー「著者名」</td></tr>
+    <tr><td>ISBN（任意）</td><td>TextField（数字キーボード）</td><td>空なら nil で保存</td></tr>
+    <tr><td>登録する</td><td>Button</td><td>タイトル・著者が空白のみなら無効（グレー）</td></tr>
+  </table>
+
+  <h2>状態（バーコード・カメラ権限3状態）</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td><code>CameraAccess.unknown</code></td><td>ProgressView。<code>.notDetermined</code> ならこの間に OS の許可ダイアログを出す</td></tr>
+    <tr><td><code>CameraAccess.granted</code></td><td>カメラプレビュー</td></tr>
+    <tr><td><code>CameraAccess.denied</code></td><td>拒否・制限。黒画面にせず案内（設定を開く／手動で登録する）</td></tr>
+    <tr><td>取得中 → 確認</td><td>書誌が取れたら確認表示。表示の優先順は 確認 &gt; 取得中 &gt; 取得失敗 &gt; 拒否 &gt; プレビュー</td></tr>
+    <tr><td>取得失敗</td><td>通信失敗・該当なしを区別せず同じ表示（<a href="../error-design.html">BS-ERR-003</a>）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>この本を登録する／登録する（枠内）</td><td>本を作成してシートを閉じる。本棚から開いた場合は本棚に戻り、オンボから開いた場合は本の詳細 → メモ編集へ直行</td></tr>
+    <tr><td>同上（無料枠超過）</td><td><a href="S07_paywall.html">Paywall（BS-S07）</a>をこのシートの上に重ねる・理由 bookLimit。本は作らない</td></tr>
+    <tr><td>もう一度スキャン</td><td>書誌・エラーを消してプレビューに戻る</td></tr>
+    <tr><td>手動で登録する（バーコード画面内）</td><td>手動登録シートを重ねる。手動で登録できたら<strong>スキャナごと閉じる</strong></td></tr>
+    <tr><td>設定を開く</td><td>設定アプリ（<code>UIApplication.openSettingsURLString</code>）</td></tr>
+    <tr><td>×</td><td>何も作らずに閉じる</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>Book(title:author:isbn:coverImageData:)   // status は reading で作られる
+BookInfo(title, author, coverImageData)    // Google Books の結果（authors は ", " で連結）
+BookLimitChecker.canAddBook(context:)      // 読書中の件数を fetchCount で数えて判定</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>書誌は <code>GoogleBooksService.fetchBookInfo(isbn:)</code>。<code>https://www.googleapis.com/books/v1/volumes?q=isbn:{読み取った数字}</code> の先頭1件を使い、表紙サムネイルは http を https に置き換えてダウンロードし、Data として本に保存する（URL を持たない）</li>
+    <li>読み取った数字が ISBN かどうかは検証しない。書籍以外の EAN は「見つからない」になる</li>
+    <li>無料枠は本棚の＋でも見ているが、<strong>登録の瞬間にもう一度判定する</strong>（シートを開いたあとに状況が変わっても抜けられない）。判定規則は <a href="../features/F02_entitlement.html">BS-F02</a></li>
+    <li>手動登録は前後の空白（改行は含まない）を削ってから保存する</li>
+    <li>登録は <code>modelContext.insert</code> のみで、明示的な <code>save()</code> は呼ばない（自動保存に任せる）</li>
+    <li>シミュレーターにはカメラが無いため、バーコードは実機でのみ確認できる</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../error-design.html">エラー設計（BS-ERR-003〜006・018・021）</a></li>
+    <li><a href="S01_onboarding.html">オンボーディング（BS-S01）</a> ／ <a href="S02_bookshelf.html">本棚（BS-S02）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <footer class="site-footer">
+    最終更新: 2026-09-26
+  </footer>
+</div>
+</body>
+</html>

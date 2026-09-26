@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - Paywall</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / Paywall</div>
+
+  <header class="site-header">
+    <h1>Paywall（PaywallView）</h1>
+    <p>買い切り1本（BookSpark Pro）の購入画面。価格は StoreKit の displayPrice だけを出す。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">実装済</span>
+      <span class="tag">画面ID: BS-S07</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    無料枠に当たったとき、または Pro 限定機能に触れたときに開く。<strong>一度の購入でずっと使える</strong>ことだけを伝え、
+    無料トライアルや利用者数などの訴求文言は置かない。オンボーディングからは開かない。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>×</td><td>Button（左上・44pt）</td><td>閉じる</td></tr>
+    <tr><td>理由の一言</td><td>バナー（暖色）</td><td>理由が bookLimit のときだけ「無料は読書中2冊まで。読了にすると枠が空きます」</td></tr>
+    <tr><td>タイトル</td><td>Text</td><td>「BookSpark Pro」（DM Serif Display 28pt）＋「一度の購入で、ずっと使えます」</td></tr>
+    <tr><td>特典</td><td>カード（3行）</td><td>読書中の本が無制限／メモとアクションを書き出し／週次レビューの推移（8週）</td></tr>
+    <tr><td>購入ボタン</td><td>Button</td><td>「{displayPrice} で購入」。商品取得前は「価格を取得中…」で無効（グレー）。購入中はスピナー</td></tr>
+    <tr><td>価格取得失敗</td><td>Text + Button</td><td>購入ボタンの代わりに「価格を取得できませんでした」＋「再試行」</td></tr>
+    <tr><td>購入を復元</td><td>Button（44pt）</td><td>復元中はスピナー</td></tr>
+    <tr><td>メッセージ</td><td>Text</td><td>購入・復元の結果（下表）</td></tr>
+    <tr><td>あとで</td><td>Button</td><td>閉じる</td></tr>
+    <tr><td>法的リンク</td><td>Link ×2</td><td>「利用規約」「プライバシーポリシー」（<code>kotaroblog.github.io/app-policies/bookspark/</code>）</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>商品取得中</td><td>購入ボタン「価格を取得中…」（無効）</td></tr>
+    <tr><td>商品取得済み</td><td>購入ボタン「¥600 で購入」（日本のストアの場合。文字列は StoreKit が返す <code>displayPrice</code>）</td></tr>
+    <tr><td>商品取得失敗</td><td>「価格を取得できませんでした」＋「再試行」</td></tr>
+    <tr><td>購入成功</td><td>Paywall を閉じる</td></tr>
+    <tr><td>キャンセル</td><td>何も出さない</td></tr>
+    <tr><td>承認待ち</td><td>「承認待ちです。承認されると自動で反映されます」</td></tr>
+    <tr><td>結果不明</td><td>「購入の結果を確認できませんでした。しばらくしてからお試しください」</td></tr>
+    <tr><td>購入失敗</td><td>「購入できませんでした: {エラー内容}」</td></tr>
+    <tr><td>復元成功</td><td>Paywall を閉じる</td></tr>
+    <tr><td>復元で見つからない</td><td>「復元できる購入が見つかりませんでした」</td></tr>
+  </table>
+
+  <h2>遷移（開く経路）</h2>
+  <table>
+    <tr><th>起点</th><th>理由（PaywallReason）</th></tr>
+    <tr><td>本棚の＋（無料・読書中2冊）</td><td><code>bookLimit</code></td></tr>
+    <tr><td>本の登録の確定時（無料枠超過）</td><td><code>bookLimit</code></td></tr>
+    <tr><td>本の詳細で読了 → 読書中（無料枠超過）</td><td><code>bookLimit</code></td></tr>
+    <tr><td>本の詳細「テキストで書き出す」（無料）</td><td><code>general</code></td></tr>
+    <tr><td>週次レビュー「Pro で推移が見られます」</td><td><code>general</code></td></tr>
+    <tr><td>設定「Pro にアップグレード」</td><td><code>general</code></td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>enum PaywallReason: String { case general, bookLimit }   // notice で一言を出し分け
+StoreKitManager.shared.proProduct   // com.happyboy1002.BookSpark.pro（非消耗型）
+StoreKitManager.PurchaseOutcome     // success / cancelled / pending / unknown</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>価格はコードに持たない。<code>Product.displayPrice</code> をそのまま出す（ストアの価格改定・地域差に追従）</li>
+    <li>ローカル確認用の <code>BookSpark.storekit</code>（displayPrice 600）はアプリのバンドルから除外し、scheme 側で指定している</li>
+    <li>購入・復元の処理と取引の監視は <a href="../features/F02_entitlement.html">BS-F02</a></li>
+    <li>ASC 上の非消耗型商品はまだ作成していない（2026-09-26 時点）。作成するまで、Xcode の StoreKit 設定を使わない実行（TestFlight 等）では商品が返らず「価格を取得できませんでした」になる</li>
+    <li>旧設計の「7日間無料」「1,200人以上」などの文言は v1.0 で削除済み</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/F02_entitlement.html">無料枠と Pro（BS-F02）</a></li>
+    <li><a href="../error-design.html">エラー設計（BS-ERR-012〜019）</a></li>
+    <li><a href="S08_settings.html">設定（BS-S08）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <footer class="site-footer">
+    最終更新: 2026-09-26
+  </footer>
+</div>
+</body>
+</html>

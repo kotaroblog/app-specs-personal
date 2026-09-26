@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - 画面遷移図</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">BookSpark</a> / 画面遷移図</div>
+
+  <header class="site-header">
+    <h1>画面遷移図</h1>
+    <p>BookSpark 全画面の遷移マップ（コミット 17e9969 時点）</p>
+  </header>
+
+  <div class="callout">スマホでは横スクロールで全体を確認できます。タブは持たず、本棚（S02）を根にした NavigationStack 1本と、シート／全画面カバーで構成する。</div>
+
+  <h2>全体フロー</h2>
+  <div class="mermaid">
+flowchart TD
+  Launch(["起動"]) --> Q{"hasCompletedOnboarding"}
+  Q -->|"false"| S01W["S01 ウォークスルー 3ページ"]
+  S01W -->|"スキップ / はじめる"| S01F["S01 最初の1冊"]
+  S01F -->|"あとで登録する"| S02
+  S01F -->|"バーコードで登録"| S03B
+  S01F -->|"手動で登録"| S03M
+  Q -->|"true"| S02["S02 本棚"]
+
+  S02 -->|"＋ 枠内"| Dlg{"本を登録"}
+  S02 -->|"＋ 無料枠超過"| S07["S07 Paywall"]
+  Dlg -->|"バーコードで登録"| S03B["S03 バーコードスキャン"]
+  Dlg -->|"手動で登録"| S03M["S03 手動登録"]
+  S03B -->|"手動で登録する"| S03M
+  S03B -->|"登録時に枠超過"| S07
+  S03M -->|"登録時に枠超過"| S07
+  S03B -->|"登録完了 本棚から"| S02
+  S03M -->|"登録完了 本棚から"| S02
+  S03B -.->|"登録完了 オンボから"| Direct["最初の1冊 直行"]
+  S03M -.->|"登録完了 オンボから"| Direct
+  Direct -.->|"本棚が push"| S04
+  Direct -.->|"詳細が自動で開く"| S05
+
+  S02 -->|"本カード"| S04["S04 本の詳細"]
+  S02 -->|"グラフアイコン"| S06["S06 週次レビュー"]
+  S02 -->|"歯車"| S08["S08 設定"]
+
+  S04 -->|"メモ追加 → 書くだけ"| S05["S05 メモ編集"]
+  S04 -->|"メモ追加 → 撮影して書く"| Cam["カメラ"]
+  Cam --> Prev["撮影プレビュー"]
+  Prev -->|"この写真で書く"| S05
+  Prev -->|"撮り直す"| Cam
+  S05 -->|"撮り直す"| Cam
+  S04 -->|"書き出し Pro"| Share["書き出しシート"]
+  S04 -->|"書き出し 無料"| S07
+  S04 -->|"読了から読書中へ 枠超過"| S07
+  S04 -->|"期限チップ / 期限を変える"| Due["期限を選ぶシート"]
+  S04 -->|"カレンダーアイコン"| Cal["カレンダー登録シート"]
+
+  S06 -->|"Pro で推移が見られます"| S07
+  S08 -->|"Pro にアップグレード"| S07
+
+  Notif(["週次通知タップ"]) --> Router["AppRouter.pendingWeeklyReview"]
+  Router --> S02
+  S02 -.->|"フラグを消費"| S06
+  </div>
+
+  <h2>主要な遷移パターン</h2>
+  <table>
+    <tr><th>起点</th><th>遷移先</th><th>トリガー</th><th>表示方式</th></tr>
+    <tr><td>起動</td><td>S01 オンボーディング</td><td><code>@AppStorage("hasCompletedOnboarding")</code> が false</td><td>ContentView の分岐</td></tr>
+    <tr><td>起動</td><td>S02 本棚</td><td>同フラグが true</td><td>ContentView の分岐（NavigationStack は本棚が自分で持つ）</td></tr>
+    <tr><td>S01 ウォークスルー</td><td>S01 最初の1冊</td><td>右上「スキップ」／最終ページの「はじめる」</td><td>同一画面内のステップ切替</td></tr>
+    <tr><td>S01 最初の1冊</td><td>S03 バーコード／手動</td><td>「バーコードで登録」「手動で登録」</td><td>sheet</td></tr>
+    <tr><td>S01 最初の1冊</td><td>S02 本棚（空状態）</td><td>「あとで登録する」</td><td>オンボ完了フラグを立てる</td></tr>
+    <tr><td>S03（オンボから）</td><td>S04 → S05</td><td>最初の1冊の登録完了</td><td><code>AppRouter.pendingFirstMemoBookID</code> を立ててオンボ完了 → 本棚がその本を push → 詳細が <code>onAppear</code> で「書くだけ」のメモ編集を開く</td></tr>
+    <tr><td>S02 本棚</td><td>本を登録ダイアログ</td><td>右下 ＋（読書中が無料枠内）</td><td>confirmationDialog</td></tr>
+    <tr><td>S02 本棚</td><td>S07 Paywall（bookLimit）</td><td>右下 ＋（無料・読書中 2 冊以上）</td><td>sheet</td></tr>
+    <tr><td>S02 本棚</td><td>S03 バーコード／手動</td><td>ダイアログの選択、または空状態のボタン</td><td>sheet</td></tr>
+    <tr><td>S02 本棚</td><td>S04 本の詳細</td><td>本カードをタップ</td><td>push（<code>navigationDestination(for: Book.self)</code>）</td></tr>
+    <tr><td>S02 本棚</td><td>S06 週次レビュー</td><td>ヘッダーのグラフアイコン／週次通知タップ</td><td>sheet</td></tr>
+    <tr><td>S02 本棚</td><td>S08 設定</td><td>ヘッダーの歯車</td><td>sheet</td></tr>
+    <tr><td>S03 バーコード</td><td>S03 手動登録</td><td>カメラ拒否時・書誌取得失敗時の「手動で登録する」</td><td>sheet（手動で登録できたらスキャナごと閉じる）</td></tr>
+    <tr><td>S03</td><td>S07 Paywall（bookLimit）</td><td>「この本を登録する」「登録する」の瞬間に無料枠超過</td><td>sheet（S03 の上に重ねる）</td></tr>
+    <tr><td>S04 本の詳細</td><td>S05 メモ編集（写真なし）</td><td>右下の書くボタン →「書くだけ」</td><td>fullScreenCover</td></tr>
+    <tr><td>S04 本の詳細</td><td>カメラ → 撮影プレビュー → S05</td><td>右下の書くボタン →「撮影して書く」→「この写真で書く」</td><td>fullScreenCover の中で fullScreenCover</td></tr>
+    <tr><td>S04 本の詳細</td><td>書き出しシート</td><td>右上「…」→「テキストで書き出す」（Pro）</td><td>sheet（medium / large）</td></tr>
+    <tr><td>S04 本の詳細</td><td>S07 Paywall（general）</td><td>同上（無料）</td><td>sheet</td></tr>
+    <tr><td>S04 本の詳細</td><td>S07 Paywall（bookLimit）</td><td>ヘッダーのメニューで読了 → 読書中（無料枠超過）</td><td>sheet</td></tr>
+    <tr><td>S04 本の詳細</td><td>期限を選ぶシート</td><td>アクションの期限チップ／「…」→「期限を変える」</td><td>sheet</td></tr>
+    <tr><td>S04 本の詳細</td><td>カレンダー登録シート</td><td>アクションのカレンダーアイコン</td><td>sheet（medium）</td></tr>
+    <tr><td>S04 本の詳細</td><td>S02 本棚</td><td>「…」→「この本を削除」→ 確認で削除</td><td>pop</td></tr>
+    <tr><td>S05 メモ編集</td><td>S04 本の詳細</td><td>「保存する」／「やめる」（書きかけがあれば破棄確認）</td><td>カバーをまとめて閉じる</td></tr>
+    <tr><td>S06 週次レビュー</td><td>S07 Paywall（general）</td><td>無料時の「Pro で推移が見られます」</td><td>sheet</td></tr>
+    <tr><td>S08 設定</td><td>S07 Paywall（general）</td><td>「Pro にアップグレード」（無料時のみ表示）</td><td>sheet</td></tr>
+    <tr><td>S08 設定</td><td>設定アプリ／Safari</td><td>通知行／法的情報・サポートのリンク</td><td>外部</td></tr>
+  </table>
+
+  <h2>本棚から開くシートの排他</h2>
+  <p>
+    本棚が開くシート（バーコード・手動・設定・週次レビュー・Paywall）は <code>ActiveSheet</code> enum の1状態にまとめ、
+    <code>.sheet(item:)</code> 1本で出す（コミット 17e9969 のレビュー修正で排他化）。同時に2枚を開こうとする状態が構造上作れない。
+    週次通知のタップも <code>activeSheet = .weeklyReview</code> を代入するだけなので、ほかのシート用の状態と衝突しない。
+  </p>
+
+  <h2>通知タップ・コールド起動の扱い</h2>
+  <ul>
+    <li><code>AppDelegate.didFinishLaunching</code> で通知デリゲートを登録するため、アプリが落ちている状態で通知をタップしても応答を受け取れる</li>
+    <li>デリゲートは画面を直接開かず、<code>AppRouter.shared.pendingWeeklyReview = true</code> を立てるだけ</li>
+    <li>本棚は <code>onAppear</code> と、フラグの <code>onChange</code> の両方で <code>consumeRouterRequests()</code> を呼ぶ。コールド起動なら出現時、起動中なら変化時に拾ってフラグを下ろす</li>
+    <li>対象は週次レビュー通知（ID <code>weekly-review</code>）のみ。アクションの期限通知はタップしてもアプリが開くだけで、画面遷移はしない</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default',
+      flowchart: { curve: 'basis', useMaxWidth: true }
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-09-26</footer>
+</div>
+</body>
+</html>

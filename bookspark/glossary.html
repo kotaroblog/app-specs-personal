@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - 用語集</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">BookSpark</a> / 用語集</div>
+
+  <header class="site-header">
+    <h1>用語集・ドメイン辞書</h1>
+    <p>BookSpark 独自の用語と、コード上での命名対応</p>
+  </header>
+
+  <div class="callout">
+    UI 上の表記と、コード上の英語識別子を一致させるため、ここを正典として参照する。定義はコミット 17e9969 の実装から起こしている。
+  </div>
+
+  <h2>ドメイン用語</h2>
+  <table>
+    <tr><th>日本語</th><th>英語識別子</th><th>定義</th><th>備考</th></tr>
+    <tr><td>本</td><td><code>Book</code></td><td>登録した1冊。バーコード（Google Books）か手動で作る</td><td>表紙は端末に保存</td></tr>
+    <tr><td>読書中</td><td><code>BookStatus.reading</code></td><td>いま読んでいる本。登録直後は必ずこれ</td><td><strong>無料枠で数えるのはこの冊数だけ</strong></td></tr>
+    <tr><td>読了</td><td><code>BookStatus.done</code></td><td>読み終えた本。本の詳細ヘッダーのメニューで切り替える</td><td>読了にすると無料枠が1つ空く。読了の本にもメモは追加できる</td></tr>
+    <tr><td>メモ</td><td><code>Memo</code></td><td>本の1ページ分の記録。要点・アクション・フレーズ（＋任意の写真）のまとまり</td><td>保存後の編集は不可（削除のみ）</td></tr>
+    <tr><td>要点</td><td><code>Memo.summary</code></td><td>そのページで大事だと思ったこと。1メモにつき最大3行</td><td>UI 見出しは「要点まとめ」</td></tr>
+    <tr><td>アクション</td><td><code>Action</code></td><td>読んだことから決めた、自分がやる行動。1メモにつき最大3件。必ず期限を持つ</td><td>入力欄のプレースホルダーは「今日か明日にできること」</td></tr>
+    <tr><td>期限</td><td><code>Action.dueDate</code></td><td>アクションをやり終える日。値は<strong>その日の 23:59（ローカル時刻）</strong>。既定は3日後</td><td>プリセット: 今日／明日／3日後／1週間／日付を指定。過去日は選べない</td></tr>
+    <tr><td>期限内</td><td><code>ActionState.open</code></td><td>未完了で、期限をまだ過ぎていない</td><td>本棚チップ「⏳ 期限内 N」</td></tr>
+    <tr><td>流れた</td><td><code>ActionState.overdue</code></td><td><strong>未完了のまま期限を過ぎた</strong>アクション（<code>dueDate &lt; now</code>）。保存された状態ではなく毎回計算する</td><td>終端ではない。後から完了にすれば「達成」、期限を引き直せば「期限内」に戻る</td></tr>
+    <tr><td>完了</td><td><code>ActionState.done</code> / <code>isDone</code></td><td>チェックを付けたアクション。付けた時刻を <code>completedAt</code> に持つ</td><td>チェックを外すと <code>completedAt</code> は消える</td></tr>
+    <tr><td>達成</td><td><code>WeeklyStats.doneCount</code></td><td>集計上の呼び方。<strong>その週に完了した</strong>アクション（<code>completedAt</code> がその週）</td><td>期限を過ぎてから完了にしたものも、完了した週の「達成」に入る</td></tr>
+    <tr><td>決着</td><td><code>WeeklyStats.totalCount</code> / <code>WeeklyBucket.totalCount</code></td><td>その週の <strong>達成 ＋ 流れた</strong>。流れたは「期限がその週にあり、いま流れている」もの</td><td>期限内のアクションは決着に入らない</td></tr>
+    <tr><td>達成率</td><td><code>WeeklyStats.achievementRate</code> / <code>WeeklyBucket.achievementRate</code></td><td><strong>達成 ÷ 決着</strong> を百分率にして四捨五入した整数。<strong>分母 0 のときは nil</strong></td><td>nil の表示: 8週推移の行は「—」、今週の達成率カードは「今週はまだ決着したアクションがありません」</td></tr>
+    <tr><td>（本の進捗）</td><td><code>Book.achievementRate</code></td><td>完了 ÷ その本の全アクション（0.0〜1.0、アクション無しは 0）</td><td><strong>週次の達成率とは別定義</strong>。本カードの進捗バーにだけ使う。UI 上は「アクション N/M 達成」</td></tr>
+    <tr><td>週</td><td><code>WeeklyHistory.startOfWeek</code></td><td><strong>月曜 0:00 始まり</strong>の7日間</td><td>週次通知は日曜 20:00（週の最終日の夜）</td></tr>
+    <tr><td>週次レビュー</td><td><code>WeeklyReviewView</code></td><td>今週のメモ数・達成・流れた・期限内と達成率を見る画面</td><td>UI タイトルは「今週の振り返り」</td></tr>
+    <tr><td>今週のひとこと</td><td><code>WeeklyReviewViewModel.feedback(for:)</code></td><td>達成率・流れた数・メモ数で出し分ける定型文。AI 生成ではない</td><td><a href="screens/S06_weekly_review.html">BS-S06</a> に全文</td></tr>
+    <tr><td>フレーズ</td><td><code>Memo.phrase</code></td><td>心に残った一文。任意・1つ</td><td>UI 見出しは「印象的なフレーズ」。フレーズだけではメモを保存できない</td></tr>
+    <tr><td>読み取ったテキスト</td><td><code>Memo.ocrText</code></td><td>ページ写真を端末内 Vision で文字認識した結果。参考表示のみ</td><td>要点やアクションに自動では入らない</td></tr>
+    <tr><td>無料枠</td><td><code>EntitlementRules.freeReadingBookLimit</code>（= 2）</td><td>無料プランで同時に「読書中」にできる冊数。<code>読書中の冊数 &lt; 2</code> なら追加できる</td><td>読了は数えない。判定箇所は <a href="features/F02_entitlement.html">BS-F02</a></td></tr>
+    <tr><td>Pro</td><td><code>StoreKitManager.isPremium</code> / <code>proID</code></td><td>買い切りの非消耗型 <code>com.happyboy1002.BookSpark.pro</code> を持っている状態</td><td>冊数無制限・テキスト書き出し・週次レビューの8週推移。UI 表記は「BookSpark Pro」</td></tr>
+  </table>
+
+  <h2>UI ラベル</h2>
+  <p>ローカライズファイルは持たず、文言は各 View に直書き。</p>
+  <table>
+    <tr><th>UI 表記</th><th>コード上の場所</th><th>使用箇所</th></tr>
+    <tr><td>本棚 ／ 読んだ知識を、行動に変える</td><td><code>BookShelfHeader</code></td><td>S02 見出し</td></tr>
+    <tr><td>📚 N冊読書中 ／ ⏳ 期限内 N ／ 流れた N</td><td><code>BookShelfHeader.statChip</code></td><td>S02 ヘッダーのチップ</td></tr>
+    <tr><td>アクション N/M 達成</td><td><code>BookCard</code></td><td>S02 本カード</td></tr>
+    <tr><td>M/d まで ／ 流れた（バッジ）</td><td><code>ActionItem.dueChip</code> / <code>DueDateChip</code></td><td>S04 アクション行・S05 期限チップ</td></tr>
+    <tr><td>撮影して書く ／ 書くだけ</td><td><code>BookDetailView</code></td><td>S04「メモを追加」ダイアログ</td></tr>
+    <tr><td>メモを残す ／ 保存する ／ やめる</td><td><code>MemoEditorView</code></td><td>S05</td></tr>
+    <tr><td>今週の振り返り ／ 来週もがんばる 👊</td><td><code>WeeklyReviewView</code></td><td>S06</td></tr>
+    <tr><td>BookSpark Pro ／ 一度の購入で、ずっと使えます ／ {価格} で購入</td><td><code>PaywallView</code></td><td>S07（価格は <code>Product.displayPrice</code>）</td></tr>
+  </table>
+
+  <h2>略語・固有名詞</h2>
+  <table>
+    <tr><th>略語</th><th>正式名称</th><th>説明</th></tr>
+    <tr><td>OCR</td><td>Optical Character Recognition</td><td>Vision の <code>VNRecognizeTextRequest</code>（日本語・英語、accurate）。端末内で完結</td></tr>
+    <tr><td>ISBN / EAN</td><td>International Standard Book Number / European Article Number</td><td>バーコードは EAN-13・EAN-8 を読み、その数字で Google Books を検索する</td></tr>
+    <tr><td>Google Books API</td><td>—</td><td>アプリ唯一の外部通信。<code>volumes?q=isbn:</code> で書名・著者・表紙 URL を取る</td></tr>
+  </table>
+
+  <h2>使い分けの注意</h2>
+  <ul>
+    <li><strong>「完了」と「達成」</strong>: 操作・個々のアクションの状態は「完了」（アクセシビリティ「完了にする」）。週次の集計値は「達成」</li>
+    <li><strong>「流れた」と「期限切れ」</strong>: UI・仕様書とも「流れた」で統一する。「期限切れ」「失敗」とは書かない</li>
+    <li><strong>「達成率」</strong>: 単独で書いたら週次の定義（達成 ÷ 決着）を指す。本カードの進捗バーの値を指すときは「本の進捗」と書き分ける</li>
+    <li><strong>「メモ」と「アクション」</strong>: メモは入れ物、アクションはその中身の一部。本の詳細ではメモ一覧とアクション一覧を別セクションに並べる（アクションは全メモを横断して並ぶ）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-09-26</footer>
+</div>
+</body>
+</html>

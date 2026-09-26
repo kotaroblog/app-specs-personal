@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - オンボーディング</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / オンボーディング</div>
+
+  <header class="site-header">
+    <h1>オンボーディング（OnboardingView）</h1>
+    <p>初回起動時だけ出る。ウォークスルー3ページ → 最初の1冊。登録できたらその本のメモ編集まで直行する。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">実装済</span>
+      <span class="tag">画面ID: BS-S01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    アプリの型（1ページ分だけ残す → アクションに期限 → 週に一度数える）を3枚で伝え、
+    <strong>最初のメモを書き終えるところまで</strong>手数を減らして連れていく。
+    読まれない質問で手数を増やさないため、パーソナライズ質問は置かない。オンボーディング内に Paywall も出さない。
+  </p>
+
+  <h2>UI 構成</h2>
+  <h3>ステップ1: ウォークスルー</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>スキップ</td><td>Button（右上・44pt）</td><td>ウォークスルーを飛ばして「最初の1冊」へ</td></tr>
+    <tr><td>ページ本体</td><td>TabView（page スタイル・標準インジケーター非表示）</td><td>SF Symbol 56pt・見出し（明朝系 24pt）・説明文。横スワイプでも送れる</td></tr>
+    <tr><td>ページインジケーター</td><td>自前の Circle ×3</td><td>現在ページはアクセント色、ほかは薄いグレー</td></tr>
+    <tr><td>次へ ／ はじめる</td><td>Button（幅240・アクセント色）</td><td>最終ページだけ「はじめる」。押すと「最初の1冊」へ</td></tr>
+  </table>
+  <table>
+    <tr><th>ページ</th><th>アイコン</th><th>見出し</th><th>説明</th></tr>
+    <tr><td>1</td><td><code>square.and.pencil</code></td><td>本を読んだら、1ページ分だけ残す</td><td>要点3つとアクションを、自分の言葉で。写真は添えても添えなくても。</td></tr>
+    <tr><td>2</td><td><code>clock.badge.exclamationmark</code></td><td>アクションには期限がつく</td><td>3日以内に動く。流れたら流れたと分かる。</td></tr>
+    <tr><td>3</td><td><code>chart.bar</code></td><td>週に一度、ふり返る</td><td>達成と流れたを数える。読書を行動に変える。</td></tr>
+  </table>
+
+  <h3>ステップ2: 最初の1冊（OnboardingFirstBookView）</h3>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>見出し</td><td>Text</td><td>「最初の1冊を／登録しましょう」＋「登録したら、そのままメモを書きます」</td></tr>
+    <tr><td>バーコードで登録</td><td>Button（主ボタン）</td><td>BarcodeScannerView をシートで開く</td></tr>
+    <tr><td>手動で登録</td><td>Button（副ボタン）</td><td>ManualBookEntryView をシートで開く</td></tr>
+    <tr><td>あとで登録する</td><td>Button（テキスト・44pt）</td><td>登録せずにオンボーディングを終える</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>初期表示</td><td>ウォークスルー1ページ目</td></tr>
+    <tr><td>ウォークスルー中</td><td>ページ番号に応じてボタン文言が「次へ」／「はじめる」</td></tr>
+    <tr><td>最初の1冊</td><td>ステップ2。シートを閉じただけ（未登録）ならこの画面に戻る</td></tr>
+    <tr><td>完了</td><td><code>hasCompletedOnboarding = true</code>。以後は起動時に表示しない</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>スキップ／はじめる</td><td>ステップ2（同一画面内）</td></tr>
+    <tr><td>バーコードで登録 → 登録完了</td><td>本棚 → 本の詳細 → メモ編集（書くだけ）に直行</td></tr>
+    <tr><td>手動で登録 → 登録完了</td><td>同上</td></tr>
+    <tr><td>あとで登録する</td><td><a href="S02_bookshelf.html">本棚（BS-S02）</a>の空状態</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool  // UserDefaults
+AppRouter.shared.pendingFirstMemoBookID: UUID?   // 最初の1冊の直行先
+Book  // S03 で作成される</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>最初の1冊の直行: 登録シートの <code>onRegistered</code> で <code>AppRouter.pendingFirstMemoBookID = book.id</code> を立て、両シートを閉じてオンボ完了。本棚が出現時にその本を <code>path</code> に push し、本の詳細が <code>onAppear</code> でフラグを下ろして「書くだけ」のメモ編集を開く</li>
+    <li>登録は S03 と同じ画面を使うので、無料枠判定もそこで通る（この時点では 0 冊なので常に通る）</li>
+    <li>スクリーンショット撮影モード（<code>-uiTestSnapshot</code>）ではオンボ完了フラグを先に立て、本棚から起動する</li>
+    <li>通知許可はここでは求めない（最初のメモの保存直前に求める。<a href="../features/F03_notification.html">BS-F03</a>）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="S03_book_entry.html">本の登録（BS-S03）</a></li>
+    <li><a href="S05_memo_editor.html">メモ編集（BS-S05）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <footer class="site-footer">
+    最終更新: 2026-09-26
+  </footer>
+</div>
+</body>
+</html>

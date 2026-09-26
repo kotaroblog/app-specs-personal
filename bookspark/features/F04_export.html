@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - テキスト書き出し</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / テキスト書き出し</div>
+
+  <header class="site-header">
+    <h1>テキスト書き出し</h1>
+    <p>本1冊分のメモとアクションをプレーンテキストにして、共有シートで外へ出す（Pro）。</p>
+    <div class="section-meta">
+      <span class="tag done">実装済</span>
+      <span class="tag">機能ID: BS-F04</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    アプリに閉じ込めず、メモアプリやノートに貼れる形で取り出すための機能。Pro 限定。
+    書式は Markdown 風のプレーンテキストで、そのまま貼っても読めることを優先する。
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/S04_book_detail.html">本の詳細（BS-S04）</a> — 右上「…」→「テキストで書き出す」</li>
+    <li><a href="../screens/S07_paywall.html">Paywall（BS-S07）</a> — 無料時</li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant D as BookDetailView
+  participant E as MemoExporter
+  participant S as ShareSheetView
+
+  U->>D: テキストで書き出す
+  alt 無料
+    D-->>U: Paywall（general）
+  else Pro
+    D->>E: export(book)
+    E-->>D: String
+    D->>S: シートで表示（medium / large）
+    U->>S: 共有ボタン（ShareLink）
+  end
+  </div>
+
+  <h2>書式</h2>
+  <pre><code># {書名} / {著者}
+
+## {メモの日付 M月d日}
+- {要点1}
+- {要点2}
+&gt; {フレーズ}
+☑ {完了したアクション}
+□ {未完了のアクション}（{M/d} まで）
+
+## {次のメモの日付}
+...</code></pre>
+  <h3>例</h3>
+  <pre><code># エッセンシャル思考 / グレッグ・マキューン
+
+## 9月26日
+- より少なく、しかし、より良く
+&gt; 最も重要なことを見極め、それ以外を捨てる勇気を持つ。
+□ 今週のタスクを上位3つに絞る（9/29 まで）
+☑ 不要な会議を1つ断る</code></pre>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>見出し: 著者が空（空白のみを含む）なら <code># {書名}</code> だけ</li>
+    <li>メモは<strong>古い順</strong>（読んだ順）。本の詳細の表示（新しい順）とは逆</li>
+    <li>各メモの中は 要点 → フレーズ → アクション の順。空の要点・空のフレーズは出さない</li>
+    <li>アクションはメモ内で<strong>作成順</strong>（本の詳細の「流れた → 期限順 → 完了」ではない）</li>
+    <li>完了は <code>☑ {文言}</code>、未完了は <code>□ {文言}（{M/d} まで）</code>。期限が無いものは期限を付けない。<strong>流れたと期限内は区別しない</strong>（どちらも □）</li>
+    <li>ブロックの間は空行1つ、末尾に改行1つ</li>
+    <li>写真・読み取ったテキスト（OCR）は出さない</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>SwiftUI <code>ShareLink</code></td><td>OS の共有シート</td><td>書き出しシート右上のアイコン。本文はテキスト選択（コピー）も可</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>無料プラン</td><td>Paywall（general）を開く</td></tr>
+    <tr><td>メモが0件</td><td>見出し行だけのテキストになる（エラーにしない）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>生成は純粋関数 <code>MemoExporter.export(book:)</code>。<code>MemoExporterTests</code> で書式を検証</li>
+    <li>書き出しシート（<code>ShareSheetView</code>）は等幅 12pt でプレビューし、左上「閉じる」・右上に共有アイコン</li>
+    <li>日付の書式は <code>Date.shortJapanese</code>（M月d日）と <code>Date.shortSlash</code>（M/d）。どちらも ja_JP 固定の共有 DateFormatter</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-09-26</footer>
+</div>
+</body>
+</html>

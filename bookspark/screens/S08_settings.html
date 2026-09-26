@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - 設定</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / 設定</div>
+
+  <header class="site-header">
+    <h1>設定（SettingsView）</h1>
+    <p>本棚右上の歯車から開くシート。プラン・復元・統計・通知の状態・法的情報・サポートを並べる。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">実装済</span>
+      <span class="tag">画面ID: BS-S08</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    設定値を持たない「確認と出口」の画面。アプリ内で切り替える設定項目（通知時刻・テーマ等）は無く、
+    通知の許可状態を見せて設定アプリへ送る、購入を復元する、ポリシーとサポートを開く、の3つが主な用途。
+  </p>
+
+  <h2>UI 構成（List・セクション順）</h2>
+  <table>
+    <tr><th>セクション</th><th>行</th><th>説明</th></tr>
+    <tr><td rowspan="3">プラン</td><td>プラン</td><td>右に「Pro」／「無料」</td></tr>
+    <tr><td>Pro にアップグレード</td><td>無料のときだけ表示 → Paywall（general）</td></tr>
+    <tr><td>購入を復元</td><td>復元中はスピナー。結果はアラート「購入の復元」で「BookSpark Pro を復元しました」／「復元可能な購入が見つかりませんでした」</td></tr>
+    <tr><td rowspan="3">統計</td><td>登録した本</td><td>「N冊」（読了を含む全件）</td></tr>
+    <tr><td>メモ</td><td>「N件」（全件）</td></tr>
+    <tr><td>アクション</td><td>「N個」（全件）</td></tr>
+    <tr><td>通知</td><td>通知</td><td>右に「許可」／「未許可」／「確認中…」と ↗。タップで設定アプリ。フッター「期限当日の朝と、流れた翌朝にお知らせします」</td></tr>
+    <tr><td rowspan="3">法的情報</td><td>プライバシーポリシー</td><td rowspan="3">外部リンク（↗）。<code>https://kotaroblog.github.io/app-policies/bookspark/</code> 配下の privacy-policy / terms / support</td></tr>
+    <tr><td>利用規約</td></tr>
+    <tr><td>サポート</td></tr>
+    <tr><td>アプリ情報</td><td>バージョン</td><td><code>CFBundleShortVersionString</code>（取れなければ「1.0」）</td></tr>
+  </table>
+  <p>ナビゲーションタイトル「設定」、左上に ×（閉じる）。</p>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>初期表示</td><td>通知行は「確認中…」→ 許可状態の取得後に確定</td></tr>
+    <tr><td>無料</td><td>プラン「無料」＋「Pro にアップグレード」</td></tr>
+    <tr><td>Pro</td><td>プラン「Pro」。アップグレード行は出さない</td></tr>
+    <tr><td>通知: 許可</td><td><code>.authorized</code> / <code>.provisional</code> / <code>.ephemeral</code></td></tr>
+    <tr><td>通知: 未許可</td><td><code>.denied</code> と <code>.notDetermined</code>（まだ一度も聞いていない場合も「未許可」）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>Pro にアップグレード</td><td><a href="S07_paywall.html">Paywall（BS-S07）</a>・理由 general</td></tr>
+    <tr><td>通知</td><td>設定アプリ（<code>UIApplication.openSettingsURLString</code>）</td></tr>
+    <tr><td>プライバシーポリシー／利用規約／サポート</td><td>Safari</td></tr>
+    <tr><td>×</td><td><a href="S02_bookshelf.html">本棚（BS-S02）</a></td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>StoreKitManager.shared.isPremium
+modelContext.fetchCount(FetchDescriptor&lt;Book&gt;())   // Memo / Action も同様
+UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+AppLinks.privacyPolicy / terms / support          // Paywall と同じ URL の単一置き場</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>通知の許可状態は <code>.task</code> で1回だけ取得する。設定アプリで変えて戻ってきても、シートを開き直すまで表示は変わらない</li>
+    <li>通知行のフッターは期限通知の2通だけを説明しており、週次（日曜 20:00）には触れていない</li>
+    <li>復元処理の失敗（<code>AppStore.sync</code> の例外）と「購入が見つからない」は同じ文言になる（<a href="../error-design.html">BS-ERR-017</a>）</li>
+    <li>統計は描画のたびに <code>fetchCount</code> で数える（キャッシュしない）</li>
+    <li>データの全削除・書き出し一括などの項目は持たない</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/F02_entitlement.html">無料枠と Pro（BS-F02）</a></li>
+    <li><a href="../features/F03_notification.html">通知（BS-F03）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <footer class="site-footer">
+    最終更新: 2026-09-26
+  </footer>
+</div>
+</body>
+</html>

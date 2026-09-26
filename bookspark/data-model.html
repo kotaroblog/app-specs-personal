@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - データモデル</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">BookSpark</a> / データモデル</div>
+
+  <header class="site-header">
+    <h1>データモデル</h1>
+    <p>SwiftData @Model 3種（Book / Memo / Action）の構造・リレーション・導出プロパティ</p>
+  </header>
+
+  <h2>ER 図</h2>
+  <div class="mermaid">
+erDiagram
+  Book ||--o{ Memo : "memos (cascade)"
+  Memo ||--o{ Action : "actions (cascade)"
+  Book {
+    UUID id
+    String title
+    String author
+    String isbn "optional"
+    Data coverImageData "externalStorage / optional"
+    String statusRawValue "reading / done"
+    Date createdAt
+  }
+  Memo {
+    UUID id
+    Data photoData "externalStorage / optional"
+    String ocrText
+    StringArray summary "最大3"
+    String phrase "optional"
+    Date createdAt
+  }
+  Action {
+    UUID id
+    String text
+    Bool isDone
+    Date dueDate "optional / 作成経路では必ず入る"
+    Date completedAt "optional"
+    String calendarEventID "optional"
+    Date reminderDate "optional"
+    Date createdAt
+  }
+  </div>
+
+  <h2>コンテナ</h2>
+  <ul>
+    <li><code>BookSparkApp</code> で <code>.modelContainer(for: [Book.self, Memo.self, Action.self])</code>。スキーマのバージョン管理（<code>VersionedSchema</code>）は持たない</li>
+    <li>スクリーンショット撮影モード（起動引数 <code>-uiTestSnapshot</code>）では <code>inMemory: true</code> にし、<code>SnapshotSeeder</code> がサンプルの本4冊を投入する。本番データには触れない</li>
+    <li>SwiftData 以外の永続値は <code>UserDefaults</code> の <code>hasCompletedOnboarding</code>（<code>@AppStorage</code>）のみ。Pro 状態は保存せず、起動時に StoreKit から判定し直す（<a href="features/F02_entitlement.html">BS-F02</a>）</li>
+  </ul>
+
+  <h2>Book</h2>
+  <pre><code>enum BookStatus: String, Codable {
+    case reading
+    case done
+}
+
+@Model
+class Book {
+    var id: UUID = UUID()
+    var title: String = ""
+    var author: String = ""
+    var isbn: String?
+
+    // 表紙画像はローカルに保存（Google Books API の URL 変更リスク回避）
+    @Attribute(.externalStorage)
+    var coverImageData: Data?
+
+    var statusRawValue: String = BookStatus.reading.rawValue
+    var createdAt: Date = Date()
+
+    @Relationship(deleteRule: .cascade, inverse: \Memo.book)
+    var memos: [Memo] = []
+}</code></pre>
+  <table>
+    <tr><th>導出プロパティ</th><th>定義</th><th>使う場所</th></tr>
+    <tr><td><code>status</code></td><td><code>statusRawValue</code> を <code>BookStatus</code> に変換。不正値は <code>.reading</code></td><td>全般</td></tr>
+    <tr><td><code>allActions</code></td><td>全メモのアクションを平らにしたもの</td><td>件数・並べ替え・削除時の通知解除</td></tr>
+    <tr><td><code>openActionCount</code></td><td><code>state == .open</code> の件数</td><td>本棚ヘッダー「期限内 N」</td></tr>
+    <tr><td><code>overdueActionCount</code></td><td><code>state == .overdue</code> の件数</td><td>本棚ヘッダー・本カード「流れた N」</td></tr>
+    <tr><td><code>achievementRate</code></td><td><strong>完了 ÷ 全アクション</strong>（0.0〜1.0）。アクションが無ければ 0</td><td>本カードの進捗バーのみ。<strong>週次レビューの「達成率」とは定義が違う</strong>（<a href="glossary.html">用語集</a>）</td></tr>
+    <tr><td><code>lastMemoDate</code></td><td>メモの <code>createdAt</code> の最大値。メモが無ければ本の <code>createdAt</code></td><td>本棚の並び順</td></tr>
+    <tr><td><code>sortedActions</code></td><td>下記の並び規則で並べた全アクション</td><td>本の詳細のアクション一覧</td></tr>
+  </table>
+
+  <h3>sortedActions の並び規則</h3>
+  <ol>
+    <li><strong>流れた</strong>（<code>.overdue</code>）— 期限の昇順（古い期限ほど上）</li>
+    <li><strong>期限内</strong>（<code>.open</code>）— 期限の昇順（近い期限ほど上）</li>
+    <li><strong>完了</strong>（<code>.done</code>）— 完了時刻の降順（最近終えたものほど上）</li>
+  </ol>
+  <p>期限が <code>nil</code> のものは <code>distantFuture</code>、完了時刻が <code>nil</code> のものは <code>distantPast</code> として扱う。
+  同着は <code>id.uuidString</code> の昇順で安定させる（描画のたびに順番が入れ替わらないように）。基準時刻を渡せる <code>sortedActions(at:)</code> がテスト用に公開されている。</p>
+
+  <h2>Memo</h2>
+  <pre><code>@Model
+class Memo {
+    var id: UUID = UUID()
+    var book: Book?
+
+    // 撮影画像（externalStorage でファイルシステムに自動保存）
+    @Attribute(.externalStorage)
+    var photoData: Data?
+
+    // Vision OCR の結果テキスト（参考表示用・写真なしメモでは空）
+    var ocrText: String = ""
+
+    // 要点（最大3行）
+    var summary: [String] = []
+
+    // 印象的なフレーズ
+    var phrase: String?
+
+    var createdAt: Date = Date()
+
+    @Relationship(deleteRule: .cascade, inverse: \Action.memo)
+    var actions: [Action] = []
+}</code></pre>
+  <ul>
+    <li>写真は <code>jpegData(compressionQuality: 0.7)</code> で保存する。写真なしメモ（「書くだけ」）は <code>photoData == nil</code>・<code>ocrText == ""</code></li>
+    <li><code>summary</code> と <code>actions</code> の上限3件は保存時の正規化で担保する（モデル側に制約は無い）。空行・前後空白・重複は落とす</li>
+    <li>保存後のメモを編集する画面は無い。変更できるのはアクション（文言・期限・完了・削除）と、メモごとの削除のみ</li>
+  </ul>
+
+  <h2>Action</h2>
+  <pre><code>enum ActionState: Sendable {
+    case open     // 期限内（未完了・期限前）
+    case done     // 完了
+    case overdue  // 流れた（未完了のまま期限を過ぎた）
+}
+
+@Model
+class Action {
+    var id: UUID = UUID()
+    var memo: Memo?
+    var text: String = ""
+    var isDone: Bool = false
+
+    // EventKit のイベントID
+    var calendarEventID: String?
+
+    var reminderDate: Date?
+    var createdAt: Date = Date()
+
+    /// 期限。新規作成時は既定で「3日後の 23:59」（ローカル時刻）
+    var dueDate: Date?
+
+    /// isDone を true にした時刻。false に戻したら nil
+    var completedAt: Date?
+}</code></pre>
+  <table>
+    <tr><th>導出・操作</th><th>定義</th></tr>
+    <tr><td><code>isOverdue(at:)</code></td><td><code>!isDone &amp;&amp; dueDate != nil &amp;&amp; dueDate &lt; now</code>。期限は「その日の 23:59:00」なので、<strong>期限日の 23:59 を過ぎた瞬間から流れた扱い</strong></td></tr>
+    <tr><td><code>state(at:)</code></td><td><code>isDone</code> なら <code>.done</code>、そうでなければ <code>isOverdue</code> で <code>.overdue</code> / <code>.open</code>。<strong>保存された列ではなく毎回計算する</strong>ので、時間が経つだけで open → overdue に変わる</td></tr>
+    <tr><td><code>setDone(_:at:)</code></td><td><code>isDone</code> と <code>completedAt</code> を同時に更新（true で時刻を入れ、false で nil）。View からは直接呼ばず <code>ActionService.setDone</code> を通す</td></tr>
+    <tr><td><code>calendarEventID</code> / <code>reminderDate</code></td><td>カレンダー登録に成功したときだけ入る（イベントID と予定の日時）。<code>reminderDate</code> は通知には使っていない。<code>calendarEventID</code> があると一覧のアイコンが「登録済み」になる</td></tr>
+  </table>
+  <p>状態遷移と通知の規則は <a href="features/F01_deadline_action.html">BS-F01 期限つきアクション</a> を参照。</p>
+
+  <h2>削除と通知の関係</h2>
+  <div class="callout warn">
+    Book → Memo → Action は <code>.cascade</code> で連鎖削除されるが、<strong>SwiftData の連鎖削除は保留中のローカル通知を消さない</strong>。
+    そのため削除は必ず <code>ActionService.delete / deleteMemo / deleteBook</code> を通し、配下の全アクションの通知を解除してから <code>context.delete</code> する。
+  </div>
+
+  <h2>モデル外の値型（画面・集計用）</h2>
+  <table>
+    <tr><th>型</th><th>置き場所</th><th>役割</th></tr>
+    <tr><td><code>SummaryDraft</code> / <code>ActionDraft</code></td><td><code>MemoEditorViewModel</code></td><td>編集中の要点／アクション1行。<code>Identifiable</code> にして行削除時の index ずれクラッシュを防ぐ。<code>ActionDraft.dueDate</code> は非 Optional（期限必須）</td></tr>
+    <tr><td><code>WeeklyStats</code></td><td><code>WeeklyReviewViewModel</code></td><td>今週のメモ数・達成・流れた・期限内。達成率は <code>Int?</code>（分母0で nil）</td></tr>
+    <tr><td><code>WeeklyBucket</code> / <code>ActionOutcome</code></td><td><code>WeeklyHistory</code></td><td>8週推移の1週分と、集計に必要な値だけを抜いた入力。SwiftData を使わずにテストできる</td></tr>
+  </table>
+
+  <h2>マイグレーション方針</h2>
+  <div class="callout warn">
+    SwiftData の <code>@Model</code> は全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する。
+  </div>
+  <ul>
+    <li>v1.0 は未リリースのため既存ユーザーデータは無い。AI 前提期のモデル（AI 回数記録など）は撤去済みで、移行処理は持たない</li>
+    <li><code>Action.dueDate</code> は Optional のまま残しているが、v1.0 のアクション作成経路（メモ編集の保存）では必ず値が入る。表示・並べ替え・集計は nil を想定した分岐を持つ</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-09-26</footer>
+</div>
+</body>
+</html>

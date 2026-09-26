@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - 本棚</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / 本棚</div>
+
+  <header class="site-header">
+    <h1>本棚（BookShelfView）</h1>
+    <p>アプリのホーム。登録した本を並べ、ヘッダーで「期限内」「流れた」の件数を常に見せる。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">実装済</span>
+      <span class="tag">画面ID: BS-S02</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    本を開く入口であり、<strong>流れたアクションが残っていることを毎回目に入れる</strong>場所。
+    旧版の「達成率」チップは、レビュー修正（17e9969）で「期限内 N／流れた N」に置き換えた。
+    アプリ全体の NavigationStack はこの画面が持つ（通知やオンボーディングから本の詳細を push するため）。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>見出し</td><td>Text</td><td>「本棚」（明朝系 26pt）＋「読んだ知識を、行動に変える」</td></tr>
+    <tr><td>週次レビュー</td><td>Icon Button（<code>chart.bar</code>・44pt）</td><td>「今週の振り返り」シートを開く</td></tr>
+    <tr><td>設定</td><td>Icon Button（<code>gearshape</code>・44pt）</td><td>設定シートを開く</td></tr>
+    <tr><td>統計チップ</td><td>Capsule ×最大3</td><td>本が1冊以上あるときだけ表示。<br>「📚 N冊読書中」（常に）／「⏳ 期限内 N」（N &gt; 0 のとき）／「流れた N」（N &gt; 0 のとき・暖色）。件数は全本の <code>openActionCount</code> / <code>overdueActionCount</code> の合計</td></tr>
+    <tr><td>本カード</td><td>NavigationLink（BookCard）</td><td>表紙（なければタイトル先頭2文字＋5色グラデーション。色はタイトルの Unicode スカラー合計で決まり、起動ごとに変わらない）・書名（1行）・著者・進捗バー（完了 ÷ 全アクション）・「アクション N/M 達成」・「流れた N」（N &gt; 0 のとき）・読書中／読了バッジ</td></tr>
+    <tr><td>本の削除</td><td>contextMenu（長押し）</td><td>「削除」→ アラート「この本を削除しますか？」「メモとアクションもすべて削除されます」</td></tr>
+    <tr><td>＋（本を追加）</td><td>FAB（右下・44pt・黒）</td><td>無料枠内なら「本を登録」ダイアログ（バーコードで登録／手動で登録／キャンセル）、超過なら Paywall</td></tr>
+  </table>
+
+  <h3>並び順</h3>
+  <p>読書中を上、読了を下。それぞれの中は <code>lastMemoDate</code>（最後にメモを書いた日。メモが無ければ登録日）の新しい順。</p>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>本が0冊（空状態）</td><td>ヘッダーは同じものを出し、統計チップだけ隠す。本文は <code>books.vertical</code> アイコン・「まだ本がありません」「最初の1冊を登録して／読書を始めましょう」・「バーコードで登録」「手動で登録」の2ボタン。FAB も出る</td></tr>
+    <tr><td>本あり</td><td>ヘッダー＋チップ＋本カードの一覧（ScrollView + LazyVStack）</td></tr>
+    <tr><td>流れたあり</td><td>ヘッダーの「流れた N」チップと、該当する本カードの「流れた N」が暖色で出る</td></tr>
+    <tr><td>エラー</td><td>この画面固有のエラー表示は無い</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>本カードをタップ</td><td><a href="S04_book_detail.html">本の詳細（BS-S04）</a>を push</td></tr>
+    <tr><td>＋ →（無料枠内）→ バーコード／手動</td><td><a href="S03_book_entry.html">本の登録（BS-S03）</a>シート</td></tr>
+    <tr><td>＋（無料・読書中が2冊以上）</td><td><a href="S07_paywall.html">Paywall（BS-S07）</a>・理由 bookLimit</td></tr>
+    <tr><td>空状態の2ボタン</td><td>本の登録シート（0冊なので枠判定は不要。登録時にも S03 側で再判定される）</td></tr>
+    <tr><td>グラフアイコン／週次通知タップ</td><td><a href="S06_weekly_review.html">週次レビュー（BS-S06）</a>シート</td></tr>
+    <tr><td>歯車</td><td><a href="S08_settings.html">設定（BS-S08）</a>シート</td></tr>
+    <tr><td>（オンボで最初の1冊を登録した直後）</td><td>その本の詳細を自動で push</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>@Query private var books: [Book]
+// Book.status / lastMemoDate / openActionCount / overdueActionCount / achievementRate
+
+enum ActiveSheet: Identifiable {   // 本棚から開くシートを1本に排他
+    case barcode, manual, settings, weeklyReview
+    case paywall(PaywallReason)
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>シートは <code>ActiveSheet</code> 1状態＋ <code>.sheet(item:)</code> 1本で出す。本の登録ダイアログだけは confirmationDialog</li>
+    <li>ScrollView + LazyVStack では <code>swipeActions</code> が効かないため、削除は contextMenu（長押し）で出す</li>
+    <li>削除は <code>ActionService.deleteBook</code> 経由（配下の全アクションの通知を解除してから削除）</li>
+    <li><code>consumeRouterRequests()</code> を <code>onAppear</code> と、<code>AppRouter</code> の2フラグの <code>onChange</code> で呼ぶ。週次通知（<code>pendingWeeklyReview</code>）と最初の1冊（<code>pendingFirstMemoBookID</code>）の2つを処理する</li>
+    <li>＋の枠判定は <code>@Query</code> の読書中件数で <code>EntitlementRules.canAddBook</code> を呼ぶ（<a href="../features/F02_entitlement.html">BS-F02</a>）</li>
+    <li>スクリーンショット撮影モードでは <code>.task</code> で <code>SnapshotSeeder.seed</code> がサンプルの本4冊（読書中2・読了2、流れたアクション1件を含む）を投入する</li>
+    <li>チップの件数は <code>state</code> を描画時に計算するため、画面を開いたまま期限をまたいでも再描画されるまで数字は変わらない</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+    <li><a href="../glossary.html">用語集（期限内・流れた・本の進捗）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <footer class="site-footer">
+    最終更新: 2026-09-26
+  </footer>
+</div>
+</body>
+</html>

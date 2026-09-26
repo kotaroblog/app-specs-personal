@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - 週次レビュー</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / 週次レビュー</div>
+
+  <header class="site-header">
+    <h1>週次レビュー（WeeklyReviewView）</h1>
+    <p>今週（月曜始まり）の達成と流れたを数え、達成率と定型のひとことを出す。Pro は過去8週の推移も見られる。</p>
+    <div style="margin-top:8px;">
+      <span class="tag done">実装済</span>
+      <span class="tag">画面ID: BS-S06</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    「読んだことを行動に変えられたか」を週に一度だけ数える場所。数えるのは<strong>達成</strong>と<strong>流れた</strong>で、
+    その比率（達成率）を見せる。ひとことは AI ではなく、数字の組み合わせで出し分ける定型文。
+  </p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>ヘッダー</td><td>Text + Button</td><td>週の範囲「M月d日〜M月d日」（月曜〜日曜）・タイトル「今週の振り返り」（明朝系 22pt）・右上 ×（44pt）</td></tr>
+    <tr><td>統計グリッド</td><td>2×2 カード</td><td>数字は DM Serif Display 26pt。下表</td></tr>
+    <tr><td>達成率カード</td><td>Text + バー</td><td>「達成率」「N%」＋グラデーションのバー。<strong>決着が0件なら数字もバーも出さず「今週はまだ決着したアクションがありません」</strong></td></tr>
+    <tr><td>今週のひとこと</td><td>カード（左にアクセント線）</td><td>下記の定型文</td></tr>
+    <tr><td>過去8週の推移（Pro）</td><td>WeeklyHistoryChart</td><td>古い週 → 今週の8行。各行「週頭の M/d」・横棒・「N%」。<strong>決着0件の週は「—」</strong>（バーは空）。VoiceOver は「M月d日の週 / 達成率 N%」または「記録なし」</td></tr>
+    <tr><td>推移の案内（無料）</td><td>Button</td><td>「Pro で推移が見られます」→ Paywall</td></tr>
+    <tr><td>来週もがんばる 👊</td><td>Button</td><td>閉じる</td></tr>
+  </table>
+
+  <h3>統計グリッドの定義</h3>
+  <table>
+    <tr><th>カード</th><th>数える対象（now = 画面を開いた時刻、週頭 = 今週の月曜 0:00）</th><th>色</th></tr>
+    <tr><td>件 今週のメモ</td><td><code>createdAt ≥ 週頭</code> のメモ</td><td>通常</td></tr>
+    <tr><td>個 達成</td><td>完了済みで <code>completedAt ≥ 週頭</code></td><td>アクセント（緑）</td></tr>
+    <tr><td>個 流れた</td><td>いま流れていて（未完了・<code>dueDate &lt; now</code>）、<code>dueDate ≥ 週頭</code></td><td>1件以上で暖色</td></tr>
+    <tr><td>個 期限内</td><td>いま期限内の<strong>全</strong>アクション（週で絞らない）</td><td>通常</td></tr>
+  </table>
+  <p>達成率 = 達成 ÷（達成 ＋ 流れた）を百分率にして四捨五入。分母が0なら nil。期限内は分母に入らない。</p>
+
+  <h3>今週のひとこと（出し分け）</h3>
+  <table>
+    <tr><th>条件</th><th>文言</th></tr>
+    <tr><td>決着0件・メモ0件</td><td>今週はまだメモがありません。1ページ分でいいので、要点とアクションを残すところから始めましょう。</td></tr>
+    <tr><td>決着0件・メモ n 件</td><td>今週は{n}件のメモを残せました。アクションの期限が来るのはこれからです。決めた日に手をつけましょう。</td></tr>
+    <tr><td>達成率 80% 以上</td><td>達成率{r}%。読んだことをきちんと行動に変えられています。この粒度のまま来週も続けましょう。</td></tr>
+    <tr><td>達成率 40〜79%</td><td>達成率{r}%。半分以上は動いています。流れた{m}件は「いつやるか」を先に決めると通ります。</td></tr>
+    <tr><td>達成率 40% 未満</td><td>達成率{r}%。{m}件が流れました。来週は数を減らして、1つに絞ってみましょう。</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>データなし（初週など）</td><td>全カード 0・達成率カードは「今週はまだ決着したアクションがありません」・ひとことは「今週はまだメモがありません…」</td></tr>
+    <tr><td>メモはあるが決着なし</td><td>達成率カードは同上・ひとことは「今週は{n}件のメモを残せました…」</td></tr>
+    <tr><td>決着あり</td><td>達成率の数字とバー・達成率帯に応じたひとこと</td></tr>
+    <tr><td>Pro</td><td>8週推移を表示</td></tr>
+    <tr><td>無料</td><td>推移の代わりに「Pro で推移が見られます」</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>（入口）本棚ヘッダーのグラフアイコン</td><td>この画面（シート）</td></tr>
+    <tr><td>（入口）週次通知「今週の振り返りができますよ」をタップ</td><td>本棚経由でこの画面（コールド起動も可。<a href="../features/F03_notification.html">BS-F03</a>）</td></tr>
+    <tr><td>Pro で推移が見られます</td><td><a href="S07_paywall.html">Paywall（BS-S07）</a>・理由 general</td></tr>
+    <tr><td>× ／ 来週もがんばる 👊</td><td>閉じて <a href="S02_bookshelf.html">本棚（BS-S02）</a></td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>struct WeeklyStats {
+    var bookCount, memoCount, doneCount, overdueCount, openCount: Int
+    var totalCount: Int { doneCount + overdueCount }   // 決着
+    var achievementRate: Int? { totalCount > 0 ? round(done / total * 100) : nil }
+}
+struct WeeklyBucket { startOfWeek, doneCount, overdueCount, achievementRate: Int? }
+WeeklyHistory.weeklyBuckets(actions:weeks: 8, now:calendar:)   // 古い順・最後が今週</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>集計は <code>.task</code> で1回だけ（画面を開いている間に完了にしても再計算しない）</li>
+    <li>週は <code>firstWeekday = 2</code>（月曜始まり）で統一。<code>WeeklyHistory.startOfWeek</code> と <code>Date.weekRangeJapanese</code> は同じ規則</li>
+    <li>8週推移の各週: 達成 = その週に <code>completedAt</code> がある完了、流れた = 未完了で <code>dueDate</code> がその週にありかつ now より前</li>
+    <li>流れたアクションを後から完了にすると、流れたから消えて<strong>完了した週の達成</strong>に移る（過去週の数字も変わる）</li>
+    <li><code>WeeklyStats.bookCount</code>（読書中の冊数）は計算しているが画面には出していない</li>
+    <li>ひとことの 40〜49% 帯でも「半分以上は動いています」と出る（閾値と文言がずれている）</li>
+    <li>推移の閲覧可否は <code>EntitlementRules.canSeeHistory(isPremium:)</code></li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../glossary.html">用語集（達成・流れた・決着・達成率）</a></li>
+    <li><a href="../features/F03_notification.html">通知（BS-F03）</a></li>
+    <li><a href="../features/F02_entitlement.html">無料枠と Pro（BS-F02）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <footer class="site-footer">
+    最終更新: 2026-09-26
+  </footer>
+</div>
+</body>
+</html>

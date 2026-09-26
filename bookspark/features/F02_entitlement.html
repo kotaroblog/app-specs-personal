@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>BookSpark - 無料枠と Pro</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">BookSpark</a> / 無料枠と Pro</div>
+
+  <header class="site-header">
+    <h1>無料枠と Pro</h1>
+    <p>無料は読書中2冊まで。買い切りの Pro で冊数無制限・書き出し・8週推移を開放する。</p>
+    <div class="section-meta">
+      <span class="tag done">実装済</span>
+      <span class="tag">機能ID: BS-F02</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    マネタイズは<strong>買い切り ¥600 の非消耗型1本</strong>（<code>com.happyboy1002.BookSpark.pro</code>）。サブスク・広告・無料トライアルは無い。
+    無料でもアプリの核（メモ・期限つきアクション・今週の週次レビュー）はすべて使え、制限は「同時に読書中にできる冊数」だけに置く。
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/S07_paywall.html">Paywall（BS-S07）</a></li>
+    <li><a href="../screens/S02_bookshelf.html">本棚（BS-S02）</a> ／ <a href="../screens/S03_book_entry.html">本の登録（BS-S03）</a> ／ <a href="../screens/S04_book_detail.html">本の詳細（BS-S04）</a></li>
+    <li><a href="../screens/S06_weekly_review.html">週次レビュー（BS-S06）</a> ／ <a href="../screens/S08_settings.html">設定（BS-S08）</a></li>
+  </ul>
+
+  <h2>無料と Pro の差</h2>
+  <table>
+    <tr><th>機能</th><th>無料</th><th>Pro</th><th>判定関数</th></tr>
+    <tr><td>読書中の本</td><td>2冊まで（読了は数えない）</td><td>無制限</td><td><code>EntitlementRules.canAddBook(readingCount:isPremium:)</code></td></tr>
+    <tr><td>テキスト書き出し</td><td>不可</td><td>可</td><td><code>EntitlementRules.canExport(isPremium:)</code></td></tr>
+    <tr><td>週次レビューの8週推移</td><td>不可（今週の集計は見られる）</td><td>可</td><td><code>EntitlementRules.canSeeHistory(isPremium:)</code></td></tr>
+    <tr><td>メモ・アクション・期限・通知・カレンダー</td><td>無制限</td><td>無制限</td><td>—</td></tr>
+  </table>
+
+  <h2>無料枠の判定規則</h2>
+  <pre><code>static let freeReadingBookLimit = 2
+
+static func canAddBook(readingCount: Int, isPremium: Bool) -> Bool {
+    if isPremium { return true }
+    return readingCount &lt; freeReadingBookLimit
+}</code></pre>
+  <p>「本を1冊、読書中の状態で増やしてよいか」だけを判定する。<code>readingCount</code> は <code>status == .reading</code> の本の数。</p>
+
+  <h3>判定を通す箇所</h3>
+  <table>
+    <tr><th>#</th><th>場所</th><th>数え方</th><th>超過時</th></tr>
+    <tr><td>1</td><td>本棚の＋（登録ダイアログを開く前）</td><td><code>@Query</code> の本から読書中を数える</td><td>Paywall（bookLimit）</td></tr>
+    <tr><td>2</td><td>バーコード登録の「この本を登録する」</td><td><code>BookLimitChecker</code>（<code>fetchCount</code> + <code>#Predicate</code>）</td><td>Paywall（bookLimit）を重ねる。本は作らない</td></tr>
+    <tr><td>3</td><td>手動登録の「登録する」</td><td>同上</td><td>同上</td></tr>
+    <tr><td>4</td><td>本の詳細で 読了 → 読書中 に戻す</td><td>同上</td><td>Paywall（bookLimit）。ステータスは変えない</td></tr>
+  </table>
+
+  <h3>抜け道対策</h3>
+  <ul>
+    <li><strong>登録の瞬間に再判定</strong>（#2・#3）: ＋で判定したあとにシートの中で状況が変わっても、確定時にもう一度数える</li>
+    <li><strong>読了 → 読書中の判定</strong>（#4）: 読了で枠を空けて新しい本を足し、元の本を読書中へ戻して3冊目にする、という経路を塞ぐ</li>
+    <li>空状態の登録ボタンとオンボーディングは #1 を通らないが、0冊なので必ず枠内で、かつ #2・#3 は必ず通る</li>
+  </ul>
+
+  <h3>仕様として許容しているもの</h3>
+  <ul>
+    <li>読了の本にもメモ・アクションを追加できる（制限は冊数のみ）</li>
+    <li>本を削除すれば枠が空く</li>
+  </ul>
+
+  <h2>購入・復元の処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant P as PaywallView
+  participant M as StoreKitManager
+  participant S as App Store
+
+  P->>M: loadProducts()
+  M->>S: Product.products(for: [proID])
+  S-->>M: Product（displayPrice）
+  U->>P: 「{価格} で購入」
+  P->>M: purchase(product)
+  M->>S: product.purchase()
+  S-->>M: success / userCancelled / pending
+  M->>M: 取引を完了させ、Pro 状態を更新
+  M-->>P: PurchaseOutcome
+  P-->>U: 成功なら閉じる／文言を出す
+
+  U->>P: 購入を復元
+  P->>M: restore()
+  M->>S: AppStore.sync()
+  M->>M: Pro 状態を更新
+  P-->>U: Pro なら閉じる／「見つかりませんでした」
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>Pro 状態は端末に保存しない。<strong>起動時</strong>と<strong>取引の更新を受け取ったとき</strong>に、StoreKit の現在の購入権から判定し直す</li>
+    <li>起動直後、判定が終わるまでのごく短い間は無料として扱われる</li>
+    <li>取引の監視（<code>Transaction.updates</code>）は <code>StoreKitManager</code> の生成時に始める。承認待ちの購入や他端末での購入はここで反映される</li>
+    <li>価格は <code>displayPrice</code> を表示するだけで、コードに金額を持たない</li>
+    <li>スクリーンショット撮影モードでは Pro 状態の確認をしない（常に無料表示）</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>StoreKit 2</td><td>商品取得・購入・購入権の確認・復元・取引監視</td><td>非消耗型1本。ASC 上の商品は未作成（2026-09-26 時点）。ローカルは <code>BookSpark.storekit</code> を scheme で指定（バンドルには入れない）</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>商品取得の失敗・商品が返らない</td><td>「価格を取得できませんでした」＋「再試行」（取得失敗は StoreKit カテゴリに error ログ）</td></tr>
+    <tr><td>購入の例外</td><td>「購入できませんでした: {エラー内容}」</td></tr>
+    <tr><td>承認待ち／結果不明／キャンセル</td><td><a href="../error-design.html">BS-ERR-013〜015</a></td></tr>
+    <tr><td>復元の失敗・該当なし</td><td>「復元できる購入が見つかりませんでした」（処理失敗は error ログ）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>ルール本体は純粋関数の <code>EntitlementRules</code>、SwiftData から数えるのは <code>BookLimitChecker</code>。View と ViewModel が同じ判定を使う</li>
+    <li>テスト: <code>EntitlementRulesTests</code> / <code>BookLimitCheckerTests</code></li>
+    <li>オンボーディング内の Paywall は v1.0 で廃止した</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-09-26</td><td>新規作成（コミット 17e9969 のコードを正として記述）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-09-26</footer>
+</div>
+</body>
+</html>
