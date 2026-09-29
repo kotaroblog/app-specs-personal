@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / ゲームロジック</div>
   <header class="site-header"><h1>ゲームロジック</h1><p>配置・消去・スコア・コンボ・ゲームオーバー判定</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: PZ-FEAT-LOGIC</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.5.2</span><span class="tag">機能ID: PZ-FEAT-LOGIC</span></div></header>
 
   <h2>グリッドサイズ</h2>
   <p>8×8（64マス、GridPosition で管理）</p>
@@ -21,6 +21,19 @@
     <li>配置時に grid[row][col] = .filled(blockColor)</li>
     <li>1マス = 1点（配置スコア）</li>
   </ul>
+
+  <h3>タップで置くときの位置（v1.5.2〜）</h3>
+  <p>タップで置く操作（ピースを選ぶ → マスをタップで仮置き → もう一度タップで置く。<a href="../screens/game.html">ゲーム画面</a>参照）では、タップしたマスを<strong>ピースのどのマスで覆うか</strong>を次の順に試し、最初に置ける位置を採用する。</p>
+  <ol>
+    <li>ピースを構成するマスを「上の段から、同じ段では左から」の順に並べる</li>
+    <li>その順に「そのマスがタップしたマスに重なる位置」を置き場所の候補にする（先頭は、ピースの一番上の段の左端のマスがタップしたマスに来る位置）</li>
+    <li>候補のうち、盤面に収まり、すべて空きマスに乗るものを採用する。1つもなければ「ここには置けません」</li>
+  </ol>
+  <ul>
+    <li>どの候補を選んでも、<strong>タップしたマスは必ずピースで埋まる</strong>。＋・逆T・Z など左上が空いている形でも、タップしたマスがずれない</li>
+    <li>盤面の端や、埋まったマスの隣をタップしても、収まる位置へずらして仮置きする</li>
+  </ul>
+  <p>ドラッグで置くときは、運んでいるピースの見た目の位置から最も近いマスに合わせる（v1.5.2〜。詳細は <a href="../screens/game.html">ゲーム画面</a>）。</p>
 
   <h2>ライン消去</h2>
   <table>
@@ -34,19 +47,48 @@
   <table>
     <tr><th>項目</th><th>得点</th></tr>
     <tr><td>配置（1マス）</td><td>+1</td></tr>
-    <tr><td>ライン消去（基本）</td><td>20 × ライン数 × max(1, comboCount)</td></tr>
-    <tr><td>Double（2ライン）</td><td>+30</td></tr>
-    <tr><td>Triple（3ライン）</td><td>+80</td></tr>
-    <tr><td>Quad（4+ライン）</td><td>+200</td></tr>
-    <tr><td>Cross（行+列同時）</td><td>+150</td></tr>
-    <tr><td>Perfect Clear（全消し）</td><td>+500</td></tr>
+    <tr><td>ライン消去（基本）</td><td><strong>20 × ライン数 × 連鎖の倍率</strong>（倍率は下表）</td></tr>
+    <tr><td>同時消しの加点: 十字（行と列を同時）</td><td>+150（<strong>最優先</strong>。十字なら本数によらずこの加点のみ）</td></tr>
+    <tr><td>同時消しの加点: 4ライン以上</td><td>+200</td></tr>
+    <tr><td>同時消しの加点: 3ライン</td><td>+80</td></tr>
+    <tr><td>同時消しの加点: 2ライン</td><td>+30</td></tr>
+    <tr><td>全消し（盤面が空になる）</td><td><strong>+1000</strong>（v2.0 で +500 から変更）</td></tr>
+  </table>
+  <h3>連鎖の倍率</h3>
+  <table>
+    <tr><th>連鎖数</th><th>倍率</th></tr>
+    <tr><td>1以下</td><td>×1</td></tr>
+    <tr><td>2</td><td>×2</td></tr>
+    <tr><td>3</td><td>×4</td></tr>
+    <tr><td>4以上</td><td>×8（上限）</td></tr>
+  </table>
+  <p>例: 連鎖3で2ラインを消した場合 = 20 × 2 × 4 + 30 = 190点（＋置いたマス数）。</p>
+  <div class="callout">
+    <strong>v1.0 の本表からの訂正（2026-09-29）</strong>: 基本点を「20 × ライン数 × max(1, comboCount)」、全消しを「+500」と記載していたが、実装と合っていなかった。
+    実装は倍率が 1→2→4→8 と倍々で上がり（上限 ×8）、全消しは v2.0 で +1000 に変更済み。本表は v1.5.2 の実装（<code>GameEngine</code> の <code>updateScore</code>・<code>comboMultiplier</code>・<code>finalizePlacement</code>）に合わせた。
+  </div>
+
+  <h3>褒め言葉（画面に出る文言）</h3>
+  <table>
+    <tr><th>条件（上から優先）</th><th>表示</th></tr>
+    <tr><td>十字消し</td><td>十字消し！</td></tr>
+    <tr><td>4ライン以上</td><td>4ライン消し！</td></tr>
+    <tr><td>3ライン</td><td>3ライン消し！</td></tr>
+    <tr><td>2ライン</td><td>2ライン消し！</td></tr>
+    <tr><td>1ラインで連鎖2</td><td>いいね！</td></tr>
+    <tr><td>1ラインで連鎖3</td><td>すごい！</td></tr>
+    <tr><td>1ラインで連鎖4以上</td><td>お見事！</td></tr>
+    <tr><td>全消し</td><td>全消し！</td></tr>
   </table>
 
-  <h2>コンボシステム</h2>
+  <h2>コンボシステム（連鎖）</h2>
+  <p><strong>v1.5.2 時点の仕様</strong>（次の版で変更予定のため、版を明記している）。</p>
   <ul>
-    <li>消去直後に新ブロック配置で再消去 → comboCount++</li>
-    <li>コンボ2以上で「Nice!」「Great!」「Amazing!」演出</li>
-    <li>各コンボでハプティクス＋サウンド段階化</li>
+    <li>ピースを置いてラインが消えたら、連鎖数（<code>comboCount</code>）を +1 する</li>
+    <li><strong>ラインが消えない手を置いたら、連鎖数は 0 に戻る</strong>（1個置くごとに判定）</li>
+    <li>連鎖2以上で倍率表示（×2・×4・×8）と、1ライン消しのときは褒め言葉（いいね！・すごい！・お見事！）を出す</li>
+    <li>ハプティクスは連鎖数に応じて段階化。効果音は連鎖の段階で音程が上がる（<a href="sound.html">サウンド</a>参照）</li>
+    <li>アンドゥで1手戻すと、連鎖数も戻す前の値に戻る</li>
   </ul>
 
   <h2>ゲームオーバー判定</h2>
@@ -94,7 +136,8 @@
   <h2>変更履歴</h2>
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
   <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
-  <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: アンドゥの回数をユーザー区分別に整理（無料3回 / プレミアム無制限・広告視聴なし）。「もう1手」セクションを新設（無料1回 / プレミアム3回、広告なしで即付与するが上限は維持）</td></tr></table>
+  <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: アンドゥの回数をユーザー区分別に整理（無料3回 / プレミアム無制限・広告視聴なし）。「もう1手」セクションを新設（無料1回 / プレミアム3回、広告なしで即付与するが上限は維持）</td></tr>
+  <tr><td>1.2</td><td>2026-09-29</td><td>v1.5.2 対応＋以前からの実装とのずれの訂正: スコア計算を実装に合わせて修正（基本点は「20 × ライン数 × 連鎖の倍率」で倍率は ×1/×2/×4/×8、<strong>全消しは +1000</strong>。旧表の <code>max(1, comboCount)</code>・+500 は誤り）。十字の加点が最優先であることを明記。褒め言葉を実際の文言（十字消し！・◯ライン消し！・いいね！・すごい！・お見事！・全消し！）に修正。連鎖の数え方（消えたら +1、消えない手で 0 に戻る）を「v1.5.2 時点」として明記。<strong>タップで置くときの位置の決め方</strong>（タップしたマスを必ず覆う位置を、上の段・左のマスから順に試す）を追加</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-07-30</footer>
+  <footer class="site-footer">最終更新: 2026-09-29</footer>
 </div></body></html>

@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">脳活ピース</a> / 広告制御</div>
   <header class="site-header"><h1>広告制御機能</h1><p>Unity LevelPlay による広告配信と、配信環境を App Store 配信版のみに限定する安全機構</p>
-  <div class="section-meta"><span class="tag done">v3.1</span><span class="tag">機能ID: PZ-FEAT-AD</span></div></header>
+  <div class="section-meta"><span class="tag done">v3.2</span><span class="tag">機能ID: PZ-FEAT-AD</span></div></header>
 
 
   <div class="callout">
@@ -21,8 +21,9 @@
     停止の原因が開発・TestFlight 検証中の自己インプレッションだったため、<strong>広告のロード・表示は App Store 配信版のみ</strong>に限定し、
     DEBUG・シミュレーター・TestFlight では一切リクエストしない。判定は App Store レシートの種別で行い、ビルド構成の設定ミスでは破れない。
     <strong>ATT ダイアログはこのゲートの外側で判定する</strong>（2026-08-23 変更）。審査ビルドでも表示する必要があるため <code>shouldRequestTracking = !appKey.isEmpty</code> という別スイッチを使う。</p>
-    <p style="margin-bottom:0">App Key と広告ユニットID（バナー / インタースティシャル / リワード）は<strong>設定済み</strong>だが、
-    <strong>ironSource Ads アカウントが承認待ち</strong>のため現時点ではまだ広告は配信されていない。
+    <p><strong>v1.5.2〜: 広告 SDK は起動時に初期化し、ATT の回答を待たない。ATT ダイアログは起動直後には出さず、初回のゲーム終了後に表示する。</strong>詳細は後述「ATT の提示時期と広告 SDK の初期化（v1.5.2〜）」。</p>
+    <p style="margin-bottom:0">App Key と広告ユニットID（バナー / インタースティシャル / リワード）は<strong>設定済み</strong>。
+    2026-08-23 時点では <strong>ironSource Ads アカウントが承認待ち</strong>のため、まだ広告は配信されていなかった（この段落は同日時点の記述。配信状況はこの仕様書では追跡していない）。
     その間、バナーは枠ごと非表示にし、リワードで与えていた報酬は広告なしで即付与する（1ゲームあたりの上限は維持）。</p>
   </div>
 
@@ -41,7 +42,7 @@
     <tr><td>SDK</td><td><strong>LevelPlay 9.6.0</strong>（SPM: <code>LevelPlay-Swift-Package</code> / プロダクト名 <code>UnityMediationSDK</code>）</td></tr>
     <tr><td>アダプタ</td><td><strong>LevelPlayUnityAdsAdapter 5.10.0</strong>（プロダクト名 <code>UnityAdsAdapter</code>）。SDK とは別のバージョン体系のため 9.x を指定すると依存解決に失敗する</td></tr>
     <tr><td>対応フォーマット</td><td>バナー（アダプティブ）・インタースティシャル・リワードの3種</td></tr>
-    <tr><td>初期化</td><td><code>LPMInitRequestBuilder(appKey:)</code> → <code>LevelPlay.initWith(_:completion:)</code>。完了は <code>@Observable</code> な <code>AdReadiness</code> で SwiftUI に伝播する</td></tr>
+    <tr><td>初期化</td><td><code>LPMInitRequestBuilder(appKey:)</code> → <code>LevelPlay.initWith(_:completion:)</code>。完了は <code>@Observable</code> な <code>AdReadiness</code> で SwiftUI に伝播する。v1.5.2〜 は<strong>起動時に ATT の回答を待たずに</strong>実行し、初期化済み・初期化中なら重ねて実行しない（失敗時は次のゲーム終了時に再試行）</td></tr>
     <tr><td>ロード開始条件</td><td>広告配信が有効 <strong>かつ SDK 初期化完了後</strong>。LevelPlay は初期化前の <code>loadAd()</code> が失敗するため</td></tr>
     <tr><td>クラス</td><td>バナー <code>LPMBannerAdView</code>（<code>LPMAdSize.createAdaptive()</code> / 破棄時に <code>destroy()</code> 必須）、全画面 <code>LPMInterstitialAd</code> / <code>LPMRewardedAd</code></td></tr>
     <tr><td>再試行</td><td>ロード失敗時は指数バックオフ（上限64秒）。再試行タスクは1本に束ねて多重実行を防ぐ</td></tr>
@@ -103,7 +104,7 @@
     <tr><th>対象</th><th>停止中の挙動</th><th>理由</th></tr>
     <tr>
       <td>トラッキング許可（ATT）ダイアログ</td>
-      <td><strong>表示する</strong>（2026-08-23 変更）。脳活ピースは App Key 設定済みのため、ironSource Ads の承認待ちで広告が配信されない間も ATT は表示する</td>
+      <td><strong>表示する</strong>（2026-08-23 変更）。脳活ピースは App Key 設定済みのため、広告が配信されない環境（審査ビルド・TestFlight 等）でも ATT は表示する。v1.5.2〜 は初回のゲーム終了後に表示する</td>
       <td>審査は sandbox 環境で実行されるため、配信可否で ATT をガードすると審査担当者に ATT が表示されず Guideline 2.1 でリジェクトされる。App Key 未設定＝広告を一切出さない版でのみ表示を止める</td>
     </tr>
     <tr>
@@ -142,6 +143,30 @@ static var shouldRequestTracking: Bool { !appKey.isEmpty }</code></pre>
   <p>App Key 未設定＝広告を一切出さない版では ATT を表示しない。
   これにより「広告がないのにトラッキング許可を求める」<strong>Guideline 5.1.2</strong> の懸念も同時に満たす。</p>
 
+  <div class="callout">
+    <strong>脳活ピースのコードへの反映時期</strong>: 上記の判定の分離は 2026-08-23 に方針として記載したが、脳活ピースのコードに入ったのは
+    <strong>2026-08-30</strong>（コミット <code>9eaecea</code>「ATT ダイアログを審査ビルドにも到達させる」）で、公開は <strong>v1.5.1（2026-09-17）</strong>。
+    v1.5.0 の公開版は、まだ <code>isAdDeliveryAvailable</code> で ATT をガードしていた（App Store 配信版では ATT が出るが、審査ビルドでは出ない状態）。
+    9eaecea の内容（<code>shouldRequestTracking</code> の追加・ATT の表示だけを外側へ移し、SDK 初期化は <code>isAdDeliveryAvailable</code> の内側に残す）は、本節の記述と一致している。
+  </div>
+
+  <h2>ATT の提示時期と広告 SDK の初期化（v1.5.2〜）</h2>
+  <table>
+    <tr><th>版</th><th>ATT ダイアログ</th><th>広告 SDK の初期化</th></tr>
+    <tr><td>v1.5.0</td><td>起動直後（約1秒後）。App Store 配信版のみ</td><td>ATT の回答後</td></tr>
+    <tr><td>v1.5.1</td><td>起動直後（約1秒後）。App Key 設定済みなら審査ビルド等でも表示</td><td>ATT の回答後（App Store 配信版のみ）</td></tr>
+    <tr><td><strong>v1.5.2〜</strong></td><td><strong>初回のゲーム終了後</strong>（ゲーム終了から約0.7秒後）。App Key 設定済みなら審査ビルド等でも表示</td><td><strong>起動時。ATT の回答を待たない</strong>（App Store 配信版のみ）</td></tr>
+  </table>
+  <ul>
+    <li><strong>ATT を後ろへ移した理由</strong>: 新規ユーザーに、まずゲームを1回体験してもらってから許可を求めるため。起動直後には出さない</li>
+    <li>ゲーム終了のたびに判定し、許可の状態が「未決定」のときだけダイアログを出す。一度回答すれば以後は出ない</li>
+    <li><strong>SDK を起動時に初期化する理由</strong>: ATT の回答を待って初期化していた段階（1.5.2 の開発中）では、新規ユーザーの1ゲーム目にバナーが出ない・2回目以降の「戻す」（広告視聴が必要）が進まない・1回目のゲーム終了で「もう1手」が出ない、という副作用があった。公開した v1.5.2 では起動時に初期化する</li>
+    <li>ATT に回答する前は、iOS が広告IDを渡さないため、個人に合わせない広告になる</li>
+    <li>ゲーム終了時の判定では、起動時の初期化に失敗していた場合の再試行も兼ねる（初期化済みなら何もしない）</li>
+    <li>起動直後には出ないため、審査向けに ATT の確認手順を審査メモに記載した（v1.5.2 提出時。審査メモ自体はリポジトリ管理外）</li>
+    <li>あわせて v1.5.2 で、リワード広告の読み込みが「ゲーム終了画面を開いた後」に終わった場合も「もう1手」が表示されるよう修正した（以前は読み込み完了が画面の更新につながらず、出てこなかった）</li>
+  </ul>
+
   <h2>プライバシーマニフェスト（PrivacyInfo.xcprivacy）の方針</h2>
   <div class="callout warn">
     <p style="margin-top:0"><strong><code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> はキーごと削除</strong>が正解。
@@ -171,6 +196,7 @@ static var shouldRequestTracking: Bool { !appKey.isEmpty }</code></pre>
     <li>広告をロード・表示するのは App Store 配信版のみ。それ以外の環境では広告を一切リクエストしない</li>
     <li>SDK の初期化完了前は広告をロードしない（LevelPlay は初期化前の <code>loadAd()</code> が失敗するため）</li>
     <li><strong>ATT ダイアログの表示は広告の配信可否と分離する</strong>。<code>shouldRequestTracking = !appKey.isEmpty</code> で判定し、審査ビルド（sandbox 環境）でも表示する。App Key 未設定の版では表示しない</li>
+    <li><strong>ATT は起動直後に出さず、初回のゲーム終了後に出す</strong>（v1.5.2〜）。広告 SDK の初期化は ATT の回答を待たない</li>
     <li><code>PrivacyInfo.xcprivacy</code> は <code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除の構成を維持する</li>
     <li>撮影モード（スクリーンショット自動撮影）では広告・ATT・計測をすべて抑止する</li>
   </ul>
@@ -188,7 +214,8 @@ static var shouldRequestTracking: Bool { !appKey.isEmpty }</code></pre>
   <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: 広告配信の恒久停止を反映。AdEnvironment（本番IDは App Store 配信版のみ / isAdDeliveryAvailable による全停止）を追加。停止中の挙動（バナー枠ごと非表示・インタースティシャル非呼出・報酬の無条件付与・ATT と SDK 初期化の抑止）と UI 文言変更を記載。仕様書から広告ユニットID・パブリッシャー識別子の記載を削除</td></tr>    <tr><td>2.0</td><td>2026-08-04</td><td><strong>広告基盤を AdMob から AppLovin MAX へ全面移行</strong>（AdMob アカウントが恒久的に無効化され再審査も却下されたため）。<code>AdEnvironment.isAdDeliveryAvailable</code> により<strong>広告のロード・表示を App Store 配信版のみに限定</strong>（DEBUG・シミュレーター・TestFlight では一切リクエストしない）。SDK Key 未設定の間は自動的に無効。配信無効期間はバナーを枠ごと非表示にし、リワードの報酬は広告なしで即付与する。仕様書から広告ユニットIDの実値を削除</td></tr>
     <tr><td>3.0</td><td>2026-08-20</td><td><strong>広告基盤を AppLovin MAX から Unity LevelPlay へ移行</strong>（AppLovin の publisher アカウント承認が下りなかったため）。SDK を LevelPlay 9.6.0（SPM <code>LevelPlay-Swift-Package</code> / product <code>UnityMediationSDK</code>）+ LevelPlayUnityAdsAdapter 5.10.0（product <code>UnityAdsAdapter</code>）へ差し替え、Unity Ads は LevelPlay 経由の bidder として利用する構成を明記。広告クラスを <code>LPMBannerAdView</code> / <code>LPMInterstitialAd</code> / <code>LPMRewardedAd</code> に更新。判定式を <code>isAdDeliveryAvailable = !appKey.isEmpty &amp;&amp; isProduction</code> と明記し、<strong>SDK 初期化完了前は広告をロードしない</strong>制約を追加。テスト広告IDに関する記述を削除（LevelPlay に該当概念がないため開発中は広告を出さない方式）。App Key と広告ユニットID3種は設定済みだが、ironSource Ads アカウントが承認待ちのため未配信であることを反映。広告面（バナー / インタースティシャル3回に1回・90秒間隔 / リワード復活・Undo）は変更なし。</td></tr>
     <tr><td>3.1</td><td>2026-08-23</td><td>広告基盤を <strong>Unity LevelPlay</strong> に統一（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: 従来は <code>isAdDeliveryAvailable</code> でガードしていたが、この値は <code>isProduction</code> を含むため、TestFlight と同じ sandbox 環境で実行される<strong>審査ビルドでは ATT が原理的に表示されなかった</strong>（2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed によりリジェクト）。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。App Key 未設定＝広告を一切出さない版では表示しないため Guideline 5.1.2 の懸念も同時に満たす。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除／ITMS-91064 の回避／<code>NSPrivacyTrackingDomains</code> は申告ではなく実行時のブロックリストであり、Unity Ads は広告配信とトラッキングで同じドメインを使うため載せると ATT 拒否ユーザーに広告が出なくなる／トラッキングの申告は ASC の App Privacy 側で行う）を明記した。</td></tr>
+    <tr><td>3.2</td><td>2026-09-29</td><td>v1.5.1/1.5.2 対応: <strong>v1.5.2 で ATT の提示時期を「起動直後」から「初回のゲーム終了後」へ変更し、広告 SDK は起動時に ATT の回答を待たずに初期化</strong>するよう変更したことを反映（版ごとの比較表・理由・回答前は個人に合わせない広告になること・初期化の重複防止と再試行・「もう1手」が出ない場合があった不具合の修正）。v3.1 の ATT 判定の分離が脳活ピースのコードに入ったのは 2026-08-30（<code>9eaecea</code>）で、公開は v1.5.1 であることを明記（記述内容とコードは一致）。ironSource Ads の「承認待ち・未配信」が 2026-08-23 時点の記述であることを明記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-23</footer>
+  <footer class="site-footer">最終更新: 2026-09-29</footer>
 </div></body></html>

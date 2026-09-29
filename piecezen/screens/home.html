@@ -26,10 +26,19 @@
     <tr><td>ベストスコア</td><td>HighScoreRecord から取得</td></tr>
     <tr><td>ストリーク</td><td>連続プレイ日数</td></tr>
     <tr><td>Playボタン</td><td>GameView へ遷移</td></tr>
-    <tr><td>Settings</td><td>SettingsView へ</td></tr>
-    <tr><td>Statistics</td><td>StatisticsView へ</td></tr>
+    <tr><td>設定ボタン（Settings）</td><td>SettingsView へ。画面下部に「成績」ボタンと横並び</td></tr>
+    <tr><td>成績ボタン（Statistics）</td><td>StatisticsView へ</td></tr>
     <tr><td>背景</td><td>ZenParticleBackground（パーティクルアニメ）</td></tr>
   </table>
+
+  <h2>下部ボタン（設定・成績）の見た目とタップ領域（v1.5.2〜）</h2>
+  <table>
+    <tr><th>項目</th><th>v1.5.1 まで</th><th>v1.5.2〜</th></tr>
+    <tr><td>見た目</td><td>アイコン＋文字のみ（背景なし）</td><td><strong>カード型</strong>（盤面と同じ面の色の角丸背景＋細い枠線）</td></tr>
+    <tr><td>タップ領域</td><td>アイコンと文字の大きさのみ</td><td><strong>幅 88pt 以上 × 高さ 48pt 以上</strong>。カード全体がタップ領域</td></tr>
+    <tr><td>2つのボタンの間隔</td><td>56pt</td><td>32pt</td></tr>
+  </table>
+  <p>ラベルは「設定」「成績」。VoiceOver では「設定画面を開く」「統計画面を開く」と読み上げる。</p>
 
   <h2>遷移</h2>
   <table>
@@ -48,7 +57,8 @@
 
   <h2>変更履歴</h2>
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
-  <tr><td>1.1</td><td>2026-06-10</td><td>画面イメージ（fastlane snapshot 自動撮影）を追加</td></tr></table>
+  <tr><td>1.1</td><td>2026-06-10</td><td>画面イメージ（fastlane snapshot 自動撮影）を追加</td></tr>
+  <tr><td>1.2</td><td>2026-09-29</td><td>v1.5.2 対応: 下部の「設定」「成績」ボタンをカード型にし、タップ領域を幅 88pt 以上 × 高さ 48pt 以上に広げた変更を反映（間隔 56pt → 32pt）</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-06-10</footer>
+  <footer class="site-footer">最終更新: 2026-09-29</footer>
 </div></body></html>
