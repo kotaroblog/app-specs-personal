@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 今日</div>
   <header class="site-header"><h1>今日画面（TodayView）</h1><p>本日の学習ダッシュボード</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">画面ID: SS-TODAY-01</span></div></header>
+  <div class="section-meta"><span class="tag todo">v1.4.0（TestFlight・未提出）</span><span class="tag">画面ID: SS-TODAY-01</span></div></header>
 
   <h2>目的・役割</h2>
   <p>本日の学習時間・達成率・科目別内訳を一目で確認できるダッシュボード画面。</p>
@@ -32,6 +32,21 @@
     <tr><td>—</td><td>シェアボタン</td><td>StudyShareSheet 起動（ツールバー trailing）</td></tr>
   </table>
 
+  <h2>今日やることの分け方（v1.4）</h2>
+  <div class="callout info">
+    v1.4 でやることの分け方を<a href="home.html">ホーム</a>と揃えた（<code>TaskScheduling.homeTasks</code>）。
+    v1.3 までは <code>Calendar.current</code> の日付で「今日」を判定しており、学習日の区切り（区切り時刻・深夜勉強の設定）を使う人は、深夜に「今日のやること」と「今日の実績」の日付がずれていた（SS-004）。
+  </div>
+  <table>
+    <tr><th>項目</th><th>v1.3 まで</th><th>v1.4</th></tr>
+    <tr><td>「今日」の判定</td><td>端末の日付（0時区切り）</td><td>学習日の区切り（<code>StudyDay.resetHour</code>）。区切り4時の人が深夜1時に開くと、前日のやることを「今日」として扱う</td></tr>
+    <tr><td>一覧に出すもの</td><td>期限切れ＋期限が今日</td><td>期限切れ＋期限が今日＋<strong>今週中</strong>のやること（v1.4 で追加された期限の種類）</td></tr>
+    <tr><td>期限切れの範囲</td><td>全部</td><td>全部（ホームは直近7日分に絞るが、今日タブは絞らない）</td></tr>
+    <tr><td>行の期限ラベル</td><td>「期限切れ」／「今日まで」</td><td>「期限切れ」／「今日まで」／<strong>「今週中」</strong>（今週中のやること・来週へ回したやること）</td></tr>
+    <tr><td>今日終えたもの</td><td>完了した日付が今日</td><td>完了した時刻が今日の学習日の中</td></tr>
+  </table>
+  <p>表示件数は従来どおり、期限切れと今日（今週中を含む）を合わせて最大5件。超えた分は「ほか N 件はカレンダーで確認できます」。</p>
+
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示</th></tr>
@@ -53,6 +68,7 @@
   <h2>関連</h2>
   <ul>
     <li><a href="share.html">シェア画面</a></li>
+    <li><a href="home.html">ホーム画面（今日やること・同じ分け方）</a></li>
     <li><a href="calendar.html">カレンダー画面（やることリスト詳細）</a></li>
     <li><a href="../features/task-list.html">やることリスト機能仕様書</a></li>
   </ul>
@@ -63,7 +79,8 @@
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-06-20</td><td>UI/UX改善反映: やることセクション追加・タスク追加インラインフィールド・TaskCreationSheet導線・空状態CTAを記載</td></tr>
     <tr><td>1.2</td><td>2026-07-11</td><td>表示優先順位を再設計: 今日やること→今日の実績→科目別内訳の順に変更。グラフ/タイムライン/履歴を詳細折りたたみセクションへ移動。前日比に増減時間（例: +31% / 前日比 +25分）を追記。重要カードスタイル適用対象を明記</td></tr>
+    <tr><td>1.3</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）を反映（SS-004）: やることの分け方をホームと揃え、「今日」を学習日の区切りで判定するよう変更。今週中のやることを一覧に含め、期限ラベルに「今週中」を追加</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-11</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div></body></html>

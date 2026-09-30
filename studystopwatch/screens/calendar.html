@@ -16,7 +16,7 @@
     <h1>カレンダー画面（CalendarScreen）</h1>
     <p>日 / 週 / 月の3ビュー切替で学習実績と期限タスクを一体管理するカレンダー</p>
     <div class="section-meta">
-      <span class="tag done">v1.3.0</span>
+      <span class="tag todo">v1.4.0（TestFlight・未提出）</span>
       <span class="tag">画面ID: SS-CAL-02</span>
     </div>
   </header>
@@ -28,12 +28,18 @@
     v1.2.0 で期限日ベースの StudyTask と完全統合し、計画（タスク）と実績（学習時間）を同一画面で管理できるようにした。
     また学習計画自動配分（StudyPlanSheet）へのアクセス導線を右上ツールバーに追加した。
   </p>
+  <p>
+    <strong>v1.4 で役割を「先の予定を見通す場所」に絞った</strong>（SS-019〜021）。今日のことはホームに任せ、最初に開く表示を<strong>週</strong>にして、
+    週は曜日ごとのやること一覧にした。「いつ勉強したか」の時間表は記録を見るものなので<a href="report.html">分析タブ</a>へ移した。
+    あわせて学習計画の進み具合と「残りを配り直す」をここに出す（<a href="../features/study-plan.html">学習計画の進み具合と配り直し</a>）。
+  </p>
 
   <h2>画面構成概要（CalendarScreen 親 View）</h2>
   <table>
     <tr><th>コンポーネント</th><th>種類</th><th>説明</th></tr>
     <tr><td>CountdownCard</td><td>カード</td><td>試験日までのカウントダウン（UserSettings.examDate 連携）。試験日未設定時は CTA 表示</td></tr>
-    <tr><td>ViewModeTabs</td><td>セグメントコントロール</td><td>今日 / 週 / 月 の3タブ。タップで即切替</td></tr>
+    <tr><td>学習計画（<code>PlanProgressSection</code>）<span class="tag">v1.4</span></td><td>カード</td><td>一覧から外していない計画があるときだけ、表示中のビューによらず試験日カードの下に出す。計画ごとの進み具合・「計画どおり／N日分遅れ／完了」・「残りを配り直す」「一覧から外す」（→ <a href="../features/study-plan.html">詳細</a>）</td></tr>
+    <tr><td>ViewModeTabs</td><td>セグメントコントロール</td><td>日 / 週 / 月 の3タブ。タップで即切替。<strong>v1.4 から最初に開く表示は「週」</strong>（v1.3 までは日）</td></tr>
     <tr><td>DayCalendarView</td><td>スクロールビュー</td><td>「今日」タブの中身（→ 後述）</td></tr>
     <tr><td>WeekCalendarView</td><td>スクロールビュー</td><td>「週」タブの中身（→ 後述）</td></tr>
     <tr><td>MonthCalendarView</td><td>グリッド + 展開領域</td><td>「月」タブの中身（→ 後述）</td></tr>
@@ -65,48 +71,64 @@
     <tr><td>科目別実績バー</td><td>科目ごとの当日学習時間を横バーで表示（Subject.colorHex）</td></tr>
   </table>
 
-  <h2>WeekCalendarView（週ビュー）</h2>
+  <h2>WeekCalendarView（週ビュー）— v1.4 で最初に開く表示</h2>
   <div class="callout">
-    <strong>v1.3 変更:</strong> 旧「今週のやること（フラットリスト＋日後ラベル）」を廃止し、3段階構成に刷新。
-  </div>
-  <div class="callout info">
-    <strong>UI/UX改善:</strong> 週ナビゲーター矢印も44×44pt に拡大。<code>accessibilityLabel: "前の週"/"次の週"</code> を付与。
+    <strong>v1.4 変更（SS-019）:</strong> v1.3 の3段階構成（① 今日のやること＋取りこぼし ② 科目別の件数（<code>SubjectProgressRow</code>）③ 6時〜23時の「いつ勉強したか」時間表）をやめ、
+    <strong>曜日ごとのやること一覧</strong>にした。今日のやることはホームと今日タブにあるので3度目に見せない。時間表は<a href="report.html">分析タブ</a>の週間表示へ移した
+    （移す際、区切り時刻を使う人で列が1日ずれていた不具合も解消）。
   </div>
   <table>
-    <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>週サマリカード</td><td>週合計時間 / 週次目標 / 達成率リングを上部に表示</td></tr>
-    <tr><td>週ナビゲーター（改善）</td><td>左右シェブロンで前後1週間移動。<strong>タップ領域44×44pt以上。</strong><code>accessibilityLabel: "前の週"/"次の週"</code></td></tr>
-    <tr><td>① 今日のやること（実行リスト）</td><td>今日が期限のタスクをチェックボックス付きで一覧表示。チェックで完了切替（即時永続化）</td></tr>
-    <tr><td>取りこぼしセクション</td><td>期限切れ（dueDate &lt; 今日）かつ未完了タスクをオレンジ色の別グループで表示。「取りこぼし N件」ヘッダー付き（責めない演出）</td></tr>
-    <tr><td>② 今週の進捗（科目別サマリーバー）</td><td>今日〜日曜の科目別タスクを SubjectProgressRow で集計表示。科目名・カラー・進捗バー・「X/Y件 完了」・「あとN件」を1行で表示。科目未設定は「その他」グループ。日後ラベル（-1日後/2日後等）は全廃</td></tr>
-    <tr><td>③ 週次タイムライン（既存）</td><td>月曜始まり7列 × 06時〜23時（hour height = 40pt）の縦グリッド。StudySession を科目色のブロックで描画</td></tr>
-    <tr><td>今日列ハイライト</td><td>今日の列に accent 5% の背景色を適用</td></tr>
-    <tr><td>現在時刻ライン（NOW）</td><td>今週のみ表示。赤い横線で現在時刻を示す</td></tr>
-    <tr><td>科目別積み上げ（既存）</td><td>今週の科目別累積時間を横長バー + 2列グリッドで一覧表示</td></tr>
+    <tr><th>順</th><th>要素</th><th>説明</th></tr>
+    <tr><td>1</td><td>週サマリカード</td><td>「今週の学習」週合計時間／週次目標／達成率リング（変更なし）</td></tr>
+    <tr><td>2</td><td>週ナビゲーター</td><td>「M月 d日 - d日」＋「今週」ボタン＋前後の週（44×44pt・変更なし）</td></tr>
+    <tr><td>3</td><td>この週のやること（<code>WeekTaskListCard</code>）<span class="tag">v1.4</span></td><td>下表</td></tr>
+    <tr><td>4</td><td>今週の科目別実績</td><td>科目別の積み上げバー＋2列グリッド（変更なし）。記録が無ければ「今週の学習記録はまだありません」</td></tr>
   </table>
+
+  <h3>この週のやること（WeekTaskListCard）</h3>
+  <table>
+    <tr><th>グループ</th><th>対象</th></tr>
+    <tr><td>期限切れ（N件）</td><td>表示中が今週のときだけ。期限がこの週より前で未完了、かつ<strong>直近7日分まで</strong>。見出しはオレンジ</td></tr>
+    <tr><td>今週中</td><td>期限の種類が「今週中」で、期限（その週の日曜）がこの週のやること（完了済みも含む）</td></tr>
+    <tr><td>月〜日の各日</td><td>期限の種類が「その日」で、期限がその日のやること。未完了が先、次に並び順・作成順。無い日は「なし」。今日には「今日」の印</td></tr>
+  </table>
+  <table>
+    <tr><th>操作</th><th>動き</th></tr>
+    <tr><td>各日の「＋」</td><td>その日を期限にしてやることを追加（<code>TaskCreationSheet</code> 新規）</td></tr>
+    <tr><td>行の左の丸</td><td>完了／未完了の切り替え</td></tr>
+    <tr><td>行をタップ</td><td>やることの編集（<code>TaskCreationSheet</code> 編集）</td></tr>
+    <tr><td>日付を押す</td><td>その日の日ビューへ移る</td></tr>
+  </table>
+  <p>各行は科目の色の点・題名（完了は打ち消し線）・説明の行（未完了のみ。「科目・昨日の分・今週中・途中まで・学習計画／前回決めた／先週から」など。ホームと同じ <code>TaskScheduling.metaLabel</code>）。</p>
 
   <h2>MonthCalendarView（月ビュー）</h2>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
     <tr><td>7×6 グリッド</td><td>月曜始まり。当月外の日はグレーアウト</td></tr>
-    <tr><td>タスクバッジ</td><td>各日の左上に未完了タスク数バッジ（緑円）。0件は非表示</td></tr>
+    <tr><td>やることの件数</td><td>各日の左上に、その日が期限の未完了のやることの件数（緑円）。0件は非表示</td></tr>
     <tr><td>今日セル</td><td>accent 色の円形バッジで日付を強調</td></tr>
     <tr><td>曜日色分け</td><td>日曜 = #E85D75、土曜 = #4A90E2</td></tr>
-    <tr><td>科目色バー</td><td>各セル下部に学習した科目の色バー（最大3科目）</td></tr>
-    <tr><td>実績ドット</td><td>各セル下部に StudySession の存在を示すドット（最大3）</td></tr>
-    <tr><td>次回予定ピン</td><td>次回予定日セルの右上にピンアイコンを表示</td></tr>
+    <tr><td>勉強した日の点</td><td>各セル下部に、その日に学習した科目の色の点（最大3）</td></tr>
     <tr><td>日タップ展開</td><td>タップで selectedDate を更新 → グリッド下に DayCalendarView をインライン展開</td></tr>
   </table>
+
+  <div class="callout info">
+    <strong>v1.4 で月のマス目の印を2つに絞った（SS-021）。</strong>
+    v1.3 までは学習した科目を「上の色バー」と「下の点」で2回出し、右上の赤い点で旧「次回やること」（<code>StudySession.nextStudyDate</code>）の日付を示していた。
+    色バーをやめ、赤い点は「次回やること」を「やること」へ一本化したため左上の件数に含まれるので外した。VoiceOver の読み上げは「未完了のやることN件」。
+  </div>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
     <tr><td>選択日に記録なし（日ビュー）</td><td>TODAY'S STUDY カードに「0時間 0分」、科目別実績なしメッセージ</td></tr>
     <tr><td>選択日にタスクなし（日ビュー）</td><td>「やることを追加しましょう」プレースホルダー</td></tr>
-    <tr><td>今週に記録なし（週ビュー）</td><td>タイムライン空白。週サマリは0表示</td></tr>
-    <tr><td>今日のタスクなし（週ビュー①）</td><td>「今日のやること」セクションを非表示</td></tr>
-    <tr><td>取りこぼしなし（週ビュー①）</td><td>取りこぼしセクションを非表示</td></tr>
-    <tr><td>今週のタスクなし（週ビュー②）</td><td>「今週の進捗」セクションを非表示</td></tr>
+    <tr><td>今週に記録なし（週ビュー）</td><td>週サマリは0表示。科目別実績は「今週の学習記録はまだありません」</td></tr>
+    <tr><td>期限切れ・今週中なし（週ビュー）<span class="tag">v1.4</span></td><td>そのグループを出さない</td></tr>
+    <tr><td>やることの無い日（週ビュー）<span class="tag">v1.4</span></td><td>その日の行に「なし」と「＋」</td></tr>
+    <tr><td>前後の週を表示中（週ビュー）<span class="tag">v1.4</span></td><td>期限切れのグループは出さない（今週のときだけ）</td></tr>
+    <tr><td>学習計画なし・全部外した<span class="tag">v1.4</span></td><td>学習計画の欄を出さない</td></tr>
+    <tr><td>学習計画が遅れている<span class="tag">v1.4</span></td><td>「N日分遅れ」（オレンジ）＋「残りを配り直す」</td></tr>
     <tr><td>試験日未設定</td><td>CountdownCard を「試験日を設定」CTA に切り替え</td></tr>
     <tr><td>試験日当日・過去</td><td>CountdownCard を「お疲れ様！」＋「次の試験日を設定」ボタンに切り替え</td></tr>
   </table>
@@ -114,7 +136,10 @@
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>タイムラインブロックタップ（週ビュー）</td><td>セッション詳細シート（モーダル）</td></tr>
+    <tr><td>週ビューの各日の「＋」<span class="tag">v1.4</span></td><td>TaskCreationSheet（新規モード・その日が期限）</td></tr>
+    <tr><td>週ビューのやることの行をタップ<span class="tag">v1.4</span></td><td>TaskCreationSheet（編集モード）</td></tr>
+    <tr><td>週ビューの日付を押す</td><td>同画面の日ビュー（その日）</td></tr>
+    <tr><td>学習計画の「残りを配り直す」<span class="tag">v1.4</span></td><td>確認アラート「残りを配り直しますか？」→「配り直す」で同画面（結果の一文を欄の下に出す）</td></tr>
     <tr><td>「📝 記録して完了」タップ（やることリスト）</td><td>ManualStudyEntrySheet（モーダル）</td></tr>
     <tr><td>タイトルタップ（やることリスト）</td><td>TaskCreationSheet（編集モード）</td></tr>
     <tr><td>「📅 期限付き」ボタンタップ（日ビュー）</td><td>TaskCreationSheet（新規モード、DatePickerグラフィカル）</td></tr>
@@ -162,6 +187,28 @@
     var periodRawValue: String    // 旧: "day" / "week" / "month"
     var periodStart: Date
     var periodEnd: Date
+
+    // v1.4 追加（すべて既定値つき）
+    var planID: UUID?             // 学習計画のやること
+    var planAmount: Int?
+    var dueScopeRawValue: String  // "day" / "week"（今週中。dueDate はその週の日曜）
+    var originRawValue: String    // manual / plan / next / carried / migrated
+    var handoffNote: String?
+}
+
+// 学習計画（v1.4 追加）
+@Model final class StudyPlan {
+    var id: UUID
+    var title: String
+    var subject: Subject?
+    var totalAmount: Int
+    var unit: String
+    var startDate: Date
+    var endDate: Date
+    var splitModeRawValue: String
+    var weekdaysText: String
+    var createdAt: Date
+    var isArchived: Bool
 }</code></pre>
 
   <h2>実装メモ</h2>
@@ -169,13 +216,13 @@
     <li class="done">旧 CalendarHeatmapView / DayDetailSheet は削除済み。SS-CAL-01 の画面IDは旧仕様として残す</li>
     <li class="done">CalendarScreen が親 View。ViewModeTabs の選択状態を @State で保持</li>
     <li class="done">selectedDate は CalendarScreen が管理し、各子ビューに Binding で渡す</li>
-    <li class="done">WeekCalendarView のタイムラインは ScrollView で縦スクロール。水平は固定7列（GeometryReader で列幅算出）</li>
+    <li class="done"><strong>v1.4</strong> 既定の表示は <code>@State private var viewMode: CalendarViewMode = .week</code></li>
+    <li class="done"><strong>v1.4</strong> 週の時間表（<code>WeekTimelineCard</code>）は <code>Views/Report/</code> へ移し、分析タブの週間表示で使う</li>
     <li class="done">MonthCalendarView の inline 展開は AnyLayout / if selectedDate != nil で制御</li>
     <li class="done">テーマカラーは AppTheme.accent（#58CC02）。カードは cardShadow() 修飾子で統一</li>
     <li class="done">日ビューの StudyTask @Query: dueDate が selectedDate と同日のタスクを取得（startOfDay/endOfDay で範囲フィルタ）</li>
-    <li class="done">週ビュー①「今日のやること」: dueDate == 今日 の未完了タスクを取得してチェックボックスリストで表示</li>
-    <li class="done">週ビュー①「取りこぼし」: dueDate &lt; startOfDay(today) かつ isCompleted == false のタスクをオレンジグループで表示</li>
-    <li class="done">週ビュー②「今週の進捗」: dueDate が今日〜今週日曜のタスクを subject でグルーピングし SubjectProgressRow で表示。日後ラベルは全廃</li>
+    <li class="done"><strong>v1.4</strong> 週ビューのやることは <code>WeekTaskListCard</code>。期限切れは <code>TaskScheduling.overdueWindowDays</code>（7日）までに絞る。「今日」は学習日の区切りで決める</li>
+    <li class="done"><strong>v1.4</strong> 週ビューの完了切り替えは <code>TaskFlowService.complete / reopen</code> を通す</li>
     <li class="done">月ビューのタスクバッジ: 月内全タスクを取得し、日付ごとに Dictionary でグルーピングして未完了件数を算出</li>
     <li class="done">StudyPlanSheet は .sheet(isPresented: $showPlanSheet) で表示</li>
     <li class="done">CountdownCard の残り日数: Calendar.current.dateComponents([.day], from: today, to: examDate).day で算出</li>
@@ -187,6 +234,9 @@
     <li><a href="../data-model.html">データモデル</a></li>
     <li><a href="goal-edit.html">目標・やることリスト画面（GoalEditSheet）</a></li>
     <li><a href="../features/task-list.html">やることリスト機能仕様書</a></li>
+    <li><a href="../features/study-plan.html">学習計画の進み具合と配り直し</a></li>
+    <li><a href="report.html">分析タブ（週の時間表の移動先）</a></li>
+    <li><a href="calendar-heatmap.html">カレンダーヒートマップ（旧・SS-CAL-01）</a></li>
     <li><a href="../features/share.html">シェア機能仕様書</a></li>
   </ul>
 
@@ -197,6 +247,7 @@
     <tr><td>1.1</td><td>2026-06-07</td><td>v1.2.0対応: StudyTask を期限日ベースに移行。日ビューに「📅 期限付き」追加ボタン・期限日サブラベル追加。週ビューに「今週のやること」セクション追加。月ビューにタスクバッジ（未完了件数）追加。右上ツールバーに StudyPlanSheet 導線追加。CountdownCard の試験日当日・過去の状態を追加</td></tr>
     <tr><td>1.2</td><td>2026-06-09</td><td>v1.3.0対応: 週ビューを3段階構成に刷新（①今日の実行リスト・取りこぼしセクション（オレンジ）、②今週の進捗（SubjectProgressRow 科目別サマリー）、③タイムライン）。日後ラベル全廃。状態テーブルに週ビュー新状態を追加</td></tr>
     <tr><td>1.3</td><td>2026-06-20</td><td>UI/UX改善反映: 日ビュー・週ビューのナビゲーション矢印を44×44ptに拡大・accessibilityLabel追加・日ビューのタスク行クイックアクション（スワイプ/長押しで完了・削除・記録して完了）を記載</td></tr>
+    <tr><td>1.4</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）を反映（SS-019〜021）: 最初に開く表示を週に変更。週ビューを曜日ごとのやること一覧（期限切れ直近7日・今週中・各日の＋）に作り替え、「いつ勉強したか」の時間表を分析タブへ移した。学習計画の欄（進み具合・残りを配り直す・一覧から外す）を追加。月のマス目の印を「やることの件数」と「勉強した日の点」に絞った（色バーと旧・次回予定の赤い点を削除）。データモデルに StudyTask の追加項目と StudyPlan を追記</td></tr>
   </table>
 
   <script>
@@ -206,7 +257,7 @@
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-20</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div>
 </body>
 </html>

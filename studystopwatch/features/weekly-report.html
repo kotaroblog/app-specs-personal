@@ -34,11 +34,26 @@
     集計ロジックは BGTask を使わずアプリ起動時トリガーとする（電池・権限のコストを最小化）。
   </p>
 
+  <div class="callout warn">
+    <strong>1.4.0（TestFlight・未提出）で週次通知の時刻と誘導先を変えた。</strong>
+    毎週<strong>月曜9時</strong>・分析タブの「先週のふりかえり」への誘導だった通知を、<strong>毎週日曜18時</strong>・ホームの「<a href="../screens/weekly-review.html">週のふりかえり</a>」への誘導に変えた。
+    日曜18時はホームに週のふりかえりカードが出始める時刻（<code>WeeklyReviewService.startHour</code>）。
+    このレポート（<code>WeeklyCoachReport</code>）の生成・表示・Premium の扱いは変えていない。
+  </div>
+  <table>
+    <tr><th></th><th>このレポート（分析タブ）</th><th>週のふりかえり（ホーム・v1.4）</th></tr>
+    <tr><td>対象</td><td>前週の学習時間の集計・コーチコメント</td><td>その週のやることの結果・終わらなかったこと・メモ</td></tr>
+    <tr><td>操作</td><td>見るだけ</td><td>終わらなかったことを「来週へ／消す」</td></tr>
+    <tr><td>課金</td><td>Premium（無料はロック）</td><td>無料</td></tr>
+    <tr><td>保存</td><td><code>WeeklyCoachReport</code> に保存</td><td>保存しない（毎回やることと記録から計算）</td></tr>
+  </table>
+
   <h2>関連画面</h2>
   <ul>
     <li><a href="../screens/report.html">レポート画面（SS-REPORT-01）</a> — 「先週のふりかえり」カードを表示</li>
     <li><a href="../screens/premium.html">プレミアム画面（SS-PREMIUM-01）</a> — ロックバナーのタップ遷移先</li>
     <li><a href="../screens/settings.html">設定画面（SS-SET-01）</a> — 週次ふりかえり通知のON/OFF は通知設定セクションで管理</li>
+    <li><a href="../screens/weekly-review.html">週のふりかえり（SS-REVIEW-01・v1.4）</a> — 週次通知の誘導先</li>
   </ul>
 
   <h2>処理フロー</h2>
@@ -123,14 +138,14 @@ final class WeeklyCoachReport {
     <li><strong>週の境界</strong>: <code>StudyDay.calendar</code> の <code>weekOfYear</code> を使用。<code>resetHour</code> を加算して学習日基準の境界に揃える</li>
     <li><strong>文言は保存しない</strong>: コーチコメント文言は View で導出（<code>totalSeconds</code>・<code>studyDayCount</code>・<code>changePercent</code> 等から条件分岐）。文言変更が過去レポートに遡及して効く</li>
     <li><strong>Premium 限定</strong>: <code>FeatureGate.canAccessWeeklyCoachReport</code> が <code>false</code> のユーザーにはロックバナーを表示</li>
-    <li><strong>週次通知</strong>: 毎週月曜朝9時に「先週のふりかえりが届きました」プッシュ通知（通知許可済みの場合のみ）。識別子: <code>"weeklyReportReminder"</code>。設定の復帰リマインダーON/OFFとは独立して管理</li>
+    <li><strong>週次通知</strong>: <strong>毎週日曜18時</strong>に「今週のふりかえり」／「終わらなかったことを来週へ回して、1週間を締めくくろう」（通知許可済みの場合のみ。v1.4〜。v1.3 までは月曜朝9時「先週のふりかえりが届きました」）。識別子: <code>"weeklyReportReminder"</code>（変更なし）。設定の復帰リマインダーON/OFFとは独立して管理</li>
   </ul>
 
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
     <tr><td>SwiftData (<code>ModelContext</code>)</td><td><code>WeeklyCoachReport</code> の永続化。<code>StudySession</code> の集計クエリ</td><td>アプリ起動時 MainActor で実行</td></tr>
-    <tr><td>UNUserNotificationCenter</td><td>毎週月曜朝9時の週次リマインダー</td><td>通知許可済みの場合のみスケジュール。冪等（毎回張り直し）</td></tr>
+    <tr><td>UNUserNotificationCenter</td><td>毎週日曜18時の週次リマインダー（v1.4〜。v1.3 までは月曜9時）</td><td>通知許可済みの場合のみスケジュール。冪等（毎回張り直し）。既存の予約も起動時に日曜18時へ張り直される</td></tr>
     <tr><td>FeatureGate</td><td><code>canAccessWeeklyCoachReport</code> で課金壁判定</td><td>SubscriptionManager を直接参照しない</td></tr>
     <tr><td>Firebase Analytics</td><td><code>weekly_report_viewed</code>・<code>weekly_report_lock_tapped</code></td><td>AnalyticsManager.shared.log(_:) 経由</td></tr>
   </table>
@@ -171,6 +186,7 @@ final class WeeklyCoachReport {
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-12</td><td>初版作成 (v1.2.0)</td></tr>
+    <tr><td>1.1</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）を反映: 週次通知を毎週月曜9時から日曜18時へ変更し、文言と誘導先をホームの「週のふりかえり」に変更。このレポートと週のふりかえりの違いを表で追記</td></tr>
   </table>
 
   <script>
@@ -180,7 +196,7 @@ final class WeeklyCoachReport {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-12</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div>
 </body>
 </html>

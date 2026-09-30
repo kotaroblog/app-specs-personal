@@ -16,7 +16,7 @@
     <h1>やることリスト機能</h1>
     <p>期限日（dueDate）ベースで学習タスクを管理し、カレンダーと連携して計画・実績を一体管理する機能</p>
     <div class="section-meta">
-      <span class="tag done">v1.3.0</span>
+      <span class="tag todo">v1.4.0（TestFlight・未提出）</span>
       <span class="tag">機能ID: SS-FEAT-TASK-01</span>
     </div>
   </header>
@@ -29,6 +29,48 @@
     タスクは <code>StudyTask</code> モデルで管理され、カレンダー日ビューでは選択日を期限とするタスクを一覧表示する。
     学習計画自動配分（StudyPlanSheet）により、長期課題を日単位タスクへ自動分割できる。
   </p>
+
+  <h2>v1.4: やること・計測・振り返りをつなぐ</h2>
+  <div class="callout">
+    <p style="margin-top:0">
+      v1.3 までは、書く場所（やること・手動記録の「次回やること」・メモ）は多いのに読む場所が無かった（SS-017）。
+      やることと計測をつなぐ <code>linkedSessionID</code> もどこでも代入されず、計画と実行が別々に閉じていた（SS-018）。
+      1.4.0（TestFlight・未提出）で、勉強の前と後、そして週1回の3か所で、やることを行き来させる。
+    </p>
+    <table>
+      <tr><th>場所</th><th>やること</th><th>仕様書</th></tr>
+      <tr><td>勉強の前</td><td>ホームの一番上に「今日やること」。「開始」でそのやることの計測</td><td><a href="../screens/home.html">ホーム</a></td></tr>
+      <tr><td>勉強の後</td><td>「終わった？」「次はいつ・何を？」「メモ」→ 次のやることを作る／同じやることを付け替える</td><td><a href="../screens/after-session.html">計測を終えたあとの画面</a></td></tr>
+      <tr><td>週1回</td><td>日曜の夜に、終わらなかったことを「来週へ／消す」</td><td><a href="../screens/weekly-review.html">週のふりかえり</a></td></tr>
+      <tr><td>先の予定</td><td>カレンダーの週（最初に開く表示）で曜日ごとに見る</td><td><a href="../screens/calendar.html">カレンダー</a></td></tr>
+    </table>
+    <p style="margin-bottom:0">旧「次回やること」（<code>StudySession.nextStudyDate</code> / <code>nextStudyNote</code>）は「やること」に一本化した（下記「データ移行（v1.3 → v1.4）」）。</p>
+  </div>
+
+  <h3>期限の種類（dueScope）</h3>
+  <table>
+    <tr><th>値</th><th>意味</th><th>dueDate</th><th>表示</th></tr>
+    <tr><td><code>day</code>（既定）</td><td>その日にやる（従来どおり）</td><td>その日（0:00）</td><td>期限を過ぎたら「昨日の分」「N日前の分」（オレンジ）</td></tr>
+    <tr><td><code>week</code></td><td>その週（月〜日）のうちにやる。「今週中」「来週へ回す」で作られる</td><td>その週の日曜</td><td>「今週中」。週が過ぎたら「先週までの分」（オレンジ）</td></tr>
+  </table>
+
+  <h3>作られた元（origin）</h3>
+  <table>
+    <tr><th>値</th><th>作られ方</th><th>行に出す説明</th></tr>
+    <tr><td><code>manual</code>（既定）</td><td>自分で追加した（既存のやることもこの値で読まれる）</td><td>出さない</td></tr>
+    <tr><td><code>plan</code></td><td>学習計画が作った</td><td>「学習計画」</td></tr>
+    <tr><td><code>next</code></td><td>計測を終えたあとの「次の予定」・手動記録の「次回の予定」で作った</td><td>「前回決めた」</td></tr>
+    <tr><td><code>carried</code></td><td>週のふりかえりで来週へ回した</td><td>「先週から」</td></tr>
+    <tr><td><code>migrated</code></td><td>旧「次回やること」から移した</td><td>「前回決めた」</td></tr>
+  </table>
+  <p>行の説明は <code>TaskScheduling.metaLabel</code> が「科目・期限の状態・途中まで（計測と紐づいた未完了）・作られた元」を「・」でつないで作る。ホーム・カレンダーの週で同じものを使う。</p>
+
+  <h3>手動記録の「次回の予定」（v1.4）</h3>
+  <ul>
+    <li>新しく記録するときに「次回の予定」を入れると、<strong>やることとして作る</strong>（期限はその日・<code>origin = next</code>・題名は入力した内容、空なら「科目名の続き」）。フッターは「ホームとカレンダーの『やること』に入ります」</li>
+    <li>計測の記録の <code>nextStudyDate</code> / <code>nextStudyNote</code> には書かない</li>
+    <li><strong>過去の記録の編集では「次回の予定」の欄を出さない</strong>（旧「次回やること」は起動時にやることへ移してあるため、編集で書き換えると二重になる）</li>
+  </ul>
 
   <h2>設計変更の背景（v1.1 → v1.2）</h2>
   <div class="callout">
@@ -43,7 +85,10 @@
   <ul>
     <li><a href="../screens/calendar.html">カレンダー画面（CalendarScreen）</a> — タスクの作成・編集・削除・完了操作の主要 UI（日ビュー・週ビュー・月ビュー）</li>
     <li><a href="../screens/goal-edit.html">目標・やることリスト画面（GoalEditSheet）</a> — 目標設定と完了率表示</li>
-    <li><a href="../screens/home.html">ホーム画面</a> — CompactGoalCard でタスク件数（N/M）を表示</li>
+    <li><a href="../screens/home.html">ホーム画面</a> — v1.4 から一番上の「今日やること」（開始・完了）</li>
+    <li><a href="../screens/after-session.html">計測を終えたあとの画面</a>（v1.4）— 次のやることの作成・付け替え</li>
+    <li><a href="../screens/weekly-review.html">週のふりかえり</a>（v1.4）— 来週へ回す／消す</li>
+    <li><a href="../screens/today.html">今日タブ</a> — v1.4 からホームと同じ分け方</li>
   </ul>
 
   <h2>データモデル（StudyTask）</h2>
@@ -62,6 +107,13 @@
     var periodRawValue: String = "day"    // 旧: "day" / "week" / "month"
     var periodStart: Date = Date()        // 旧: 期間開始
     var periodEnd: Date = Date()          // 旧: 期間終了
+
+    // v1.4 で追加（すべて既定値つき。既存データはこの値で読み込まれる）
+    var planID: UUID?                     // 学習計画のやることの計画ID
+    var planAmount: Int?                  // 学習計画で割り当てた量
+    var dueScopeRawValue: String = "day"  // "day" / "week"
+    var originRawValue: String = "manual" // manual / plan / next / carried / migrated
+    var handoffNote: String?              // 次に開いたとき「前回のメモ」として見せる
 }</code></pre>
 
   <table>
@@ -78,6 +130,11 @@
     <tr><td>periodRawValue</td><td>String</td><td>後方互換フィールド（v1.2以降は非推奨）</td></tr>
     <tr><td>periodStart</td><td>Date</td><td>後方互換フィールド（v1.2以降は非推奨）</td></tr>
     <tr><td>periodEnd</td><td>Date</td><td>後方互換フィールド（v1.2以降は非推奨）</td></tr>
+    <tr><td>planID</td><td>UUID?</td><td>v1.4〜。学習計画のやることの計画ID（計画以外は nil）</td></tr>
+    <tr><td>planAmount</td><td>Int?</td><td>v1.4〜。学習計画で割り当てた量（進み具合の計算用）</td></tr>
+    <tr><td>dueScopeRawValue</td><td>String</td><td>v1.4〜。期限の種類（day / week）。既定 day</td></tr>
+    <tr><td>originRawValue</td><td>String</td><td>v1.4〜。作られた元。既定 manual</td></tr>
+    <tr><td>handoffNote</td><td>String?</td><td>v1.4〜。作ったときに残したメモ</td></tr>
   </table>
 
   <h2>画面・操作仕様</h2>
@@ -97,7 +154,13 @@
   <h3>カレンダー 月ビュー</h3>
   <p>各日の左上に未完了タスク数バッジ（緑円）を表示。</p>
 
-  <h3>カレンダー 週ビュー（v1.3〜: 3段階構成）</h3>
+  <div class="callout warn">
+    <strong>v1.4 で週ビューを作り替えた。</strong> 以下の「3段階構成」は v1.3 の記録。v1.4 の週ビューは曜日ごとのやること一覧（期限切れ直近7日・今週中・月〜日の各日と「＋」）で、
+    科目別の件数（<code>SubjectProgressRow</code>）と時間表は週ビューから外した（時間表は分析タブへ）。現行の仕様は<a href="../screens/calendar.html">カレンダー画面</a>を参照。
+    月ビューの印は「やることの件数」と「勉強した日の点」だけになった。
+  </div>
+
+  <h3>カレンダー 週ビュー（v1.3: 3段階構成・v1.4 で廃止）</h3>
   <div class="callout">
     <strong>v1.3 変更:</strong> 旧「今週のやること（フラットリスト＋日後ラベル）」を廃止し、以下の3段階構成に刷新。
   </div>
@@ -131,6 +194,9 @@
   <p>タスクの追加・編集はカレンダーから行う旨を案内する点は変更なし。</p>
 
   <h2>Phase 3: 学習計画自動配分（StudyPlanSheet）</h2>
+  <div class="callout info">
+    v1.4 で計画そのもの（<code>StudyPlan</code>）を保存し、量を合計ちょうどに配るよう変えた。現行の仕様は<a href="../screens/study-plan-sheet.html">学習計画シート</a>と<a href="study-plan.html">学習計画の進み具合と配り直し</a>を参照（以下は v1.3 時点の記録を含む）。
+  </div>
   <p>カレンダー画面右上の「📅」ボタンからアクセス。長期課題を日単位タスクへ自動分割する。</p>
 
   <table>
@@ -252,12 +318,40 @@ sequenceDiagram
     </ul>
   </div>
 
+  <h2>データ移行（v1.3 → v1.4）</h2>
+  <div class="callout warn">
+    <strong>すべて追加のみ。</strong> 既存項目の削除・型変更・名前変更はしていない（SwiftData の自動の移行で読める）。1.3.4 のデータの形から新しい版の形で開き直し、
+    科目・学習記録・やること・成績・教材・目標・設定・週次レポートの件数と中身が変わらないことをテストで確かめた。
+  </div>
+  <h3>旧「次回やること」をやることへ写す（NextStudyMigrationService）</h3>
+  <ul>
+    <li>起動時に<strong>1回だけ</strong>実行する（UserDefaults <code>nextStudy_toTask_migrated_v1</code>）</li>
+    <li><code>nextStudyDate</code> がある計測の記録ごとに、やることを作る: 題名は <code>nextStudyNote</code>（空なら「科目名の続き」）、期限はその日、<code>origin = migrated</code>、その記録のメモがあれば <code>handoffNote</code> に入れる</li>
+    <li><strong>元の値は消さない</strong>（記録として残す。新しい版では表示に使わないだけ）</li>
+    <li><strong>7日より前の予定は写さない</strong>（突然「期限切れ」が大量に出るのを防ぐ。元の値は残る）</li>
+    <li>題名・期限・科目が同じ移行済みのやることがあれば作らない（途中で落ちて再実行されても重複しない）。保存に失敗したときはフラグを立てず、次の起動で再実行する</li>
+  </ul>
+  <h3>科目を消したときの参照（SubjectReferenceService・SS-022）</h3>
+  <div class="callout warn">
+    <strong>🔴 以前からのクラッシュ要因。</strong> Subject は記録（StudySession）と成績（TestRecord）には削除の決まり（cascade / nullify）を持つが、
+    やること（StudyTask）・学習計画（StudyPlan）・教材（StudyMaterial）からの参照には持たない。そのまま科目を消すと、消えた科目を指したまま残り、
+    画面が科目名を読んだ瞬間に落ちる（SwiftData の assertion）。v1.4 のホームは今日やることの科目名を読むので、以前に科目を消した人は起動直後に落ちうる。
+  </div>
+  <ul>
+    <li><strong>科目を消す前</strong>（設定の削除確認）: その科目を指しているやること・学習計画・教材の参照を外す（それ自体は消さない）</li>
+    <li><strong>起動時</strong>（RootView で本編を出す前）: 以前の版で科目を消したときに残った「消えた科目への参照」を外す</li>
+    <li>データの形は変えない。参照を外したやることは「科目なし」として表示され、ホームで開始すると前回の科目で計る</li>
+  </ul>
+
   <h2>ビジネスルール</h2>
   <ul>
     <li>期限日が同じタスクは <code>dueDate == selectedDate</code> のクエリで取得する。時刻は無視し日付のみで比較</li>
     <li>dueDate = nil のタスクはどの日にも表示しない（「未整理タスク」として将来のセクションで対応予定）</li>
     <li>「記録して完了」でキャンセルした場合、タスクは未完了のまま維持する</li>
-    <li>完了済みタスクの再オープン（チェック解除）は可能。isCompleted = false、completedAt = nil、linkedSessionID = nil にリセットする</li>
+    <li>完了済みタスクの再オープン（チェック解除）は可能。isCompleted = false、completedAt = nil にする（v1.4 のホーム・週ビューは <code>TaskFlowService.reopen</code> を通し、<code>linkedSessionID</code> は残す）</li>
+    <li>v1.4: やることの書き込み（完了・付け替え・作成）は <code>TaskFlowService</code> を通す。削除は利用者が明示的に選んだとき（週のふりかえりの「消す」・学習計画の配り直しで余ったもの・既存の削除操作）だけ</li>
+    <li>v1.4: ホーム・カレンダーの週に出す期限切れは直近7日分まで（<code>TaskScheduling.overdueWindowDays</code>）。データは消さない。今日タブは全部出す</li>
+    <li>v1.4: 「今日」は学習日の区切り（<code>StudyDay.resetHour</code>）で決める（SS-004）</li>
     <li>タスクの sortOrder はユーザーが並び替えた順序を保持（デフォルトは createdAt 昇順）</li>
     <li>1日あたりのタスク上限は設けない</li>
     <li>StudyPlanSheet: 試験日 - 開始日が0日以下の場合、保存ボタンを非活性にする</li>
@@ -311,6 +405,7 @@ sequenceDiagram
     <tr><td>1.1</td><td>2026-06-07</td><td>v1.2.0対応: 期間バケツモデルから期限日（dueDate）モデルへ全面移行。学習計画自動配分（StudyPlanSheet）追加。週ビュー「今週のやること」セクション追加。月ビュータスクバッジ追加。データ移行仕様（StudyTaskMigrationService）追加</td></tr>
     <tr><td>1.2</td><td>2026-06-08</td><td>v1.2.1対応: StudyPlanSheet 土日除外ロジックの DST 対策（startOfDay を追加）。MonthCalendarView タスクバッジ集計を表示月範囲のみに最適化（パフォーマンス改善）。DueDateFormatter 期限日カラーロジックを共通ユーティリティに抽出</td></tr>
     <tr><td>1.3</td><td>2026-06-09</td><td>v1.3.0対応: StudyTask に subject フィールド追加。StudyPlanSheet の科目選択を必須化。GoalEditSheet のタスク表示を科目別進捗バー（SubjectProgressRow）に変更。週ビューを3段階構成（今日の実行リスト・取りこぼしセクション・今週の進捗）に刷新。SubjectProgressRow 共通コンポーネント仕様を追加</td></tr>
+    <tr><td>1.4</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）を反映（SS-017〜022）: やること・計測・振り返りをつなぐ3か所の概要、期限の種類（day / week＝今週中）と作られた元（manual / plan / next / carried / migrated）、StudyTask の追加項目、手動記録の「次回の予定」をやることとして作る変更（編集時は欄を出さない）、旧「次回やること」の移行（NextStudyMigrationService）、科目削除時と起動時の参照外し（SubjectReferenceService）を追記。v1.3 の週ビュー3段階構成は廃止した旨を注記</td></tr>
   </table>
 
   <script>
@@ -320,7 +415,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-09</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div>
 </body>
 </html>

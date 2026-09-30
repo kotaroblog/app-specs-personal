@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 計測を終えたあとの画面</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 計測を終えたあとの画面</div>
+
+  <header class="site-header">
+    <h1>計測を終えたあとの画面（AfterSessionSheet）</h1>
+    <p>1回の勉強の終わりに「終わった？」「次はいつ・何を？」「メモ」を残すシート</p>
+    <div class="section-meta">
+      <span class="tag todo">v1.4.0（TestFlight・未提出）</span>
+      <span class="tag">画面ID: SS-AFTER-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    塾で授業の終わりに「今日やったこと」「次回の宿題」を書いて次の授業で見返していたのと同じことを、1回の勉強の終わりにする画面。
+    v1.3 までは「次回やること」やメモを入力できても、入力シート以外のどこにも表示されず（SS-017）、
+    やること（<code>StudyTask</code>）と計測（<code>StudySession</code>）をつなぐ <code>linkedSessionID</code> も一度も代入されていなかった（SS-018）。
+    この画面で「計測 → 次のやること」を作り、ホームの「今日やること」で次の勉強の前に見せる。
+  </p>
+
+  <h2>開く経路</h2>
+  <table>
+    <tr><th>開始元</th><th>開くタイミング</th><th>モード</th></tr>
+    <tr><td>ホームの「今日やること」の「開始」（やることから始めた計測）</td><td>計測の完了ボタンを押すと<strong>毎回</strong>開く</td><td>やることモード（<code>task != nil</code>）</td></tr>
+    <tr><td>科目から始めた計測（開始CTA・科目一覧・フォーカス科目）</td><td>自動では開かない。完了後の取り消しトーストにある「<strong>次にやることを決める</strong>」を押したときだけ開く</td><td>科目モード（<code>task == nil</code>）</td></tr>
+  </table>
+  <div class="callout info">
+    科目から始めた計測の取り消しトーストは、この導線を押す時間を取るため表示時間を延ばした（記録したとき 8秒、目標達成の演出を挟んだとき残り 4秒。破棄のときは従来どおり 5秒）。
+    「次にやることを決める」を押すとトーストの自動消去とレビュー依頼の予約を止め、レビュー依頼はこの画面を閉じたあとに出し直す。
+  </div>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>やることモード</th><th>科目モード</th></tr>
+    <tr><td>ナビゲーションタイトル</td><td colspan="2">「おつかれさまでした」</td></tr>
+    <tr><td>見出し（<code>AfterSessionHeader</code>）</td><td colspan="2">「記録しました」＋「科目名・時間」。右に「取り消す」（この計測を記録しなかったことにする）</td></tr>
+    <tr><td>終わった？</td><td>「このやること、終わった？」＋やることの題名＋「終わった／途中まで」（既定: 終わった）</td><td>—</td></tr>
+    <tr><td>何をやった？</td><td>—</td><td>自由入力（例：教科書 p.20〜25・任意）。入力はメモとして扱う</td></tr>
+    <tr><td>次はいつやる？（<code>AfterSessionNextSection</code>）</td><td colspan="2">「明日／あさって／今週中／日付を選ぶ」（既定: 明日）。「日付を選ぶ」は明日〜365日後、初期値は3日後。<strong>学習計画のやることのときは出さない</strong></td></tr>
+    <tr><td>次に何をやる？</td><td>下書きを自動で入れる（下表）。利用者が書き換えたあとは自動で上書きしない</td><td>空欄</td></tr>
+    <tr><td>補足</td><td colspan="2">「空のままにすると、次の予定は作りません」</td></tr>
+    <tr><td>学習計画の次の予定（<code>AfterSessionPlanInfo</code>）</td><td>学習計画のやることのときだけ、「次はいつ／何を」の代わりに出す。「次の予定（学習計画どおり）」＋次のやること（例: 10/1（木）　英単語帳: 10語（4日目/30日））。最後なら「この計画のやることは、これで最後です」。途中までを選ぶと「このやることは、残りを明日に回します」。末尾に「計画の日程を変えるときは、カレンダーの学習計画から配り直せます」</td><td>—</td></tr>
+    <tr><td>メモ（任意）</td><td>最初は「メモを残す（任意）」ボタンだけ。押すと入力欄が開く。「次にこのやることを開いたとき『前回のメモ』として出ます」</td><td>—（「何をやった？」がメモを兼ねる）</td></tr>
+    <tr><td>保存する</td><td colspan="2">主ボタン（下部固定）</td></tr>
+    <tr><td>スキップ（時間だけ記録）</td><td colspan="2">弱いボタン。計測の記録は残し、次の予定は作らない</td></tr>
+  </table>
+
+  <h3>「次に何をやる？」の下書き</h3>
+  <table>
+    <tr><th>条件</th><th>下書き</th><th>例</th></tr>
+    <tr><td>終わった（既定）</td><td>題名の末尾にある範囲を、同じ幅で次の範囲にずらす（<code>TaskScheduling.nextRangeTitle</code>）。範囲が無い題名はそのまま</td><td>「青チャート 例題45–48」→「青チャート 例題49–52」／「p.31–40」→「p.41–50」</td></tr>
+    <tr><td>途中まで</td><td>題名＋「の続き」（すでに「の続き」で終わっていれば付けない）</td><td>「青チャート 例題45–48の続き」</td></tr>
+  </table>
+  <p>範囲の区切りは <code>-</code> <code>–</code> <code>−</code> <code>〜</code> <code>~</code> <code>～</code> を受け付け、題名の中で最後の数字の範囲だけを対象にする。範囲の無い題名で同じ題名が入るのは決めた仕様どおり（コードレビューの🟡指摘を仕様として残した）。</p>
+
+  <h2>保存したときの動き</h2>
+  <table>
+    <tr><th>開始元</th><th>選択</th><th>データへの反映</th><th>お知らせの文言</th></tr>
+    <tr><td rowspan="3">やること（学習計画以外）</td><td>終わった・次の題名あり</td><td>やることを完了にして計測と紐づけ、次のやることを新しく作る（<code>origin = next</code>・期限は選んだ日。今週中なら期限はその週の日曜で <code>dueScope = week</code>・科目は元のやること、無ければ計測の科目）</td><td>「明日の『やること』に入れました」など</td></tr>
+    <tr><td>終わった・次の題名が空</td><td>やることを完了にするだけ</td><td>「やることを完了にしました」</td></tr>
+    <tr><td>途中まで</td><td><strong>同じやることの期限を付け替える</strong>（新しく作らない）。題名は「次に何をやる？」の内容（既定「〜の続き」）に置き換える</td><td>「明日の『やること』に回しました」など</td></tr>
+    <tr><td rowspan="2">やること（学習計画）</td><td>終わった</td><td>やることを完了にする。次の予定は作らない</td><td>「次は計画どおり 10/1（木）」／最後なら「計画の最後のやることでした」</td></tr>
+    <tr><td>途中まで</td><td>同じやることを明日へ付け替える（題名・量は変えない）</td><td>「残りを明日のやることに回しました」</td></tr>
+    <tr><td rowspan="2">科目</td><td>次の題名あり</td><td>次のやることを新しく作る（<code>origin = next</code>・科目は計測の科目）</td><td>「〇〇の『やること』に入れました」</td></tr>
+    <tr><td>次の題名が空</td><td>何も作らない</td><td>「記録しました」</td></tr>
+  </table>
+  <ul>
+    <li>メモ（科目モードでは「何をやった？」）が入っていれば、計測の記録（<code>StudySession.note</code>）に入れる。あわせて次のやること（途中までなら同じやること）の <code>handoffNote</code> に入れ、ホームで「前回のメモ」として出す</li>
+    <li>やることモードでは、どの選択でも計測と紐づける（<code>linkedSessionID</code>）。紐づいた未完了のやることは、ホームで「途中まで」と表示され、ボタンが「続き」になる</li>
+    <li>「今週中」を選んだときのお知らせは「今週の『やること』に…」、日付を選んだときは「9/29（火）の『やること』に…」</li>
+  </ul>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>やることモード（学習計画以外）</td><td>見出し → 終わった？ → 次はいつ・何を → メモ（閉じた状態）</td></tr>
+    <tr><td>やることモード（学習計画）</td><td>見出し → 終わった？ → 学習計画の次の予定 → メモ（閉じた状態）</td></tr>
+    <tr><td>科目モード</td><td>見出し → 何をやった？ → 次はいつ・何を</td></tr>
+    <tr><td>「日付を選ぶ」を選択</td><td>日付の選択欄を出す</td></tr>
+    <tr><td>保存・スキップ・取り消しを受け付けた後</td><td>2回目以降の操作は無視する（保存の連打で次のやることが2件できるのを防ぐ）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th><th>閉じたあと</th></tr>
+    <tr><td>保存する</td><td>シートを閉じてホームへ</td><td>お知らせ「保存しました」＋上表の文言</td></tr>
+    <tr><td>スキップ（時間だけ記録）</td><td>シートを閉じてホームへ</td><td>お知らせ「記録しました」＋「科目名・時間」</td></tr>
+    <tr><td>下へスワイプして閉じる</td><td>ホームへ</td><td><strong>スキップと同じ扱い</strong>（やることとの紐づけは残す）。お知らせ「記録しました」＋時間</td></tr>
+    <tr><td>取り消す</td><td>シートを閉じてホームへ</td><td>計測の記録を削除し、お知らせ「記録を取り消しました」。完了回数（<code>completedSessionCount</code>）を1戻す。広告・祝賀・レビュー依頼は出さない</td></tr>
+  </table>
+  <p>お知らせ（<code>FlowToast</code>）は4秒で消える。VoiceOver 利用者にも届くよう読み上げを送る。取り消しはこの画面の中だけで行う（お知らせからは取り消せない）。</p>
+
+  <h2>広告・祝賀・レビュー依頼の順番</h2>
+  <div class="callout warn">
+    <strong>やることから始めた計測では、広告を保存画面より先に出さない。</strong>
+    完了ボタンの時点では目標達成とレビュー依頼の判定だけ済ませ、広告・祝賀・レビュー依頼はこの画面を閉じたあとに出す。
+    広告を出すのは「やることモード かつ レビュー依頼の回でない かつ 目標達成の回でない」とき（<code>AfterSessionContext.showsAdAfter</code>）。
+    目標達成・レビュー依頼の回に広告を出さない決まりは v1.3 までと同じ。<br>
+    科目から始めた計測は従来どおり、完了の時点で広告（出す回なら）→ 取り消しトーストの順。トーストからこの画面を開いたときは、閉じたあとにレビュー依頼だけを出し直す。
+  </div>
+  <p>閉じたあとの祝賀は 0.5秒後に表示して 3秒で閉じ、レビュー依頼はその 1秒後。あわせて週のふりかえりカードの表示を更新する。</p>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>StudySession（note に保存）
+StudyTask（isCompleted / completedAt / linkedSessionID / dueDate / dueScopeRawValue /
+           title / originRawValue / handoffNote を更新・作成）
+
+AfterSessionViewModel {                 // @Observable @MainActor
+    session: StudySession
+    task: StudyTask?                    // 科目から始めた計測では nil
+    doneChoice: .finished | .partial
+    whenChoice: NextWhen                // tomorrow / dayAfterTomorrow / thisWeek / custom
+    customDate: Date
+    memo: String
+    nextText: String
+    nextPlanTask: StudyTask?            // 同じ計画の、期限が同じか後の未完了のやること（いちばん近いもの）
+}
+enum AfterSessionResult { case saved(message:), skipped(message:), undone }</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">計測中のやることは <code>TimerViewModel.currentTaskID</code> で持ち、UserDefaults（<code>activeTimer_taskID</code>）にも保存する。アプリを終了して計測を復元しても、やることとの紐づけが残る</li>
+    <li class="done">完了時に <code>currentTaskID</code> のやることが見つからない（計測中に消した等）ときは、科目から始めた計測と同じ流れになる</li>
+    <li class="done">「今日」は学習日の区切り（<code>StudyDay.resetHour</code>）で決める。深夜1時・区切り4時の人が「明日」を選ぶと、学習日の翌日が期限になる</li>
+    <li class="done">書き込みは <code>TaskFlowService</code>（complete / reschedule / createTask / link）を通す。画面から <code>StudyTask</code> のプロパティを直接書き換えない</li>
+    <li class="done">シートは <code>sheet(item:)</code> で開き、閉じたあとに使う内容を <code>activeAfterSession</code> に別で持つ（閉じると <code>afterSession</code> は nil になるため）</li>
+    <li class="done">保存・スキップ・取り消しは <code>isFinishing</code> で1回だけ受け付ける</li>
+    <li class="done">計測イベント: 開いたとき <code>after_session_shown</code>、保存 <code>after_session_saved</code>、スキップ・スワイプで閉じたとき <code>after_session_skipped</code>（内容は送らない。<a href="../logging.html">ロギング方針</a>参照）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="home.html">ホーム画面（今日やること・取り消しトースト）</a></li>
+    <li><a href="../features/timer.html">タイマー機能（完了後の流れ）</a></li>
+    <li><a href="../features/task-list.html">やることリスト機能（期限の種類・作られた元）</a></li>
+    <li><a href="../features/study-plan.html">学習計画の進み具合と配り直し</a></li>
+    <li><a href="weekly-review.html">週のふりかえり（この週のメモ）</a></li>
+    <li><a href="../flow.html">画面遷移図</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-01</td><td>初版作成。1.4.0（TestFlight・未提出）で新設した画面（SS-017 / SS-018）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
+</div>
+</body>
+</html>

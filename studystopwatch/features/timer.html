@@ -9,14 +9,14 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / タイマー機能</div>
   <header class="site-header"><h1>タイマー機能</h1><p>永続化・バックグラウンド対応・ポモドーロ</p>
-  <div class="section-meta"><span class="tag done">v1.1</span><span class="tag">機能ID: SS-FEAT-TIMER</span></div></header>
+  <div class="section-meta"><span class="tag todo">v1.4.0（TestFlight・未提出）</span><span class="tag">機能ID: SS-FEAT-TIMER</span></div></header>
 
   <h2>概要</h2>
   <p>科目別の学習時間を計測する中核機能。バックグラウンド・アプリ再起動でも正確に経過時間を保持。
   ポモドーロモード（集中25分/休憩5分）対応。</p>
 
   <h2>関連画面</h2>
-  <ul><li><a href="../screens/home.html">ホーム画面</a></li><li><a href="../screens/live-activity.html">Live Activity</a></li></ul>
+  <ul><li><a href="../screens/home.html">ホーム画面</a></li><li><a href="../screens/live-activity.html">Live Activity</a></li><li><a href="../screens/after-session.html">計測を終えたあとの画面（v1.4）</a></li></ul>
 
   <h2>永続化の仕組み</h2>
   <ol>
@@ -25,6 +25,7 @@
     <li>フォアグラウンド復帰 <code>handleForeground()</code> → 背景中の経過時間を加算、Timer 再開</li>
     <li>アプリ再起動時 <code>restoreIfNeeded(context)</code> → 24時間内なら自動復元</li>
     <li>停止時 <code>clearTimerState()</code> → UserDefaults クリア</li>
+    <li><strong>v1.4</strong> やることから始めた計測は、そのやることの ID（<code>currentTaskID</code>）も <code>activeTimer_taskID</code> に保存し、復元時に読み戻す。科目から始めた計測ではキーを消す</li>
   </ol>
 
   <h2>ポモドーロモード</h2>
@@ -99,13 +100,33 @@
     <tr><td>1分未満キャンセル</td><td>「記録として保存しますか？」+ 取り消しボタン</td><td>1分未満セッションを復元して保存（従来は無音で破棄していたが取り消し可能に変更）</td></tr>
   </table>
 
+  <h2>やることから始めた計測と、終えたあとの流れ（v1.4）</h2>
+  <div class="callout info">
+    v1.4 で「やること（計画）→ 計測 → 振り返り」をつないだ（SS-017 / SS-018）。計測そのもの（永続化・ポモドーロ・24時間境界）は変えていない。
+  </div>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>開始</td><td><code>TimerViewModel.start(subject:taskID:)</code>。ホームの「今日やること」の「開始」からは <code>taskID</code> 付きで呼ぶ。科目はやることの科目、無ければ前回の科目、それも無ければ先頭の科目</td></tr>
+    <tr><td>計測中の表示</td><td>科目名の下にやることの題名（2行まで。VoiceOver は「やること：〜」）</td></tr>
+    <tr><td>完了（やることから）</td><td>記録を保存 → 目標達成・レビュー依頼の判定 → <a href="../screens/after-session.html">計測を終えたあとの画面</a>。<strong>広告・祝賀・レビュー依頼はこの画面を閉じたあと</strong>（広告は保存より先に出さない）</td></tr>
+    <tr><td>完了（科目から）</td><td>従来どおり（広告 → 取り消しトースト）。トーストに「次にやることを決める」を足し、押すと同じ画面を科目モードで開く</td></tr>
+    <tr><td>計測中にやることが消えた</td><td>完了時にやることが見つからなければ、科目から始めた計測と同じ流れ</td></tr>
+  </table>
+  <table>
+    <tr><th>取り消しトースト</th><th>v1.3 まで</th><th>v1.4</th></tr>
+    <tr><td>記録したとき</td><td>約5秒</td><td><strong>8秒</strong>（「次にやることを決める」を押す時間を取る）。目標達成の演出を挟んだときは演出のあと残り 4秒</td></tr>
+    <tr><td>破棄したとき</td><td>約5秒</td><td>5秒（変更なし）</td></tr>
+  </table>
+  <p>広告と目標達成・レビュー依頼の排他（レビュー依頼の回・目標達成の回は広告を出さない）は v1.3 までと同じ。</p>
+
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-07-03</td><td>セッション完了フローの排他制御・ポモドーロのバックグラウンド対応・計測時間消失バグ修正</td></tr>
     <tr><td>1.2</td><td>2026-07-11</td><td>計測中UIのボタン優先度変更（完了=主・一時停止=弱いアウトライン）。完了直後・破棄直後・1分未満キャンセルの取り消し可能トースト（約5秒）を追記</td></tr>
+    <tr><td>1.3</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）を反映: やることから始めた計測（<code>start(subject:taskID:)</code>・<code>activeTimer_taskID</code> への保存と復元・計測中のやることの題名）、完了後に計測を終えたあとの画面を出し広告・祝賀・レビュー依頼を閉じたあとに回す流れ、取り消しトーストの「次にやることを決める」と表示時間（記録 8秒）を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-11</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div></body></html>

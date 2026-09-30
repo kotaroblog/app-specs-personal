@@ -18,6 +18,19 @@
 
 
   <div class="callout">
+    <p style="margin-top:0"><strong>2026-10-01 v1.4.0 (build 19) を TestFlight へ（審査は未提出）</strong></p>
+    <p>「<strong>やること（計画）→ 計測 → 振り返り</strong>」を、勉強の前後と週1回の3か所でつないだ再設計（SS-017〜022）。
+    書く場所は多いのに読む場所が無かったのが使いにくさの正体だった。</p>
+    <ul>
+      <li><strong>ホーム</strong>: 未完了のやることがある日だけ一番上に「今日やること」。「開始」でそのやることの計測。日曜18時から「週のふりかえり」カード → <a href="screens/home.html">ホーム</a></li>
+      <li><strong>計測を終えたあと</strong>: 「終わった？」「次はいつ・何を？」「メモ」→ <a href="screens/after-session.html">計測を終えたあとの画面</a>（新規）</li>
+      <li><strong>週のふりかえり</strong>: やることの結果・終わらなかったこと（来週へ／消す）・この週のメモ → <a href="screens/weekly-review.html">週のふりかえり</a>（新規）。週次通知は月曜9時から日曜18時へ</li>
+      <li><strong>カレンダー</strong>: 最初に開く表示を週（曜日ごとのやること）に。学習計画の進み具合と「残りを配り直す」→ <a href="features/study-plan.html">学習計画の進み具合と配り直し</a>（新規）。時間表は分析タブへ</li>
+      <li><strong>データ</strong>: StudyTask に5項目・StudyPlan を追加（<strong>追加のみ</strong>）。旧「次回やること」はやることへ移行。科目削除で落ちる問題を修正 → <a href="data-model.html">データモデル</a></li>
+    </ul>
+  </div>
+
+  <div class="callout">
     <p style="margin-top:0"><strong>2026-08-20 広告基盤を AppLovin MAX から Unity LevelPlay へ移行</strong></p>
     <p>AdMob アカウントが「無効なトラフィック」により恒久的に無効化（2026-07-30）され、再審査請求も却下された。
     その後 AppLovin MAX へ移行したが <strong>publisher アカウントの承認が下りなかった</strong>ため断念し、
@@ -58,7 +71,7 @@
     <li><span class="k">言語</span><span class="v">日本語のみ</span></li>
     <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（広告は <strong>Unity LevelPlay</strong> へ移行。App Key 未設定のため現在は配信なし）</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
-    <li><span class="k">バージョン</span><span class="v">v1.3.1 (build 15)（2026-08-18 公開）</span></li>
+    <li><span class="k">バージョン</span><span class="v">v1.4.0 (build 19) TestFlight 配信・審査未提出（2026-10-01）／直前の審査提出は v1.3.4 (build 18)</span></li>
     <li><span class="k">表示名</span><span class="v">学習ストップウォッチ</span></li>
     <li><span class="k">拡張ターゲット</span><span class="v">Live Activity / Widget</span></li>
     <li><span class="k">App Group</span><span class="v"><code>group.com.happyboy1002.StudyStopwatch</code></span></li>
@@ -86,7 +99,7 @@
     <a class="card" href="screens/home.html"><div class="title">ホーム（タイマー）</div><div class="desc">タイマー実行画面</div><div class="meta"><span class="tag">SS-HOME-01</span></div></a>
     <a class="card" href="screens/today.html"><div class="title">今日</div><div class="desc">本日の学習ダッシュボード</div><div class="meta"><span class="tag">SS-TODAY-01</span></div></a>
     <a class="card" href="screens/calendar-heatmap.html"><div class="title">カレンダーヒートマップ（旧）</div><div class="desc">月単位の学習日数可視化（廃止・SS-CAL-02 へ移行）</div><div class="meta"><span class="tag">SS-CAL-01</span></div></a>
-    <a class="card" href="screens/calendar.html"><div class="title">カレンダー画面</div><div class="desc">日 / 週 / 月 3ビュー切替カレンダー（リニューアル版）</div><div class="meta"><span class="tag">SS-CAL-02</span></div></a>
+    <a class="card" href="screens/calendar.html"><div class="title">カレンダー画面</div><div class="desc">日 / 週 / 月 3ビュー切替。v1.4 から最初は週（曜日ごとのやること）＋学習計画の欄</div><div class="meta"><span class="tag">SS-CAL-02</span></div></a>
     <a class="card" href="screens/goal-edit.html"><div class="title">目標・やることリスト</div><div class="desc">今日 / 今週 / 今月の目標設定 + タスク管理</div><div class="meta"><span class="tag">SS-GOAL-01</span></div></a>
     <a class="card" href="screens/report.html"><div class="title">レポート</div><div class="desc">週間/月間/通期統計</div><div class="meta"><span class="tag">SS-REPORT-01</span></div></a>
     <a class="card" href="screens/share.html"><div class="title">シェア</div><div class="desc">SNS共有4種カード</div><div class="meta"><span class="tag">SS-SHARE-01</span></div></a>
@@ -98,7 +111,9 @@
     <a class="card" href="screens/widget.html"><div class="title">Widget</div><div class="desc">ホーム画面ウィジェット</div><div class="meta"><span class="tag">SS-WID-01</span></div></a>
     <a class="card" href="screens/focus-subject-mode.html"><div class="title">フォーカス科目モード</div><div class="desc">今日の1科目をピン留めし、選ぶ疲れをなくす</div><div class="meta"><span class="tag">SS-FOCUS-01</span><span class="tag">v1.1.0</span></div></a>
     <a class="card" href="screens/grades-tab.html"><div class="title">分析タブ / 成績セグメント</div><div class="desc">分析タブ（v1.3.0 で「レポート」から改称）内にセグメント追加。テスト記録の入力・グラフ可視化・履歴一覧（5タブ構成維持）</div><div class="meta"><span class="tag">SS-GRADES-01〜03</span><span class="tag">v1.1.0</span></div></a>
-    <a class="card" href="screens/study-plan-sheet.html"><div class="title">学習計画シート</div><div class="desc">総量・終了日から StudyTask を日付自動配分して一括生成</div><div class="meta"><span class="tag">SS-PLAN-01</span></div></a>
+    <a class="card" href="screens/study-plan-sheet.html"><div class="title">学習計画シート</div><div class="desc">総量・終了日から StudyPlan と日ごとの StudyTask を作る（v1.4 から合計ちょうどに配分）</div><div class="meta"><span class="tag">SS-PLAN-01</span></div></a>
+    <a class="card" href="screens/after-session.html"><div class="title">計測を終えたあとの画面</div><div class="desc">「終わった？」「次はいつ・何を？」「メモ」を残し、次のやることを作る</div><div class="meta"><span class="tag">SS-AFTER-01</span><span class="tag">v1.4.0</span></div></a>
+    <a class="card" href="screens/weekly-review.html"><div class="title">週のふりかえり</div><div class="desc">日曜18時からホームに出す。やることの結果・終わらなかったこと（来週へ／消す）・この週のメモ</div><div class="meta"><span class="tag">SS-REVIEW-01</span><span class="tag">v1.4.0</span></div></a>
     <a class="card" href="screens/task-creation-sheet.html"><div class="title">タスク作成シート</div><div class="desc">やること単体の新規作成・編集（プリセット候補・期限日設定）</div><div class="meta"><span class="tag">SS-TASK-01</span></div></a>
   </div>
 
@@ -112,7 +127,8 @@
     <a class="card" href="features/notification.html"><div class="title">通知</div><div class="desc">日次リマインダー</div></a>
     <a class="card" href="features/share.html"><div class="title">シェア</div><div class="desc">4種カード + Instagram Stories</div></a>
     <a class="card" href="features/app-update.html"><div class="title">アプリ更新チェック</div><div class="desc">App Store JSON API</div></a>
-    <a class="card" href="features/task-list.html"><div class="title">やることリスト</div><div class="desc">StudyTask 管理 + セッション連携完了</div><div class="meta"><span class="tag">SS-FEAT-TASK-01</span></div></a>
+    <a class="card" href="features/task-list.html"><div class="title">やることリスト</div><div class="desc">StudyTask 管理。v1.4 で今週中・作られた元・計測との紐づけ・旧「次回やること」の移行</div><div class="meta"><span class="tag">SS-FEAT-TASK-01</span></div></a>
+    <a class="card" href="features/study-plan.html"><div class="title">学習計画の進み具合と配り直し</div><div class="desc">StudyPlan を保存し、進み具合・遅れを見せ、残りを今日から終了日までに配り直す</div><div class="meta"><span class="tag">SS-FEAT-PLAN-01</span><span class="tag">v1.4.0</span></div></a>
     <a class="card" href="features/focus-subject-mode.html"><div class="title">フォーカス科目モード</div><div class="desc">1科目ピン留め・タイマー即起動の処理フロー</div><div class="meta"><span class="tag">SS-FEAT-FOCUS-01</span><span class="tag">v1.1.0</span></div></a>
     <a class="card" href="features/grade-record.html"><div class="title">成績記録機能</div><div class="desc">テスト結果の登録・編集・削除・グラフ描画フロー（レポートタブ内セグメント統合）</div><div class="meta"><span class="tag">SS-FEAT-GRADE-01</span><span class="tag">v1.1.0</span></div></a>
     <a class="card" href="features/weekly-report.html"><div class="title">週次ふりかえりレポート</div><div class="desc">前週（月〜日）の学習実績をスナップショット保存。Premium ユーザーにコーチコメント付きで提示</div><div class="meta"><span class="tag">SS-FEAT-WEEKLY-01</span><span class="tag">v1.2.0</span><span class="tag">Premium</span></div></a>
@@ -123,9 +139,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-08-20</td><td>変更履歴セクションを新設。<strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）。機能仕様書 <a href="features/ad-control.html">広告制御</a> を新規作成し、冒頭の告知とマネタイズ表記を更新。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない。</td></tr>
     <tr><td>1.1</td><td>2026-08-23</td><td><strong>広告基盤を Unity LevelPlay に統一</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: <code>isAdDeliveryAvailable</code>（<code>isProduction</code> を含む）でガードしていたため、sandbox 環境で実行される審査ビルドでは ATT が表示されず、2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed でリジェクトされた。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を明記。 詳細は <a href="features/ad-control.html">広告制御</a>。</td></tr>
+    <tr><td>1.2</td><td>2026-10-01</td><td><strong>v1.4.0（TestFlight・未提出）</strong>を反映。冒頭に再設計の告知を追加し、バージョン表記を更新。新規3ページ（<a href="screens/after-session.html">計測を終えたあとの画面</a>・<a href="screens/weekly-review.html">週のふりかえり</a>・<a href="features/study-plan.html">学習計画の進み具合と配り直し</a>）のカードを追加。カレンダー・学習計画シート・やることリストのカード説明を更新</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-23</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div>
 </body>
 </html>

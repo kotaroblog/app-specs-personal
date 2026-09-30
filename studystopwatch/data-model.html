@@ -23,6 +23,8 @@ erDiagram
   Subject ||--o{ StudySession : has
   Subject ||--o{ TestRecord : "recorded for"
   Subject ||--o{ StudyTask : "assigned to"
+  Subject ||--o{ StudyPlan : "assigned to"
+  StudyPlan ||--o{ StudyTask : "planID"
   StudySession ||--o| StudyTask : "linked via linkedSessionID"
   WeeklyCoachReport {
     UUID id
@@ -74,6 +76,23 @@ erDiagram
     String periodRawValue
     Date periodStart
     Date periodEnd
+    UUID planID
+    Int planAmount
+    String dueScopeRawValue
+    String originRawValue
+    String handoffNote
+  }
+  StudyPlan {
+    UUID id
+    String title
+    Int totalAmount
+    String unit
+    Date startDate
+    Date endDate
+    String splitModeRawValue
+    String weekdaysText
+    Date createdAt
+    Bool isArchived
   }
   TestRecord {
     UUID id
@@ -97,7 +116,17 @@ erDiagram
     var subject: Subject?
 
     var date: Date { Calendar.current.startOfDay(for: startTime) }
+
+    // 抜粋: 「詳しく記録する」の項目
+    var note: String?            // メモ。v1.4 から計測を終えたあとの画面のメモもここに入り、週のふりかえりの「この週のメモ」に出る
+    var nextStudyDate: Date?     // 旧「次回やること」。v1.4 からは書かない・表示に使わない（値は残す）
+    var nextStudyNote: String?   // 同上
 }</code></pre>
+  <div class="callout info">
+    <strong>v1.4:</strong> 旧「次回やること」（<code>nextStudyDate</code> / <code>nextStudyNote</code>）は「やること」に一本化した。
+    起動時に1回だけ、直近7日以降の予定をやること（<code>origin = migrated</code>）へ写す（<code>NextStudyMigrationService</code>。元の値は消さない）。
+    手動記録の「次回の予定」は v1.4 からやることとして作り、この2項目には書かない。
+  </div>
 
   <h2>Subject</h2>
   <pre><code>@Model final class Subject {
@@ -142,7 +171,17 @@ erDiagram
     var periodRawValue: String = "day"   // 旧: TaskPeriod.rawValue: "day" / "week" / "month"
     var periodStart: Date = Date()       // 旧: 期間開始（例: 今日0時）
     var periodEnd: Date = Date()         // 旧: 期間終了（例: 今日23:59:59）
+
+    // v1.4 で追加（すべて既定値つき。既存データはこの値で読み込まれる）
+    var planID: UUID?                                          // 学習計画から作られたやることの計画ID（計画以外は nil）
+    var planAmount: Int?                                       // 学習計画で割り当てた量（進み具合の計算用）
+    var dueScopeRawValue: String = TaskDueScope.day.rawValue   // "day" / "week"（week のとき dueDate はその週の日曜）
+    var originRawValue: String = TaskOrigin.manual.rawValue    // manual / plan / next / carried / migrated
+    var handoffNote: String?                                   // 次に開いたとき「前回のメモ」として見せる
 }
+
+enum TaskDueScope: String { case day, week }                            // v1.4
+enum TaskOrigin: String { case manual, plan, next, carried, migrated }  // v1.4
 
 // TaskPeriod は後方互換のため残す（v1.2 以降は非推奨）
 enum TaskPeriod: String {
@@ -150,6 +189,39 @@ enum TaskPeriod: String {
     case week  = "week"
     case month = "month"
 }</code></pre>
+
+  <h2>StudyPlan（v1.4 新規）</h2>
+  <pre><code>/// 学習計画。「教材の総量を、終了日までの日数に配る」計画そのもの。
+/// 日ごとのやること（StudyTask）は planID でこの計画に紐づく。
+/// v1.3 以前に作った計画はこのモデルを持たない（やることだけが残る）ため、進み具合には出ない。
+@Model final class StudyPlan {
+    var id: UUID = UUID()
+    var title: String = ""
+    var subject: Subject?
+    var totalAmount: Int = 0
+    var unit: String = ""
+    var startDate: Date = Date()
+    var endDate: Date = Date()
+    var splitModeRawValue: String = PlanSplitMode.daily.rawValue   // daily / weekdayFilter / single
+    var weekdaysText: String = ""        // 曜日指定のときに配る曜日（1=日〜7=土 をカンマ区切り）
+    var createdAt: Date = Date()
+    var isArchived: Bool = false         // 一覧から外したか（終わった計画・やめた計画）
+}</code></pre>
+  <p>計算と書き込みは <a href="features/study-plan.html">学習計画の進み具合と配り直し</a> を参照。<code>modelContainer</code> に <code>StudyPlan.self</code> を追加した。</p>
+
+  <h2>v1.4 のデータ変更のまとめ</h2>
+  <div class="callout warn">
+    <strong>すべて追加のみ。既存項目の削除・型変更・名前変更はしていない。</strong>
+    StudyTask に5項目（既定値つき）を足し、StudyPlan を足しただけなので、SwiftData の自動の移行で開ける。
+    1.3.4 のデータの形を写したテストで、科目・学習記録・やること・成績・教材・目標・設定・週次レポートの件数と中身が変わらないこと、
+    足した項目が既定値で読めること、旧「次回やること」が元の値を残したままやることへ写ることを確かめた。
+  </div>
+  <h3>科目を消したときの参照（SS-022）</h3>
+  <p>
+    Subject は StudySession（cascade）と TestRecord（nullify）には削除の決まりを持つが、<strong>StudyTask・StudyPlan・StudyMaterial からの参照には持たない</strong>。
+    そのまま科目を消すと消えた科目を指したまま残り、科目名を読んだ瞬間に落ちる（以前からの問題。v1.4 のホームは起動直後に科目名を読むので落ちうる）。
+    v1.4 では <code>SubjectReferenceService</code> で、科目を消す前に3つの参照を外し、起動時（RootView で本編を出す前）に消えた科目への参照を外す。削除の決まり自体は変えていない。
+  </p>
 
   <h2>TestRecord（v1.1.0 新規）</h2>
   <pre><code>@Model final class TestRecord {
@@ -283,6 +355,14 @@ enum TestType: String, Codable, CaseIterable {
     <tr><td><code>appearanceMode</code></td><td>String</td><td>外観モード（system/light/dark）</td></tr>
   </table>
 
+  <h3>v1.4 で足した UserDefaults キー</h3>
+  <table>
+    <tr><th>キー</th><th>型</th><th>用途</th></tr>
+    <tr><td><code>activeTimer_taskID</code></td><td>String (UUID)</td><td>やることから始めた計測のやることID（他の <code>activeTimer_*</code> と同じ保存先。計測の終了でクリア）</td></tr>
+    <tr><td><code>weeklyReview_closedWeekStart</code></td><td>Double（1970年からの秒）</td><td>週のふりかえりを閉じた・終えた週の月曜。その週はカードを出さない</td></tr>
+    <tr><td><code>nextStudy_toTask_migrated_v1</code></td><td>Bool</td><td>旧「次回やること」をやることへ写す処理を済ませたか</td></tr>
+  </table>
+
   <h2>Enum 一覧</h2>
   <ul>
     <li><code>GoalType</code>: regularExam / highSchoolEntrance / universityEntrance</li>
@@ -295,6 +375,10 @@ enum TestType: String, Codable, CaseIterable {
     <li><code>ShareGraphType</code>: line / bar</li>
     <li><code>OnboardingPage</code>: welcome / goalType / subject / score / motivation / exam / target / commit / paywall</li>
     <li><code>PomodoroPhase</code>: focus（25分） / shortBreak（5分）</li>
+    <li><code>TaskDueScope</code>: day / week（やることの期限の種類）<strong>v1.4 新規</strong></li>
+    <li><code>TaskOrigin</code>: manual / plan / next / carried / migrated（やることの作られた元）<strong>v1.4 新規</strong></li>
+    <li><code>PlanSplitMode</code>: daily / weekdayFilter / single（学習計画の分割方法。旧 <code>StudyPlanSheet.SplitMode</code>）<strong>v1.4 新規</strong></li>
+    <li><code>NextWhen</code>: tomorrow / dayAfterTomorrow / thisWeek / custom（計測を終えたあとの「次はいつ」。保存はしない）<strong>v1.4 新規</strong></li>
   </ul>
 
   <h2>マイグレーション方針</h2>
@@ -311,6 +395,7 @@ enum TestType: String, Codable, CaseIterable {
     <tr><td>1.3</td><td>2026-06-07</td><td>v1.2.0対応: StudyTask に dueDate（Date?）フィールドを追加。periodRawValue / periodStart / periodEnd を後方互換フィールド（非推奨）として明記。ER 図・Enum 一覧を更新</td></tr>
     <tr><td>1.4</td><td>2026-06-09</td><td>v1.3.0対応: StudyTask に subject（Subject?）フィールドを追加。ER 図に Subject → StudyTask リレーションを追加</td></tr>
     <tr><td>1.5</td><td>2026-06-12</td><td>v1.2.0対応: WeeklyCoachReport @Model を新規追加。ER 図に WeeklyCoachReport エンティティを追加。PaywallSource enum を追加。modelContainer に WeeklyCoachReport.self 登録</td></tr>
+    <tr><td>1.6</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）対応: StudyTask に planID / planAmount / dueScopeRawValue / originRawValue / handoffNote を追加。StudyPlan @Model を新規追加。ER 図に StudyPlan と planID の関係を追加。StudySession の旧「次回やること」の扱い（やることへの移行・書かない）、科目削除時の参照外し（SubjectReferenceService）、v1.4 の UserDefaults キーと Enum（TaskDueScope / TaskOrigin / PlanSplitMode / NextWhen）を追記。すべて追加のみであることを明記</td></tr>
   </table>
 
   <script>
@@ -320,7 +405,7 @@ enum TestType: String, Codable, CaseIterable {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-12</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div>
 </body>
 </html>

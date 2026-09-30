@@ -34,6 +34,30 @@
     <tr><td>プレミアム</td><td><code>isPremium</code></td><td>サブスク購読状態</td></tr>
   </table>
 
+  <h2>やること・振り返りの用語（v1.4）</h2>
+  <table>
+    <tr><th>UI 表記</th><th>英語識別子</th><th>定義</th></tr>
+    <tr><td>やること</td><td><code>StudyTask</code></td><td>期限つきの勉強の予定。v1.4 で旧「次回やること」をここに一本化した</td></tr>
+    <tr><td>今日やること</td><td><code>TodayTaskListCard</code> / <code>HomeTaskList</code></td><td>ホームの一番上に出す、期限切れ（直近7日分）・今日・今週中・今日終えたやること。未完了がある日だけ出す</td></tr>
+    <tr><td>今日</td><td><code>TaskScheduling.today</code></td><td>学習日の区切り（<code>StudyDay.resetHour</code>）で決めた今日。区切り4時の人の深夜1時は前日</td></tr>
+    <tr><td>今週中</td><td><code>TaskDueScope.week</code></td><td>「その週（月〜日）のうちにやる」期限の種類。<code>dueDate</code> はその週の日曜。週が過ぎたら「先週までの分」</td></tr>
+    <tr><td>期限切れ／昨日の分／N日前の分</td><td><code>TaskScheduling.metaLabel</code></td><td>期限を過ぎた未完了のやること。ホームとカレンダーの週では直近7日分（<code>overdueWindowDays</code>）まで出す</td></tr>
+    <tr><td>前回決めた</td><td><code>TaskOrigin.next</code> / <code>.migrated</code></td><td>計測を終えたあと・手動記録の「次回の予定」で作ったやること、または旧「次回やること」から移したやることに付く説明</td></tr>
+    <tr><td>先週から</td><td><code>TaskOrigin.carried</code></td><td>週のふりかえりで来週へ回したやることに付く説明</td></tr>
+    <tr><td>学習計画（やることの説明）</td><td><code>TaskOrigin.plan</code></td><td>学習計画が作ったやることに付く説明</td></tr>
+    <tr><td>途中まで</td><td><code>linkedSessionID != nil</code>（未完了）</td><td>計測と紐づいたが終わっていないやること。ホームの「開始」が「続き」になる</td></tr>
+    <tr><td>前回のメモ</td><td><code>StudyTask.handoffNote</code></td><td>やることを作った・回したときに残したメモ。次に開いたとき見せる</td></tr>
+    <tr><td>計測を終えたあとの画面</td><td><code>AfterSessionSheet</code></td><td>「終わった？」「次はいつ・何を？」「メモ」を聞く画面</td></tr>
+    <tr><td>〜の続き</td><td><code>TaskScheduling.continuationTitle</code></td><td>「途中まで」を選んだときの次の題名の下書き</td></tr>
+    <tr><td>次の範囲</td><td><code>TaskScheduling.nextRangeTitle</code></td><td>題名末尾の範囲を同じ幅でずらした下書き（p.31–40 → p.41–50）</td></tr>
+    <tr><td>週のふりかえり／今週のふりかえり／先週のふりかえり</td><td><code>WeeklyReviewService</code> / <code>WeeklyReviewView</code></td><td>日曜18時からホームに出す、その週のやることの結果・終わらなかったこと・メモ。前の週をふりかえるときは「先週」。無料。分析タブの「先週のふりかえり」カード（<code>WeeklyCoachReport</code>・Premium）とは別物</td></tr>
+    <tr><td>来週へ／今週へ</td><td><code>WeeklyReviewViewModel.Decision.carry</code></td><td>終わらなかったやることを、ふりかえった週の翌週の「今週中」に付け替えること</td></tr>
+    <tr><td>学習計画</td><td><code>StudyPlan</code></td><td>総量を開始日〜終了日の日に配る計画。v1.4 から計画そのものを保存する</td></tr>
+    <tr><td>進み具合／N日分遅れ</td><td><code>PlanProgress</code></td><td>終えた量／総量、期限を過ぎた未完了の計画のやることの数</td></tr>
+    <tr><td>配り直し（残りを配り直す）</td><td><code>StudyPlanService.rebalance</code></td><td>学習計画の残りを、今日から終了日までの日に配り直すこと。完了したやることには触らない</td></tr>
+    <tr><td>一覧から外す</td><td><code>StudyPlan.isArchived</code></td><td>終わった計画をカレンダーの学習計画の欄から消すこと。やることは残る</td></tr>
+  </table>
+
   <h2>ポモドーロ用語</h2>
   <table>
     <tr><th>UI 表記</th><th>コード</th></tr>
@@ -55,12 +79,14 @@
     <li>「科目」と「教科」 — UIでは「教科」、コードは <code>Subject</code></li>
     <li>「セッション」と「記録」 — UIで「記録」、コードで <code>StudySession</code></li>
     <li>ポモドーロは集中フェーズのみ duration に計上（休憩は記録されない）</li>
+    <li>「ふりかえり」は2つある — ホームの<strong>週のふりかえり</strong>（v1.4・無料・やること中心）と、分析タブの<strong>先週のふりかえり</strong>カード（週次コーチレポート・Premium・学習時間中心）。前の週をふりかえるとき、ホーム側の見出しも「先週のふりかえり」になるので、書くときはどちらかを明記する</li>
+    <li>「次回やること」（旧）と「やること」 — v1.4 で「やること」に一本化。旧「次回やること」は起動時にやることへ移した</li>
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr><tr><td>1.1</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）の用語を追加（今日やること・今週中・前回決めた・先週から・途中まで・前回のメモ・計測を終えたあとの画面・週のふりかえり・来週へ・学習計画・進み具合・配り直し・一覧から外す など）。「ふりかえり」が2つあることの注意を追記</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div>
 </body>
 </html>

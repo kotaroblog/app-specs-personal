@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 学習計画の進み具合と配り直し</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 学習計画の進み具合と配り直し</div>
+
+  <header class="site-header">
+    <h1>学習計画の進み具合と配り直し</h1>
+    <p>学習計画を「計画」として保存し、進み具合・遅れを見せ、遅れたら残りを今日から終了日までに配り直す</p>
+    <div class="section-meta">
+      <span class="tag todo">v1.4.0（TestFlight・未提出）</span>
+      <span class="tag">機能ID: SS-FEAT-PLAN-01</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    v1.3 までの学習計画は、<a href="../screens/study-plan-sheet.html">学習計画シート</a>が「計画名: 1日量（N日目/M日）」のやることを日数分作るだけで、
+    計画としてのまとまりが残らなかった。そのため計画の一覧・進み具合・遅れが見えず、1日休むと期限切れが溜まるだけで、残りを配り直す手段が無かった（SS-020）。
+    アプリの中心価値「試験日から逆算して今日やる分が決まる」の本体が欠けていた。
+  </p>
+  <p>
+    v1.4 で計画そのもの（<code>StudyPlan</code>）を保存し、日ごとのやること（<code>StudyTask</code>）に <code>planID</code> と割り当てた量（<code>planAmount</code>）を持たせた。
+    これで「どこまで進んだか」「何日分遅れているか」が計算でき、残りを配り直せる。データは足すだけで、既存のやることは消さない。
+  </p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/study-plan-sheet.html">学習計画シート（SS-PLAN-01）</a> — 計画の作成</li>
+    <li><a href="../screens/calendar.html">カレンダー画面（SS-CAL-02）</a> — 「学習計画」欄（進み具合・配り直し・一覧から外す）</li>
+    <li><a href="../screens/after-session.html">計測を終えたあとの画面（SS-AFTER-01）</a> — 学習計画のやることは次の予定を聞かず、計画の次のやることを見せる</li>
+    <li><a href="../screens/weekly-review.html">週のふりかえり（SS-REVIEW-01）</a> — 学習計画のやることは付け替えず、配り直しへ案内する</li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <h3>計画を作る</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant V as StudyPlanSheet
+  participant S as StudyPlanService
+  participant DB as SwiftData
+
+  U->>V: 計画名・科目・総量・単位・開始日・終了日・分割方法を入力
+  V->>S: targetDays / distribute（プレビュー「1日あたり 3〜4 ページ × N 日間」）
+  U->>V: 作成
+  V->>S: createPlan(...)
+  S->>DB: insert StudyPlan
+  S->>DB: insert StudyTask × N（planID・planAmount・origin=plan・dueScope=day）
+  V->>DB: save
+  V-->>U: シートを閉じる（計測イベント plan_created）
+  </div>
+
+  <h3>進み具合を見て、配り直す</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as ユーザー
+  participant V as PlanProgressSection（カレンダー）
+  participant S as StudyPlanService
+  participant DB as SwiftData
+
+  V->>S: progress(plan, tasks, today)
+  S-->>V: 終えた量・遅れの日数・残りの日数
+  V-->>U: 「計画どおり」／「N日分遅れ」＋「残りを配り直す」／「完了」＋「一覧から外す」
+  U->>V: 残りを配り直す
+  V-->>U: 確認「残りの X ページを、今日から 10/31（土） までの N日に配り直します…」
+  U->>V: 配り直す
+  V->>S: rebalance(plan, tasks, today)
+  S->>DB: 未完了のやることを付け替え／足りなければ作成／余れば削除
+  V->>DB: save（計測イベント plan_rebalanced）
+  V-->>U: 「『英単語帳』を配り直しました」
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <h3>配る日と量</h3>
+  <ul>
+    <li><strong>配る日</strong>: 毎日＝開始日〜終了日の毎日／曜日を選ぶ＝その期間の選んだ曜日だけ／1タスク＝終了日の1日だけ</li>
+    <li><strong>量は合計ちょうどに配る</strong>: 1日あたり＝総量÷日数の商。割り切れない分は<strong>前の日から1ずつ多くする</strong>（例: 10ページを3日 → 4・3・3）。v1.3 までは切り上げた量を全日に入れていたため、合計が総量を超えていた</li>
+    <li>量が0になる日はやることを作らない（総量が日数より少ないときは、前から総量の数の日だけ作る）。プレビューの「× N 日間」も実際に作る数で出す</li>
+    <li>「1日あたり」は量に幅があれば「3〜4」のように出す</li>
+    <li>題名は「計画名: 量単位（i日目/n日）」、1タスクのときは「計画名: 量単位」</li>
+    <li>作ったやることは <code>origin = plan</code>。ホームなどでは「学習計画」と表示する</li>
+  </ul>
+
+  <h3>進み具合</h3>
+  <table>
+    <tr><th>項目</th><th>計算</th></tr>
+    <tr><td>終えた量</td><td>完了した計画のやることの <code>planAmount</code> の合計（総量を上限）。途中までのやることは完了するまで数えない</td></tr>
+    <tr><td>遅れの日数</td><td>期限が今日より前で未完了の計画のやることの数</td></tr>
+    <tr><td>残りの日数</td><td>今日（開始日より前なら開始日）から終了日までの、配る日の数。終了日を過ぎていれば0</td></tr>
+    <tr><td>状態</td><td>残りの量が0、または未完了のやることが0なら「完了」／遅れがあれば「N日分遅れ」（オレンジ）／それ以外は「計画どおり」</td></tr>
+  </table>
+  <p>表示は計画ごとに、科目の色の丸・計画名・状態・進捗バー・「done / total単位・終了日 M/d（E）」。「今日」は学習日の区切り（<code>StudyDay.resetHour</code>）で決める。</p>
+
+  <h3>配り直し</h3>
+  <ul>
+    <li>「残りを配り直す」は遅れているときだけ出す。押すと確認を出す（「配り直す／やめる」）</li>
+    <li>残り（総量−終えた量）を、今日から終了日までの配る日に、作るときと同じ規則で配る</li>
+    <li>未完了のやることを期限の早い順に新しい日程へ付け替える（題名・期限・量を書き換え、期限の種類は「その日」）。足りなければ新しく作り、余ったものは削除する</li>
+    <li><strong>完了したやることには触らない</strong>。題名の「i日目/n日」は、完了した数に続けて振り直す</li>
+    <li>残りが無いときは「『計画名』は残りがありません」、終了日を過ぎている（または残りの配る日が0日）ときは「終了日を過ぎているため配り直せません」</li>
+  </ul>
+
+  <h3>一覧から外す</h3>
+  <ul>
+    <li>「完了」の計画には「一覧から外す」を出す。押すと <code>isArchived = true</code> にして欄から消す。やることには触らない</li>
+    <li>一覧に出す計画が0件のとき、カレンダーの「学習計画」欄そのものを出さない</li>
+  </ul>
+
+  <h3>他の画面での扱い</h3>
+  <ul>
+    <li>計測を終えたあと: 学習計画のやることは「次はいつ・何を」を聞かず、同じ計画の次のやることを見せる。途中までなら同じやることを明日へ回す（<a href="../screens/after-session.html">詳細</a>）</li>
+    <li>週のふりかえり: 学習計画のやることは「来週へ／消す」の対象にしない（付け替えると進み具合が狂う）。件数だけ出して配り直しへ案内する</li>
+    <li>科目を消したとき: その科目を指していた計画の科目を外す（計画そのものは残る。<a href="task-list.html">やることリスト機能</a>参照）</li>
+  </ul>
+
+  <div class="callout warn">
+    <strong>1.4.0 より前に作った計画は、進み具合の欄に出ない。</strong>
+    v1.3 以前は計画の入れ物（<code>StudyPlan</code>）を作っていなかったため、まとめる手がかりが無い。
+    そのとき作ったやることはそのまま残り、ふつうのやることとして表示・完了できる（<code>planID</code> が無いので、週のふりかえりでは「来週へ／消す」の対象になる）。
+  </div>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>SwiftData（<code>StudyPlan</code> / <code>StudyTask</code>）</td><td>計画と日ごとのやることの保存</td><td>カレンダーの欄は <code>isArchived == false</code> の計画と <code>planID != nil</code> のやることだけを読む</td></tr>
+    <tr><td>Firebase Analytics</td><td><code>plan_created</code>（作ったやることの数）／<code>plan_rebalanced</code></td><td>計画名などの内容は送らない</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>配る日が0日・総量が0（作成時）</td><td>計画を作らない（作成ボタンは入力が揃うまで押せない）</td></tr>
+    <tr><td>終了日を過ぎている・残りの配る日が0日（配り直し時）</td><td>何も変えず「終了日を過ぎているため配り直せません」</td></tr>
+    <tr><td>残りの量が0（配り直し時）</td><td>何も変えず「『計画名』は残りがありません」</td></tr>
+    <tr><td>SwiftData の保存失敗</td><td>Logger でエラーを記録する。作成時はシートを閉じない（<code>StudyPlanSheet</code>）。配り直し時は <code>TaskFlowService.save</code> が記録する</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">計算は <code>StudyPlanService</code> の純粋関数（<code>targetDays</code> / <code>distribute</code> / <code>taskTitle</code> / <code>progress</code> / <code>rebalanceSchedule</code>）に置き、単体テストで確かめている</li>
+    <li class="done">分割方法の enum は画面内の <code>StudyPlanSheet.SplitMode</code> から <code>PlanSplitMode</code>（daily / weekdayFilter / single）へ移し、計画に保存する</li>
+    <li class="done">曜日は <code>weekdaysText</code> に「1=日〜7=土」をカンマ区切りで保存する</li>
+    <li class="done">カレンダーの欄は <code>PlanProgressSection</code>。表示中のビュー（日・週・月）によらず、試験日カードと表示切替タブの間に出す</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-01</td><td>初版作成。1.4.0（TestFlight・未提出）で追加した計画の保存・進み具合・配り直し（SS-020）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 週のふりかえり</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 週のふりかえり</div>
+
+  <header class="site-header">
+    <h1>週のふりかえり（WeeklyReviewCard / WeeklyReviewView）</h1>
+    <p>日曜の夜に、やることの結果・終わらなかったこと・この週のメモを1画面で見て、来週へつなぐ</p>
+    <div class="section-meta">
+      <span class="tag todo">v1.4.0（TestFlight・未提出）</span>
+      <span class="tag">画面ID: SS-REVIEW-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>
+    「やること（計画）→ 計測 → 振り返り」の3か所目。勉強の前（ホームの今日やること）と後（<a href="after-session.html">計測を終えたあとの画面</a>）に加えて、週に1回、
+    予定に対してどうだったかを見て、終わらなかったことを来週へ回す（SS-017 の決定 ⑤⑥）。
+    分析タブの「先週のふりかえり」（<code>WeeklyCoachReport</code>・Premium）とは別物で、こちらは<strong>無料で使える</strong>。
+  </p>
+
+  <h2>いつ出すか</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>出し始め</td><td><strong>日曜18時</strong>（<code>WeeklyReviewService.startHour = 18</code>）から、その週（月〜日）のふりかえりをホームに出す</td></tr>
+    <tr><td>出し終わり</td><td>「ふりかえる」で終えるか、カードの × で閉じるまで。月曜以降も閉じるまで前の週のふりかえりが残る</td></tr>
+    <tr><td>対象の週</td><td>今が日曜18時以降ならその週、それより前なら前の週（<code>reviewWeekStart</code>）</td></tr>
+    <tr><td>見出し</td><td>対象の週が今の週なら「今週のふりかえり」、前の週なら「<strong>先週のふりかえり</strong>」（週の途中でこの版に更新した人には前の週が出るため）</td></tr>
+    <tr><td>回す先の言い方</td><td>今の週をふりかえるときは「来週へ」、前の週をふりかえるときは「<strong>今週へ</strong>」</td></tr>
+    <tr><td>出さない条件</td><td>その週を閉じた（UserDefaults <code>weeklyReview_closedWeekStart</code> がその週の月曜）／中身が無い（予定のやること0件・勉強時間0・終わらなかったもの0件・学習計画の遅れ0件のすべて）</td></tr>
+    <tr><td>表示の更新</td><td>ホームを開いたとき・アプリが前面に戻ったとき・計測を終えたあとの画面を閉じたとき・ふりかえりを終えたとき</td></tr>
+    <tr><td>通知</td><td>毎週日曜18時に「今週のふりかえり」を通知する（v1.3 までの月曜9時から変更。<a href="../features/notification.html">通知</a>参照）</td></tr>
+  </table>
+
+  <h2>UI 構成 — ホームのカード（WeeklyReviewCard）</h2>
+  <p>ホームの試験日カウントダウンのすぐ下、「今日やること」より上に出す。</p>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>見出し</td><td>「今週のふりかえり」または「先週のふりかえり」</td></tr>
+    <tr><td>説明</td><td>予定があれば「やること 8 / 12件。3分で終わります」、無ければ「終わらなかったことを整理して、来週につなげよう」</td></tr>
+    <tr><td>× ボタン</td><td>その週のふりかえりを閉じる（以後その週は出さない）</td></tr>
+    <tr><td>「ふりかえる」</td><td>ふりかえり画面をシートで開く</td></tr>
+  </table>
+
+  <h2>UI 構成 — ふりかえり画面（WeeklyReviewView）</h2>
+  <table>
+    <tr><th>要素</th><th>説明</th></tr>
+    <tr><td>ナビゲーションタイトル</td><td>カードと同じ見出し</td></tr>
+    <tr><td>「あとで」（左上）</td><td>何も反映せずに閉じる。カードは残る</td></tr>
+    <tr><td>やることカード</td><td>週の範囲（例: 9/28（月） 〜 10/4（日））、「8 / 12件 終わった」、進捗バー、「勉強時間 9時間40分（先週より＋1時間10分）・勉強した日 5日」。前の週が0、または差が1分未満のときは（先週より…）を出さない</td></tr>
+    <tr><td>終わらなかったこと（N件）</td><td>「最初は全部『来週へ』になっています。要らないものだけ『消す』に」。各行に科目の色・題名・「科目・期限 9/30（水）」（今週中のやることは「9/28（月）の週のうち」）・「来週へ／消す」の選択</td></tr>
+    <tr><td>学習計画の遅れ</td><td>学習計画の終わっていないやることがあるときだけ。「学習計画の終わっていないやることがN件あります。カレンダーの『学習計画』から、残りを今日からの日程に配り直せます」</td></tr>
+    <tr><td>この週のメモ</td><td>その週の計測の記録に残したメモ（新しい順・最大10件）。「9/30（水）　数学」＋本文</td></tr>
+    <tr><td>終えるボタン（下部固定）</td><td>回すものがあれば「3件を来週へ回して閉じる」、無ければ「閉じる」</td></tr>
+  </table>
+
+  <h2>数え方</h2>
+  <table>
+    <tr><th>項目</th><th>対象</th></tr>
+    <tr><td>予定の数（分母）</td><td>期限がその週（月〜日）のやること。学習計画のやること・完了済みを含む</td></tr>
+    <tr><td>終えた数（分子）</td><td>上のうち完了しているもの</td></tr>
+    <tr><td>終わらなかったこと</td><td>未完了で、期限が<strong>その週と、その前の7日</strong>のやること。<strong>学習計画のやることは含めない</strong>（付け替えると計画の進み具合が狂うため）。期限の古い順</td></tr>
+    <tr><td>学習計画の遅れ（件数）</td><td>同じ期間の、未完了の学習計画のやること</td></tr>
+    <tr><td>勉強時間・勉強した日</td><td>学習日の区切りで数えた、その週と前の週の計測の記録</td></tr>
+  </table>
+  <div class="callout info">
+    終わらなかったことを「その前の7日」までに絞るのは、途中でやめた学習計画などの古いやることを一括で付け替えないため。それより古いものはデータとして残る（消さない）。
+  </div>
+
+  <h2>終えたときの動き</h2>
+  <table>
+    <tr><th>選択</th><th>データへの反映</th></tr>
+    <tr><td>来週へ（今週へ）</td><td>期限を<strong>ふりかえった週の翌週の日曜</strong>にし、期限の種類を「今週中」（<code>dueScope = week</code>）にする。作られた元が「自分で追加」「前回決めた」「旧・次回やること」のものは「先週から」（<code>origin = carried</code>）にする</td></tr>
+    <tr><td>消す</td><td>そのやることを削除する（利用者が明示的に選んだときだけ）</td></tr>
+  </table>
+  <p>反映後、その週を閉じた扱いにしてカードを消し、ホームにお知らせ「ふりかえりを終えました」＋「3件を来週の『やること』に回しました」を出す。</p>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示内容</th></tr>
+    <tr><td>日曜18時より前（前の週は閉じ済み）</td><td>カードを出さない</td></tr>
+    <tr><td>日曜18時以降</td><td>「今週のふりかえり」カードを出す</td></tr>
+    <tr><td>月曜〜日曜18時で、前の週を閉じていない</td><td>「先週のふりかえり」カードを出す（回す先は「今週へ」）</td></tr>
+    <tr><td>終わらなかったこと0件</td><td>終わらなかったことのカードを出さない。ボタンは「閉じる」</td></tr>
+    <tr><td>学習計画の遅れ0件</td><td>学習計画の案内を出さない</td></tr>
+    <tr><td>メモ0件</td><td>この週のメモを出さない</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>遷移先</th></tr>
+    <tr><td>カードの「ふりかえる」</td><td>ふりかえり画面（sheet）</td></tr>
+    <tr><td>カードの ×</td><td>同画面（カードを消す）</td></tr>
+    <tr><td>「あとで」</td><td>ホーム（反映しない・カードは残る）</td></tr>
+    <tr><td>終えるボタン</td><td>ホーム（反映してカードを消す・お知らせ）</td></tr>
+    <tr><td>週次通知をタップ</td><td>アプリが開く（特定のタブへは移さない。カードはホームに出ている）</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <pre><code>StudyTask（dueDate / dueScopeRawValue / originRawValue を更新、または削除）
+StudySession（startTime / duration / note / subject を読むだけ）
+
+struct WeeklyReviewData {
+    weekStart: Date                 // ふりかえる週の月曜（カレンダー日）
+    plannedCount: Int
+    doneCount: Int
+    leftovers: [StudyTask]
+    memos: [Memo]                   // 最大10件
+    totalSeconds / previousWeekSeconds: TimeInterval
+    studyDayCount: Int
+    title: String                   // 今週のふりかえり / 先週のふりかえり
+    planBehindCount: Int
+    carriesToCurrentWeek: Bool      // true なら「今週へ」
+}</code></pre>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">判定と集計は <code>WeeklyReviewService</code>（純粋な計算 <code>buildReview</code> と読み込み <code>availableReview</code> を分けている）、画面の状態は <code>WeeklyReviewViewModel</code></li>
+    <li class="done">ふりかえり画面は <code>sheet(item:)</code> で開く。別の Bool で開くと、開く瞬間に中身が空として扱われ真っ白になる</li>
+    <li class="done">終えるボタンは <code>isFinishing</code> で1回だけ受け付ける</li>
+    <li class="done">計測イベント: カードを出したとき <code>weekly_review_shown</code>、終えたとき <code>weekly_review_completed</code>（回した件数・消した件数）、× で閉じたとき <code>weekly_review_dismissed</code></li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="home.html">ホーム画面（カードの位置）</a></li>
+    <li><a href="after-session.html">計測を終えたあとの画面（メモの入口）</a></li>
+    <li><a href="../features/study-plan.html">学習計画の進み具合と配り直し</a></li>
+    <li><a href="../features/weekly-report.html">週次ふりかえりレポート（分析タブ・Premium）</a></li>
+    <li><a href="../features/notification.html">通知（日曜18時の週次通知）</a></li>
+    <li><a href="../features/task-list.html">やることリスト機能</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-01</td><td>初版作成。1.4.0（TestFlight・未提出）で新設した画面（SS-017）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
+</div>
+</body>
+</html>

@@ -22,7 +22,7 @@
     <tr><td>アイコン選択</td><td>SF Symbol一覧</td></tr>
     <tr><td>並び順</td><td>Stepper or Drag&Drop</td></tr>
     <tr><td>点数目標セクション（追加）</td><td>前回点（currentScore）・目標点（targetScore）の2フィールド（いずれも任意・0〜100）。goalType 問わず全ユーザーに表示</td></tr>
-    <tr><td>削除ボタン</td><td>確認後 cascade で関連 StudySession も削除</td></tr>
+    <tr><td>削除ボタン</td><td>確認後 cascade で関連 StudySession も削除。<strong>v1.4</strong>: 削除の前に、その科目を指しているやること・学習計画・教材の参照を外す（<code>SubjectReferenceService.detachReferences</code>。やること等は残り「科目なし」になる。SS-022）</td></tr>
   </table>
 
   <h2>点数目標の表示・保存ルール</h2>
@@ -41,7 +41,8 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-07-11</td><td>点数目標セクション（currentScore/targetScore・任意・0〜100）を追加。オンボーディング必須フロー圧縮に伴う移設対応</td></tr>
+    <tr><td>1.2</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）: 科目の削除（設定の削除確認）で、削除の前にその科目を指しているやること・学習計画・教材の参照を外すようにした（それ自体は消さない）。外さないと消えた科目を指したまま残り、科目名を読んだ瞬間に落ちていた（SS-022）。起動時にも、以前の版で残った参照を外す</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-11</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div></body></html>
