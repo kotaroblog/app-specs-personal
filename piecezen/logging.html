@@ -24,6 +24,7 @@
     <tr><td><code>SoundManager</code></td><td>サウンド再生</td></tr>
     <tr><td><code>StreakManager</code></td><td>ストリーク管理</td></tr>
     <tr><td><code>SettingsView</code></td><td>設定変更</td></tr>
+    <tr><td><code>Analytics</code></td><td>計測イベントの送信内容（下記「計測イベント」）</td></tr>
   </table>
 
   <h2>ログレベル</h2>
@@ -34,8 +35,40 @@
     <tr><td><code>.error</code></td><td>StoreKit verify失敗、SwiftData fetch/save失敗</td></tr>
   </table>
 
-  <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <h2>計測イベント（AnalyticsManager）</h2>
+  <p>
+    計測は <code>AnalyticsManager</code>（<code>BlockPuzzle/Services/AnalyticsManager.swift</code>）に一元化し、登録された送信先すべてに送る。
+    送信先は常に Logger（カテゴリ <code>Analytics</code>）で、<code>GoogleService-Info.plist</code> がある場合だけ Firebase Analytics も加わる（<code>AnalyticsFirebaseBridge</code>）。
+    個人情報は送らず、スコアや回数などの匿名の数値だけを送る。イベント名は英小文字とアンダースコア（Firebase の制約）。
+  </p>
+  <table>
+    <tr><th>イベント</th><th>パラメータ</th><th>送るとき</th></tr>
+    <tr><td><code>app_open</code></td><td>なし</td><td>アプリ起動</td></tr>
+    <tr><td><code>game_start</code></td><td>なし</td><td>ゲーム開始</td></tr>
+    <tr><td><code>game_over</code></td><td><code>score</code> / <code>max_combo</code> / <code>duration_seconds</code></td><td>ゲームオーバー</td></tr>
+    <tr><td><code>score_result</code></td><td><code>score</code> / <code>is_new_high_score</code></td><td>ゲームオーバー</td></tr>
+    <tr><td><code>tutorial_start</code> / <code>tutorial_complete</code></td><td>なし</td><td>チュートリアルの開始・完了</td></tr>
+    <tr><td><code>tutorial_skip</code></td><td><code>step_reached</code></td><td>チュートリアルを飛ばした</td></tr>
+    <tr><td><code>theme_selected</code></td><td><code>theme</code> / <code>source</code>（onboarding / settings）</td><td>テーマを選んだ</td></tr>
+    <tr><td><code>undo_used</code></td><td><code>used_ad</code></td><td>アンドゥを使った</td></tr>
+    <tr><td><code>ad_interstitial_shown</code> / <code>ad_rewarded_shown</code></td><td>なし</td><td>全画面広告・リワード広告の表示</td></tr>
+    <tr><td><code>iap_paywall_view</code> / <code>iap_purchase_start</code></td><td>なし</td><td>購入画面の表示・購入の開始</td></tr>
+    <tr><td><code>iap_purchase_success</code></td><td><code>product_id</code></td><td>購入の完了</td></tr>
+    <tr><td><code>bonus_start</code> ★ v1.5.3</td><td><code>time_limit_seconds</code>（制限時間の秒数）</td><td>ボーナスタイムに入った（入る演出が始まったとき）</td></tr>
+    <tr><td><code>bonus_end</code> ★ v1.5.3</td><td><code>perfect_count</code>（全消しした枚数）／<code>boards</code>（置き終えた盤面の数）／<code>score</code>（ボーナスタイムで得た点）</td><td>ボーナスタイムが時間切れで終わった（まとめの表示に移ったとき）</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <h3>ボーナスタイムの計測（v1.5.3〜）</h3>
+  <ul>
+    <li>送信は <code>GameView.handleBonusPhaseChange</code> で、ボーナスタイムの段階（<code>BonusPhase</code>）が「入る演出」になったら <code>bonus_start</code>、「終了」になったら <code>bonus_end</code> を送る。VoiceOver の読み上げも同じ場所で出す</li>
+    <li>目的は、ボーナスタイムの試作の良し悪し（何枚全消しできているか・どれだけ点が入っているか）を数字で見ること</li>
+    <li><strong>撮影モード（ストア用スクリーンショットの自動撮影）では送らない</strong>（<code>AppEnvironment.isUISnapshot</code>。ゲーム開始の計測と同じ扱い）</li>
+    <li><strong>既知の穴</strong>: ボーナスタイムの途中で画面を離れると <code>bonus_end</code> が送られず、<code>bonus_start</code> と件数が揃わない（ISSUES.md BP-018 に記載・未対応）。件数を比べるときは差があることを前提にする</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+  <tr><td>1.1</td><td>2026-10-01</td><td>v1.5.3 対応: 「計測イベント（AnalyticsManager）」節を新設し、既存イベントの一覧に <code>bonus_start</code>（<code>time_limit_seconds</code>）と <code>bonus_end</code>（<code>perfect_count</code>・<code>boards</code>・<code>score</code>）を追加。撮影モードでは送らないこと、ボーナスの途中で画面を離れると <code>bonus_end</code> が送られない既知の穴（BP-018）を記載。カテゴリ一覧に <code>Analytics</code> を追加</td></tr></table>
+
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div></body></html>

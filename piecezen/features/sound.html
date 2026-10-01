@@ -8,8 +8,8 @@
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / サウンド</div>
-  <header class="site-header"><h1>サウンド機能（SoundManager）</h1><p>合成した専用の効果音16音（マリンバ系）を AVAudioPlayer で再生（v1.5.2〜）</p>
-  <div class="section-meta"><span class="tag done">v1.5.2</span><span class="tag">機能ID: PZ-FEAT-SOUND</span></div></header>
+  <header class="site-header"><h1>サウンド機能（SoundManager）</h1><p>合成した専用の効果音20音（マリンバ系）を AVAudioPlayer で再生（v1.5.2〜。v1.5.3 でボーナスタイム用の4音を追加）</p>
+  <div class="section-meta"><span class="tag done">v1.5.3</span><span class="tag">機能ID: PZ-FEAT-SOUND</span></div></header>
 
   <div class="callout">
     <strong>v1.5.2（2026-09-28 公開）で効果音を全面的に差し替えた。</strong>
@@ -18,7 +18,7 @@
     番号指定のため iOS の版によって音が変わることもあった。v1.5.2 からは、アプリ専用に合成した16音を同梱して鳴らす。
   </div>
 
-  <h2>効果音の一覧（16音）</h2>
+  <h2>効果音の一覧（20音）</h2>
   <p>ファイルは <code>BlockPuzzle/Resources/Sounds/sfx_*.caf</code>（非圧縮 16bit の CAF）。音色はマリンバ系で統一。</p>
   <table>
     <tr><th>イベント</th><th>ファイル</th><th>音</th></tr>
@@ -27,6 +27,16 @@
     <tr><td>ライン消去（連鎖の段階 × ライン数）</td><td><code>sfx_clear_c1_single.caf</code> 〜 <code>sfx_clear_c4_big.caf</code>（12音）</td><td>マリンバ。下表のとおり、連鎖は音程、ライン数は和音の厚みで表す</td></tr>
     <tr><td>全消し</td><td><code>sfx_perfect.caf</code></td><td>ド・ミ・ソ・ド・ミと駆け上がり、和音と鐘の音で着地する</td></tr>
     <tr><td>ゲームオーバー</td><td><code>sfx_gameover.caf</code></td><td>ソ→ミ→ドと下がって終わる。警告音ではなく「おしまい」の合図</td></tr>
+  </table>
+
+  <h3>ボーナスタイムの音（4音・v1.5.3〜）</h3>
+  <p>ボーナスタイム（<a href="game-logic.html">ゲームロジック</a> を参照）の入り・盤面の切り替わり・残り時間・時間切れに鳴らす。音色は他の音と同じマリンバ系（残り時間の音のみ木の音）。</p>
+  <table>
+    <tr><th>イベント</th><th>ファイル</th><th>音</th></tr>
+    <tr><td>ボーナスタイムに入る</td><td><code>sfx_bonus_start.caf</code></td><td>「ソ・ソ・ドー」のファンファーレに、和音と鐘の音を重ねる。全消しの駆け上がりと聞き分けられるよう、はっきりした3拍にしている</td></tr>
+    <tr><td>全消しして次の盤面へ進む</td><td><code>sfx_bonus_board.caf</code></td><td>ド→ミと高く上がり、きらっと抜ける短い音。全消しの音と重ならないよう<strong>約0.45秒遅らせて</strong>鳴らす。全消しできずに次の盤面へ進むときは鳴らさない</td></tr>
+    <tr><td>残り時間</td><td><code>sfx_bonus_tick.caf</code></td><td>残り3秒から1秒ごとに鳴る木の「コッ」（約0.18秒）。消去の音とぶつからないよう軽くしつつ、聞き取れる長さの余韻を残す。同時に軽い振動も出す</td></tr>
+    <tr><td>時間切れ</td><td><code>sfx_bonus_end.caf</code></td><td>全部の音を重ねた和音を下から順に鳴らし、鐘の音で締める。ゲームオーバー（下がって終わる）とは逆に「よくできました」の合図。残り時間がわずかで次の盤面へ進まずにまとめへ移るときも、この音を鳴らす</td></tr>
   </table>
 
   <h2>ライン消去の音（4段 × 3種 = 12音）</h2>
@@ -51,17 +61,17 @@
   <h2>再生の仕様</h2>
   <table>
     <tr><th>項目</th><th>仕様</th></tr>
-    <tr><td>再生方式</td><td><code>AVAudioPlayer</code>。全16音を最初に一度だけ読み込み、アプリ全体で共有する。同じ音が続けて鳴っても前の音を途中で切らないよう、1音につきプレイヤーを2つ持つ</td></tr>
+    <tr><td>再生方式</td><td><code>AVAudioPlayer</code>。全20音を最初に一度だけ読み込み、アプリ全体で共有する。同じ音が続けて鳴っても前の音を途中で切らないよう、1音につきプレイヤーを2つ持つ</td></tr>
     <tr><td>読み込みのタイミング</td><td>ゲーム開始時に先に読み込み、最初の1個を置いたときに音が遅れないようにする（サウンドがオフのときは読み込まない）</td></tr>
     <tr><td>オーディオセッション</td><td><code>.ambient</code>。<strong>他のアプリの音楽を止めない。消音モード（マナーモード）では鳴らない</strong>。広告の動画再生などで設定が変わっていた場合は、鳴らす前に戻す</td></tr>
-    <tr><td>鳴らすタイミング</td><td>ラインが消える音は、置く音の<strong>約0.04秒後</strong>に鳴らす（同時だと聞き分けにくいため）。ゲームオーバーの音は<strong>約0.35秒遅らせて</strong>、最後の1個を置いた音と重ねず、終了画面の出現に合わせる</td></tr>
+    <tr><td>鳴らすタイミング</td><td>ラインが消える音は、置く音の<strong>約0.04秒後</strong>に鳴らす（同時だと聞き分けにくいため）。ゲームオーバーの音は<strong>約0.35秒遅らせて</strong>、最後の1個を置いた音と重ねず、終了画面の出現に合わせる。ボーナスタイムで次の盤面へ進む音は、全消しの音の<strong>約0.45秒後</strong>に鳴らす</td></tr>
     <tr><td>オン/オフ</td><td>設定画面の「サウンド」トグル。オフのときは何も鳴らさない（設定は端末に保存）</td></tr>
   </table>
 
   <h2>音の作り方（再生成）</h2>
   <ul>
     <li>音はすべて数式から合成しており、外部の音素材は使っていない（素材のライセンスの問題がない）</li>
-    <li>BlockPuzzle リポジトリ内の <code>tools/sound-lab/generate_sfx.py --export</code> で、アプリに入れる16音を再生成できる。<strong>音声ファイルは手で差し替えず、必ずこのスクリプトで作り直す</strong></li>
+    <li>BlockPuzzle リポジトリ内の <code>tools/sound-lab/generate_sfx.py --export</code> で、アプリに入れる20音を再生成できる（ボーナスタイムの4音は <code>bonus_start_sound</code>・<code>bonus_board_sound</code>・<code>bonus_tick_sound</code>・<code>bonus_end_sound</code> の各関数）。<strong>音声ファイルは手で差し替えず、必ずこのスクリプトで作り直す</strong></li>
     <li>同じフォルダの聴き比べページで候補を比較した。音色3系統（マリンバ／木琴／グラス）・置く音3案・回転音2案の候補から、マリンバ・木のブロック・「くるっ」の組み合わせを採用した</li>
     <li>設計の前提: 利用者は60〜70代で高い音ほど聞こえにくいため、音の中心を 500Hz〜4kHz に置く。スマホのスピーカーは低音が出ないので、低い基音に頼らず倍音で音の高さを伝える。盛り上げは音量ではなく音程で出す</li>
   </ul>
@@ -82,7 +92,8 @@
 
   <h2>変更履歴</h2>
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
-  <tr><td>2.0</td><td>2026-09-29</td><td>v1.5.2 対応: 全面改訂。効果音を iOS のシステム音から<strong>合成した専用の16音（マリンバ系）</strong>に差し替えたことを反映（置く・回転・全消し・ゲームオーバーの4音＋ライン消去12音）。消去音は連鎖の段階で音程が上がり（ド→ミ→ソ→高いド）、消えたライン数で和音の厚みが増す（1本＝単音／2〜3本＝和音／十字・4本以上＝和音＋オクターブ）。再生は AVAudioPlayer、オーディオセッション <code>.ambient</code>（他アプリの音楽を止めない・消音モードでは鳴らない）、消える音は約0.04秒後・ゲームオーバーは約0.35秒後。<code>tools/sound-lab/generate_sfx.py --export</code> での再生成と、v2.0 ロードマップの「自然素材系SE」との関係を記載。旧記述（Tock.caf 等のシステム音・activePlayers 配列）は実装と合わないため削除</td></tr></table>
+  <tr><td>2.0</td><td>2026-09-29</td><td>v1.5.2 対応: 全面改訂。効果音を iOS のシステム音から<strong>合成した専用の16音（マリンバ系）</strong>に差し替えたことを反映（置く・回転・全消し・ゲームオーバーの4音＋ライン消去12音）。消去音は連鎖の段階で音程が上がり（ド→ミ→ソ→高いド）、消えたライン数で和音の厚みが増す（1本＝単音／2〜3本＝和音／十字・4本以上＝和音＋オクターブ）。再生は AVAudioPlayer、オーディオセッション <code>.ambient</code>（他アプリの音楽を止めない・消音モードでは鳴らない）、消える音は約0.04秒後・ゲームオーバーは約0.35秒後。<code>tools/sound-lab/generate_sfx.py --export</code> での再生成と、v2.0 ロードマップの「自然素材系SE」との関係を記載。旧記述（Tock.caf 等のシステム音・activePlayers 配列）は実装と合わないため削除</td></tr>
+  <tr><td>2.1</td><td>2026-10-01</td><td>v1.5.3 対応: ボーナスタイム用の4音（<code>sfx_bonus_start</code>＝入るときのファンファーレ「ソ・ソ・ドー」＋和音と鐘／<code>sfx_bonus_board</code>＝全消しして次の盤面へ進む合図・全消しの音の約0.45秒後／<code>sfx_bonus_tick</code>＝残り3秒から1秒ごとの木の「コッ」・約0.18秒／<code>sfx_bonus_end</code>＝時間切れ・全部の音を重ねた和音と鐘）を追加し、全20音に。再生の仕様と再生成の記述を20音に更新</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-09-29</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div></body></html>
