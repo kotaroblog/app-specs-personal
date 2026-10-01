@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / ゲーム終了</div>
   <header class="site-header"><h1>ゲーム終了（GameOverView）</h1><p>GameView上のオーバーレイ画面</p>
-  <div class="section-meta"><span class="tag done">v1.5.0</span><span class="tag">画面ID: PZ-OVER-01</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.5.3</span><span class="tag">画面ID: PZ-OVER-01</span></div></header>
 
   <h2>UI 構成</h2>
   <table>
@@ -17,7 +17,7 @@
     <tr><td>「GAME OVER」ラベル</td><td>大きく中央表示</td></tr>
     <tr><td>スコア表示</td><td>現在スコア + ベストスコア</td></tr>
     <tr><td>NEW BEST バッジ</td><td>更新時のみ表示</td></tr>
-    <tr><td>「もう1手」ボタン</td><td>残り回数がある場合のみ表示。無料は1回/ゲーム、プレミアムは3回/ゲーム</td></tr>
+    <tr><td>「もう1手」ボタン</td><td>残り回数がある場合のみ表示。無料は1回/ゲーム、プレミアムは3回/ゲーム。押すと手持ちを置けるピースに入れ替えて続ける（v1.5.3〜）</td></tr>
     <tr><td>Restartボタン</td><td>新ゲーム開始</td></tr>
     <tr><td>Shareボタン</td><td>標準シェアシート（スコア50点以上で表示）</td></tr>
     <tr><td>プレミアム訴求リンク</td><td>未購入時のみ表示</td></tr>
@@ -57,14 +57,23 @@
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>もう1手</td><td>救済処理 → GameView（プレイ再開）</td></tr>
+    <tr><td>もう1手</td><td>救済処理（手持ちの入れ替え）→ GameView（プレイ再開）</td></tr>
     <tr><td>Restart</td><td>GameView（リセット）</td></tr>
     <tr><td>Share</td><td>UIActivityViewController</td></tr>
     <tr><td>プレミアム訴求リンク</td><td>PaywallView（フルスクリーンモーダル）</td></tr>
   </table>
 
   <h2>救済機能</h2>
-  <p>「もう1手」を選択すると、ランダムで1セルを消去してゲームを継続する。残り回数を使い切るとボタンは表示されない。</p>
+  <p>「もう1手」を選択すると、<strong>手持ちの3個を、いまの盤面に置けるピースを1個以上含む3個に入れ替えて</strong>ゲームを継続する（v1.5.3〜）。残り回数を使い切るとボタンは表示されない。</p>
+  <ul>
+    <li>終了画面が閉じてから入れ替わるのが見えるよう、少し間を置いて手持ちを入れ替え、「ピースを入れ替えました」と表示する</li>
+    <li>盤面に空きマスがあれば必ず続けられる（1マスのピースはどこにでも置けるため）</li>
+    <li>入れ替えの後はアンドゥできない（ゲームオーバー前の手に戻すと、入れ替えた手持ちまで元に戻るため）</li>
+    <li>続けた後に再びゲームオーバーになっても、プレイ記録は増えない（同じゲームの記録を更新する。<a href="statistics.html">脳活記録</a>参照）</li>
+  </ul>
+  <div class="callout">
+    <strong>v1.5.2 までの方式</strong>: 埋まっているマスをランダムに1マス消して続けていた。手持ちが置けるようになるかを見ていなかったため、続けられたのはゲームオーバーの約14%で、残りは同じ手持ちのまますぐゲームオーバーに戻っていた。
+  </div>
 
   <h2>CTAボタン デザイン仕様</h2>
   <p>本画面の主要CTAボタン（もう1手 / Restart）は、ストリーク報酬モーダル・チュートリアル・テーマ選択の計4画面で共通のボタンデザインを採用している。見た目の統一により画面間で一貫した操作感を実現する。</p>
@@ -85,7 +94,8 @@
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
   <tr><td>1.1</td><td>2026-07-14</td><td>CTAボタン共通デザイン仕様セクションを追加（4画面統一・不透明度是正）</td></tr>
   <tr><td>1.2</td><td>2026-07-30</td><td>v1.5.0 対応: リワードボタンを「広告を見てもう1手」→「無料でもう1手」（アイコン gift.fill）に変更し、広告なしで即救済する挙動を記載。回数上限（無料1回 / プレミアム3回）を追加。プレミアム訴求リンクの文言を「プレミアムでアンドゥ無制限・もう1手3回」に更新</td></tr>  <tr><td>1.3</td><td>2026-08-20</td><td>広告基盤の <strong>Unity LevelPlay 移行</strong>を反映。救済リワードの根拠を「v1.5.0 での広告恒久停止」から「LevelPlay 移行後、ironSource Ads アカウント承認待ちで未配信」へ更新（配信が始まれば <code>isAdDeliveryAvailable</code> の分岐で元のリワード仕様に戻る）。表示条件・上限回数は変更なし。</td></tr>
+  <tr><td>1.4</td><td>2026-10-01</td><td>v1.5.3 対応: 「もう1手」の救済を、ランダムに1マス消す方式から<strong>手持ちを置けるピースを含む3個に入れ替える方式</strong>に修正（「ピースを入れ替えました」の表示・入れ替え後はアンドゥ不可・続けた後のゲームオーバーで記録が増えないこと）。旧方式で続けられたのが約14%だったことを注記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-20</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div></body></html>

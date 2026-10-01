@@ -13,7 +13,7 @@
     <h1>脳活記録画面（StatisticsView）</h1>
     <p>「あなたの脳活記録」コンセプトで再設計（v1.3.0〜）。4指標・週次グラフ・家族共有機能を搭載</p>
     <div class="section-meta">
-      <span class="tag done">v1.1</span>
+      <span class="tag done">v1.5.3</span>
       <span class="tag">画面ID: PZ-STATS-01</span>
     </div>
   </header>
@@ -39,7 +39,7 @@
     <tr><th>指標名</th><th>データソース</th><th>表示形式</th></tr>
     <tr><td>連続日数</td><td><code>StreakManager.currentStreak</code></td><td>〇日</td></tr>
     <tr><td>ベストスコア</td><td><code>HighScoreRecord</code></td><td>3桁区切り数値</td></tr>
-    <tr><td>総プレイ回数</td><td><code>StatRecord</code> 件数</td><td>〇回</td></tr>
+    <tr><td>総プレイ回数</td><td><code>StatRecord</code> 件数（v1.5.3〜 1ゲーム1件）</td><td>〇回</td></tr>
     <tr><td>最大コンボ（v1.3 新規）</td><td><code>StatRecord.maxCombo</code> 全期間最大</td><td>×〇</td></tr>
   </table>
 
@@ -99,6 +99,14 @@ StreakManager.currentStreak（@Observable）</code></pre>
     <li>旧 <code>StatRecord</code>（<code>maxCombo</code> なし）は <code>default 0</code> で自動マイグレーション済み。表示上は ×0 となる</li>
   </ul>
 
+  <h3>1ゲームの記録は1件（v1.5.3〜）</h3>
+  <ul>
+    <li><code>StatRecord</code> はゲームオーバーで作るが、<strong>「もう1手」で続けた後のゲームオーバーでは新しく足さず、同じ記録の点・最大コンボを更新する</strong></li>
+    <li>「もう1手」で続けている間は、置くたびに記録の点を更新する（2回目のゲームオーバーの前に画面を離れても、伸びた点が履歴とグラフに残る）</li>
+    <li>v1.5.2 までは、ゲームオーバーのたびに記録を足していたため、<strong>「もう1手」で続けたゲームが2回（プレミアムでは最大4回）数えられ</strong>、総プレイ回数が実際より多く出ていた。直近10ゲームの履歴にも同じゲームが並んでいた。過去に保存済みの記録は書き換えない</li>
+    <li>ボーナスタイム中の連鎖は、最大コンボに数えない（<a href="../features/game-logic.html">ゲームロジック</a>の「ボーナスタイム」参照）</li>
+  </ul>
+
   <h2>関連</h2>
   <ul>
     <li><a href="../features/v1-3-rebranding.html">v1.3.0 リリース仕様書</a>（本画面のリニューアル仕様）</li>
@@ -111,7 +119,8 @@ StreakManager.currentStreak（@Observable）</code></pre>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-19</td><td>v1.3.0 対応: 画面名を「統計」→「脳活記録」へリネーム。4指標（連続日数・ベストスコア・総プレイ回数・最大コンボ）・週次グラフ・ShareLink 家族共有・直近10ゲーム最大コンボ表示を追加</td></tr>
     <tr><td>1.2</td><td>2026-06-10</td><td>画面イメージ（fastlane snapshot 自動撮影）を追加</td></tr>
+    <tr><td>1.3</td><td>2026-10-01</td><td>v1.5.3 対応: プレイ記録を<strong>1ゲーム1件</strong>に（「もう1手」で続けたゲームが2回数えられなくなった。続けた後は同じ記録を更新し、置くたびに点を更新する）。総プレイ回数の定義を更新。ボーナスタイム中の連鎖は最大コンボに数えないことを追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-06-10（v1.2）</footer>
+  <footer class="site-footer">最終更新: 2026-10-01（v1.3）</footer>
 </div></body></html>

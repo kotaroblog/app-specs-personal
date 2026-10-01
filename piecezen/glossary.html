@@ -19,10 +19,16 @@
     <tr><td>形状</td><td><code>BlockShape</code></td><td>ブロックの形（19種）</td></tr>
     <tr><td>ライン消去</td><td>Line Clear</td><td>横/縦の8マスが揃って消える</td></tr>
     <tr><td>クロス消去</td><td>Cross</td><td>横+縦同時消去（特別演出 +150点）</td></tr>
-    <tr><td>コンボ</td><td><code>comboCount</code></td><td>連続消去の回数</td></tr>
-    <tr><td>パーフェクトクリア</td><td>Perfect Clear</td><td>グリッド全消し（+500点）</td></tr>
+    <tr><td>コンボ / 連鎖</td><td><code>comboCount</code></td><td>ラインを消した手が続いた回数。連鎖数に応じて基本点の倍率が ×1→×2→×4→×8 と上がる。v1.5.3〜 消えない手を1回だけ見逃す（下記「連鎖の見逃し」）</td></tr>
+    <tr><td>連鎖の見逃し</td><td><code>comboMissCount</code> / <code>comboGraceMoves</code></td><td>★ v1.5.3。ラインが消えない手を1回だけ見逃し、連鎖を切らない。2回続けて消えないと連鎖は 0 に戻る。次に消えないと切れるときは、スコア欄の見出しが「あと1手で切れる」になる。アンドゥで見逃した回数も戻る</td></tr>
+    <tr><td>全消し / パーフェクトクリア</td><td>Perfect Clear</td><td>盤面のマスがすべて空になること。通常は +1000点（v2.0 で +500 から変更）。ボーナスタイム中は加点せず、倍率が1つ上がる</td></tr>
+    <tr><td>ボーナスタイム</td><td><code>isBonusTime</code> / <code>BonusPhase</code></td><td>★ v1.5.3。ゲージが満タンになると入る、制限時間15秒の特別な盤面。用意された盤面を何回全消しできるかを競う。時間切れで、ボーナス前の盤面・手持ち・連鎖に戻る（ゲームオーバーにはならない）。中はアンドゥ不可</td></tr>
+    <tr><td>ゲージ（ボーナスのゲージ）</td><td><code>bonusGauge</code> / <code>BonusGaugeView</code></td><td>★ v1.5.3。ラインを1本消すごとに1目盛りたまる（同時消しは本数分）。8目盛りで満タン。残り1本で「あと1本！」。ボーナスタイム中の消去は数えない</td></tr>
+    <tr><td>ボーナスの倍率</td><td><code>bonusMultiplier</code></td><td>★ v1.5.3。ボーナスタイム中、連鎖の倍率の代わりに基本点に掛ける倍率。1枚目 ×2 から、全消しするたびに ×3 → ×4 → ×5（上限）</td></tr>
+    <tr><td>盤面の型</td><td><code>BonusTemplate</code></td><td>★ v1.5.3。ボーナスタイムに出す盤面と3個のピースの組（24型 × 回転4・反転2）。難しさは素直（easy）／中くらい（medium）／罠あり（hard）の3段</td></tr>
+    <tr><td>残り時間のバー</td><td><code>BonusTimerBar</code></td><td>★ v1.5.3。ボーナスタイム中に戻すボタンの行に出す、残り秒数・倍率・全消しの回数の表示</td></tr>
     <tr><td>アンドゥ / 戻す</td><td><code>UndoSnapshot</code></td><td>1手戻す（無料は3回/ゲーム、プレミアムは無制限）</td></tr>
-    <tr><td>もう1手</td><td>Reward（旧: Reward Ad）</td><td>ゲーム終了後に1セル消去して復活する救済。無料1回/ゲーム、プレミアム3回/ゲーム。★ v1.5.0 で広告視聴なしの即付与に変更</td></tr>
+    <tr><td>もう1手</td><td><code>rescueWithReward</code>（旧: Reward Ad）</td><td>ゲーム終了後に、手持ちを今の盤面に置けるピースを含む3個に入れ替えて続ける救済（★ v1.5.3 で「ランダムに1セル消去」から変更。入れ替え後はアンドゥ不可）。無料1回/ゲーム、プレミアム3回/ゲーム。★ v1.5.0 で広告視聴なしの即付与に変更。続けても1ゲームの記録は1件のまま</td></tr>
     <tr><td>プレミアム</td><td><code>isPremium</code></td><td>買い切りIAP購入済み状態。★ v1.5.0 で「広告除去」から改称・特典を差し替え</td></tr>
     <tr><td>プレミアム限定テーマ</td><td><code>isPremiumOnly</code></td><td>購入者のみ選択できるテーマ（和み・琥珀・若草）。★ v1.5.0 追加</td></tr>
     <tr><td>広告配信可否</td><td><code>isAdDeliveryAvailable</code></td><td>広告を配信するかの単一スイッチ。★ v1.5.0 で恒久的に false（広告停止）</td></tr>
@@ -58,7 +64,7 @@
     <tr><td>Triple</td><td>3ライン消去 +80</td></tr>
     <tr><td>Quad</td><td>4+ライン消去 +200</td></tr>
     <tr><td>Cross</td><td>行+列同時 +150</td></tr>
-    <tr><td>Perfect Clear</td><td>全消し +500</td></tr>
+    <tr><td>Perfect Clear</td><td>全消し +1000（ボーナスタイム中は加点なし）</td></tr>
   </table>
 
   <h2>注意</h2>
@@ -72,7 +78,8 @@
   <h2>変更履歴</h2>
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
   <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
-  <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: ColorTheme を10種類に更新（プレミアム限定3種を追加・無料/有料区分を明示）。用語「プレミアム」「プレミアム限定テーマ」「広告配信可否」「もう1手」を追加し、アンドゥの回数定義を更新。ストア表示名の記載を「脳活ピース」に是正し、Product ID 名と商品内容の乖離を注記</td></tr></table>
+  <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: ColorTheme を10種類に更新（プレミアム限定3種を追加・無料/有料区分を明示）。用語「プレミアム」「プレミアム限定テーマ」「広告配信可否」「もう1手」を追加し、アンドゥの回数定義を更新。ストア表示名の記載を「脳活ピース」に是正し、Product ID 名と商品内容の乖離を注記</td></tr>
+  <tr><td>1.2</td><td>2026-10-01</td><td>v1.5.3 対応: 「ボーナスタイム」「ゲージ」「ボーナスの倍率」「盤面の型」「残り時間のバー」「連鎖の見逃し」を追加。「コンボ」に連鎖の倍率と見逃しを追記。「もう1手」を手持ちの入れ替え方式に更新。全消しの点を +500 → <strong>+1000</strong> に訂正（v2.0 で変更済みだったのに旧値のままだった）し、ボーナスタイム中は加点しないことを追記</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-07-30</footer>
+  <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div></body></html>
