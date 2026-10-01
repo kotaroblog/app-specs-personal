@@ -9,36 +9,58 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / ハプティクス</div>
   <header class="site-header"><h1>ハプティクス機能（HapticManager）</h1><p>UIFeedbackGenerator</p>
-  <div class="section-meta"><span class="tag done">v1.0</span><span class="tag">機能ID: PZ-FEAT-HAPTIC</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.5.3</span><span class="tag">機能ID: PZ-FEAT-HAPTIC</span></div></header>
 
   <h2>API</h2>
   <pre><code>final class HapticManager {
-    static let shared: HapticManager
+    var isEnabled: Bool   // UserDefaults "isHapticEnabled"（未設定なら true）
 
     func blockPlaced()
+    func selectionChanged()            // v1.5.2〜
+    func lineCleared()
     func linesCleared(count: Int, isCross: Bool)
     func comboCleared(level: Int)
+    func invalidAction()
+    func perfectClear()
     func gameOver()
     func highScoreUpdated()
 }</code></pre>
+  <p>GameEngine がインスタンスを1つ持ち（<code>engine.haptic</code>）、画面からもこれを使う（シングルトンではない）。</p>
 
   <h2>振動パターン</h2>
   <table>
-    <tr><th>イベント</th><th>振動</th></tr>
-    <tr><td>blockPlaced</td><td>軽い impact (light)</td></tr>
-    <tr><td>linesCleared (1)</td><td>medium</td></tr>
-    <tr><td>linesCleared (2+)</td><td>heavy</td></tr>
-    <tr><td>linesCleared (cross)</td><td>notification.success</td></tr>
-    <tr><td>comboCleared (level)</td><td>段階的に強く</td></tr>
-    <tr><td>gameOver</td><td>notification.error</td></tr>
-    <tr><td>highScoreUpdated</td><td>notification.success</td></tr>
+    <tr><th>イベント</th><th>振動</th><th>鳴らす場面</th></tr>
+    <tr><td>blockPlaced</td><td>impact（light）</td><td>ピースを置いた・回転した・アンドゥした</td></tr>
+    <tr><td>selectionChanged（v1.5.2〜）</td><td>selection（UISelectionFeedbackGenerator）</td><td>タップで置く操作でピースを選んだ・仮置きした（置いたときの振動と区別できる軽い手応え）。v1.5.3〜 ボーナスタイムの残り3秒から1秒ごと</td></tr>
+    <tr><td>linesCleared（1ライン）</td><td>impact（medium）</td><td>1本消した</td></tr>
+    <tr><td>linesCleared（2ライン）</td><td>impact（medium）</td><td>2本同時に消した</td></tr>
+    <tr><td>linesCleared（3ライン）</td><td>notification.success</td><td>3本同時に消した</td></tr>
+    <tr><td>linesCleared（4ライン以上）</td><td>impact（heavy）→ 0.08秒後に heavy</td><td>4本以上同時に消した</td></tr>
+    <tr><td>linesCleared（十字）</td><td>impact（heavy）→ 0.06秒後に rigid</td><td>行と列を同時に消した（最優先）</td></tr>
+    <tr><td>comboCleared（連鎖2）</td><td>impact（medium）</td><td>連鎖2で消した（通常時のみ）</td></tr>
+    <tr><td>comboCleared（連鎖3）</td><td>notification.success</td><td>連鎖3で消した（通常時のみ）</td></tr>
+    <tr><td>comboCleared（連鎖4以上）</td><td>impact（heavy）→ 0.08秒後に rigid</td><td>連鎖4以上で消した（通常時のみ）</td></tr>
+    <tr><td>invalidAction</td><td>notification.warning</td><td>置けない場所に離した・タップで仮置きできなかった</td></tr>
+    <tr><td>perfectClear</td><td>heavy → success → heavy → rigid（間隔 0.12〜0.18秒）</td><td>全消し。v1.5.3〜 ボーナスタイム中の全消しでも鳴らす</td></tr>
+    <tr><td>gameOver</td><td>notification.error</td><td>ゲームオーバー</td></tr>
+    <tr><td>highScoreUpdated</td><td>notification.success → 0.2秒後に impact（heavy）</td><td>初めてハイスコアを超えた。v1.5.3〜 ボーナスタイムに入るとき・時間切れのときにも使う</td></tr>
   </table>
 
+  <h2>ボーナスタイムの振動（v1.5.3〜）</h2>
+  <table>
+    <tr><th>場面</th><th>振動</th></tr>
+    <tr><td>ボーナスタイムに入る</td><td>highScoreUpdated</td></tr>
+    <tr><td>ボーナス中の全消し</td><td>perfectClear（点の加算はなく、次の盤面と倍率がごほうび）</td></tr>
+    <tr><td>残り3秒・2秒・1秒</td><td>selectionChanged（1秒に1回。効果音 <code>sfx_bonus_tick</code> と同時）</td></tr>
+    <tr><td>時間切れ</td><td>highScoreUpdated</td></tr>
+  </table>
+  <p>流れと時計の止まる条件は <a href="game-logic.html">ゲームロジック</a> の「ボーナスタイム」、音は <a href="sound.html">サウンド</a> を参照。</p>
+
   <h2>制御</h2>
-  <p>@AppStorage("hapticEnabled") で有効/無効を切替。無効時は何もしない。</p>
+  <p>設定画面の「ゲーム」の「ハプティクス」トグルで有効/無効を切り替える。値は UserDefaults のキー <code>isHapticEnabled</code> に保存し、未設定なら有効。無効のときはどのイベントでも何もしない。</p>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr><tr><td>1.1</td><td>2026-10-02</td><td>v1.5.2/1.5.3 対応＋実装とのずれの訂正: 振動パターンの表を実装（HapticManager）に合わせて全面的に直した（1〜2ラインは medium、3ラインは success、4ライン以上は heavy 2回、十字は heavy→rigid、連鎖は段階別、invalidAction・perfectClear を追加）。v1.5.2 の selectionChanged（タップで置く操作の選択・仮置き）と、v1.5.3 のボーナスタイムの振動（入る・全消し・残り3秒・時間切れ）を追加。API 欄の <code>static let shared</code> を削除（GameEngine が持つインスタンスを使う）。保存キーを <code>hapticEnabled</code> から実装どおりの <code>isHapticEnabled</code> に訂正</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
 </div></body></html>

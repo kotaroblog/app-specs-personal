@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">脳活ピース</a> / 広告制御</div>
   <header class="site-header"><h1>広告制御機能</h1><p>Unity LevelPlay による広告配信と、配信環境を App Store 配信版のみに限定する安全機構</p>
-  <div class="section-meta"><span class="tag done">v3.2</span><span class="tag">機能ID: PZ-FEAT-AD</span></div></header>
+  <div class="section-meta"><span class="tag done">v3.3</span><span class="tag">機能ID: PZ-FEAT-AD</span></div></header>
 
 
   <div class="callout">
@@ -89,7 +89,7 @@
     </tr>
     <tr>
       <td>インタースティシャル</td>
-      <td>3ゲームに1回、最低90秒間隔（未購入時のみ）<br><code>LPMInterstitialAd</code></td>
+      <td>3ゲームに1回、最低90秒間隔（未購入時のみ）。ゲーム終了画面で「もう一度」を押したときに判定する<br><code>LPMInterstitialAd</code><br>v1.5.3〜 「もう1手」で続けたゲームも<strong>1ゲームとして1回だけ数える</strong>（v1.5.2 までは、続けた後のゲームオーバーでも回数が進み、広告の間隔が縮んでいた）</td>
       <td>呼び出さない。<strong>広告リクエストも発生しない</strong></td>
     </tr>
     <tr>
@@ -215,7 +215,8 @@ static var shouldRequestTracking: Bool { !appKey.isEmpty }</code></pre>
     <tr><td>3.0</td><td>2026-08-20</td><td><strong>広告基盤を AppLovin MAX から Unity LevelPlay へ移行</strong>（AppLovin の publisher アカウント承認が下りなかったため）。SDK を LevelPlay 9.6.0（SPM <code>LevelPlay-Swift-Package</code> / product <code>UnityMediationSDK</code>）+ LevelPlayUnityAdsAdapter 5.10.0（product <code>UnityAdsAdapter</code>）へ差し替え、Unity Ads は LevelPlay 経由の bidder として利用する構成を明記。広告クラスを <code>LPMBannerAdView</code> / <code>LPMInterstitialAd</code> / <code>LPMRewardedAd</code> に更新。判定式を <code>isAdDeliveryAvailable = !appKey.isEmpty &amp;&amp; isProduction</code> と明記し、<strong>SDK 初期化完了前は広告をロードしない</strong>制約を追加。テスト広告IDに関する記述を削除（LevelPlay に該当概念がないため開発中は広告を出さない方式）。App Key と広告ユニットID3種は設定済みだが、ironSource Ads アカウントが承認待ちのため未配信であることを反映。広告面（バナー / インタースティシャル3回に1回・90秒間隔 / リワード復活・Undo）は変更なし。</td></tr>
     <tr><td>3.1</td><td>2026-08-23</td><td>広告基盤を <strong>Unity LevelPlay</strong> に統一（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: 従来は <code>isAdDeliveryAvailable</code> でガードしていたが、この値は <code>isProduction</code> を含むため、TestFlight と同じ sandbox 環境で実行される<strong>審査ビルドでは ATT が原理的に表示されなかった</strong>（2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed によりリジェクト）。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。App Key 未設定＝広告を一切出さない版では表示しないため Guideline 5.1.2 の懸念も同時に満たす。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除／ITMS-91064 の回避／<code>NSPrivacyTrackingDomains</code> は申告ではなく実行時のブロックリストであり、Unity Ads は広告配信とトラッキングで同じドメインを使うため載せると ATT 拒否ユーザーに広告が出なくなる／トラッキングの申告は ASC の App Privacy 側で行う）を明記した。</td></tr>
     <tr><td>3.2</td><td>2026-09-29</td><td>v1.5.1/1.5.2 対応: <strong>v1.5.2 で ATT の提示時期を「起動直後」から「初回のゲーム終了後」へ変更し、広告 SDK は起動時に ATT の回答を待たずに初期化</strong>するよう変更したことを反映（版ごとの比較表・理由・回答前は個人に合わせない広告になること・初期化の重複防止と再試行・「もう1手」が出ない場合があった不具合の修正）。v3.1 の ATT 判定の分離が脳活ピースのコードに入ったのは 2026-08-30（<code>9eaecea</code>）で、公開は v1.5.1 であることを明記（記述内容とコードは一致）。ironSource Ads の「承認待ち・未配信」が 2026-08-23 時点の記述であることを明記</td></tr>
+    <tr><td>3.3</td><td>2026-10-02</td><td>v1.5.3 対応: インタースティシャルの回数（<code>AdManager.gameCount</code>）を、「もう1手」で続けたゲームでも1ゲーム1回だけ進めるようにした変更を反映。判定はゲーム終了画面の「もう一度」を押したときであることを明記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-09-29</footer>
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
 </div></body></html>
