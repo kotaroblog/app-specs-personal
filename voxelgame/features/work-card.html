@@ -10,11 +10,11 @@
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / 作品カード</div>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / 作品カード</div>
 
   <header class="site-header">
     <h1>作品カード</h1>
-    <p>「これまでに置いた量」を数字で振り返るカード。設置の集計（PlacementTally）を含む</p>
+    <p>「これまでに置いた量」を数字で振り返るカード。ステージでは着手前・完成・作者の写真も並ぶ。設置の集計（PlacementTally）を含む</p>
     <div style="margin-top:8px;">
       <span class="tag">機能ID: VG-FEAT-WORKCARD</span>
     </div>
@@ -26,13 +26,17 @@
   <h2>関連画面</h2>
   <ul>
     <li><a href="../screens/gameplay.html">ゲームプレイ画面（メニュー → 作品カード）</a></li>
-    <li><a href="../screens/world-select.html">ワールド選択画面（累計設置数バッジ）</a></li>
+    <li><a href="../screens/world-select.html">ワールド選択画面（累計設置数バッジ・ステージの一覧のカード）</a></li>
+    <li><a href="stage.html">ステージと記念写真（写真を撮る側）</a></li>
   </ul>
+  <p>開き方: メニューの「作品カード」。ステージで「完成にする」の写真を撮り終えたときは自動で開く。</p>
 
   <h2>表示内容</h2>
   <table>
     <tr><th>項目</th><th>内容</th><th>データ元</th></tr>
     <tr><td>ワールド名</td><td>見出しとして表示</td><td>WorldRecord.name</td></tr>
+    <tr><td>お題（ステージのみ）</td><td>「お題: 岬の先に、灯台を建てる」</td><td>WorldRecord.stageID → StageCatalog</td></tr>
+    <tr><td>写真3枚（ステージのみ）</td><td>「着手前」「完成」「作者」を横に並べる（下記）</td><td>stageBeforePhoto / stageAfterPhoto / stageAuthorPhoto</td></tr>
     <tr><td>これまでに置いたブロック</td><td>累計設置数（大きな数字）</td><td>PlacementTally.total</td></tr>
     <tr><td>制作日数</td><td>「制作N日目」。初回設置日を1日目とする</td><td>WorldRecord.firstPlacedAt</td></tr>
     <tr><td>よく使った材料</td><td>種別ごとの設置数の上位3種（色チップ＋名前＋個数）</td><td>PlacementTally.byBlock</td></tr>
@@ -43,6 +47,32 @@
     <li>ワールド選択画面の各行には累計設置数バッジ（cube アイコン＋「N個」）を表示し、入らなくても積み上げが見える</li>
     <li>VoiceOver 向けに「これまでに置いたブロック N個、制作M日目」を1要素にまとめて読み上げる</li>
   </ul>
+
+  <h2>ステージの写真（2026-09-27 CF13・2026-09-28 CF22）</h2>
+  <p>決まった角度から撮った「着手前／完成」を同じ枠で並べ、積み上げた投資を一目で分かるようにする。写真の撮り方は<a href="stage.html">ステージと記念写真</a>を参照。</p>
+  <table>
+    <tr><th>枠</th><th>ラベル</th><th>写真が無いとき</th></tr>
+    <tr><td>着手前</td><td>着手前</td><td rowspan="3">カメラのアイコン。読み上げは「〇〇の写真はまだありません」（ある場合は「〇〇の写真」）</td></tr>
+    <tr><td>完成</td><td>完成（未完成の間は「完成（まだ）」）</td></tr>
+    <tr><td>作者</td><td>作者（完成を宣言した瞬間のプレイヤーの画面。三人称なら自分のキャラも写る）</td></tr>
+  </table>
+  <ul>
+    <li>枠は 16:9 を先に決めてから写真で埋める（scaledToFill・角丸8）。写真に枠を合わせると、着手前と完成で枠の大きさが揃わなかった（2026-09-27 にシミュレーターで確認）</li>
+    <li>ステージ以外のワールド（stageID が nil、または定義に無い id）では写真の節を出さない</li>
+    <li>記念写真（左上のカメラのボタン）は「写真」アプリへ保存するだけで、作品カードには入らない</li>
+  </ul>
+
+  <h2>ステージの一覧のカード（ワールド選択）</h2>
+  <p>ワールド選択画面の右側（幅290pt）の「ステージ」の欄に、ステージ1つにつき1枚のカードを出す（<code>StageCard</code>）。ステージのワールドは左の「自分のワールド」の一覧には出さない。</p>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>サムネイル</td><td>76×50pt・角丸8。完成の写真があればそれ、無ければ着手前の写真。どちらも無ければ空と砂のグラデーションに旗のアイコン</td></tr>
+    <tr><td>名前・お題</td><td>「岬の灯台」と、お題1行（1行で省略）</td></tr>
+    <tr><td>進み具合</td><td>まだ始めていない「まだ始めていません」／制作中「制作中 ・ 置いたブロック N」（WorldRecord.placedBlockCount）／完成「完成 ・ 日付」（黄色）</td></tr>
+    <tr><td>タップ</td><td>そのステージへ入る（無ければ作る）</td></tr>
+    <tr><td>長押し</td><td>ワールドがあるときだけ「最初からやり直す」。確認のあと、建てた物と写真ごと削除する</td></tr>
+    <tr><td>読み上げ</td><td>「ステージ 岬の灯台。岬の先に、灯台を建てる。（進み具合）」を1要素・ボタンとして読む</td></tr>
+  </table>
 
   <h2>集計ルール（PlacementTally）</h2>
   <div class="mermaid">
@@ -88,11 +118,19 @@ sequenceDiagram
     <tr><td>累計が 65535 を超える</td><td>直列化時に 65535 でクランプする（内訳・日別とも UInt16）</td></tr>
   </table>
 
+  <h2>既知の課題</h2>
+  <table>
+    <tr><th>ID</th><th>内容</th><th>状態</th></tr>
+    <tr><td>CF-011</td><td>着手前の写真が、読み込み途中の地形で撮られることがある（初回の生成が8秒を超えると準備完了が保険で先に立つため。一度撮ると撮り直さない）。コードで確認・実機では未確認</td><td>未対応</td></tr>
+    <tr><td>CF-012</td><td>作品カード（最大3枚）と一覧のステージのカードが、描き直すたびに写真を <code>UIImage(data:)</code> で読み込み直している（性能だけの問題）。直すなら読み込んだ画像を覚えておく</td><td>未対応</td></tr>
+  </table>
+
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li><code>PlacementTally</code> は SceneKit 非依存の純粋値型で、シミュレーターなしで単体テストできる（PlacementTallyTests）</li>
     <li>epochDay は 2026-01-01 00:00:00 UTC 起点の経過日数。タイムゾーン変更・サマータイムで日付境界が動かないよう UTC 固定にしている</li>
     <li>カードは <code>GameInput.tally</code>（メインスレッドのミラー）と WorldRecord を読むだけで、自前の集計を持たない</li>
+    <li>写真の節も WorldRecord の写真の列と StageCatalog を読むだけで、カード側では撮らない・保存しない</li>
     <li>カード本体は ScrollView + AdaptiveMaxHeight(standard: 320) でラップし、最大文字サイズでも全項目へ到達できる</li>
   </ul>
 
@@ -101,12 +139,14 @@ sequenceDiagram
     <li><a href="../data-model.html">データモデル（WorldRecord / PlacementTally）</a></li>
     <li><a href="objectives.html">目標ガイド</a></li>
     <li><a href="building-assist.html">建築支援操作</a></li>
+    <li><a href="stage.html">ステージと記念写真</a></li>
   </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-09-17</td><td>初版作成。建築特化への転換で追加した作品カードと設置の集計（PlacementTally）を記載</td></tr>
+    <tr><td>1.1</td><td>2026-10-02</td><td>ステージのお題と着手前・完成・作者の写真（CF13・CF22）、ワールド選択のステージの一覧のカード、完成時に自動で開くこと、既知の課題（CF-011・CF-012）を追記</td></tr>
   </table>
 
   <script>
@@ -116,7 +156,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-09-17</footer>
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
 </div>
 </body>
 </html>

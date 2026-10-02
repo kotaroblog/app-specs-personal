@@ -10,7 +10,7 @@
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../">Felix App Specs</a> / <a href="./">CraftFrontier</a> / データモデル</div>
+  <div class="breadcrumb"><a href="../">Personal App Specs</a> / <a href="./">CraftFrontier</a> / データモデル</div>
 
   <header class="site-header">
     <h1>データモデル</h1>
@@ -18,8 +18,9 @@
   </header>
 
   <h2>概要</h2>
-  <p>永続化は<strong>100% SwiftData</strong>（デフォルトの SQLite ストア）で完結しており、独自のバイナリファイル I/O は行わない。モデルは <code>WorldRecord</code>・<code>ChunkRecord</code>・<code>ChestRecord</code> の3つで、いずれも <code>worldID</code>（UUID）でワールドごとに分離する。ゲームロジック自体は SceneKit のレンダースレッド上で動くランタイムクラス（<code>Player</code>・<code>Mob</code> 等）が保持し、変化があったときだけ SwiftData モデルへ書き戻す。</p>
-  <p>2026-09-16 の建築特化への転換で、<strong>体力・満腹度に関する列が消え、代わりに「これまでに置いた量」を記録する列が加わった</strong>。保存したい対象が「生き延びた状態」から「積み上げた投資」へ移ったためである。</p>
+  <p>永続化は<strong>100% SwiftData</strong>（デフォルトの SQLite ストア）で完結しており、独自のファイル I/O は行わない。モデルは <code>WorldRecord</code>・<code>ChunkRecord</code>・<code>ChestRecord</code> の3つ（<code>VoxelSchemaV1.models</code>）で、いずれも <code>worldID</code>（UUID）でワールドごとに分離する。ゲームロジック自体は SceneKit のレンダースレッド上で動くランタイムクラス（<code>Player</code>・<code>Chunk</code> 等）が保持し、変化があったときだけ SwiftData モデルへ書き戻す。</p>
+  <p>2026-09-16 の建築特化への転換で、<strong>体力・満腹度に関する列が消え、代わりに「これまでに置いた量」を記録する列が加わった</strong>。その後、ステージ（舞台とお題）・世界の種類（群島／島／無限）・船・群島の改訂番号の列を、<strong>すべて既定値つきの追加</strong>として足している（スキーマは V1 のまま。後述）。</p>
+  <p>ステージの写真3枚だけは <code>@Attribute(.externalStorage)</code> で、SwiftData が行の外の別ファイルに置く。WorldRecord は定期保存で何度も書き直すため、行の中に写真があると保存のたびに写真ごと書き直すことになるからである。</p>
 
   <h2>ER 図</h2>
   <div class="mermaid">
@@ -31,112 +32,210 @@ erDiagram
     String name
     Int seed
     Date lastPlayedAt
+    Data inventoryData "0xFF形式"
+    Data craftingJobData "JSON"
+    Data toolCraftingJobData "JSON"
     Int placedBlockCount
     Data placedByBlockData
     Data dailyPlacedData
-    Date firstPlacedAt
-    Data inventoryData
+    String worldKindRaw "nilは無限の世界"
+    String stageID "nilは通常の世界"
+    Date stageCompletedAt
+    Data stageBeforePhoto "externalStorage"
+    Data stageAfterPhoto "externalStorage"
+    Data stageAuthorPhoto "externalStorage"
+    Bool isRidingBoat
+    Int archipelagoRevision
   }
   ChunkRecord {
     UUID worldID
     Int cx
     Int cz
-    Data blocksData "16x64x16=16384バイト"
+    Data blocksData "16384バイト＋向きの追記"
   }
   ChestRecord {
     UUID worldID
     Int x
     Int y
     Int z
-    Data slotsData
+    Data slotsData "0xFF形式"
   }
   </div>
 
   <h2>WorldRecord（SwiftData @Model）</h2>
-  <p>ワールドのメタ情報・進行状態をまとめて保持する唯一のモデル。プレイヤーの位置・時刻・天候は保存対象外で、毎回スポーン地点から再開する。</p>
+  <p>ワールドのメタ情報・進行状態をまとめて保持するモデル。プレイヤーの位置・向き・時刻・天候・船の位置は保存対象外で、毎回スポーン地点から再開する。</p>
   <table>
-    <tr><th>プロパティ</th><th>型</th><th>説明</th></tr>
-    <tr><td>id</td><td>UUID</td><td>ワールド固有ID。ChunkRecord/ChestRecord の worldID と紐付く</td></tr>
-    <tr><td>name / seed</td><td>String / Int</td><td>ワールド名・地形生成シード</td></tr>
-    <tr><td>createdAt / lastPlayedAt</td><td>Date</td><td>作成日時・最終プレイ日時（一覧の並び順に使用）</td></tr>
-    <tr><td>totalPlayTime</td><td>TimeInterval</td><td>累計プレイ時間</td></tr>
-    <tr><td>exploredDistance</td><td>Double</td><td>累積移動距離。ワールド選択画面のバッジに表示する（目標ガイドの判定条件からは外れた）</td></tr>
-    <tr><td>spawnX / spawnY / spawnZ</td><td>Float</td><td>スポーン座標。既定 (8, 62, 8)。ベッド使用で更新される</td></tr>
-    <tr><td>inventoryData / unlockedToolsData</td><td>Data / Data</td><td>所持品・解放済みツールのシリアライズ</td></tr>
-    <tr><td>selectedToolRaw</td><td>String</td><td>選択中ツール（既定 "hand"）</td></tr>
-    <tr><td><strong>placedBlockCount</strong></td><td>Int</td><td>プレイヤーが設置した累計ブロック数。目標6「自由に建てる」の進行度に使う。🔴 <strong>権威ではなく非正規化キャッシュ</strong>で、真の権威は placedByBlockData（内訳）。sum(内訳) == この値 という不変条件を PlacementTally.apply 経由の2箇所だけが守る</td></tr>
-    <tr><td><strong>placedByBlockData</strong></td><td>Data</td><td>種別ごとの設置累計（例: 石レンガ62個）。inventoryData と同じバイト形式で直列化する</td></tr>
-    <tr><td><strong>dailyPlacedData</strong></td><td>Data</td><td>日別の設置数（epochDay → 設置数）。直近730日を超える古い日は保存時に切り捨てる</td></tr>
-    <tr><td><strong>firstPlacedAt</strong></td><td>Date?</td><td>初めて設置した日時。作品カードの制作日数の起点（既定 nil）</td></tr>
-    <tr><td>hasPlacedFurnace</td><td>Bool</td><td>かまど設置履歴（目標4の巻き戻り防止。かまどは設置で所持数が0に戻るため）</td></tr>
-    <tr><td>hasSmeltedGlass</td><td>Bool</td><td>ガラス精錬履歴（目標5の判定）</td></tr>
-    <tr><td>hasPlacedBed</td><td>Bool</td><td>ベッド設置履歴。目標ガイドの条件からは外れたが列としては存続</td></tr>
-    <tr><td>hasCompletedAllObjectives</td><td>Bool</td><td>全6目標を達成済みか（達成トーストを一度だけ出すため）</td></tr>
-    <tr><td>hasSeenLavaWarning</td><td>Bool</td><td>溶岩の事前警告トーストを表示済みか（接触ダメージ廃止後も列は存続）</td></tr>
-    <tr><td>hasSavedProgress</td><td>Bool</td><td>一度でも進行状態を保存したか。false なら新規ワールド扱いで初期在庫を使う</td></tr>
+    <tr><th>プロパティ</th><th>型</th><th>既定値</th><th>説明</th></tr>
+    <tr><td>id</td><td>UUID</td><td>UUID()</td><td>ワールド固有ID。ChunkRecord/ChestRecord の worldID と紐付く</td></tr>
+    <tr><td>name / seed</td><td>String / Int</td><td>"" / 0</td><td>ワールド名・地形生成シード（init で必ず渡す）</td></tr>
+    <tr><td>createdAt / lastPlayedAt</td><td>Date</td><td>Date.now</td><td>作成日時・最終プレイ日時（一覧の並び順に使用）</td></tr>
+    <tr><td>totalPlayTime</td><td>TimeInterval</td><td>0</td><td>累計プレイ時間</td></tr>
+    <tr><td>exploredDistance</td><td>Double</td><td>0</td><td>累積移動距離。ワールド選択画面のバッジに表示する</td></tr>
+    <tr><td>spawnX / spawnY / spawnZ</td><td>Float</td><td>8 / 62 / 8</td><td>スポーン座標。ベッド使用で更新される。<code>setKind</code> で島は (0.5, -, 0.5)、群島は本島の南の草原（<code>ArchipelagoTerrain.spawn</code>）に置き直す</td></tr>
+    <tr><td>inventoryData</td><td>Data</td><td>空</td><td>所持品。形式は後述の「所持品・チェストの直列化」</td></tr>
+    <tr><td>unlockedToolsData</td><td>Data</td><td>空</td><td>解放済みツール。Tool の rawValue（hand / woodPickaxe / stonePickaxe / ironPickaxe / shears）をカンマ区切りにした UTF-8。空なら hand・woodPickaxe として読み、読み込み時に hand を必ず足す</td></tr>
+    <tr><td><strong>craftingJobData</strong></td><td>Data</td><td>空</td><td>保存時点で進行中だった加工ジョブ（JSON）。ジョブが無ければ空</td></tr>
+    <tr><td><strong>toolCraftingJobData</strong></td><td>Data</td><td>空</td><td>保存時点で進行中だった道具作成ジョブ（JSON）。ジョブが無ければ空</td></tr>
+    <tr><td>selectedToolRaw</td><td>String</td><td>"hand"</td><td>選択中ツール。解放済みに含まれなければ hand へ補正する</td></tr>
+    <tr><td>placedBlockCount</td><td>Int</td><td>0</td><td>プレイヤーが設置した累計ブロック数。🔴 <strong>権威ではなく非正規化キャッシュ</strong>で、真の権威は placedByBlockData（内訳）。sum(内訳) == この値 という不変条件を PlacementTally.apply 経由の2箇所だけが守る</td></tr>
+    <tr><td>placedByBlockData</td><td>Data</td><td>空</td><td>種別ごとの設置累計（例: 石レンガ62個）。inventoryData と同じバイト形式</td></tr>
+    <tr><td>dailyPlacedData</td><td>Data</td><td>空</td><td>日別の設置数（epochDay → 設置数）。直近730日を超える古い日は保存時に切り捨てる</td></tr>
+    <tr><td>firstPlacedAt</td><td>Date?</td><td>nil</td><td>初めて設置した日時。作品カードの制作日数の起点</td></tr>
+    <tr><td>hasPlacedFurnace</td><td>Bool</td><td>false</td><td>かまど設置履歴（かまどは設置で所持数が0に戻るため、目標の巻き戻り防止に使う）</td></tr>
+    <tr><td>hasSmeltedGlass / hasPlacedBed</td><td>Bool</td><td>false</td><td>ガラス精錬履歴（目標の判定）／ベッド設置履歴（目標の条件からは外れたが列は存続）</td></tr>
+    <tr><td>hasCompletedAllObjectives</td><td>Bool</td><td>false</td><td>全6目標を達成済みか（達成トーストを一度だけ出すため）</td></tr>
+    <tr><td>hasSeenLavaWarning</td><td>Bool</td><td>false</td><td>溶岩の事前警告トーストを表示済みか</td></tr>
+    <tr><td>hasSavedProgress</td><td>Bool</td><td>false</td><td>一度でも進行状態を保存したか。false なら新規ワールド扱いで初期在庫を使い、true なら inventoryData が空でも「空にして保存した状態」として復元する</td></tr>
+    <tr><td><strong>stageID</strong></td><td>String?</td><td>nil</td><td>ステージ（舞台とお題）のワールドなら StageCatalog の id。nil は通常の世界（2026-09-27）</td></tr>
+    <tr><td><strong>stageCompletedAt</strong></td><td>Date?</td><td>nil</td><td>完成を宣言した日時。nil なら制作中。完成後も手直しでき、宣言し直すと上書きする</td></tr>
+    <tr><td><strong>stageBeforePhoto / stageAfterPhoto</strong></td><td>Data?（externalStorage）</td><td>nil</td><td>着手前・完成の写真。決まった角度から撮る JPEG（1枚100KB前後）</td></tr>
+    <tr><td><strong>stageAuthorPhoto</strong></td><td>Data?（externalStorage）</td><td>nil</td><td>完成を宣言した瞬間の画面（三人称なら自分のキャラも写る。2026-09-28）</td></tr>
+    <tr><td><strong>worldKindRaw</strong></td><td>String?</td><td>nil</td><td>地形の種類（<code>WorldKind</code> の rawValue: "archipelago" / "island" / "infinite"）。nil・読めない値は以前からの無限の世界として扱う（計算プロパティ <code>worldKind</code>）。新しいワールドの既定は群島（2026-09-28 追加）</td></tr>
+    <tr><td><strong>isRidingBoat</strong></td><td>Bool</td><td>false</td><td>船に乗っているか。乗ると船のブロックを外すので、乗っている間は true にしておく。次に入ったとき true なら船を1つ所持品へ戻して false にする。「保存して出る」で出たときも同様に戻す（2026-10-01）</td></tr>
+    <tr><td><strong>archipelagoRevision</strong></td><td>Int</td><td>0</td><td>群島の「最初から置いてある物」をどの改訂まで入れたか。現行は 1（build 24：凍った滝・崖のリフト）。新しい群島は作るときに最新にする（2026-10-02 追加）</td></tr>
   </table>
   <div class="callout warn">
-    <strong>廃止された列</strong>: <code>hp</code>（体力）・<code>hunger</code>（満腹度）・<code>hasCraftedTorch</code>・<code>hasCraftedGoldenApple</code>。いずれも 2026-09-16 の建築特化への転換で、対応する仕組み（体力・空腹・16段階の目標ガイド）ごと削除した。
+    <strong>09-17 以降に足した列はすべて既定値つきの追加</strong>（craftingJobData・toolCraftingJobData・stageID・stageCompletedAt・写真3枚・worldKindRaw・isRidingBoat・archipelagoRevision）。SwiftData の軽量マイグレーションは「既存レコードに新しい列の値を埋められること」が条件で、既定値の無い非 Optional が1つでもあると次に列を足した時点で移行が失敗し、ストアごと開けなくなる（＝全ワールド消失）。そのためスキーマは <code>VoxelSchemaV1</code> のまま、移行ステージを持たない。
   </div>
+  <div class="callout warn">
+    <strong>廃止された列</strong>: <code>hp</code>（体力）・<code>hunger</code>（満腹度）・<code>hasCraftedTorch</code>・<code>hasCraftedGoldenApple</code>。いずれも 2026-09-16 の建築特化への転換で、対応する仕組みごと削除した。
+  </div>
+
+  <h3>群島の改訂の入れ直し（ArchipelagoMigration）</h3>
+  <p>保存済みのチャンクは生成し直さないため、build 23 で作った群島には build 24 で直した物（凍った滝・崖のリフト）が出ない。群島のワールドに入るとき <code>archipelagoRevision &lt; ArchipelagoMigration.currentRevision</code> なら、保存済みチャンクを読み込んで次の2つを一度だけ書き込み、改訂番号を上げて保存する。</p>
+  <table>
+    <tr><th>入れ直す物</th><th>決まり（Rule）</th><th>内容</th></tr>
+    <tr><td>凍った滝</td><td>replacesWater</td><td>水のマスだけ置き換える</td></tr>
+    <tr><td>崖のリフト（乗り場2つを含む）</td><td>replacesTerrain</td><td>地形のまま（空気・雪・石・土・草・木・葉・鉱石・水・溶岩・氷・草花）のマスだけ置き換える。プレイヤーが置いた建材は上書きしない</td></tr>
+  </table>
 
   <h2>ChunkRecord（SwiftData @Model）</h2>
   <table>
-    <tr><th>プロパティ</th><th>説明</th></tr>
-    <tr><td>worldID</td><td>所属ワールドID</td></tr>
-    <tr><td>cx, cz</td><td>チャンクグリッド座標（ブロック座標 = cx/cz × 16）</td></tr>
-    <tr><td>blocksData</td><td>Block.rawValue を 16×64×16=16384 バイトへ直列化した Data。インデックス = x + 16*(y + 64*z)</td></tr>
+    <tr><th>プロパティ</th><th>既定値</th><th>説明</th></tr>
+    <tr><td>worldID</td><td>sentinel UUID（00000000-…）</td><td>所属ワールドID。旧セーブとの互換用の固定値を既定にしている</td></tr>
+    <tr><td>cx, cz</td><td>0</td><td>チャンクグリッド座標（ブロック座標 = cx/cz × 16）</td></tr>
+    <tr><td>blocksData</td><td>空</td><td>チャンクの直列化（下記）</td></tr>
   </table>
-  <p>チャンク（ランタイム側の <code>Chunk</code> クラス）はブロック編集のたびに <code>dirtyChunks</code> へ記録され、(a) チャンクアンロード時、(b) アプリのバックグラウンド移行通知時、(c) 30秒ごとの定期保存、の3経路で <code>WorldStore.saveChunk</code>（専用シリアルキュー上の ModelContext）へ書き込まれる。</p>
+
+  <h3>チャンクの保存形式（Chunk.serialized / Chunk.from(data:)）</h3>
+  <table>
+    <tr><th>部分</th><th>バイト数</th><th>内容</th></tr>
+    <tr><td>ブロック配列</td><td>16×64×16 = 16384</td><td>1マス1バイトの Block.rawValue。インデックス = <code>y × 256 + z × 16 + x</code></td></tr>
+    <tr><td>向きの追記（任意）</td><td>4</td><td>マジック "VXOR"（0x56 0x58 0x4F 0x52）</td></tr>
+    <tr><td></td><td>1</td><td>版（現行 1）</td></tr>
+    <tr><td></td><td>2</td><td>項目数（UInt16 リトルエンディアン）</td></tr>
+    <tr><td></td><td>3 × 項目数</td><td>[位置 UInt16 LE（上のインデックス）, 保存値 UInt8] の並び。位置の昇順</td></tr>
+  </table>
+  <ul>
+    <li><strong>保存値</strong>は下位3ビット（マスク 0x07）。下位2ビットが90度単位の向き（0＝北・1＝西・2＝南・3＝東）、3ビット目（0x04）はベッドでは「2マスのベッド」の印（<code>BedPlacement.twoCellFlag</code>。印の無い bed は2マス化以前に置いた1マスのベッド）、ランタンでは「吊るしている」印（<code>LanternPlacement.hangingFlag</code>）</li>
+    <li>書き出すのは「向きを保存するブロック」（<code>Chunk.storesOrientation</code> ＝ 階段・<code>isRotatable</code>・bed・bedHead・lantern）で、かつ保存値が0以外のマスだけ。該当が無ければ追記自体を付けず、16384バイトちょうどになる</li>
+    <li><strong>旧形式も読める</strong>: 追記の無いデータは向き0として読む。マジック・版が合わなければ追記を無視する。16384バイトに満たない部分は空気、知らない rawValue（欠番を含む）は空気として読む</li>
+    <li>版1の形式は石の階段のころから変えていない。旧版は自分の知らない項目を読み飛ばすので、向きを保存するブロックを足しても旧版で読めなくなることはない</li>
+  </ul>
+  <p>チャンクはブロック編集のたびに <code>dirtyChunks</code> へ記録され、(a) チャンクアンロード時、(b) アプリのバックグラウンド移行・「保存して出る」、(c) 定期保存、の経路で <code>WorldStore.saveChunk</code>（専用シリアルキュー上の ModelContext。既存レコードがあれば上書き）へ書き込まれる。バックグラウンド移行時は <code>whenAllPendingWritesComplete</code> で投入済みの書き込みが終わるまで実行猶予を取る。</p>
 
   <h2>ChestRecord（SwiftData @Model）</h2>
   <table>
-    <tr><th>プロパティ</th><th>説明</th></tr>
-    <tr><td>worldID, x, y, z</td><td>所属ワールドID・チェストのワールド座標</td></tr>
-    <tr><td>slotsData</td><td>チェスト内アイテムのシリアライズ（形式は下記インベントリと同じ）</td></tr>
+    <tr><th>プロパティ</th><th>既定値</th><th>説明</th></tr>
+    <tr><td>worldID</td><td>sentinel UUID</td><td>所属ワールドID</td></tr>
+    <tr><td>x, y, z</td><td>0</td><td>チェストのワールド座標</td></tr>
+    <tr><td>slotsData</td><td>空</td><td>チェストの中身（所持品と同じ 0xFF 形式）</td></tr>
   </table>
+  <ul>
+    <li>読み込みは同期（<code>loadChestInventory</code>）、保存は非同期の upsert（<code>saveChestInventory</code>）、壊したときは <code>deleteChest</code> で消す</li>
+    <li><code>chestRecordExists</code>: 生成した目印の報酬チェストを初回だけ補充し、空にした後に再補充しないための判定</li>
+    <li>編集モードでチェストを持ち上げると、中身は <code>CarriedBlock.chestContents</code> として一緒に運び、置いた先の座標で保存し直す。持ち上げたまま編集モードを切る・保存する場合は、チェストと中身を所持品へ戻す（持ち上げ中は所持品にも世界にも無いため）</li>
+  </ul>
+
+  <h2>所持品の2つの写し（GameInput）</h2>
+  <p>所持品はスレッドの違う2か所で持つ。<strong>2026-10-02 に同期のしかたを直した（CF-025）</strong>。</p>
+  <table>
+    <tr><th>写し</th><th>実体</th><th>誰が書くか</th></tr>
+    <tr><td>描画スレッド用の写し</td><td><code>invMirror</code>（NSLock で保護）</td><td>描画スレッド（掘る・置く・船を戻す等）は <code>adjustInventory</code> でここを増減し、<code>itemCount</code> でここを読む</td></tr>
+    <tr><td>画面用の一覧</td><td><code>inventory</code>（@Published、メインスレッド）</td><td>SwiftUI（加工・チェスト操作・クリエイティブ等）が直接書き換える</td></tr>
+  </table>
+  <ul>
+    <li><strong>描画スレッドの増減は写しを正とし</strong>、増減のたびにメインスレッドへ「写しを一覧へ映す」（<code>publishInventoryMirror</code>）を投げる。映している最中は一覧の didSet を通さない（写しへ戻し書きしない）</li>
+    <li><strong>画面側の書き換えは、品ごとの差分（新 − 旧）だけを写しへ足す</strong>（<code>applyInventoryEdit</code>）</li>
+    <li>🔴 以前は画面側の書き換えで写しを一覧ごと上書きしていた。描画スレッドの増減は一覧へ遅れて届くので、別の品の書き込みで上書きされると、まだ届いていない増減とその間の増減が失われていた</li>
+    <li>保存はメインスレッドで一覧（<code>input.inventory</code>）を <code>encodeInventory</code> して inventoryData に書く</li>
+    <li>初期在庫は 松明2・チェスト1・小麦3（新規ワールドのみ）</li>
+  </ul>
 
   <h2>Block（UInt8 enum）</h2>
-  <p>rawValue が UInt8 として <code>blocksData</code> / <code>inventoryData</code> に直接書き込まれる。最大 rawValue は 37（金ブロック）。<strong>建築特化への転換で削除した食料アイテムの rawValue（16〜18・31・33）は欠番のまま残す</strong>（他ブロックの値をずらさないため。旧セーブに残っていてもデコード時に air へ倒れる）。アトラス列数は将来の拡張余地を見て40列確保している。</p>
+  <p>rawValue が UInt8 として <code>blocksData</code>・<code>inventoryData</code>・<code>slotsData</code>・<code>placedByBlockData</code> に直接書き込まれる。現行の最大 rawValue は <strong>97</strong>（リフトの乗り場）。<strong>欠番 16〜18・31・33 は建築特化への転換で廃止した食べ物</strong>（鶏肉・豚肉・牛肉・パン・金のリンゴ）で、値をずらさないため再利用しない。旧セーブに残っていても読み込み時に空気として読む（所持品では読み飛ばす）。テクスチャアトラスの列は <code>Block.atlasColumn</code> で rawValue から切り離してあり、形違い・色違いは素材の列を借りるので列を消費しない。</p>
+
+  <h3>性質の定義</h3>
   <table>
-    <tr><th>値</th><th>名前</th><th>カテゴリ</th><th>備考</th></tr>
-    <tr><td>0</td><td>air</td><td>-</td><td>透明・衝突なし</td></tr>
-    <tr><td>1</td><td>grass</td><td>地形</td><td>上面が緑、側面が土</td></tr>
-    <tr><td>2</td><td>dirt</td><td>地形</td><td></td></tr>
-    <tr><td>3</td><td>stone</td><td>地形</td><td>建材の主素材。ホットバー固定枠</td></tr>
-    <tr><td>4</td><td>sand</td><td>地形</td><td>水辺・砂漠に生成。精錬でガラスに変換可</td></tr>
-    <tr><td>5</td><td>snow</td><td>地形</td><td>山岳バイオーム高所</td></tr>
-    <tr><td>6</td><td>wood</td><td>自然</td><td>木の幹。板材の材料</td></tr>
-    <tr><td>7</td><td>brick</td><td>建築</td><td>石の精錬で入手</td></tr>
-    <tr><td>8</td><td>leaves</td><td>自然</td><td>半透明、衝突なし</td></tr>
-    <tr><td>9</td><td>water</td><td>液体</td><td>半透明。泳げる（blocksMovement=false）。設置不可</td></tr>
-    <tr><td>10</td><td>coalOre</td><td>鉱石</td><td>精錬の燃料</td></tr>
-    <tr><td>11</td><td>ironOre</td><td>鉱石</td><td></td></tr>
-    <tr><td>12</td><td>goldOre</td><td>鉱石</td><td>金インゴット→金ブロックの起点</td></tr>
-    <tr><td>13</td><td>diamondOre</td><td>鉱石</td><td>深部にのみ生成</td></tr>
-    <tr><td>14</td><td>lava</td><td>液体</td><td>破壊不可・設置不可。<strong>接触ダメージは廃止</strong></td></tr>
-    <tr><td>15</td><td>cactus</td><td>自然</td><td>砂漠バイオーム。<strong>接触ダメージは廃止</strong></td></tr>
-    <tr><td>16〜18</td><td><s>chickenMeat / pork / beef</s></td><td>欠番</td><td>食料の廃止により削除（rawValue は再利用しない）</td></tr>
-    <tr><td>19</td><td>torch</td><td>光源</td><td>クロス表示ノード。松明クラフトで入手。ホットバー固定枠</td></tr>
-    <tr><td>20</td><td>chest</td><td>機能</td><td>タップでチェストシートを開く</td></tr>
-    <tr><td>21</td><td>bed</td><td>機能</td><td>タップでスポーン変更。夜なら朝までスキップ</td></tr>
-    <tr><td>22</td><td>furnace</td><td>機能</td><td>タップでかまどシートを開く</td></tr>
-    <tr><td>23</td><td>ironIngot</td><td>素材</td><td>かまどで鉄鉱石から精錬。鉄のツルハシの材料</td></tr>
-    <tr><td>24</td><td>goldIngot</td><td>素材</td><td>かまどで金鉱石から精錬。金ブロックの材料</td></tr>
-    <tr><td>25</td><td>farmland</td><td>農業</td><td>耕地ブロック</td></tr>
-    <tr><td>26</td><td>wheat</td><td>農業</td><td>未成熟の小麦（若芽）。初期所持3個</td></tr>
-    <tr><td>27</td><td>wheatMature</td><td>農業</td><td>成熟した小麦。設置不可（成長システムの結果としてのみ存在する）</td></tr>
-    <tr><td>28</td><td>flower</td><td>装飾</td><td>平原の地表装飾。設置可能</td></tr>
-    <tr><td>29</td><td>tallGrass</td><td>装飾</td><td>平原の地表装飾。設置可能</td></tr>
-    <tr><td>30</td><td>mushroom</td><td>装飾</td><td>平原の地表装飾。設置可能（食用の用途は廃止）</td></tr>
-    <tr><td>31</td><td><s>bread</s></td><td>欠番</td><td>食料の廃止により削除</td></tr>
-    <tr><td>32</td><td>glass</td><td>建築</td><td>砂の精錬で入手。ホットバー固定枠</td></tr>
-    <tr><td>33</td><td><s>goldenApple</s></td><td>欠番</td><td>食料の廃止により削除</td></tr>
-    <tr><td><strong>34</strong></td><td>stoneBricks（石レンガ）</td><td>建築</td><td>石4→4。壁・床の主役。ホットバー固定枠</td></tr>
-    <tr><td><strong>35</strong></td><td>polishedStone（磨き石）</td><td>建築</td><td>石2→2。のっぺりした面。窓枠や縁取りに</td></tr>
-    <tr><td><strong>36</strong></td><td>planks（板材）</td><td>建築</td><td>木1→4。木造の壁・床。ホットバー固定枠</td></tr>
-    <tr><td><strong>37</strong></td><td>goldBlock（金ブロック）</td><td>建築</td><td>金インゴット4→1。金インゴットの出口となる高コストな装飾用建材（2026-09-17 追加）</td></tr>
+    <tr><th>列</th><th>プロパティ</th><th>意味</th></tr>
+    <tr><td>固体</td><td>isSolid</td><td>隣接面の遮蔽判定・当たり判定に使う。水は固体だが <code>blocksMovement</code> は false（泳げる）</td></tr>
+    <tr><td>立方体</td><td>rendersAsBlock</td><td>ChunkMesher が立方体（ハーフは下半分）として描くか。× は別ノード（FurnitureNode・交差した板）で描くか、持ち物だけの物</td></tr>
+    <tr><td>置ける</td><td>isPlaceable</td><td>設置プレビュー・設置・スポイト・クリエイティブの所持品一覧が共通で使うゲート</td></tr>
+    <tr><td>形</td><td>isStairs / isSlab / isFence</td><td>階段・ハーフ（<code>collisionHeight</code> 0.5）・柵（細い柱で隣とつながる）</td></tr>
+    <tr><td>透ける</td><td>rendersTranslucent</td><td>水と同じ組の半透明メッシュ（深度を書かない）で描く。氷の階段は別ノード側で透かす</td></tr>
+    <tr><td>向き</td><td>Chunk.storesOrientation</td><td>チャンクの「向きの追記」に保存値を書くか</td></tr>
+    <tr><td>編集</td><td>isEditable</td><td>編集モードで持ち上げ・置き換えの対象にできるか（回せるのは <code>isRotatable</code> ＝ 階段・チェスト・かまど・作業台・石切台・船）</td></tr>
   </table>
-  <p>ブロックは <code>isSolid</code> / <code>blocksMovement</code> / <code>rendersAsBlock</code> / <code>isRaycastTarget</code> / <code>occludesNeighborFaces</code> に加え、<strong><code>isPlaceable</code></strong>（プレイヤーが設置できるか）を持つ。isPlaceable は設置プレビュー（ゴースト）・設置処理・スポイト・クリエイティブの所持品一覧が共通で参照する単一のゲートで、水・溶岩・成熟小麦は除外される。</p>
+  <p>凡例: ○＝はい / ×＝いいえ / -＝世界に置かれない（持ち物だけ）。</p>
+
+  <table>
+    <tr><th>値</th><th>名前</th><th>分類</th><th>固体</th><th>立方体</th><th>置ける</th><th>形</th><th>透ける</th><th>向き</th><th>編集</th><th>備考</th></tr>
+    <tr><td>0</td><td>air</td><td>-</td><td>×</td><td>×</td><td>×</td><td></td><td>×</td><td>×</td><td>×</td><td>空気</td></tr>
+    <tr><td>1〜5</td><td>grass / dirt / stone / sand / snow</td><td>地形</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>石は建材の主素材。砂は精錬でガラス</td></tr>
+    <tr><td>6</td><td>wood（原木）</td><td>地形</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>isLog。葉を支える幹</td></tr>
+    <tr><td>7</td><td>brick（レンガ）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td></td></tr>
+    <tr><td>8</td><td>leaves（葉）</td><td>地形</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>isLeaves。幹とのつながりを失うと消える（LeafDecay）</td></tr>
+    <tr><td>9</td><td>water</td><td>地形</td><td>○</td><td>○</td><td>×</td><td></td><td>○</td><td>×</td><td>×</td><td>blocksMovement=false。隣の面を隠さない</td></tr>
+    <tr><td>10〜13</td><td>coalOre / ironOre / goldOre / diamondOre</td><td>地形</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>鉱石</td></tr>
+    <tr><td>14</td><td>lava</td><td>地形</td><td>○</td><td>○</td><td>×</td><td></td><td>×</td><td>×</td><td>×</td><td>接触ダメージは廃止</td></tr>
+    <tr><td>15</td><td>cactus</td><td>地形</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>接触ダメージは廃止</td></tr>
+    <tr><td>16〜18</td><td><s>chickenMeat / pork / beef</s></td><td>欠番</td><td colspan="8">食べ物の廃止で削除。旧セーブでは空気として読む</td></tr>
+    <tr><td>19</td><td>torch</td><td>家具/設備</td><td>×</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>光源</td></tr>
+    <tr><td>20</td><td>chest</td><td>家具/設備</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>回せる。BlockUse.chest。中身は ChestRecord</td></tr>
+    <tr><td>21</td><td>bed（足側）</td><td>家具/設備</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>置くと向きの先へ bedHead を自動で置く。保存値の 0x04 が2マスの印。回さず持ち上げて置き直す</td></tr>
+    <tr><td>22</td><td>furnace</td><td>家具/設備</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>回せる。BlockUse.furnace</td></tr>
+    <tr><td>23 / 24</td><td>ironIngot / goldIngot</td><td>素材</td><td>×</td><td>×</td><td>×</td><td></td><td>×</td><td>×</td><td>-</td><td>持ち物だけ（照準の対象外）</td></tr>
+    <tr><td>25</td><td>farmland</td><td>地形</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>耕した土</td></tr>
+    <tr><td>26</td><td>wheat（若芽）</td><td>植物と染料</td><td>×</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>×</td><td>成長の状態を持ち運べないので編集不可。成長タイマーはメモリのみ（ロード時に拾い直す）</td></tr>
+    <tr><td>27</td><td>wheatMature</td><td>植物と染料</td><td>×</td><td>○</td><td>×</td><td></td><td>×</td><td>×</td><td>×</td><td>成長の結果としてだけ存在する</td></tr>
+    <tr><td>28〜30</td><td>flower / tallGrass / mushroom</td><td>植物と染料</td><td>×</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>交差した板（isCrossPlant）。置き換えでは置けない（下の土が要る）</td></tr>
+    <tr><td>31</td><td><s>bread</s></td><td>欠番</td><td colspan="8">食べ物の廃止で削除</td></tr>
+    <tr><td>32</td><td>glass</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>砂の精錬</td></tr>
+    <tr><td>33</td><td><s>goldenApple</s></td><td>欠番</td><td colspan="8">食べ物の廃止で削除</td></tr>
+    <tr><td>34〜38</td><td>stoneBricks / polishedStone / planks / goldBlock / diamondBlock</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>石レンガ・磨き石・板材・金ブロック・ダイヤブロック</td></tr>
+    <tr><td>39</td><td>stoneStairs</td><td>形違い</td><td>○</td><td>×</td><td>○</td><td>階段</td><td>×</td><td>○</td><td>○</td><td>別ノード描画。回せる</td></tr>
+    <tr><td>40</td><td>stoneSlab</td><td>形違い</td><td>○</td><td>○</td><td>○</td><td>ハーフ</td><td>×</td><td>×</td><td>○</td><td>下半分だけ（メッシャー対応）</td></tr>
+    <tr><td>41 / 42</td><td>workbench / stonecutter</td><td>家具/設備</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>作業台・石切台。回せる。BlockUse</td></tr>
+    <tr><td>43 / 44</td><td>stoneChips / diamondGem</td><td>素材</td><td>×</td><td>×</td><td>×</td><td></td><td>×</td><td>×</td><td>-</td><td>石片（石材加工の副産物）・ダイヤ素材。持ち物だけ</td></tr>
+    <tr><td>45</td><td>bedHead</td><td>家具/設備</td><td>○</td><td>×</td><td>×</td><td></td><td>×</td><td>○</td><td>○</td><td>2マスのベッドの頭側。所持・単独設置はできない。どちらを壊しても両方消え、ベッド1個が返る</td></tr>
+    <tr><td>46</td><td>sandstone</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>砂岩</td></tr>
+    <tr><td>47 / 48</td><td>woodSlab / woodStairs</td><td>形違い</td><td>○</td><td>○ / ×</td><td>○</td><td>ハーフ / 階段</td><td>×</td><td>× / ○</td><td>○</td><td>板材の絵を借りる</td></tr>
+    <tr><td>49〜52</td><td>stoneBrickStairs / stoneBrickSlab / sandstoneStairs / sandstoneSlab</td><td>形違い</td><td>○</td><td>階段× / ハーフ○</td><td>○</td><td>階段 / ハーフ</td><td>×</td><td>階段○ / ハーフ×</td><td>○</td><td></td></tr>
+    <tr><td>53</td><td>lantern</td><td>家具/設備</td><td>×</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>保存値の 0x04 が「天井から吊るす」印</td></tr>
+    <tr><td>54 / 55</td><td>woodFence / stoneWall</td><td>形違い</td><td>○</td><td>×</td><td>○</td><td>柵</td><td>×</td><td>×</td><td>○</td><td>細い柱。隣へ横木を伸ばしてつながる（FenceConnection）</td></tr>
+    <tr><td>56</td><td>wool</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>羊毛（ハサミで刈る）</td></tr>
+    <tr><td>57〜59</td><td>wildStrawberry / sunflower / indigoPlant</td><td>植物と染料</td><td>×</td><td>×</td><td>×</td><td></td><td>×</td><td>×</td><td>×</td><td>実った株。育てた結果としてだけ存在し、摘んで実と種にする</td></tr>
+    <tr><td>60〜62</td><td>strawberrySeed / sunflowerSeed / indigoSeed</td><td>植物と染料</td><td>×</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>×</td><td>土に植えると若芽。成長の状態を持ち運べないので編集不可</td></tr>
+    <tr><td>63〜72</td><td>strawberries / sunflowerPetals / indigoLeaves / 染料7色（red / orange / yellow / green / blue / purple / black）</td><td>植物と染料</td><td>×</td><td>×</td><td>×</td><td></td><td>×</td><td>×</td><td>-</td><td>isDyeItem。持ち物だけ（照準の対象外）</td></tr>
+    <tr><td>73〜79</td><td>染めた羊毛7色</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>羊毛の白い絵に色を掛けて描く（Block.tint）</td></tr>
+    <tr><td>80〜86</td><td>染めた石レンガ7色</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>明るい石レンガの絵に色を掛けて描く</td></tr>
+    <tr><td><strong>87</strong></td><td>spruceLog（針葉樹の原木）</td><td>雪山の資材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>isLog。雪山の森（2026-10-01）</td></tr>
+    <tr><td><strong>88</strong></td><td>spruceLeaves（針葉樹の葉）</td><td>雪山の資材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>isLeaves。雪をかぶった葉</td></tr>
+    <tr><td><strong>89</strong></td><td>sprucePlanks（針葉樹の板）</td><td>雪山の資材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>原木1→4</td></tr>
+    <tr><td><strong>90</strong></td><td>ice（氷）</td><td>雪山の資材</td><td>○</td><td>○</td><td>○</td><td></td><td>○</td><td>×</td><td>○</td><td>凍った湖・氷の洞窟。隣の面を隠さない</td></tr>
+    <tr><td><strong>91</strong></td><td>boat（船）</td><td>乗り物/仕掛け</td><td>×</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>×</td><td>海面（真下が水）にだけ置ける。データは真ん中の1マスで、見た目は向きの線上に3マス。回せるが持ち上げ不可（壊して拾う）。BlockUse.boat（2026-10-01）</td></tr>
+    <tr><td><strong>92</strong></td><td>spruceStairs</td><td>形違い</td><td>○</td><td>×</td><td>○</td><td>階段</td><td>×</td><td>○</td><td>○</td><td>針葉樹の板3→2（2026-10-01）</td></tr>
+    <tr><td><strong>93</strong></td><td>spruceSlab</td><td>形違い</td><td>○</td><td>○</td><td>○</td><td>ハーフ</td><td>×</td><td>×</td><td>○</td><td>針葉樹の板3→6</td></tr>
+    <tr><td><strong>94</strong></td><td>spruceFence</td><td>形違い</td><td>○</td><td>×</td><td>○</td><td>柵</td><td>×</td><td>×</td><td>○</td><td>針葉樹の板3→2</td></tr>
+    <tr><td><strong>95</strong></td><td>iceStairs</td><td>形違い</td><td>○</td><td>×</td><td>○</td><td>階段</td><td>○（別ノード）</td><td>○</td><td>○</td><td>氷3→1（石切台）</td></tr>
+    <tr><td><strong>96</strong></td><td>iceSlab</td><td>形違い</td><td>○</td><td>○</td><td>○</td><td>ハーフ</td><td>○</td><td>×</td><td>○</td><td>氷3→6（石切台）</td></tr>
+    <tr><td><strong>97</strong></td><td>liftStation（リフトの乗り場）</td><td>乗り物/仕掛け</td><td>×</td><td>×</td><td>×</td><td></td><td>×</td><td>×</td><td>×</td><td>雪山の崖に最初から置いてある細い柱。壊せない・動かせない・作れない。BlockUse.lift（2026-10-01）</td></tr>
+  </table>
+  <ul>
+    <li><strong>置き換えで置けるか</strong>（<code>canReplaceInto</code>）: isPlaceable の物のうち、bed・bedHead・wheat・wheatMature・boat・交差した板の植物と種を除いたもの（ベッドは2マス、植物は下の土が要る、船は海面だけ）</li>
+    <li><strong>使える物</strong>（<code>BlockUse</code>）: workbench・stonecutter・chest・furnace・bed（頭側を狙ってもベッド）・boat（乗る）・lift（liftStation に乗る）。狙っている間、置くボタンが「使う」「乗る」に替わる</li>
+    <li>船・リフトは「動くブロック」の仕組みを使わない。乗っている間はプレイヤーの動き方を切り替え、見た目のノードを付けるだけ（船は乗ると船のブロックを外し、降りると係留の場所か今の所へ置き直す。リフトの位置は <code>Lift</code> の定義で決まり、ワールドには保存しない）</li>
+  </ul>
 
   <h2>PlacementTally（設置の集計・ランタイム値型）</h2>
   <pre><code>struct PlacementTally: Equatable {
@@ -182,16 +281,16 @@ erDiagram
   <ul>
     <li><strong>hp は廃止</strong>（体力・ダメージ・死亡の仕組みごと削除）</li>
     <li>視点モードの権威は <code>GameInput.isThirdPerson</code>（既定 false ＝ 一人称）で、レンダーループが毎フレーム Player へ同期する</li>
-    <li>クリエイティブの昇降は 6 m/s で、Y を 0〜63（Chunk.sizeY-1）にクランプする。落下死が無くなったため、下限が無いと世界の下へ抜けて詰むのを防ぐ目的がある</li>
-    <li>位置・時刻・天候・動物は WorldRecord に保存されない（毎回スポーン地点・正午・晴れから再開）</li>
+    <li>クリエイティブの昇降は 6 m/s で、Y を 0〜63（Chunk.sizeY-1）にクランプする</li>
+    <li>位置・時刻・天候・動物・船に乗っている状態の位置は WorldRecord に保存されない（毎回スポーン地点から再開）</li>
   </ul>
 
   <h2>GameInput（UI状態、ObservableObject）</h2>
-  <p>SwiftUI 側から参照される <code>@Published</code> の集合。レンダースレッドとの橋渡しは「値が変化したときだけ <code>DispatchQueue.main.async</code> でミラー反映する」規約で統一されている。主なカテゴリ:</p>
+  <p>SwiftUI 側から参照される <code>@Published</code> の集合。レンダースレッドとの橋渡しは「値が変化したときだけ <code>DispatchQueue.main.async</code> でミラー反映する」規約で統一されている（所持品だけは上記「所持品の2つの写し」の規則）。主なカテゴリ:</p>
   <table>
     <tr><th>カテゴリ</th><th>代表的なプロパティ</th></tr>
-    <tr><td>プレイヤー状態</td><td>selectedBlock, selectedTool, unlockedTools, inventory（初期値は torch2 / chest1 / wheat3）</td></tr>
-    <tr><td>建築支援</td><td>canUndo（アンドゥ可否）, tally（PlacementTally のミラー）, breakProgress</td></tr>
+    <tr><td>プレイヤー状態</td><td>selectedBlock, selectedTool, unlockedTools, inventory（初期値は torch2 / chest1 / wheat3）, craftingJob, toolCraftingJob, isInBoat</td></tr>
+    <tr><td>建築支援</td><td>canUndo（アンドゥ可否）, tally（PlacementTally のミラー）, breakProgress, carriedBlock（編集モードで持ち上げ中の物）</td></tr>
     <tr><td>UI表示制御</td><td>showCrafting, showSettings, showChest, showInventory, showFurnace, showMenu, showWorkCard, toastMessage, goalBannerTitle / goalBannerHint</td></tr>
     <tr><td>進行フラグ</td><td>hasPlacedFurnace, hasPlacedBed, hasSmeltedGlass, hasCompletedAllObjectives, hasSeenLavaWarning</td></tr>
     <tr><td>探索HUD</td><td>dayPhaseLabel, compassLabel, altitudeLabel, biomeLabel, beacons, waypointPosition</td></tr>
@@ -202,14 +301,22 @@ erDiagram
     <tr><td>その他</td><td>isCreative, weather, isWorldReady, sleepFade, sessionStats（@Published ではない内部計測）</td></tr>
   </table>
 
-  <h2>インベントリ / チェストのシリアライズ形式</h2>
-  <p>個数を UInt8（最大255）でクランプしていた旧形式から、上限を撤廃した新形式に移行済み。先頭バイトで新旧を判別する。</p>
+  <h2>所持品・チェストの直列化</h2>
+  <p>所持品（inventoryData）・チェスト（slotsData）・種別ごとの設置累計（placedByBlockData）は同じ形式。個数を UInt8（最大255）でクランプしていた旧形式から、上限を撤廃した新形式に移行済み。先頭バイトで新旧を判別する。</p>
   <table>
     <tr><th>形式</th><th>構造</th><th>個数上限</th></tr>
-    <tr><td>旧形式</td><td>[rawValue: UInt8, count: UInt8] の2バイトペアの並び</td><td>255</td></tr>
+    <tr><td>旧形式（読み取り専用）</td><td>[rawValue: UInt8, count: UInt8] の2バイトペアの並び</td><td>255</td></tr>
     <tr><td>新形式</td><td>先頭に 0xFF、以降 [rawValue: UInt8, countLo: UInt8, countHi: UInt8] の3バイト組（UInt16 リトルエンディアン）</td><td>65535</td></tr>
   </table>
-  <p>0xFF は Block の最大 rawValue（37）と衝突しないため、先頭バイトだけで安全に新旧を判別できる。デコードは常に両形式に対応し、エンコードは常に新形式で書く。<strong>種別ごとの設置累計（placedByBlockData）も同じ形式を再利用する</strong>。</p>
+  <p>0xFF は Block の最大 rawValue（97）と衝突しないため、先頭バイトだけで安全に新旧を判別できる。デコードは常に両形式に対応し、エンコードは常に新形式で書く。個数0の品は書き出さず、知らない rawValue（欠番）は読み飛ばす。エンコード・デコードは <code>GameDomain.swift</code> と <code>WorldStore</code> の2か所に同じ実装がある（揃えて変えること）。</p>
+
+  <h3>加工ジョブ（craftingJobData / toolCraftingJobData）の形式</h3>
+  <p><code>JSONEncoder</code> 既定の JSON。ジョブが無ければ空 Data。読み込み時、期限を過ぎたジョブはその場で完成させる。</p>
+  <table>
+    <tr><th>型</th><th>項目</th></tr>
+    <tr><td>CraftingJob</td><td>recipeName（String）・output（Block の rawValue）・outputCount・station（"手作業" / "作業台" / "石切台" / "かまど"）・startedAt・duration・byproduct（{block, count}。任意。無い旧データも読める）</td></tr>
+    <tr><td>ToolCraftingJob</td><td>recipeName・unlocks（Tool の rawValue）・station・startedAt・duration</td></tr>
+  </table>
 
   <h3>日別設置数（dailyPlacedData）の形式</h3>
   <table>
@@ -226,9 +333,10 @@ erDiagram
     現状は <code>VoxelSchemaV1</code>（1.0.0）のみで移行ステージは無く、軽量マイグレーションに任せている。軽量マイグレーションが効くのは「デフォルト値つきプロパティの追加・削除」など情報を失わない変更に限られるため、<strong>各 @Model の全プロパティにデフォルト値を置く</strong>。ボクセルゲームではワールドが積み上げた成果そのもので、1回の全損が致命傷になる。
   </div>
   <ul>
-    <li>列の追加だけで済むならデフォルト値つきで足すだけでよい（V1 のまま）。実績: placedBlockCount・placedByBlockData・dailyPlacedData・firstPlacedAt は全てデフォルト値つきで追加した</li>
+    <li>列の追加だけで済むならデフォルト値つきで足すだけでよい（V1 のまま）。実績: placedBlockCount・placedByBlockData・dailyPlacedData・firstPlacedAt・craftingJobData・toolCraftingJobData・stageID・stageCompletedAt・写真3枚・worldKindRaw・isRidingBoat・archipelagoRevision は全てデフォルト値つきで追加した</li>
     <li>型変更・リネーム・データ加工が必要なら、先に現行の型定義をコピーして V1 内へ固定し、新定義を V2 として作る（V1 が現行型を参照したまま書き換えると移行の起点が失われる）</li>
     <li>新しい Block を追加する場合は既存 rawValue を変更せず末尾に追加する。削除した Block の rawValue は欠番として再利用しない</li>
+    <li>チャンクの中身に後から物を足す必要がある場合（群島の改訂など）は、スキーマではなく WorldRecord の改訂番号で一度だけ書き込む（ArchipelagoMigration）</li>
     <li>永続ストアの生成に失敗した場合は<strong>メモリ内ストアで起動する</strong>（失敗は Logger に残す）。ここで停止するとアプリが二度と開けず、ワールドの吸い出し手段まで失われるため「起動はする／このセッションの保存はされない」側に倒している</li>
   </ul>
 
@@ -238,6 +346,7 @@ erDiagram
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
     <tr><td>2.0</td><td>2026-07-05</td><td>実装との大幅な乖離を解消する全面改訂。永続化方式（バイナリファイル→SwiftData 3モデル）・Block一覧（28→34種）・WorldRecord/GameInputの実フィールド・インベントリのシリアライズ形式変更を反映</td></tr>
     <tr><td>3.0</td><td>2026-09-17</td><td>建築特化への転換を反映する改訂。WorldRecord から hp / hunger / hasCraftedTorch / hasCraftedGoldenApple を削除し、placedBlockCount・placedByBlockData・dailyPlacedData・firstPlacedAt を追加。Block 一覧に建材4種（34〜37）を追加し食料5種を欠番として明記。PlacementTally・SessionStats・日別設置数の直列化形式・スキーマ版管理（VoxelSchemaV1）の節を新設。GameInput の視点・実験的設定・ホットバー関連プロパティを更新</td></tr>
+    <tr><td>4.0</td><td>2026-10-02</td><td>build 24 とその後の修正までを反映する改訂。Block 一覧を 0〜97 に拡張し、分類（地形・建材・形違い・家具/設備・植物と染料・雪山の資材・乗り物/仕掛け・素材）と性質（固体・立方体・置ける・形・透ける・向きの保存・編集）の表に作り直した（針葉樹・氷・船 87〜91、針葉樹/氷の形違い 92〜96、リフトの乗り場 97 を含む）。チャンクの保存形式に向きの追記（"VXOR"・版1）を追加し、ブロック配列のインデックス式の誤り（旧記載 x + 16*(y + 64*z) → 正 y×256 + z×16 + x）を修正。WorldRecord に craftingJobData・toolCraftingJobData・ステージ系5列（写真3枚は externalStorage）・worldKindRaw・isRidingBoat・archipelagoRevision を既定値つきで追記し、群島の改訂の入れ直し（ArchipelagoMigration）の節を新設。所持品の2つの写し（CF-025 の修正）・加工ジョブの JSON 形式・チェストの持ち上げ時の中身の扱いを追記</td></tr>
   </table>
 
   <script>
@@ -247,7 +356,7 @@ erDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-09-17</footer>
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
 </div>
 </body>
 </html>

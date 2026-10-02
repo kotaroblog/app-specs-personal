@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - 編集モード</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / 編集モード</div>
+
+  <header class="site-header">
+    <h1>編集モード</h1>
+    <p>置いたブロックを配置しなおす操作。置き換え・持ち上げて別の場所へ置く・置いたまま回す</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-EDIT</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>本人の要望（2026-09-27「ブロックを配置しなおす操作もできたらすごくいい」）から入れた操作（CF17）。本人の決定で a 置き換え・b 向きの変更・c 移動のすべてを、<strong>編集ボタンで切り替える方式</strong>にした。編集モードのあいだは、緑のボタンが「置き換え」（持ち上げ中は「ここに置く」）、赤のボタンが「持ち上げる」になり、回せる物を狙うとスポイトの位置に「回す」が出る。</p>
+  <p>置き換え・持ち上げは<strong>壊すのと同じ時間</strong>がかかる（地形の石を一瞬で取れる抜け道を作らない）。クリエイティブは一瞬（0.05 秒）。回すはどちらも一瞬。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（編集ボタン・置く／壊すボタン・回すボタン・十字の下の案内）</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant GI as GameInput
+  participant GV as GameSceneView
+  participant CM as ChunkManager
+
+  U->>GI: 編集ボタン（isEditMode = true）
+  Note over GI: 押している途中の操作をすべて止める
+  U->>GV: 赤「持ち上げる」を長押し
+  GV->>GV: holdBlockedReason（できない理由があれば1回だけ知らせる）
+  loop 壊すのと同じ時間
+    GV->>GV: 進捗を進める
+  end
+  GV->>CM: detachBlock（向き・チェストの中身を控えて外す）
+  GV->>GI: setCarried（持ち上げ中。所持品にも世界にも無い）
+  U->>GV: 紫「ここに置く」
+  GV->>GI: takeCarried
+  alt 置ける
+    GV->>CM: 持ち上げたときの向き・中身のまま置く
+  else 置けない
+    GV->>GI: setCarried（持ち上げたままに戻す）・理由を知らせる
+  end
+  U->>GI: 編集ボタン（isEditMode = false）
+  GI->>GI: 持ち上げ中の物があれば所持品へ戻す
+  </div>
+
+  <h2>切り替えと表示</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>編集ボタン</td><td>鉛筆の丸（<code>pencil.circle</code>。オンは塗りつぶし・紫・白い地）。44pt。読み上げ「編集モード」・値「オン／オフ」・ヒント「オンにすると、置き換え・持ち上げる・回すが使えます」</td></tr>
+    <tr><td>切り替えたとき</td><td>押している途中の「壊す／持ち上げる」「置き換え」「ジャンプ」をすべて止める（同じボタンの意味が変わるため。残すと、オフにしたあと持ち上げのつもりで掘り続けたり、オンにした瞬間に押していないのに置き換えが進んだりした）。VoiceOver のトグルも止めた状態へ戻す</td></tr>
+    <tr><td>オフにしたとき</td><td>持ち上げ中の物があれば所持品へ戻し「持ち上げていた◯◯を所持品に戻しました」（置く手段が無くなるため）</td></tr>
+    <tr><td>赤のボタン</td><td>「壊す」→「持ち上げる」</td></tr>
+    <tr><td>緑のボタン</td><td>持ち上げていないとき＝長押しの「置き換え」。持ち上げ中＝紫の「ここに置く」（読み上げ「持ち上げた◯◯をここに置く」）</td></tr>
+    <tr><td>回すボタン</td><td>編集中に回せる物（階段・1マスの家具）を狙っているあいだだけ、スポイトの位置に出す（<code>arrow.clockwise</code>）</td></tr>
+    <tr><td>十字の下の案内</td><td>持ち上げていないとき「編集中 ─ 長押しで［置き換え］［持ち上げる］」、持ち上げ中「持ち上げ中：◯◯ ─ 置く場所を狙って［ここに置く］」（紫の地）</td></tr>
+    <tr><td>編集中に出さないもの</td><td>使える物（作業台・チェスト・船・リフトの乗り場など）を狙ったときの「使う／乗る」（緑は置き換えなので）。羊の毛刈りもしない（CF-015）</td></tr>
+  </table>
+
+  <h2>操作</h2>
+  <table>
+    <tr><th>操作</th><th>入力</th><th>結果</th></tr>
+    <tr><td>置き換え</td><td>緑を長押し（壊すのと同じ時間）</td><td>狙ったブロックを、選んでいる建材にその場で差し替える。向きは今の向き（通常の置き方と同じ）。元のブロックは所持品へ戻り（チェストは中身も）、選んだ建材を1つ減らす。クリエイティブは所持品を動かさない（チェストの中身も戻さない）。設置の集計に数える</td></tr>
+    <tr><td>持ち上げる</td><td>赤を長押し（壊すのと同じ時間）</td><td>狙ったブロックを状態ごと外して持つ（向き・チェストの中身）。持っているあいだ、その物は所持品にも世界にも無い。2マスのベッドは両方外してベッド1つとして持つ</td></tr>
+    <tr><td>ここに置く</td><td>紫をタップ（持ち上げ中）</td><td>狙った所へ、持ち上げたときの向きとチェストの中身のまま置く。ベッドだけは2マスなので今の向きで置く。置ける場所の条件は通常の設置と同じ。置けなければ持ち上げたまま</td></tr>
+    <tr><td>回す</td><td>回すボタンをタップ</td><td>狙った物を置いたまま 90 度回す（保存している向き +1）。チェストの中身は位置で記録しているのでそのまま残る</td></tr>
+  </table>
+
+  <h3>長押しの時間</h3>
+  <p>置き換え・持ち上げは、狙ったブロックを今の道具で壊す時間（<code>miningDuration</code>）と同じ。例: 土・砂 0.3 秒、素手の石 5 秒。クリエイティブは 0.05 秒。進捗の扱い（別のブロックへ狙いを移したときの退避・猶予）も壊すと同じ。</p>
+
+  <h3>回せる物</h3>
+  <p>階段（すべての階段）・チェスト・かまど・作業台・石切台・船（<code>Block.isRotatable</code>）。2マスのベッドは頭側のマスが動くので回さない（持ち上げて置き直す）。</p>
+
+  <h2>対象外の物</h2>
+  <table>
+    <tr><th>物</th><th>持ち上げ・置き換えの対象</th><th>理由</th></tr>
+    <tr><td>空気・水・溶岩</td><td>対象外</td><td>掴めない</td></tr>
+    <tr><td>小麦（育ち中・実った）</td><td>対象外</td><td>成長の状態を持ち運べない（壊して植え直す）</td></tr>
+    <tr><td>染料の植物の若芽（いちご・ひまわり・藍の種）</td><td>対象外</td><td>小麦と同じく成長の状態を持ち運べない（CF29）</td></tr>
+    <tr><td>実った染料の植物（野いちご・ひまわり・藍）</td><td>対象外</td><td>摘んで実と種にする物。所持品に入ると置けず何にも使えない物になっていた（build 22 のパス5）</td></tr>
+    <tr><td>船</td><td>対象外（回すのは可）</td><td>水の上にしか置けない。陸へ置けないよう、壊して拾う（CF31）</td></tr>
+    <tr><td>リフトの乗り場</td><td>対象外（壊すのも不可）</td><td>最初から置いてある物。動かすとリフトが動かなくなる（CF32）</td></tr>
+    <tr><td>世界の底</td><td>対象外</td><td>壊せない段</td></tr>
+  </table>
+  <p>置き換えに<strong>使えない</strong>建材（選んでいる側）: ベッド・小麦・船・植物と種（下の土が要るため通常の置き方で置く）、およびもともと置けない物。</p>
+
+  <h2>できない理由の知らせ</h2>
+  <p>長押しを始められないときは、押しているあいだに1回だけ知らせる。この押し続けで持ち上げ・置き換えを終えた直後の所では知らせない（終えた直後から断る知らせが出て、うまくいったのに断られたように見えたため。CF-014。持ち上げのあとは離すまで、置き換えのあとはそのマスの上だけ止める）。</p>
+  <table>
+    <tr><th>場面</th><th>知らせ</th></tr>
+    <tr><td>世界の底を狙った（持ち上げ・置き換え）</td><td>世界の底は動かせません</td></tr>
+    <tr><td>リフトの乗り場を狙った</td><td>リフトの乗り場は動かせません</td></tr>
+    <tr><td>対象外の物を狙った</td><td>◯◯は動かせません</td></tr>
+    <tr><td>持ち上げ中に、さらに持ち上げようとした</td><td>持ち上げている物を先に置いてください</td></tr>
+    <tr><td>置き換えに使えない建材を選んでいる</td><td>◯◯は置き換えに使えません</td></tr>
+    <tr><td>選んでいる建材を持っていない（クリエイティブ以外）</td><td>選択中のブロックがありません</td></tr>
+    <tr><td>狙った物と選んでいる建材が同じ（ベッドの頭側はベッドとして比べる）</td><td>同じブロックです</td></tr>
+    <tr><td>置き換え: 通れない建材で自分の体に重なる</td><td>自分の位置には置けません</td></tr>
+    <tr><td>置き換え・ここに置く: ランタンに床も天井も無い</td><td>ランタンは床に置くか、天井から吊るしてください</td></tr>
+    <tr><td>ここに置く: 何も狙っていない</td><td>届く場所にブロックがありません</td></tr>
+    <tr><td>ここに置く: 高さの範囲の外</td><td>これより下には置けません／これより上には置けません</td></tr>
+    <tr><td>ここに置く: 置く所が空気・水でない</td><td>そこには置けません</td></tr>
+    <tr><td>ここに置く: 植物を草・土の上面以外に</td><td>草か土の上に置けます</td></tr>
+    <tr><td>ここに置く: ベッドの頭側が置けない</td><td>（ベッドの通常の設置と同じ理由）</td></tr>
+    <tr><td>ここに置く: 頭の上がふさがっていて足場積みできない</td><td>頭の上がふさがっていて登れません</td></tr>
+    <tr><td>ここに置く: 自分の体に重なる</td><td>自分の位置には置けません</td></tr>
+    <tr><td>回す: ベッドを狙った</td><td>ベッドは回せません（持ち上げて置き直してください）</td></tr>
+    <tr><td>回す: 回せない物を狙った</td><td>◯◯は回せません</td></tr>
+  </table>
+  <p>ここに置く で自分の真下（足場積みできる所）に置いたときは、通常の設置と同じくプレイヤーを持ち上げる。</p>
+
+  <h2>持ち上げ中の物とチェストの中身</h2>
+  <table>
+    <tr><th>場面</th><th>扱い</th></tr>
+    <tr><td>持ち上げ中</td><td>所持品にも世界にも無い。チェストは中身ごと持つ（チェストの記録は消す。報酬チェストの台座＝レンガの上は空の記録を残して中身の再生成を防ぐ）</td></tr>
+    <tr><td>ワールドを出る・アプリが裏へ回る（非アクティブになる）</td><td>保存の前に、持ち上げ中の物と中身を所持品へ戻す（戻さずに終えると消えるため）</td></tr>
+    <tr><td>編集モードをオフにする</td><td>所持品へ戻す</td></tr>
+    <tr><td>置くのと所持品へ戻すのが重なった</td><td>取り出しはロックで一方だけが受け取る（<code>takeCarried</code>）ので、置いたうえに所持品にも戻る二重取りは起きない</td></tr>
+    <tr><td>置き換えでチェストを差し替えた（クリエイティブ以外）</td><td>チェストと中身を所持品へ戻す</td></tr>
+  </table>
+
+  <h2>取り消しとの関係</h2>
+  <ul>
+    <li>取り消し（直前の1手を戻す、深さ1）は、通常の設置・破壊だけが対象</li>
+    <li>持ち上げ・置き換え・ここに置く・回すをすると、取り消しの履歴を空にする（それより前の1手を戻せないようにする）。直後に取り消しを押すと「戻せる操作がありません」</li>
+    <li>リフトに乗っているあいだは、取り消しも含めて編集の操作を受けない（<a href="vehicles.html">乗り物</a>）</li>
+  </ul>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>置き換え・持ち上げは壊すのと同じ時間がかかる（クリエイティブは一瞬）。回すは一瞬</li>
+    <li>持ち上げた物は向き・チェストの中身を保ったまま置き直す。物が失われる経路を作らない（オフ・退出・裏へ回る、いずれも所持品へ）</li>
+    <li>置ける場所の条件は通常の設置と同じ（ランタンの支え・植物の土・体との重なり・足場積み）</li>
+    <li>成長の状態を持つ物・水の上にしか置けない物・最初から置いてある物は持ち上げ・置き換えの対象にしない</li>
+    <li>編集の操作は取り消しの対象にせず、行うと履歴を空にする</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>採掘（VG-FEAT-MINING）</td><td>長押しの時間・ひび割れ・進捗の退避</td><td>壊すと同じ仕組み</td></tr>
+    <tr><td>WorldStore</td><td>チェストの中身の記録の付け直し</td><td>置いた場所で作り直す（空でも作る）</td></tr>
+    <tr><td>所持品（GameInput）</td><td>置き換えの出し入れ・持ち上げ中の物の戻し</td><td>クリエイティブは所持品を動かさない</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>長押しを始められない</td><td>理由を1回だけ知らせ、進捗を退避して 0 に戻す</td></tr>
+    <tr><td>ここに置く が失敗した</td><td>持ち上げたままに戻し、理由を知らせる</td></tr>
+    <tr><td>持ち上げ中にアプリが裏へ回る・ワールドを出る</td><td>保存の前に所持品へ戻す</td></tr>
+    <tr><td>コントロールセンター・着信でタッチが取り消された</td><td>押しっぱなしの操作（持ち上げ・置き換えを含む）を止める</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>長押しの種類・できない理由: <code>GameSceneView.swift</code>（<code>currentHoldAction</code>・<code>holdBlockedReason</code>・<code>isQuietAfterFinishing</code>）</li>
+    <li>操作本体: <code>GameSceneView.swift</code>（<code>liftBlock</code>・<code>replaceBlock</code>・<code>placeCarried</code>・<code>rotateAimed</code>・<code>detachBlock</code>・<code>placeEditedBlock</code>）</li>
+    <li>状態: <code>GameInput.swift</code>（<code>isEditMode</code>・<code>setReplacing</code>・<code>setCarried</code>・<code>takeCarried</code>・<code>returnCarriedToInventory</code>・<code>aimedRotatable</code>）</li>
+    <li>対象の判定: <code>GameRules.swift</code>（<code>Block.isEditable</code>・<code>isRotatable</code>・<code>canReplaceInto</code>）</li>
+    <li>画面: <code>GameControls.swift</code>（<code>EditModeButton</code>・<code>RotateButton</code>・<code>EditModeHint</code>・置き換えボタン）</li>
+    <li>船は回す対象だが、回したあとに胴が桟橋・岸にかかるかは確かめていない（<a href="vehicles.html">乗り物</a>参照）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+    <li><a href="mining.html">採掘演出</a></li>
+    <li><a href="building-assist.html">建築補助</a></li>
+    <li><a href="vehicles.html">乗り物（船とリフト）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-02</td><td>初版作成（CF17 の編集モード。build 24 時点の対象外の物＝染料の植物・船・リフトの乗り場を含む）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
+</div>
+</body>
+</html>

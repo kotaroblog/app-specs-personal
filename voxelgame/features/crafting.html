@@ -10,73 +10,172 @@
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / クラフト</div>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / クラフト</div>
 
   <header class="site-header">
     <h1>クラフト</h1>
-    <p>ツール解放レシピ・アイテムレシピ・かまど精錬・採掘速度テーブルの定義</p>
+    <p>加工の種類と設備・時間制の加工ジョブ・道具・全レシピ（建材・染料）・かまど精錬・採掘速度テーブルの定義</p>
     <div style="margin-top:8px;">
       <span class="tag">機能ID: VG-FEAT-CRAFTING</span>
     </div>
   </header>
 
   <h2>概要</h2>
-  <p>クラフトは素材を即時消費する2系統に分かれる。<strong>ツールレシピ</strong>はアイテム化せず「解放フラグ（Set&lt;Tool&gt;への追加）」を得る方式で、耐久値・重複所持・喪失の概念がない。<strong>アイテムレシピ</strong>は素材からブロック（アイテム）を生成する。精錬（かまど）は時間ゼロの即時変換で、作業台等の設置物クラフトには時間経過が一切ない。2026-09-16 の建築特化への転換で、<strong>戦闘用（剣）と食料（パン・金のリンゴ）のレシピを削除し、代わりに見た目を作り分けるための建材レシピを足した</strong>。</p>
+  <p>クラフトは<strong>設備ごとの加工</strong>として動く。レシピは自分の工程（手作業・組み立て・石材加工）を持ち、工程ごとに決まった設備（手元・作業台・石切台）でしか始められない。精錬はかまどで行う。どの加工も<strong>素材を開始時に消費し、決まった秒数のあとで完成品が所持品へ入る「加工ジョブ」</strong>で、画面を閉じても時間が来れば自動で完成し、ワールドの保存・復元をまたいで続く。</p>
+  <p>レシピは2系統。<strong>道具レシピ</strong>はアイテム化せず「解放フラグ（<code>Set&lt;Tool&gt;</code> への追加）」を得る方式で、耐久値・重複所持の概念がない。<strong>アイテムレシピ</strong>は素材からブロック・アイテムを作る（<code>itemRecipes</code> の末尾に染料のレシピ <code>dyeRecipes</code> を連結）。2026-09-16 の建築特化への転換で戦闘用（剣）と食料のレシピを削除し、以後は<strong>見た目を作り分けるための建材</strong>（形違い・素材違い・色違い）を増やしている。</p>
 
   <h2>関連画面</h2>
   <ul>
-    <li><a href="../screens/gameplay.html">ゲームプレイ画面（クラフト画面シート）</a></li>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（クラフト画面シート・かまどシート）</a></li>
   </ul>
 
-  <h2>処理フロー</h2>
+  <h2>加工の種類と設備</h2>
+  <table>
+    <tr><th>工程（CraftingProcess）</th><th>設備（CraftingStation）</th><th>開き方</th><th>所要時間</th></tr>
+    <tr><td>手作業</td><td>手作業（設備なし）</td><td>左上のハンマーボタン</td><td>0.5秒</td></tr>
+    <tr><td>組み立て</td><td>作業台</td><td>置いた作業台を狙って［使う］</td><td>1.5秒</td></tr>
+    <tr><td>石材加工</td><td>石切台</td><td>置いた石切台を狙って［使う］</td><td>2.0秒</td></tr>
+    <tr><td>精錬（工程ではなく専用レシピ）</td><td>かまど</td><td>置いたかまどを狙って［使う］</td><td>2.0〜2.5秒（レシピごと）</td></tr>
+  </table>
+  <ul>
+    <li>所要時間は工程で決まり、同じ工程のレシピはすべて同じ秒数。道具レシピは作業台の「組み立て」と同じ 1.5 秒</li>
+    <li>作業台・石切台・かまどは自分で作って置く設備。ただし<strong>群島の雪山の山小屋</strong>には作業台とかまどが最初から置いてある（石切台は無い）</li>
+  </ul>
+
+  <h3>クラフト画面の表示</h3>
+  <ul>
+    <li>見出しは「（設備名）でクラフト」。上部の切り替えで<strong>「この設備」（既定）／「すべて」</strong>を選べ、「すべて」ではほかの設備のレシピも並ぶ</li>
+    <li>ほかの設備のレシピの行には、作成ボタンの代わりに「（設備名）で作る／置いた（設備名）を狙って［使う］」を出す（手作業の画面にも同じ趣旨の案内文を常設。2026-09-27、CF-002：作業台を置いても作り方が分からなかったため）</li>
+    <li>アイテムレシピの行には、工程名・<strong>「所要時間 X.X秒 / 完成数 N」</strong>・加工ロス（ある場合）・副産物（ある場合）・素材ごとの「所持数/必要数」（足りれば緑、足りなければ赤）を出す</li>
+    <li>加工中は先頭にカード（「加工中：レシピ名」「道具作成中：レシピ名」）を出し、進捗バーと「完成まで X.X秒」を 0.1 秒ごとに更新する</li>
+    <li>ボタンは「加工開始」（道具は「作成開始」／解放済みは「作成済」）。別のジョブが動いている間は「加工中」で押せない</li>
+  </ul>
+
+  <h2>処理フロー（加工ジョブ）</h2>
   <div class="mermaid">
 sequenceDiagram
   participant U as User
-  participant CraftSheet
+  participant Sheet as CraftingSheet / FurnaceSheet
   participant Input as GameInput
+  participant Loop as レンダーループ
+  participant Store as WorldRecord
 
-  U->>CraftSheet: クラフトボタンをタップ
-  CraftSheet->>Input: inventory を参照
-  CraftSheet->>CraftSheet: 各レシピの素材充足確認
-  CraftSheet-->>U: 解放可能レシピをハイライト表示
-  U->>CraftSheet: レシピをタップ（クラフト実行）
-  CraftSheet->>Input: inventory から素材を即時消費
-  alt ツールレシピ
-    CraftSheet->>Input: unlockedTools に追加
-  else アイテムレシピ
-    CraftSheet->>Input: inventory に output を加算
+  U->>Sheet: 加工開始（設備・素材・空きを確認）
+  Sheet->>Input: startCrafting / startSmelting / startToolCrafting
+  Input->>Input: 素材（と燃料）を即時消費し CraftingJob を作る
+  loop 0.5秒ごと（ポーズ中も止めない）
+    Loop->>Input: consumeDueJobFlag（完成予定時刻を過ぎたか）
   end
-  CraftSheet-->>U: トーストを表示
+  Loop->>Input: メインスレッドで flushDueJobs
+  Input->>Input: 完成品（と副産物）を所持品へ追加／道具を解放
+  Input-->>U: 効果音とトースト「（名前） ×N が完成しました」
+  Input->>Store: 保存時に未完成のジョブを JSON で保存
+  Store-->>Input: ワールドを開くとき復元し、期限が過ぎていれば完成させる
   </div>
 
-  <h2>ツールレシピ一覧（素材消費 → Tool を解放）</h2>
-  <table>
-    <tr><th>ツール</th><th>必要素材</th><th>採掘ティア</th></tr>
-    <tr><td>hand（素手）</td><td>初期解放（レシピなし）</td><td>0</td></tr>
-    <tr><td>woodPickaxe（木のツルハシ）</td><td>初期解放（レシピなし）</td><td>1</td></tr>
-    <tr><td>stonePickaxe（石のツルハシ）</td><td>石 10個</td><td>2</td></tr>
-    <tr><td>ironPickaxe（鉄のツルハシ）</td><td>鉄インゴット 5個</td><td>3</td></tr>
-    <tr><td>diamondPickaxe（ダイヤのツルハシ）</td><td>ダイヤ鉱石 5個</td><td>4</td></tr>
-  </table>
-  <p>鉄のツルハシは<strong>鉄鉱石ではなく鉄インゴットを要求</strong>する。これにより「鉄鉱石を採掘 → かまどで精錬（石炭消費）→ 鉄インゴットでクラフト」という精錬・燃料消費を必ず経由する進行になる。</p>
-  <div class="callout warn">
-    <strong>剣（木/鉄/ダイヤ）は 2026-09-16 の建築特化への転換で全廃した。</strong>攻撃対象（敵対モブ）が無くなり、攻撃力というパラメータ自体が存在しない。ツール進行は<strong>掘削速度の差</strong>としてのみ残る。
-  </div>
+  <h2>加工ジョブのルール</h2>
+  <ul>
+    <li><strong>同時に動かせるジョブは1つだけ</strong>。アイテム加工と精錬は同じ枠（<code>craftingJob</code>）を使い、道具作成（<code>toolCraftingJob</code>）とも排他</li>
+    <li>素材・燃料は<strong>開始時に消費</strong>し、完成品は<strong>完成時に追加</strong>する（途中の取り消しは無い）</li>
+    <li>進み方は開始時刻からの<strong>実時間</strong>。クラフト画面を閉じても、メニューなどでポーズ中でも止まらず、時間が来れば自動で完成する（レンダーループが 0.5 秒ごとに期限だけを確かめ、完成処理はメインスレッドで1回だけ行う）</li>
+    <li>未完成のジョブはワールドの保存時に <code>WorldRecord.craftingJobData</code> / <code>toolCraftingJobData</code> へ保存し、次に開いたときに復元する。ワールドを離れていた時間も経過に数えるため、期限を過ぎていれば開いた時点で完成する</li>
+    <li>副産物のキーが無い古い保存データも読める（副産物なしとして扱う）</li>
+    <li>精錬中はワールドのかまどが火の入った見た目になる。ガラスの精錬が完成すると目標ガイドの「ガラスを作る」を達成にする</li>
+  </ul>
 
-  <h2>アイテムレシピ一覧（素材消費 → ブロック/アイテムを生成）</h2>
+  <h3>加工ロスと副産物</h3>
+  <ul>
+    <li><strong>加工ロス</strong>は「切り出しで回収できずに失われる素材の量」を画面に示す表示用の値。素材の消費量・完成数はレシピの入力・出力のとおりで、ロス分を別に差し引く計算は無い</li>
+    <li><strong>副産物</strong>は完成時に完成品と一緒に所持品へ入る。現在は石材の階段3種が出す<strong>石片 ×1</strong> のみ。石片は置けないアイテムで、現時点で石片を使うレシピは無い</li>
+    <li>階段は「入力3 → 出力1・加工ロス1」、ハーフは「入力3 → 出力6」。<strong>素材を変えても形の値段は揃える</strong>（石・石レンガ・砂岩・氷で同じ）</li>
+    <li>氷の階段は加工ロス1だが<strong>副産物なし</strong>（氷の削りくずは溶けるため）。木・針葉樹の形違いは作業台で作り、削りくずの出口が無いので副産物を付けない</li>
+  </ul>
+
+  <h2>道具</h2>
   <table>
-    <tr><th>アイテム</th><th>必要素材</th><th>生成数</th><th>区分</th></tr>
-    <tr><td>ベッド</td><td>木 3個</td><td>1</td><td>設備</td></tr>
-    <tr><td>かまど</td><td>石 8個</td><td>1</td><td>設備</td></tr>
-    <tr><td>松明</td><td>木 1個 + 石炭 1個</td><td>4</td><td>設備（光源）</td></tr>
-    <tr><td>チェスト</td><td>木 8個</td><td>1</td><td>設備</td></tr>
-    <tr><td>石レンガ</td><td>石 4個</td><td>4</td><td>建材（2026-09-16 追加）</td></tr>
-    <tr><td>磨き石</td><td>石 2個</td><td>2</td><td>建材（2026-09-16 追加）</td></tr>
-    <tr><td>板材</td><td>木 1個</td><td>4</td><td>建材（2026-09-16 追加）</td></tr>
-    <tr><td>金ブロック</td><td>金インゴット 4個</td><td>1</td><td>建材（2026-09-17 追加）</td></tr>
+    <tr><th>道具</th><th>入手</th><th>採掘ティア</th><th>効果</th></tr>
+    <tr><td>素手</td><td>初期解放</td><td>0</td><td>基準</td></tr>
+    <tr><td>木のツルハシ</td><td>初期解放（レシピなし）</td><td>1</td><td>木・石・石炭が速くなる</td></tr>
+    <tr><td>石のツルハシ</td><td>作業台：石 10個（1.5秒）</td><td>2</td><td>鉄鉱石・金鉱石が実用的な速さになる</td></tr>
+    <tr><td>鉄のツルハシ</td><td>作業台：鉄インゴット 5個（1.5秒）</td><td>3</td><td>ダイヤ鉱石が実用的な速さになる（最上位）</td></tr>
+    <tr><td>ハサミ</td><td>作業台：鉄インゴット 2個（1.5秒）。2026-09-28 追加（CF23）</td><td>0（掘る速さは素手と同じ）</td><td>羊を狙うと置くボタンが「毛を刈る」になり、羊毛を刈れる</td></tr>
   </table>
-  <p>建材3種（石レンガ・磨き石・板材）は、見た目を作り分けられないと「箱」しか建たないため、石と木からの派生として追加した。石レンガは壁・床の主役、磨き石はのっぺりした面で窓枠や縁取り、板材は木造の壁・床を想定する。</p>
-  <p>金ブロックは<strong>金インゴットの出口</strong>。旧・金のリンゴが唯一の消費先だったため、その削除で金鉱石→精錬まで進める動機が無いデッドエンドになっていた。4個で1個という高コストな比率にし、「高コストな建材＝目に見える投資」という設計の核心に乗せている（Fable 5.1、2026-09-17）。</p>
+  <ul>
+    <li>鉄のツルハシとハサミは鉄鉱石ではなく<strong>鉄インゴット</strong>を要求する。「鉄鉱石を掘る → かまどで精錬（石炭を消費）→ 作業台で作る」という流れを必ず経由する</li>
+    <li>道具を選ぶと効果の説明を出す。文言は手書きせず採掘時間（<code>miningDuration</code>）から算出する（2026-09-19）</li>
+    <li><strong>ダイヤのツルハシは廃止</strong>（鉄のツルハシが最上位）。旧データでダイヤのツルハシを解放済みの場合は、読み込み時に鉄のツルハシとして扱う</li>
+    <li>剣（木/鉄/ダイヤ）は 2026-09-16 の建築特化への転換で全廃した。攻撃力というパラメータは存在せず、ツルハシの違いは<strong>掘削速度だけ</strong></li>
+  </ul>
+
+  <h2>アイテムレシピ一覧（<code>itemRecipes</code>）</h2>
+  <p>表記: 鉄インゴット・金インゴット・ダイヤ鉱石は、ゲーム内ではそれぞれ「鉄」「金」「ダイヤ」と表示される。</p>
+
+  <h3>手作業（手元・0.5秒）</h3>
+  <table>
+    <tr><th>レシピ</th><th>入力</th><th>出力</th><th>加工ロス</th><th>副産物</th><th>備考</th></tr>
+    <tr><td>板材</td><td>木 1</td><td>板材 4</td><td>-</td><td>-</td><td>2026-09-16 追加</td></tr>
+    <tr><td>針葉樹の板</td><td>針葉樹の原木 1</td><td>針葉樹の板 4</td><td>-</td><td>-</td><td>2026-10-01 追加（CF31・雪山の島の原木から）</td></tr>
+    <tr><td>作業台</td><td>板材 4</td><td>作業台 1</td><td>-</td><td>-</td><td>設備</td></tr>
+    <tr><td>松明</td><td>板材 1 ＋ 石炭 1</td><td>松明 4</td><td>-</td><td>-</td><td>光源</td></tr>
+  </table>
+
+  <h3>作業台（組み立て・1.5秒）</h3>
+  <table>
+    <tr><th>レシピ</th><th>入力</th><th>出力</th><th>加工ロス</th><th>副産物</th><th>備考</th></tr>
+    <tr><td>ベッド</td><td>板材 3</td><td>ベッド 1</td><td>-</td><td>-</td><td>設備</td></tr>
+    <tr><td>かまど</td><td>石 8</td><td>かまど 1</td><td>-</td><td>-</td><td>設備</td></tr>
+    <tr><td>チェスト</td><td>板材 8</td><td>チェスト 1</td><td>-</td><td>-</td><td>設備</td></tr>
+    <tr><td>石切台</td><td>石 8 ＋ 鉄インゴット 1</td><td>石切台 1</td><td>-</td><td>-</td><td>設備</td></tr>
+    <tr><td>金ブロック</td><td>金インゴット 4</td><td>金ブロック 1</td><td>-</td><td>-</td><td>2026-09-17 追加。金インゴットの出口</td></tr>
+    <tr><td>ダイヤブロック</td><td>ダイヤ素材 4</td><td>ダイヤブロック 1</td><td>-</td><td>-</td><td>ダイヤ素材は石切台で作る</td></tr>
+    <tr><td>木の階段</td><td>板材 3</td><td>木の階段 2</td><td>-</td><td>-</td><td>2026-09-26 追加（CF12）</td></tr>
+    <tr><td>木のハーフブロック</td><td>板材 3</td><td>木のハーフブロック 6</td><td>-</td><td>-</td><td>2026-09-26 追加（CF12）</td></tr>
+    <tr><td>ランタン</td><td>鉄インゴット 1 ＋ 松明 1</td><td>ランタン 1</td><td>-</td><td>-</td><td>2026-09-27 追加（CF12）。床置き・天井から吊るす</td></tr>
+    <tr><td>木の柵</td><td>板材 3</td><td>木の柵 2</td><td>-</td><td>-</td><td>2026-09-27 追加（CF12）。隣とつながる細い柱</td></tr>
+    <tr><td>船</td><td>板材 5</td><td>船 1</td><td>-</td><td>-</td><td>2026-10-01 追加（CF31）。海面にだけ置ける</td></tr>
+    <tr><td>針葉樹の階段</td><td>針葉樹の板 3</td><td>針葉樹の階段 2</td><td>-</td><td>-</td><td>2026-10-01 追加（CF32）</td></tr>
+    <tr><td>針葉樹のハーフブロック</td><td>針葉樹の板 3</td><td>針葉樹のハーフブロック 6</td><td>-</td><td>-</td><td>2026-10-01 追加（CF32）</td></tr>
+    <tr><td>針葉樹の柵</td><td>針葉樹の板 3</td><td>針葉樹の柵 2</td><td>-</td><td>-</td><td>2026-10-01 追加（CF32）</td></tr>
+  </table>
+  <p>染料と色付きの建材も作業台で作る（下の「染料と色付きの建材」）。</p>
+
+  <h3>石切台（石材加工・2.0秒）</h3>
+  <table>
+    <tr><th>レシピ</th><th>入力</th><th>出力</th><th>加工ロス</th><th>副産物</th><th>備考</th></tr>
+    <tr><td>石レンガ</td><td>石 4</td><td>石レンガ 4</td><td>-</td><td>-</td><td>2026-09-16 追加</td></tr>
+    <tr><td>磨き石</td><td>石 2</td><td>磨き石 2</td><td>-</td><td>-</td><td>2026-09-16 追加</td></tr>
+    <tr><td>砂岩</td><td>砂 4</td><td>砂岩 4</td><td>-</td><td>-</td><td>2026-09-26 追加（CF12）。砂の出口</td></tr>
+    <tr><td>ダイヤ素材</td><td>ダイヤ鉱石 1</td><td>ダイヤ素材 1</td><td>-</td><td>-</td><td>原石を素材化（ダイヤブロックの材料）</td></tr>
+    <tr><td>石の階段</td><td>磨き石 3</td><td>石の階段 1</td><td>1</td><td>石片 1</td><td>石を磨いてから切り出す二段階加工</td></tr>
+    <tr><td>石ハーフブロック</td><td>磨き石 3</td><td>石ハーフブロック 6</td><td>-</td><td>-</td><td></td></tr>
+    <tr><td>石レンガの階段</td><td>石レンガ 3</td><td>石レンガの階段 1</td><td>1</td><td>石片 1</td><td>2026-09-27 追加（CF12）</td></tr>
+    <tr><td>石レンガのハーフブロック</td><td>石レンガ 3</td><td>石レンガのハーフブロック 6</td><td>-</td><td>-</td><td>2026-09-27 追加（CF12）</td></tr>
+    <tr><td>砂岩の階段</td><td>砂岩 3</td><td>砂岩の階段 1</td><td>1</td><td>石片 1</td><td>2026-09-27 追加（CF12）</td></tr>
+    <tr><td>砂岩のハーフブロック</td><td>砂岩 3</td><td>砂岩のハーフブロック 6</td><td>-</td><td>-</td><td>2026-09-27 追加（CF12）</td></tr>
+    <tr><td>石の塀</td><td>石レンガ 3</td><td>石の塀 2</td><td>-</td><td>-</td><td>2026-09-27 追加（CF12）。隣とつながる細い柱</td></tr>
+    <tr><td>氷の階段</td><td>氷 3</td><td>氷の階段 1</td><td>1</td><td>なし</td><td>2026-10-01 追加（CF32）。透ける</td></tr>
+    <tr><td>氷のハーフブロック</td><td>氷 3</td><td>氷のハーフブロック 6</td><td>-</td><td>-</td><td>2026-10-01 追加（CF32）。透ける</td></tr>
+  </table>
+
+  <h3>染料と色付きの建材（作業台・1.5秒。<code>dyeRecipes</code>、2026-09-30 追加・CF29）</h3>
+  <table>
+    <tr><th>レシピ</th><th>入力</th><th>出力</th><th>加工ロス</th><th>副産物</th></tr>
+    <tr><td>赤の染料</td><td>野いちごの実 1</td><td>赤の染料 2</td><td>-</td><td>-</td></tr>
+    <tr><td>黄の染料</td><td>ひまわりの花びら 1</td><td>黄の染料 2</td><td>-</td><td>-</td></tr>
+    <tr><td>青の染料</td><td>藍の葉 1</td><td>青の染料 2</td><td>-</td><td>-</td></tr>
+    <tr><td>黒の染料</td><td>石炭 1</td><td>黒の染料 2</td><td>-</td><td>-</td></tr>
+    <tr><td>橙の染料（混色）</td><td>赤の染料 1 ＋ 黄の染料 1</td><td>橙の染料 2</td><td>-</td><td>-</td></tr>
+    <tr><td>紫の染料（混色）</td><td>赤の染料 1 ＋ 青の染料 1</td><td>紫の染料 2</td><td>-</td><td>-</td></tr>
+    <tr><td>緑の染料（混色）</td><td>黄の染料 1 ＋ 青の染料 1</td><td>緑の染料 2</td><td>-</td><td>-</td></tr>
+    <tr><td>（色）の羊毛 ×7色</td><td>羊毛 4 ＋ （色）の染料 1</td><td>（色）の羊毛 4</td><td>-</td><td>-</td></tr>
+    <tr><td>（色）の石レンガ ×7色</td><td>石レンガ 4 ＋ （色）の染料 1</td><td>（色）の石レンガ 4</td><td>-</td><td>-</td></tr>
+  </table>
+  <ul>
+    <li>7色＝赤・橙・黄・緑・青・紫・黒。元の白（羊毛）・灰色（石レンガ）と合わせて各8色。羊毛・石レンガ以外は染められない</li>
+    <li>実1つで染料2つ、染料1つで建材4つ → 64個を染めるのに実8つ（8回の収穫）</li>
+    <li>実と種は、島の地帯ごとに生える植物（野いちご＝草原・ひまわり＝台地・藍の草＝水辺）を摘んで得る。種は土に植えると翌朝に実る。羊毛はハサミで羊から刈る</li>
+    <li>染料と実は置けないアイテム（種は土に植えられる）。作品に残るのは染めた建材</li>
+  </ul>
 
   <h3>廃止されたレシピ</h3>
   <table>
@@ -84,64 +183,69 @@ sequenceDiagram
     <tr><td>パン（小麦3個 → 1個）</td><td>削除</td><td>食料と満腹度の仕組みごと廃止したため（<a href="survival.html">サバイバルシステム（廃止済み）</a>）</td></tr>
     <tr><td>金のリンゴ（金インゴット2＋小麦1）</td><td>削除</td><td>同上。消費先としての役割は金ブロックが引き継いだ</td></tr>
     <tr><td>剣3種（木/鉄/ダイヤ）</td><td>削除</td><td>攻撃対象が無くなったため</td></tr>
-    <tr><td>松明（木1＋石炭1 → 4個）</td><td><strong>存続</strong></td><td>夜間の建築に必要な光源。ホットバー固定枠にも入っている</td></tr>
+    <tr><td>ダイヤのツルハシ</td><td>削除</td><td>鉄のツルハシへ統合（旧データは鉄のツルハシとして読む）</td></tr>
   </table>
 
-  <h2>かまど精錬レシピ一覧</h2>
+  <h2>かまど精錬レシピ一覧（<code>smeltingRecipes</code>）</h2>
   <table>
     <tr><th>素材</th><th>成果物</th><th>燃料</th><th>所要時間</th></tr>
-    <tr><td>鉄鉱石</td><td>鉄インゴット</td><td>石炭 1個</td><td>即時（時間ゼロ）</td></tr>
-    <tr><td>金鉱石</td><td>金インゴット</td><td>石炭 1個</td><td>即時</td></tr>
-    <tr><td>砂</td><td>ガラス</td><td>石炭 1個</td><td>即時</td></tr>
-    <tr><td>石</td><td>レンガ</td><td>石炭 1個</td><td>即時</td></tr>
+    <tr><td>鉄鉱石 1</td><td>鉄インゴット 1</td><td>石炭 1個</td><td>2.5秒</td></tr>
+    <tr><td>金鉱石 1</td><td>金インゴット 1</td><td>石炭 1個</td><td>2.5秒</td></tr>
+    <tr><td>砂 1</td><td>ガラス 1</td><td>石炭 1個</td><td>2.0秒</td></tr>
+    <tr><td>石 1</td><td>レンガ 1</td><td>石炭 1個</td><td>2.0秒</td></tr>
   </table>
-  <p>燃料は石炭のみで木材は燃料にならない。かまどは設置済みブロックをタップして開き、所持していなくてもワールドに1つあれば精錬可能。</p>
+  <p>燃料は石炭のみ（木材・板材は燃料にならない）。かまどシートは置いたかまどを狙って［使う］で開き、上部に「燃料 石炭: N個」（0なら赤）、各行に「精錬時間 X.X秒 / 石炭 1個」と素材の所持数を出す。1回の精錬で1個ずつ作る。精錬もアイテム加工と同じ加工ジョブの枠を使う。</p>
 
-  <h2>採掘速度テーブル（秒）</h2>
-  <p>採掘は「不可」ではなく「採掘ティア（tool.miningTier）による時間の段階的短縮」で表現される。tier: 素手=0、木Pick=1、石Pick=2、鉄Pick=3、ダイヤPick=4。どのブロックも理論上は素手で時間をかければ掘れる（溶岩を除く）。剣が廃止されたいま、ツールの違いは<strong>掘削速度だけ</strong>に集約されている。</p>
+  <h2>採掘速度テーブル（秒・<code>miningDuration</code>）</h2>
+  <p>採掘は「不可」ではなく「採掘ティア（<code>tool.miningTier</code>）による時間の段階的短縮」で表現される。tier: 素手・ハサミ=0、木のツルハシ=1、石のツルハシ=2、鉄のツルハシ=3。</p>
   <table>
-    <tr><th>ブロック分類</th><th>tier 0</th><th>tier 1</th><th>tier 2</th><th>tier 3</th><th>tier 4</th></tr>
-    <tr><td>dirt/sand/grass/leaves/snow/water/cactus/torch/farmland/wheat/植生3種</td><td>0.3s（tier不問固定）</td><td>0.3s</td><td>0.3s</td><td>0.3s</td><td>0.3s</td></tr>
-    <tr><td>wood</td><td>1.5s</td><td>0.6s</td><td>0.6s</td><td>0.6s</td><td>0.6s</td></tr>
-    <tr><td>stone / brick / coalOre</td><td>5.0s</td><td>2.0s</td><td>0.6s</td><td>0.6s</td><td>0.6s</td></tr>
-    <tr><td>ironOre / goldOre</td><td>8.0s</td><td>8.0s</td><td>1.5s</td><td>0.6s</td><td>0.6s</td></tr>
-    <tr><td>diamondOre</td><td>12.0s</td><td>12.0s</td><td>12.0s</td><td>2.0s</td><td>0.8s</td></tr>
-    <tr><td>lava</td><td colspan="5">30.0s（ただし液体は破壊自体が拒否されるため実質採掘不可）</td></tr>
-    <tr><td>その他（既定値）</td><td colspan="5">1.0s（tier不問）</td></tr>
+    <tr><th>ブロック分類</th><th>tier 0</th><th>tier 1</th><th>tier 2</th><th>tier 3</th></tr>
+    <tr><td>植物（花・草・キノコ・染料の植物と若芽）、土・砂・草ブロック・葉・針葉樹の葉・雪・水・サボテン・松明・耕地・小麦・船</td><td colspan="4">0.3s（tier不問）</td></tr>
+    <tr><td>木・針葉樹の原木</td><td>1.5s</td><td>0.6s</td><td>0.6s</td><td>0.6s</td></tr>
+    <tr><td>石・レンガ・石炭</td><td>5.0s</td><td>2.0s</td><td>0.6s</td><td>0.6s</td></tr>
+    <tr><td>鉄鉱石・金鉱石</td><td>8.0s</td><td>8.0s</td><td>1.5s</td><td>0.6s</td></tr>
+    <tr><td>ダイヤ鉱石</td><td>12.0s</td><td>12.0s</td><td>12.0s</td><td>2.0s</td></tr>
+    <tr><td>溶岩</td><td colspan="4">30.0s（ただし液体は破壊自体を拒否するため実質採掘不可）</td></tr>
+    <tr><td>その他（石レンガ・板材・氷・羊毛・設備など既定値）</td><td colspan="4">1.0s（tier不問）</td></tr>
   </table>
-  <p>クリエイティブモード時はブロック種別・ティアに関わらず常に 0.05 秒。</p>
+  <p>クリエイティブモード時はブロック種別・ティアに関わらず常に 0.05 秒。リフトの乗り場（最初から置いてある物）は壊せない。</p>
 
   <h2>ビジネスルール</h2>
   <ul>
-    <li>ツールは「アイテム」ではなく <code>Set&lt;Tool&gt;</code> への解放フラグ。耐久値・重複所持は無い（死亡そのものが無くなったため、死亡時の喪失という概念も存在しない）</li>
-    <li>木のツルハシのみクラフト不要で最初から解放済み（<code>unlockedTools</code> の初期値）</li>
-    <li>同じツールを重複クラフトする概念自体が存在しない（解放済みツールは選択画面から除外される）</li>
-    <li>クリエイティブモード時はクラフトUIの操作自体は可能。所持数チェックが回避されるため素材が0でもクラフト可能</li>
-    <li>採掘対象の miningTier ゲートは「不可」ではなく時間短縮のみのため、低ティアツールでも根気があれば高階層の鉱石まで採掘できる（ダイヤ鉱石は石Pickで12秒/個）</li>
+    <li>道具は「アイテム」ではなく <code>Set&lt;Tool&gt;</code> への解放フラグ。耐久値・重複所持は無い。解放済みの道具は「作成済」になり作れない</li>
+    <li>素手と木のツルハシはクラフト不要で最初から解放済み（<code>unlockedTools</code> の初期値）</li>
+    <li>レシピは決まった設備でしか始められない（「すべて」表示で見えても、別の設備のレシピは開始できない）</li>
+    <li><strong>クリエイティブモードでもクラフト・精錬には素材が要る</strong>（所持数チェックは回避されない）。クリエイティブでは所持品シートから全ブロックを選べるため、建てるだけならクラフトは不要</li>
+    <li>採掘ティアは「不可」ではなく時間短縮のみのため、低ティアの道具でも根気があれば高階層の鉱石まで掘れる（ダイヤ鉱石は石のツルハシで12秒/個）</li>
+    <li>新しい資材は必ず建物に残る物（建材・飾り）に行き着かせる。金ブロック（金インゴットの出口）・砂岩（砂の出口）・ランタン（鉄インゴットの使い道）はこの方針で足した</li>
   </ul>
 
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
-    <tr><td>GameInput.inventory</td><td>素材の確認・消費</td><td>クラフト・精錬実行時に参照・更新する</td></tr>
-    <tr><td>GameInput.unlockedTools</td><td>ツール解放状態の管理</td><td><code>Set&lt;Tool&gt;</code> へ追加。WorldRecord.unlockedToolsData に永続化</td></tr>
+    <tr><td>GameInput.inventory</td><td>素材の確認・消費、完成品・副産物の追加</td><td>在庫の増減はドメイン関数（<code>startItemCraft</code> / <code>startSmelting</code> / <code>finishItemCraft</code> 等）に集約し、UIから直接変更しない</td></tr>
+    <tr><td>GameInput.unlockedTools</td><td>道具の解放状態</td><td><code>Set&lt;Tool&gt;</code> へ追加。WorldRecord.unlockedToolsData に永続化</td></tr>
+    <tr><td>WorldRecord.craftingJobData / toolCraftingJobData</td><td>未完成ジョブの保存・復元</td><td>JSON。空データはジョブなし</td></tr>
     <tr><td><a href="objectives.html">目標ガイド（VG-FEAT-OBJECTIVES）</a></td><td>石のツルハシ解放・かまど設置・ガラス精錬の達成判定</td><td>unlockedTools と WorldRecord の hasPlacedFurnace / hasSmeltedGlass</td></tr>
     <tr><td><a href="building-assist.html">建築支援操作（VG-FEAT-BUILD-ASSIST）</a></td><td>建材の選択・設置</td><td>ホットバー固定枠は石・板材・石レンガ・ガラス・松明</td></tr>
+    <tr><td><a href="creative.html">クリエイティブモード（VG-FEAT-CREATIVE）</a></td><td>採掘時間 0.05 秒</td><td>クラフトの素材チェックは回避しない</td></tr>
   </table>
 
   <h2>エラー処理</h2>
   <table>
     <tr><th>発生条件</th><th>対応</th></tr>
-    <tr><td>クラフト実行時に素材が不足している（UIバグ等）</td><td>クラフトを中断しトーストで通知</td></tr>
+    <tr><td>素材・燃料が足りない／別のジョブが動いている／設備が違う</td><td>ボタンを無効化する。ドメイン関数側でも同じ条件で開始を拒否する（false を返し在庫を変えない）</td></tr>
+    <tr><td>完成予定を過ぎたのに完成処理が走らない（取りこぼし）</td><td>完成判定のフラグは1回で消し、完成しなかった場合はフラグを戻す（同じジョブが何十回も完成処理に回らず、かつ永久に止まらない）</td></tr>
+    <tr><td>保存データのジョブが読めない</td><td>ジョブなしとして扱う</td></tr>
   </table>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li>レシピはコード内ハードコード配列（Recipe/ItemRecipe/SmeltRecipe）で、データファイル分離はしていない</li>
-    <li>採掘進行度は breakTargetX/Y/Z（シングルターゲット）+ breakProgress で管理し、レンダーループで deltaTime を積算する</li>
-    <li>破壊されたブロックのアイテムドロップは breakBlock 内で inventory[block] += 1 相当の加算を行う（松明・チェスト・農作物は個別のドロップロジック）</li>
-    <li>所持品シートのクリエイティブ表示は建材 → 地形 → 鉱石 → 設備・装飾の手動順で並べる。rawValue 順にすると後から足した建材（石レンガ34・磨き石35・板材36・金ブロック37）が末尾へ落ちて見つけにくいため</li>
-    <li>設置可否は「植生・小麦・松明ではない、かつ rendersAsBlock」の単一ゲートで判定する</li>
+    <li>レシピはコード内の配列（<code>toolRecipes</code> / <code>itemRecipes</code>＋<code>dyeRecipes</code> / <code>smeltingRecipes</code>、GameDomain.swift）で、データファイル分離はしていない。染料の色・植物の対応は Dyes.swift</li>
+    <li>工程（<code>CraftingProcess</code>）が設備と所要時間を持つ。レシピ側は工程だけを指定する</li>
+    <li>ジョブは <code>CraftingJob</code>（アイテム・精錬）と <code>ToolCraftingJob</code>（道具）。完成予定時刻をロック付きのミラーに写し、レンダースレッドは @Published を読まずに期限だけを判定する</li>
+    <li>クラフト画面を開いている間は画面側の 0.1 秒タイマーでも完成を拾う（レンダーループと二重になっても、先に取った側だけが完成させる）</li>
+    <li>破壊されたブロックのアイテムドロップは breakBlock 内で加算する（松明・チェスト・農作物・植物は個別のドロップロジック）</li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -150,6 +254,7 @@ sequenceDiagram
     <tr><td>1.0</td><td>2026-06-27</td><td>初版作成</td></tr>
     <tr><td>2.0</td><td>2026-07-05</td><td>実装との大幅な乖離を解消する全面改訂。ツール解放レシピ・アイテムレシピ4種・精錬レシピ4種・採掘速度テーブルを実装どおりに修正</td></tr>
     <tr><td>3.0</td><td>2026-09-17</td><td>建築特化への転換を反映。剣3種・パン・金のリンゴのレシピを削除し、建材レシピ4種（石レンガ・磨き石・板材・金ブロック）を追加。攻撃力列を廃止してツール進行を掘削速度差のみに整理。目標ガイドの連携先を6段階版へ差し替え</td></tr>
+    <tr><td>4.0</td><td>2026-10-02</td><td>build 24 時点の実装に合わせて全面改訂。追加: 加工の種類と設備（手作業0.5秒・作業台1.5秒・石切台2.0秒・かまど）、時間制の加工ジョブ（実時間で自動完成・ポーズ中も進む・保存と復元・同時1件）、加工ロスと副産物（石片）、「この設備／すべて」表示と所要時間・完成数の表示、ハサミ、レシピ表を設備別に再編し 09-17 以降の追加分（作業台・石切台・ダイヤ素材/ダイヤブロック・砂岩・木/石レンガ/砂岩の階段とハーフ・ランタン・木の柵・石の塀・針葉樹の板・船・針葉樹の階段/ハーフ/柵・氷の階段/ハーフ・染料7色と混色・色付きの羊毛/石レンガ各7色）を実装の数どおりに記載。修正: 精錬を「即時」から 2.0〜2.5秒のジョブへ、ベッド・チェスト・松明の素材を木から板材へ、ダイヤのツルハシ廃止に伴い採掘ティアを0〜3へ、採掘速度の対象（針葉樹・植物・船）を更新、「クリエイティブでは素材0でもクラフトできる」の誤記を「素材が要る」へ</td></tr>
   </table>
 
   <script>
@@ -159,7 +264,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-09-17</footer>
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
 </div>
 </body>
 </html>

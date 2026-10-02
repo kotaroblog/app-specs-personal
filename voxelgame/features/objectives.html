@@ -10,7 +10,7 @@
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / 目標ガイド</div>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / 目標ガイド</div>
 
   <header class="site-header">
     <h1>目標ガイド</h1>
@@ -79,6 +79,16 @@ stateDiagram-v2
     <li>一時展開には世代トークンを持たせ、目標が連続で進んだとき古い自動折りたたみが新しい展開を消さないようにする</li>
   </ul>
 
+  <h3>横向きでの扱いとメニューの「現在の目標」</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>横向き（縦が compact）</td><td>画面上の目標ガイドは<strong>出さない</strong>（2026-09-19）。展開時に約90ptを占め、残すと操作クラスタが画面外へ押し出されて移動できなくなったため</td></tr>
+    <tr><td>メニューのカード</td><td>メニュー（ポーズ）の先頭に「現在の目標」カード（<code>ObjectiveMenuCard</code>）を常に出す（2026-09-24）。縦向き・横向きを問わず、アイコン・タイトル・進捗数（例 37/100）・進捗バー・操作ヒント・場所ヒントを、折りたたみ状態に関係なく全部表示する</td></tr>
+    <tr><td>目標が無いとき</td><td>クリエイティブ中（メニューへ目標を渡さない）と全6段階の達成後は「現在、表示する目標はありません。自由に建築できます。」</td></tr>
+    <tr><td>読み上げ</td><td>カード全体を1要素にまとめ「現在の目標、○○、進捗、操作ヒント、場所ヒント」の順で読む。UIテスト用の識別子は <code>currentObjectiveMenu</code></td></tr>
+  </table>
+  <p>横向きで目標ガイドを消したままだと、横向きで遊ぶ人は次に何をすればよいかを確かめる手段が無かった。常時表示のコントロールは増やさず、既存のメニューに確認先を置いた。</p>
+
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
@@ -99,6 +109,7 @@ stateDiagram-v2
   <ul class="checklist">
     <li>目標の算出は ContentView の <code>currentObjective</code>（computed property）。毎フレームではなく SwiftUI の再評価タイミングで計算される</li>
     <li>しきい値 <code>objectiveBuildTarget = 100</code> は GameObjectives.swift のトップレベル定数で一元管理する</li>
+    <li>ステージ（舞台とお題のワールド。CF13）でも同じ6段階を出す（ステージ専用の分岐は無い。ステージではクリエイティブにできないので、ガイドは常に対象になる）</li>
     <li>🔴 P3（2027-01〜02）で「最初の設計図」を5段目へ差し込み、6段目を設計図の完成に置き換える計画がコード側コメントに記載されている（現時点では未実装）</li>
   </ul>
 
@@ -113,6 +124,7 @@ stateDiagram-v2
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-09-17</td><td>初版作成。建築特化への転換（2026-09-16）で6段階に作り直した目標ガイドを、ゲームプレイ画面仕様書から機能仕様書として独立させた</td></tr>
+    <tr><td>1.1</td><td>2026-10-02</td><td>「横向きでの扱いとメニューの『現在の目標』」を新設。横向きでは画面上のガイドを出さないこと（09-19）と、メニュー先頭の現在の目標カード（09-24・全項目表示・目標が無いときの文言・読み上げ）を追記。ステージでも同じ6段階を出す旨を実装メモに追記</td></tr>
   </table>
 
   <script>
@@ -122,7 +134,7 @@ stateDiagram-v2
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-09-17</footer>
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
 </div>
 </body>
 </html>

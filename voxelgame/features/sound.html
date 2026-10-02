@@ -10,7 +10,7 @@
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / 効果音システム</div>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / 効果音システム</div>
 
   <header class="site-header">
     <h1>効果音システム</h1>
@@ -138,7 +138,7 @@ sequenceDiagram
   <table>
     <tr><th>種類</th><th>ON 条件</th></tr>
     <tr><td>雨</td><td>天候が雨のとき</td></tr>
-    <tr><td>夜</td><td>太陽高度 <code>sunFactor &lt; 0.15</code>。1日10分のうち<strong>約5.5分（55%）</strong>が夜にあたる</td></tr>
+    <tr><td>夜</td><td>太陽高度 <code>sunFactor &lt; 0.15</code>。1日20分（昼13分・夜7分）のうち<strong>約8.2分（41%）</strong>が夜にあたる（昼の始めと終わりの約1.2分＋夜の7分）</td></tr>
     <tr><td>昼の風</td><td>夜と対で切り替える（昼 ON / 夜 OFF）</td></tr>
     <tr><td>洞窟</td><td>プレイヤーの <code>y &lt; 24</code></td></tr>
   </table>
@@ -231,6 +231,7 @@ sequenceDiagram
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-09-26</td><td>効果音システムの初版</td></tr>
     <tr><td>1.0.1</td><td>2026-09-26</td><td>素材ごとの <code>tone</code> の実値と、硬い順に単調でなければならない制約を追記</td></tr>
+    <tr><td>1.0.2</td><td>2026-10-02</td><td>夜の環境音が鳴る時間を、1日20分（2026-09-27 に10分から延長・昼13分・夜7分）に合わせて「約8.2分（41%）」へ直した（旧記述は1日10分のときの値）</td></tr>
   </table>
 
   <script>

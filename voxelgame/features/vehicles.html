@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - 乗り物（船とリフト）</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / 乗り物（船とリフト）</div>
+
+  <header class="site-header">
+    <h1>乗り物（船とリフト）</h1>
+    <p>群島の世界で島と島のあいだを渡る「船」と、雪山の島の崖のふもとと棚の上を結ぶ「崖のリフト」</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-VEHICLES</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>群島の世界（2026-09-30 本人決定「1つの地図に島を並べ、海を船で渡る」）で使う2つの乗り物。どちらも<strong>動くブロックの仕組みは使わず</strong>、乗っているあいだだけプレイヤーの動き方を切り替え、見た目の形（船の胴・リフトのかご）をプレイヤーに付けて動かす。</p>
+  <ul>
+    <li><strong>船</strong>（CF31・build 23 で追加、build 24 で3マスの小舟に）: 海面に置き、狙って「乗る」。速さ 8 m/s で海を進み、跳ぶボタンの「降りる」で近くの係留の場所へ寄せて陸へ上がる</li>
+    <li><strong>崖のリフト</strong>（CF32・build 24）: 雪山の島の崖に最初から置いてある1基。乗り場を狙って「乗る」と、かごで高さ 15 を約 2.5 秒で上がる・下りる。作れる昇降機（エレベーター・滑車）は次の段（B）</li>
+  </ul>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（置くボタンの「乗る」・跳ぶボタンの「降りる」）</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <h3>船</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant GV as GameSceneView
+  participant BR as BoatRules
+  participant CM as ChunkManager
+
+  U->>GV: 船（真ん中・へさき・とも）を狙って「乗る」
+  GV->>CM: 船のブロックを空気に（向きを読んでから）
+  GV->>GV: isInBoat = true・水面へ移す・へさきの向きを向く
+  GV->>GV: 足元に船の形（makeBoat）を付ける・isRidingBoat を保存
+  loop 乗っているあいだ（毎フレーム）
+    GV->>BR: isSailable（今の向きで胴がかからないか）
+    BR-->>GV: かからなければ boatHeading = 見ている向き
+    GV->>BR: canSail（次の位置・かかり具合が増えないか）
+    GV->>GV: 8 m/s で進む・チャンクの読み込みは続ける
+  end
+  U->>GV: 跳ぶボタン「降りる」
+  GV->>BR: parkingCell（係留の場所 → その場 → まわり1マス）
+  alt 止められる所がある
+    GV->>CM: 船のブロックを置く（placeFurniture）
+  else 無い
+    GV->>GV: 所持品へ（「船を所持品にしまいました」）
+  end
+  GV->>BR: landingSpot（近くの立てる陸）
+  GV->>GV: 陸へ移す（無ければその場の水に入る）
+  </div>
+
+  <h3>崖のリフト</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant GV as GameSceneView
+  participant L as Lift / LiftRide
+
+  U->>GV: 乗り場を狙って「乗る」
+  GV->>L: ride(from: 乗り場)
+  L-->>GV: 片道（from・to・降り立つ所・綱の上端・向き）
+  GV->>GV: 降り口（足元と頭の2マス）がふさがっていないか
+  GV->>GV: 乗る前の向きを控え、南（yaw π）・やや下向きへ
+  GV->>GV: かご（makeLiftCar）と綱（makeLiftRope）を出す
+  loop 約 2.5 秒（ゆっくり出てゆっくり止まる）
+    GV->>L: position(at: 経過秒)
+    GV->>GV: プレイヤー・かご・綱を動かす（歩く・跳ぶ・置く等は受けない）
+  end
+  GV->>GV: 降り立つ所へ移し、乗る前の向きへ戻す・かごと綱を片づける
+  </div>
+
+  <h2>船</h2>
+  <h3>基本の値</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>速さ</td><td>8 m/s（<code>BoatRules.speed</code>。歩き 6・泳ぎ 3.6）。本島の北の桟橋から雪山の桟橋まで約 27 秒</td></tr>
+    <tr><td>水面の高さ</td><td>y 9（<code>ArchipelagoTerrain.seaLevel</code>）。船のブロックはこの段に置き、乗っているあいだの足元もこの高さに固定する</td></tr>
+    <tr><td>大きさ（見た目）</td><td>長さ 3.0（<code>FurnitureNode.boatLength</code>。真ん中が船のマス、前後に1マスずつはみ出す）・幅 1.3（<code>boatWidth</code>）</td></tr>
+    <tr><td>当たり（胴）</td><td>真ん中から、へさき 1.4（<code>bowReach</code>）・とも 1.3（<code>sternReach</code>）・横 0.45（<code>sideReach</code>）。横を見た目の幅より狭くしているのは、係留の場所で最初から胴が階段にかからないようにするため</td></tr>
+    <tr><td>作り方</td><td>板 5 → 船 1（組み立て＝作業台）</td></tr>
+    <tr><td>壊す時間</td><td>0.3 秒（土・砂などと同じ）。壊すと船として拾える</td></tr>
+    <tr><td>置くボタンの表示</td><td>狙うと「乗る」（帆船の絵 <code>sailboat.fill</code>）。案内は「海を渡る」。読み上げは「船に乗る」</td></tr>
+  </table>
+
+  <h3>置ける所</h3>
+  <p>置くボタンと置く場所の影は同じ判定（<code>BoatRules.placement</code>）を使う。置けないときは影が赤（不透明度 0.30）になる。</p>
+  <table>
+    <tr><th>条件</th><th>内容</th><th>満たさないときの知らせ</th></tr>
+    <tr><td>海面の水の上</td><td>置くマスが y 9 で空気、真下が水。水の中を狙っていたら最大3段まで上の水面へ上げる（浜の砂の横など）。崖の下の池・棚の泉・地底湖など海面以外の水には置けない（CF-021）</td><td>船は海の上に置けます</td></tr>
+    <tr><td>近くに別の船が無い</td><td>まわり2マス（5×5）に船のブロックが無い。中心どうしが2マス以内だと3マスの胴が重なりうるため</td><td>近くにほかの船があります</td></tr>
+    <tr><td>3マス続く海</td><td>へさきを向こう（見ている向きを90度単位に丸めた向き）へ向けて、前後のマスも進める水であること。だめなら横向き（+90度）で試す</td><td>船を浮かべるには、3マス続く海が要ります</td></tr>
+  </table>
+
+  <h3>進み方と当たり</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>進める列</td><td>水面の下（y 8）が水で、水面の段（y 9）とその上（y 10）が通れないブロックでふさがっていない列（<code>isSailable(x:z:)</code>）</td></tr>
+    <tr><td>胴の確かめ方</td><td>前後 4 点（とも −1.3・真ん中・へさき 0.7・へさき 1.4）× 横 3 点（−0.45・0・+0.45）。へさきの先端は細いので横の2点は見ない（計 10 点）。かかっている点の数を数える（<code>blockedPoints</code>）</td></tr>
+    <tr><td>向き</td><td>見ている向きへ回る。ただし、その向きで胴が桟橋・岸・柱にかかるなら回らず、今の向き（<code>boatHeading</code>）のまま</td></tr>
+    <tr><td>進む</td><td>次の位置の真ん中のマスが進める列で、胴のかかり具合が今より増えないときだけ進む（<code>canSail</code>）。x と z を別々に確かめるので、片方がふさがっていても、もう片方へは滑って進める</td></tr>
+    <tr><td>最初からかかっている船</td><td>狭い所に置いた古い船など、乗った時点で胴がかかっていても、かかり具合が増えない向き（離れる向き）へは動ける。「かからない所へだけ進める」にすると、桟橋の横で向きを変えただけでどちらへも進めなくなったため</td></tr>
+    <tr><td>移動の入力</td><td>移動パッドの前後・左右（見ている向き基準）。斜めは速さ 1 に正規化。跳ぶ・上昇は受けない（飛行も切る）</td></tr>
+    <tr><td>チャンクの読み込み</td><td>乗っているあいだも、チャンクの読み込み・定期保存・統計を止めない（CF-020。以前は船の分岐が途中で戻っていて、読み込み済みの約100ブロックの先で見えない壁に止まり、雪山の島へ届かなかった）</td></tr>
+  </table>
+
+  <h3>乗る・降りる</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>狙い</td><td>真ん中のマスに加え、へさき・ともの先のマス（船の向きの線上の隣）を狙っても、その船の真ん中を狙ったことにする（<code>boatCenter(adjacentTo:)</code>）。乗る・壊すの両方で効く</td></tr>
+    <tr><td>乗る</td><td>船のブロックを外し（空気にする）、プレイヤーを船のマスの水面へ移す。へさきの向きを向き、足元に船の形を付ける。すでに乗っているときは「もう船に乗っています」。リフトに乗っているあいだは乗れない</td></tr>
+    <tr><td>乗っているあいだのボタン</td><td>跳ぶボタンが「降りる」になる（読み上げ「船を降りる」）</td></tr>
+    <tr><td>船を止める所</td><td>①近く 4 ブロック以内（<code>mooringSnapDistance</code>）の係留の場所が空いていれば、近い順にそこへ（桟橋の向き＝へさきを沖へ）②今のマスに、乗っていた向き（だめなら横向き）③まわり1マス（3×3）で止められる所。止める所は「真ん中に置けて、前後が進める水で、近くに別の船が無い」（<code>canPark</code>）。どれも無理なら所持品へ戻し「船を所持品にしまいました」</td></tr>
+    <tr><td>降り立つ所</td><td>船のまわり 4 マス（9×9、真ん中を除く）で、足元が固く（葉と船は除く）、体の2マスが空いていて体の段が水でない所。高さは水面から2段まで（y 9〜11）。近さ・向いている方・低さで点を付けて1か所選ぶ（<code>landingSpot</code>）。見つからなければ、その場の水（y 8）に入る</td></tr>
+    <tr><td>乗ったまま落ちた・出た</td><td>乗ると船のブロックを外すので、ワールドに「乗っている」（<code>isRidingBoat</code>）を保存する。乗ったままアプリが落ちたら、次にワールドへ入ったとき船を所持品へ戻す。乗ったままワールドを出たときも所持品へ戻す（位置は保存しないので、次はスポーン地点から）</td></tr>
+  </table>
+
+  <h3>最初から置いてある船（係留の場所）</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>場所</td><td>群島の各桟橋（本島の北・南・西の桟橋、雪山の桟橋）の先端の、海へ下りる階段の3段目の横（横へ2マス）。床の横は両側の柵にさえぎられて狙えないため、柵の無い階段の横にした</td></tr>
+    <tr><td>向き</td><td>へさきを沖へ（桟橋の伸びる向き）</td></tr>
+    <tr><td>置く条件</td><td>そのマスと前後のマスがすべて海のときだけ置く（置けた桟橋だけが係留の場所になる）</td></tr>
+    <tr><td>ほかの用途</td><td>地図の桟橋の目印と、降りたときの船の寄せ先に使う</td></tr>
+  </table>
+
+  <h3>形（<code>FurnitureNode.makeBoat</code>）</h3>
+  <ul>
+    <li>細長い胴（底板と両舷はとも寄りに長さの 62%、へさきへ向けて斜めの板で細める）・とがったへさき</li>
+    <li>舷の上に濃い針葉樹の板の縁取り・ともの板</li>
+    <li>腰掛け2つ（真ん中の前と後ろ）・両側のオール（縁に掛けて先を水へ下ろす）</li>
+    <li>へさきの柱にランタン（夜の海でも向きがわかる）。帆は付けない（一人称で前が見えなくなるため）</li>
+    <li>底は水面のすぐ上（0.02）に置く。水面より下に沈めると、船の中に水面が見えて浸水しているように見えた</li>
+  </ul>
+
+  <h2>崖のリフト</h2>
+  <h3>配置と構造</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>場所</td><td>雪山の島の崖（山小屋から北へまっすぐ歩いた所）。かごは崖のすぐ南の列（島の中心からの局所座標 x 6, z 2）を上下する。凍った滝（局所 x −16）・西の坂（x −30〜−26）とは離してある</td></tr>
+    <tr><td>高さ</td><td>ふもと y 20（<code>footY</code>）⇔ 棚の上 y 35（<code>ledgeY</code>）。高さ 15</td></tr>
+    <tr><td>乗り場</td><td>ふもと＝局所 (7, 20, 3)、棚の上＝局所 (7, 35, 1)。ブロック <code>liftStation</code></td></tr>
+    <tr><td>降り立つ所</td><td>ふもと＝局所 (6, 20, 3)、棚の上＝局所 (6, 35, 1)（縦穴の隣、乗り場の横）。生成時に足元と頭の2マスを空ける</td></tr>
+    <tr><td>縦穴</td><td>y 20〜37 を空け、両側（x ±1）に針葉樹の柵の柱。底（y 19）にかごの受け台（針葉樹の板）</td></tr>
+    <tr><td>梁</td><td>y 38（<code>beamY</code> = 棚の上 + 3）に針葉樹の板を3マス、梁の両端の上（y 39）にランタン。梁を原木にすると「建設地に木が生えている」判定に木として数えられたため板にした</td></tr>
+    <tr><td>ふもとのまわり</td><td>乗り場のまわり（局所 6.5, 3.5 から半径 3.5）は平らにならし、木を生やさない</td></tr>
+    <tr><td>群島以外の世界</td><td>リフトは無い（<code>archipelagoLifts()</code> が空）</td></tr>
+  </table>
+
+  <h3>乗る</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>置くボタンの表示</td><td>乗り場を狙うと「乗る」（<code>arrow.up.and.down.square.fill</code>）。案内は「崖の上と下を行き来する」。読み上げは「リフトに乗る」</td></tr>
+    <tr><td>速さ・時間</td><td>6 m/s（<code>Lift.speed</code>。歩く速さと同じ）。高さ 15 を 2.5 秒（最短 1 秒）。位置は smoothstep（3s² − 2s³）でゆっくり出てゆっくり止まる</td></tr>
+    <tr><td>知らせ</td><td>乗ると「リフトで崖の上へ」／「リフトでふもとへ」</td></tr>
+    <tr><td>乗っているあいだの向き</td><td>南（yaw π。本島と海の側）・やや下向き（pitch −0.12）。乗り場の方を向いたままだと目の前が縦穴の柱でふさがって何も見えなかったため</td></tr>
+    <tr><td>着いたら</td><td>反対側の降り立つ所へ移し、乗る前の向き（乗り場の方）へ戻す。乗り場はどちらの階でも降り立つ所の同じ側にあるので、着いた階の乗り場を向く</td></tr>
+    <tr><td>乗れないとき</td><td>降り口（足元・頭の2マス）に通れないブロックが置かれていたら乗らない（「リフトの降り口がふさがっています」）。船に乗っているあいだは乗れない。群島のリフトの乗り場でなければ「このリフトは動きません」</td></tr>
+    <tr><td>乗っているあいだに受けない操作</td><td>歩く・跳ぶ・降りる・壊す・持ち上げる・置き換え・置く・回す・取り消し（降り口をふさぐと着いた先でブロックに埋まるため。build 24 前のパス5）</td></tr>
+    <tr><td>音・振動</td><td>乗るときと着いたときに針葉樹の板を置く音と軽い振動</td></tr>
+  </table>
+
+  <h3>乗り場のブロックの扱い</h3>
+  <table>
+    <tr><th>操作</th><th>結果</th></tr>
+    <tr><td>壊す</td><td>できない（「リフトの乗り場は壊せません」）</td></tr>
+    <tr><td>持ち上げる・置き換え（編集モード）</td><td>できない（「リフトの乗り場は動かせません」）</td></tr>
+    <tr><td>作る・置く</td><td>できない（レシピが無く、置けるブロックでもない）。最初からある1基だけ</td></tr>
+    <tr><td>当たり</td><td>通り抜けられる（細い柱なので乗り降りの所をふさがない）</td></tr>
+  </table>
+
+  <h3>形</h3>
+  <ul>
+    <li><strong>乗り場</strong>（<code>makeLiftStation</code>）: 針葉樹の柱に、鉄の色の操作箱・レバーと赤い握り・小さなランタン</li>
+    <li><strong>かご</strong>（<code>makeLiftCar</code>。乗っているあいだだけ現れる）: 縦穴の1マスに収まる床（0.92 角）・四隅の原木の柱（高さ 2.1）・腰の高さ（0.9）と上（2.1）の枠・吊り金具</li>
+    <li><strong>綱</strong>（<code>makeLiftRope</code>）: かごの上（床から 2.1 + 0.12）から梁まで、長さを毎フレーム伸び縮みさせる</li>
+  </ul>
+
+  <h3>既存のワールドへの入れ直し</h3>
+  <p>build 23 で作った群島のワールドで崖のあたりを掘って保存していると、保存済みのチャンクは生成し直さないため、リフトが出ない（滝も水のまま）。ワールドを開くときに一度だけ（<code>ArchipelagoMigration</code>、改訂番号 1）、リフトが入る保存済みチャンクを読み、地形のままのマス（空気・雪・石・土・草・木・葉・鉱石・水・溶岩・氷・草花）だけをリフトの構造で置き換えて保存する。プレイヤーが置いた建材・家具は消さない。保存されていないチャンクは次に生成するとき最新の形で作られるので触らない。</p>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>乗り物は「動くブロック」にしない。乗っているあいだだけ動き方を切り替え、形をプレイヤーに付ける（Fable 5.1 の設計）</li>
+    <li>船は海面（y 9）の水の上にだけ置ける。持ち上げ・置き換えの対象にしない（陸へ置けないよう、壊して拾う）</li>
+    <li>船は3マス。胴が桟橋・岸にかかる向きへは回らず、かかり具合が増える所へは進まない</li>
+    <li>船を降りると、近くの係留の場所 → その場 → まわり1マスの順で船を止め、どこにも止められなければ所持品へ戻す。船が失われる経路を作らない（降りられない・落ちた・ワールドを出た、いずれも所持品へ）</li>
+    <li>リフトは最初から地図にある1基だけ。乗り場は壊せない・動かせない・作れない</li>
+    <li>リフトは降り口がふさがっていたら動かさない。乗っているあいだは世界を変える操作を一切受けない</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>地形（VG-FEAT-TERRAIN・群島）</td><td>海面の高さ・桟橋と係留の場所・崖のリフトの位置</td><td><code>ArchipelagoTerrain</code>・<code>TerrainGenerator.archipelagoMoorings / archipelagoLifts</code></td></tr>
+    <tr><td>クラフト（VG-FEAT-CRAFTING）</td><td>船のレシピ（板 5・作業台）</td><td>リフトの乗り場はレシピなし</td></tr>
+    <tr><td>WorldRecord（SwiftData）</td><td>船に乗っているかの保存（<code>isRidingBoat</code>）</td><td>落ちたときに船を所持品へ戻すため</td></tr>
+    <tr><td>サウンド（VG-FEAT-SOUND）</td><td>乗る・降りる・着く音</td><td>船＝船を置く音、リフト＝針葉樹の板を置く音</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>海面以外・陸に船を置こうとした</td><td>置かない。「船は海の上に置けます」・影は赤</td></tr>
+    <tr><td>前後が海でない・近くに別の船</td><td>置かない。「船を浮かべるには、3マス続く海が要ります」／「近くにほかの船があります」</td></tr>
+    <tr><td>降りるとき船を止める水面が無い（桟橋のすき間など）</td><td>船を所持品へ戻す（「船を所持品にしまいました」）</td></tr>
+    <tr><td>降りるとき立てる陸が無い</td><td>その場の水に入る（船はそばに浮かんでいる）</td></tr>
+    <tr><td>乗ったままアプリが落ちた／ワールドを出た</td><td>次に入ったとき／出るときに船を所持品へ戻す</td></tr>
+    <tr><td>リフトの降り口がふさがっている</td><td>乗らない。「リフトの降り口がふさがっています」</td></tr>
+    <tr><td>リフトの片道が見つからない</td><td>「このリフトは動きません」</td></tr>
+  </table>
+
+  <h2>既知の課題</h2>
+  <table>
+    <tr><th>ID</th><th>内容</th><th>状態</th></tr>
+    <tr><td>CF-026</td><td>船の向きが変えられないとき、見ている方へ横滑りする。胴が桟橋にかかる向きへは回らないが、進む方向は見ている方向のまま（移動の入力が見ている向き基準）なので、桟橋の横で桟橋の方を向いて進むと蟹歩きのように横へ動く（胴が桟橋に当たれば止まる）</td><td>未対応（低）。直すなら、向きが止まっているあいだは進む方向を胴の向きに合わせる。本人の実機の感触を聞いてから決める</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>決まり（純粋関数・単体テスト対象）: <code>Boat.swift</code>（<code>BoatRules</code>）・<code>Lift.swift</code>（<code>Lift</code>・<code>LiftRide</code>）</li>
+    <li>乗り降り・毎フレームの動き: <code>GameSceneView.swift</code>（<code>boardBoat</code>・<code>disembarkBoat</code>・<code>rideLift</code>・<code>moveLiftCar</code>・<code>finishLiftRide</code>・<code>boatHeading</code>・<code>updatePlayerMovement</code> の船／リフトの分岐）。船の移動は <code>Player.moveBoat</code></li>
+    <li>形: <code>FurnitureNode.swift</code>（<code>makeBoat</code>・<code>makeLiftStation</code>・<code>makeLiftCar</code>・<code>makeLiftRope</code>）</li>
+    <li>配置: <code>ArchipelagoTerrain.swift</code>（桟橋の係留の場所・<code>SnowIsland.lift</code>・<code>liftStructure</code>・<code>ArchipelagoMigration</code>）</li>
+    <li>「乗る」の表示: <code>GameRules.swift</code> の <code>BlockUse</code>（<code>.boat</code>・<code>.lift</code>。動詞は「乗る」）</li>
+    <li>🔴 船の分岐で <code>return</code> しないこと。末尾のチャンクの読み込み・定期保存・統計が止まる（CF-020）</li>
+    <li>船は <code>isRotatable</code> に含まれるため、編集モードで「回す」の対象になる（置いたまま90度回す。回したあとに胴が桟橋・岸にかかるかは確かめていない）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+    <li><a href="terrain.html">地形（群島・桟橋・雪山の島）</a></li>
+    <li><a href="edit-mode.html">編集モード</a></li>
+    <li><a href="crafting.html">クラフト</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-02</td><td>初版作成（船＝CF31・build 24 の3マスの小舟、崖のリフト＝CF32）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
+</div>
+</body>
+</html>

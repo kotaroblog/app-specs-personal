@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - 地図</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / 地図</div>
+
+  <header class="site-header">
+    <h1>地図</h1>
+    <p>自分を中心に周りの地形と建てた物を上から見渡す全画面の地図。群島では群島全体の地図に切り替えられる</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-MAP</span>
+      <span class="tag">WBS: CF19・CF31</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>左上の地図ボタンで開く全画面の地図。北が上で、自分を中心に周囲 128 ブロックずつ（256 ブロック四方）を上から見た地表の色で描き、起伏の陰影と水の深さを付ける。自分の位置と向き、スポーン地点（ベッド）・チェスト・目印を重ね、左の欄にそれぞれの方角と距離を出す。拡大縮小は 256・128・64 ブロック四方の3段。</p>
+  <p>群島の世界では、いちばん広い段からさらに縮小すると「群島全体（約 1024 ブロック四方）」に切り替わり、桟橋と雪山の山小屋の目印で、海の上でも行き先がわかる（CF31）。</p>
+  <p>経緯: 2026-09-27 に本人が TestFlight 16 で「地図が欲しい」と要望。それまでは方角の表示と、ベッド・最後に開けたチェスト・目印1つへの方角と距離だけで、周りの地形や建てた場所を見渡せなかった。本人が案A「全画面の地図」を選択（ミニマップは横向きの画面が操作ボタンで埋まっているため見送り）。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01。左上の地図ボタン）</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant GI as GameInput
+  participant GV as GameSceneView（描画スレッド）
+  participant CM as ChunkManager
+  participant MV as WorldMapOverlay
+
+  U->>GI: 地図ボタン（showMap = true）
+  GI->>GI: ゲームを一時停止・地図づくりを依頼
+  MV-->>U: 「地図を作っています」
+  GV->>GI: consumeMapSnapshotRequest
+  GV->>CM: mapColumns（自分中心の 256×256 列）
+  GV->>GV: MapRenderer.image（1マス1ピクセル・陰影）
+  GV->>GV: 目印を集める（群島なら桟橋・山小屋と群島全体の地図）
+  GV->>GI: mapSnapshot（メインスレッドへ。閉じていたら捨てる）
+  MV-->>U: 地図と左の欄を表示
+  U->>MV: 閉じるボタン or 地図の外側をタップ
+  MV->>GI: showMap = false（mapSnapshot を捨てる）
+  </div>
+
+  <h2>画面の構成</h2>
+  <table>
+    <tr><th>部位</th><th>仕様</th></tr>
+    <tr><td>開く</td><td>ゲームプレイ画面の左上の地図ボタン（<code>mapButton</code>・44pt）。開いている間はゲームを一時停止する</td></tr>
+    <tr><td>左の欄（幅 180）</td><td>見出し「地図」・「北が上」・縮小／拡大ボタン（44pt）・縮尺の文字（「約128ブロック四方」など）・目印ごとの「名前  方角 距離m」（8方位・水平距離の整数。1 未満は「すぐそば」）</td></tr>
+    <tr><td>地図本体</td><td>正方形（表示領域の短い辺）・角丸 10。北（-Z）が上、東（+X）が右。地図そのものはタップを受けない（拡大した画像が左の欄のボタンへのタップを横取りしていたため。UI テストで発覚）</td></tr>
+    <tr><td>自分</td><td>白い矢印（<code>location.north.fill</code>）を向きに合わせて回す。向きは北=0・時計回り（方角の表示と同じ決め方）</td></tr>
+    <tr><td>閉じる</td><td>右上の閉じるボタン（<code>mapCloseButton</code>）か、地図の外側の暗い所をタップ。閉じると地図は捨て、開くたびに今の周りで作り直す</td></tr>
+    <tr><td>作成中</td><td>「地図を作っています」の表示（描画スレッドで数十ミリ秒）</td></tr>
+  </table>
+
+  <h2>拡大縮小</h2>
+  <table>
+    <tr><th>段</th><th>見える範囲</th><th>備考</th></tr>
+    <tr><td>群島全体（群島の世界だけ）</td><td>約 1024 ブロック四方</td><td>いちばん広い段からさらに縮小で切り替わる。拡大で 256 の段へ戻る</td></tr>
+    <tr><td>倍率 1</td><td>256 ブロック四方（いちばん広い段）</td><td>地図1枚の全体</td></tr>
+    <tr><td>倍率 2（既定）</td><td>128 ブロック四方</td><td>周りの地形と建てた物の両方が見やすい</td></tr>
+    <tr><td>倍率 4</td><td>64 ブロック四方</td><td>いちばん狭い段</td></tr>
+  </table>
+  <p>拡大は1マス1ピクセルの画像を補間なし（<code>interpolation(.none)</code>）で拡大する。端の段では該当ボタンを無効（薄く）にする。</p>
+
+  <h2>地図の作り方（列の集め方）</h2>
+  <p>自分の位置を中心に、北西の角から 256×256 列を集める（<code>ChunkManager.mapColumns</code>）。チャンクごとに次の順で使う。</p>
+  <table>
+    <tr><th>優先</th><th>出どころ</th><th>写る物</th></tr>
+    <tr><td>1</td><td>読み込み済みのチャンク（実物）</td><td>木・建てた物も写る</td></tr>
+    <tr><td>2</td><td>保存済みのチャンクの記録</td><td>保存時点の実物</td></tr>
+    <tr><td>3</td><td>ステージのワールド: ステージの地形の式（<code>StageTerrain</code>）</td><td>地形のみ（立て札の土台などの手置きの小物と木は写らない）。通常の式だと、まだ見ていない所に別の地形が描かれるため</td></tr>
+    <tr><td>3</td><td>それ以外: 地形の式（<code>generator.terrain</code>）</td><td>地形のみ（木や洞窟の口は写らない）。群島の凍った湖は底ではなく表面の氷を描く</td></tr>
+  </table>
+  <p>1列は上から下へ、地図に描くブロックに当たるまで下りる。空気・松明・ランタン・草花・染料の植物（交差した板で描く植物）は飛ばして下の地面を描く。水は水面の高さと深さ（水でない所までの段数）を持つ。式から求める列は海面 9 未満を水として扱う。</p>
+
+  <h2>色と陰影</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>基本の色</td><td>いちばん上のブロックの上面の色（<code>colorTop</code>）</td></tr>
+    <tr><td>起伏（北西から光）</td><td>北隣と西隣の高さとの差の合計が正なら ×1.12、負なら ×0.8</td></tr>
+    <tr><td>高さ</td><td>低地（高さ 12）を基準に 1 段ごとに 0.8% 明るく。×0.95〜×1.25 で止める（台地と低地を見分けるため）</td></tr>
+    <tr><td>水の深さ</td><td>1 段深くなるごとに ×0.9（下限 ×0.5）</td></tr>
+    <tr><td>海岸線</td><td>水・不明な所との境目は起伏として扱わない（海岸線が縞にならないように）</td></tr>
+    <tr><td>不明な所</td><td>RGB (24, 26, 32)</td></tr>
+  </table>
+  <p>🔴 北隣だけと比べていた版は、南北に走る崖（島の東の崖）に影が付かず、高さ 40 の台地も草原と同じ色で、崖と台地が読み取れなかった（2026-09-28、CF25 の QA スクショ）。西隣との比較と高さの明るさを足した。</p>
+
+  <h2>目印</h2>
+  <table>
+    <tr><th>目印</th><th>出す条件</th><th>位置</th><th>色（通常の段）</th></tr>
+    <tr><td>ベッド</td><td>ベッドを置いてスポーン地点にしたとき</td><td>スポーン地点</td><td>赤みのピンク</td></tr>
+    <tr><td>スポーン地点</td><td>ベッドを置いていないとき（ベッドと排他）</td><td>スポーン地点</td><td>黄</td></tr>
+    <tr><td>チェスト</td><td>チェストを開けたことがあるとき</td><td>最後に開けたチェスト</td><td>橙</td></tr>
+    <tr><td>目印</td><td>目印を立てているとき</td><td>目印の位置（1つ）</td><td>ピンク</td></tr>
+    <tr><td>建設地</td><td>ステージのワールド</td><td>お題を建てる場所（ステージのカメラの注視点）</td><td>水色</td></tr>
+    <tr><td>桟橋（北の桟橋・南の桟橋・西の桟橋・雪山の桟橋）</td><td>群島のワールド</td><td>船の係留の場所</td><td>水色</td></tr>
+    <tr><td>山小屋</td><td>群島のワールド</td><td>雪山の島の山小屋（ワールド座標 x 6, z -373.5）</td><td>淡い橙</td></tr>
+  </table>
+  <ul>
+    <li>通常の段では、見えている範囲の外の目印は地図の縁に寄せ、不透明度 0.6 で出す（方向がわかるように）</li>
+    <li>群島全体の地図では目印を白で描き、範囲の外は切り取る</li>
+    <li>左の欄には全目印の方角と距離を並べる（群島では海の上でも行き先がわかる）</li>
+  </ul>
+
+  <h2>群島全体の地図（CF31）</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>範囲</td><td>中心（x -150, z 0）・一辺 1024 ブロック。火山（南）・資源の島（西）の分まで入れ、後の版で枠が変わらないようにしている</td></tr>
+    <tr><td>解像度</td><td>256×256 ピクセル（1 ピクセル＝4 ブロック。各ピクセルの中心の列を引く）</td></tr>
+    <tr><td>出どころ</td><td>設計した地形の式だけから描く。建てた物・読み込んだチャンクは見ない</td></tr>
+    <tr><td>作るタイミング</td><td>初めて地図を開いたときに一度だけ描いて覚えておく（同じプレイ中は使い回す）</td></tr>
+    <tr><td>縮尺の表示</td><td>「群島全体（約1024ブロック四方）」</td></tr>
+  </table>
+
+  <h2>ワールドごとの見え方</h2>
+  <table>
+    <tr><th>ワールド</th><th>見え方</th></tr>
+    <tr><td>島</td><td>陸は中心 (0, 0)・半径 120。スポーン地点（真ん中）から開いた地図のいちばん広い段（256 四方）に島全体が入る</td></tr>
+    <tr><td>群島</td><td>256 四方の段に加え、群島全体の段と桟橋・山小屋の目印</td></tr>
+    <tr><td>ステージ</td><td>まだ見ていない所もステージの地形の式で描き、建設地の目印を出す</td></tr>
+    <tr><td>無限の世界</td><td>256 四方までの3段</td></tr>
+  </table>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>北が上で固定（自分の向きで回さない）。向きは矢印で示す</li>
+    <li>地図は開いたときの周りで作る。開いている間は一時停止なので、作り直しはしない</li>
+    <li>小さな飾り（草花・染料の植物・松明・ランタン）は描かず下の地面を描く</li>
+    <li>まだ行っていない所も地形の式で描く（真っ暗にはしない）。ただし木・建てた物は実物か保存済みの記録がある所だけ</li>
+    <li>群島全体の地図は設計した地形だけを描き、建てた物は入らない</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>地形生成（VG-FEAT-TERRAIN）</td><td>まだ読み込んでいない所の地形の式・群島全体の地図</td><td><code>generator.terrain</code>・<code>generator.column</code></td></tr>
+    <tr><td>WorldStore</td><td>保存済みのチャンクの記録</td><td>読み込んでいないが保存がある所</td></tr>
+    <tr><td>ステージ（VG-FEAT-STAGE）</td><td>ステージの地形の式・建設地の目印</td><td>CF19 の時点で合流時の切り替えを要件化</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>地図を作っている間に閉じた</td><td>出来上がった地図を捨てる</td></tr>
+    <tr><td>画像が作れない（列数の不一致など）</td><td>地図を出さない（「地図を作っています」のまま。閉じて開き直せる）</td></tr>
+    <tr><td>列の情報が何も無い</td><td>不明な所の色で描く</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>WorldMap.swift</code>: <code>WorldMap</code>（size 256・zoomLevels [1, 2, 4]）、<code>MapColumn</code>、<code>MapMarker</code>、<code>MapOverview</code>、<code>MapSnapshot</code>、<code>MapRenderer</code>（<code>image</code>・<code>color</code>・<code>heading</code>・<code>archipelagoOverview</code>）</li>
+    <li><code>WorldMapView.swift</code>: <code>WorldMapOverlay</code>・<code>MapCanvas</code>・<code>OverviewCanvas</code>・<code>MapSidePanel</code></li>
+    <li><code>ChunkManager.swift</code>: <code>mapColumns</code>・<code>mapColumn(in:)</code>・<code>stageMapColumn</code>・<code>generatedMapColumn</code></li>
+    <li><code>GameSceneView.swift</code>: <code>publishMapSnapshot</code>（描画スレッドで作り、メインスレッドへ渡す）・<code>archipelagoOverview</code>（キャッシュ）</li>
+    <li><code>GameInput.swift</code>: <code>showMap</code>（一時停止と地図づくりの依頼）・<code>mapSnapshot</code></li>
+    <li><code>ArchipelagoTerrain.swift</code>: <code>overviewCenter</code>・<code>overviewSpan</code>・<code>overviewPixels</code>、桟橋の名前、山小屋の位置</li>
+    <li>テスト: 単体 <code>WorldMapTests</code> 9件。UI は CF19 で1件、CF31 で群島全体の地図の1件</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+    <li><a href="terrain.html">地形生成</a></li>
+    <li><a href="stage.html">ステージ</a></li>
+    <li><a href="dyes.html">植物と染料</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-02</td><td>初版作成（CF19 の全画面の地図・拡大縮小・陰影・目印・ステージの地形と建設地、CF31 の群島全体の地図と桟橋・山小屋の目印を反映）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
+</div>
+</body>
+</html>

@@ -4,24 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>CraftFrontier - 採掘演出</title>
+<title>CraftFrontier - 採掘（壊す操作と演出）</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Felix App Specs</a> / <a href="../">CraftFrontier</a> / 採掘演出</div>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / 採掘（壊す操作と演出）</div>
 
   <header class="site-header">
-    <h1>採掘演出</h1>
-    <p>ブロック破壊（採掘）に対する視覚フィードバック。採掘中のひび割れ表示と破壊完了時の破片パーティクル</p>
+    <h1>採掘（壊す操作と演出）</h1>
+    <p>長押しでブロックを壊す操作。届く距離・道具ごとの採掘時間・壊せない物と断る知らせ・手の振り・ひび割れと破片・葉の自然消滅</p>
     <div style="margin-top:8px;">
       <span class="tag">機能ID: VG-FEAT-MINING</span>
     </div>
   </header>
 
   <h2>概要</h2>
-  <p>プレイヤーが「壊す」ボタンを長押ししてブロックを採掘する際、進行度と破壊完了を直感的に伝えるための演出。採掘中は対象ブロックにひび割れが段階的に深まり、破壊した瞬間にブロック色の破片が飛び散る。これによりツールごとの採掘時間差や「あと少しで壊れる」という手応えを視覚的に提示する。採掘速度そのものの仕様は<a href="crafting.html">クラフト（採掘速度テーブル）</a>を参照。</p>
+  <p>プレイヤーは「壊す」ボタンを長押しして、照準のブロックを壊す（採掘する）。押しているあいだ進行度（progress 0→1）が「経過秒 ÷ 採掘時間」で進み、1 に達すると壊れて所持品に入る。採掘中は対象ブロックにひびが段階的に深まり、ブロックが小刻みに揺れ、壊れた瞬間にブロック色の破片が飛び散る。一人称では画面右下の手、三人称では自キャラの右腕が、壊しているあいだ振り続ける。</p>
+  <p>編集モード（CF17）では同じ長押しが「持ち上げる」（赤）・「置き換え」（緑）になり、どちらも壊すのと同じ時間がかかる。</p>
 
   <h2>関連画面</h2>
   <ul>
@@ -32,92 +33,190 @@
   <div class="mermaid">
 sequenceDiagram
   participant U as User
-  participant GV as GameView
-  participant TA as TextureAtlas
+  participant GV as GameSceneView
+  participant GR as GameRules
+  participant Hand as 手（一人称）/ キャラ（三人称）
   participant Scene as SceneKit Scene
 
-  U->>GV: 壊すボタン長押し（照準ブロック）
-  loop 採掘中（progress 0→1）
-    GV->>GV: progress を更新
-    GV->>TA: crackStageImages[stage] を取得
-    GV->>Scene: breakOverlayNode を対象ブロックに追従表示
+  U->>GV: 壊すボタン長押し
+  GV->>GR: Reach.distance で照準ブロックを求める（サバイバル4.5 / クリエイティブ5）
+  GV->>GV: holdBlockedReason（世界の底・リフトの乗り場など）
+  alt 壊せない
+    GV-->>U: 理由を押している間に1回だけ知らせる（進行度は0）
+  else 壊せる
+    GV->>Hand: setBreaking(true) で振り続ける・道具に持ち替える
+    loop 押している間（毎フレーム）
+      GV->>GR: miningDuration(block, tool, isCreative)
+      GV->>GV: progress += dt / 採掘時間
+      GV->>Scene: ひび（4段階）と揺れを対象ブロックに表示
+    end
+    Note over GV: progress ≥ 1.0
+    GV->>Scene: ブロックを除去・破片を1回飛ばす
+    GV-->>U: 「（ブロック名） +1」・破壊音・触覚
+    opt 原木を壊した
+      GV->>GR: LeafDecay.unsupportedLeaves で消す葉を予約
+    end
   end
-  Note over GV: progress ≥ 1.0 でブロック破壊
-  GV->>Scene: 対象ブロックノードを除去
-  GV->>GV: spawnBreakParticles(color: colorTop)
-  GV->>Scene: SCNParticleSystem をワンショット再生
-  Note over Scene: 約0.55秒後に自動消滅
+  U->>GV: 指を離す
+  GV->>Hand: setBreaking(false) で構えに戻す
+  GV->>GV: 進行度を0.7秒だけ退避（同じブロックに戻れば再開）
   </div>
 
-  <h2>ひび割れ表示</h2>
+  <h2>届く距離（CF-008）</h2>
   <table>
     <tr><th>項目</th><th>仕様</th></tr>
-    <tr><td>表示ノード</td><td>採掘中の対象ブロックに追従するオーバーレイノード（<code>breakOverlayNode</code>）。照準ハイライト（<code>highlightNode</code>）と同様の追従の仕組みで実装</td></tr>
-    <tr><td>テクスチャ</td><td><code>TextureAtlas.crackStageImages</code>。決定論的ノイズパターンで生成した半透明の黒い線からなる 4 段階のひび割れテクスチャ</td></tr>
-    <tr><td>段階数</td><td>4 段階（progress 0〜1 に対応）</td></tr>
-    <tr><td>段階の閾値</td><td>progress 0.25 / 0.5 / 0.75 を境に次の段階へ切り替え</td></tr>
-    <tr><td>生成方式</td><td>決定論的ノイズ（seed 固定）で生成するため、同一ブロックでは常に同じひび割れパターンになる</td></tr>
+    <tr><td>距離</td><td><strong>サバイバル 4.5・クリエイティブ 5</strong>（ブロック単位、目線から。<code>Reach</code>）。Minecraft（Java 版）と同じ値</td></tr>
+    <tr><td>適用範囲</td><td>壊す・置く・使う・持ち上げる・置き換え・羊を狙う（毛刈り）で共通の1つの値。三人称でもカメラ位置ではなく目線から測る</td></tr>
+    <tr><td>経緯</td><td>2026-09-27 まではサバイバル・クリエイティブとも 6 で、本人が実機で「素手やツルハシが明らかに届かない遠いブロックまで壊せる」と指摘。build 17 から現在の値（<code>02adfec</code>）</td></tr>
+    <tr><td>船</td><td>3マスの船のへさき・ともを狙ったら、真ん中のマスを狙ったことにする（壊す・乗る。CF31）</td></tr>
+  </table>
+
+  <h2>道具と採掘時間</h2>
+  <p>採掘時間は <code>miningDuration(block:tool:isCreative:)</code>（GameRules.swift の純粋関数）で決まる。道具の種類ではなく採掘ティアで判定する。</p>
+  <table>
+    <tr><th>道具</th><th>採掘ティア</th><th>入手</th></tr>
+    <tr><td>素手</td><td>0</td><td>最初から</td></tr>
+    <tr><td>ハサミ（CF23）</td><td>0（掘る力は素手と同じ。羊の毛を刈る道具）</td><td>作業台で鉄インゴット2つ</td></tr>
+    <tr><td>木のツルハシ</td><td>1</td><td>クラフト</td></tr>
+    <tr><td>石のツルハシ</td><td>2</td><td>クラフト</td></tr>
+    <tr><td>鉄のツルハシ</td><td>3</td><td>作業台で鉄インゴット5つ</td></tr>
+  </table>
+  <p>ダイヤのツルハシは廃止済み。旧データに残っていた場合は鉄のツルハシとして読み込む。</p>
+
+  <table>
+    <tr><th>ブロック</th><th>ティア0</th><th>ティア1</th><th>ティア2</th><th>ティア3</th></tr>
+    <tr><td>土・砂・草・葉・雪・サボテン・松明・農地・小麦・花・背の高い草・キノコ・針葉樹の葉・船</td><td colspan="4">0.3秒（道具によらない）</td></tr>
+    <tr><td>植物（花・草・キノコ・染料の植物・若芽。CF29）</td><td colspan="4">0.3秒（摘むだけ）</td></tr>
+    <tr><td>原木・針葉樹の原木</td><td>1.5秒</td><td colspan="3">0.6秒</td></tr>
+    <tr><td>石・レンガ・石炭鉱石</td><td>5.0秒</td><td>2.0秒</td><td colspan="2">0.6秒</td></tr>
+    <tr><td>鉄鉱石・金鉱石</td><td colspan="2">8.0秒</td><td>1.5秒</td><td>0.6秒</td></tr>
+    <tr><td>ダイヤ鉱石</td><td colspan="3">12.0秒</td><td>2.0秒</td></tr>
+    <tr><td>溶岩</td><td colspan="4">30.0秒</td></tr>
+    <tr><td>上記以外（板材・家具・建材など）</td><td colspan="4">1.0秒</td></tr>
+    <tr><td>クリエイティブ</td><td colspan="4">すべて 0.05秒</td></tr>
+  </table>
+  <p>道具を選んだときの効果説明（例: 石のツルハシ＝「石が8.3倍速い / 鉄鉱石が掘れる」）は、この関数から素手との比較で組み立てる（文言を手書きしない。素手で7秒以上かかる物が7秒未満になれば「掘れる」と出す）。</p>
+
+  <h2>壊せない物と断る知らせ</h2>
+  <p>長押しを始められない場所では、押しているあいだ<strong>1回だけ</strong>トーストで理由を知らせ、進行度は進めない（<code>holdBlockedReason</code>）。</p>
+  <table>
+    <tr><th>対象</th><th>壊す（通常）</th><th>持ち上げる・置き換え（編集モード）</th></tr>
+    <tr><td>世界の底（高さ0の段。<code>WorldFloor</code>）</td><td>「ここは世界の底なので掘れません」</td><td>「世界の底は動かせません」</td></tr>
+    <tr><td>最初から置いてあるリフトの乗り場（CF32）</td><td>「リフトの乗り場は壊せません」</td><td>「リフトの乗り場は動かせません」</td></tr>
+    <tr><td>編集できない物</td><td>―</td><td>「（ブロック名）は動かせません」</td></tr>
+    <tr><td>持ち上げ中にさらに持ち上げる</td><td>―</td><td>「持ち上げている物を先に置いてください」</td></tr>
+    <tr><td>置き換えに使えない建材・在庫なし・同じブロック</td><td>―</td><td>「（建材名）は置き換えに使えません」／「選択中のブロックがありません」／「同じブロックです」</td></tr>
+  </table>
+  <ul>
+    <li>世界の底を壊せなくしたのは、地中を掘り進めると底が抜けて世界の外へ落ち続けた不具合（2026-09-27 本人指摘）への対処。足元が高さ −4 より下になった場合は地上へ戻す保険もある</li>
+    <li><code>breakBlock</code> 側でも世界の底・リフトの乗り場・空気は壊さない（経路が増えても底が抜けないように二重に止める）。水・溶岩は「液体は壊せません」と知らせて壊さない</li>
+    <li>持ち上げ・置き換えを終えた直後、同じ押し続けのあいだは断る知らせを出さない（CF-014）</li>
+    <li>リフトに乗っているあいだは、壊す・持ち上げる・置き換え・置くのいずれも受け付けない（CF32）</li>
+  </ul>
+
+  <h2>編集モードの長押しとの関係（CF17）</h2>
+  <table>
+    <tr><th>状態</th><th>赤ボタンの長押し</th><th>緑ボタンの長押し</th></tr>
+    <tr><td>通常</td><td>壊す</td><td>（置く・使うはタップ）</td></tr>
+    <tr><td>編集モード</td><td>持ち上げる（向き・チェストの中身を保ったまま外す）</td><td>置き換え（狙った物を選択中の建材に替える）</td></tr>
+  </table>
+  <p>持ち上げ・置き換えの所要時間も <code>miningDuration</code>（狙った物 × 選択中の道具）で、ひび・揺れ・手の振りも同じように出る。原木を持ち上げた場合も葉の自然消滅の予約をする。</p>
+
+  <h2>手の振り（CF10・CF31）</h2>
+  <table>
+    <tr><th>項目</th><th>一人称（FirstPersonHand、CF10）</th><th>三人称（PlayerModel、build 24〜）</th></tr>
+    <tr><td>表示</td><td>画面右下の操作ボタン群の左上に手先を置き、腕がボタンの裏から伸びて見える。地形より必ず手前に描く</td><td>自キャラの右手（画面の右に見える腕）の先に持ち物を付ける。一人称のあいだはキャラを隠す</td></tr>
+    <tr><td>持ち物</td><td colspan="2">一人称と三人称で同じ。<strong>普段は選択中の建材</strong>、<strong>壊している間と、建材を置けない（在庫切れ・置けない物）ときは選択中の道具</strong>。素手なら何も持たない。持ち替えると一人称は下から持ち上げる動きを付ける</td></tr>
+    <tr><td>壊している間</td><td>肩を支点に振り下ろす動き（0.07秒＋戻り0.15秒）を繰り返し、やめたら0.10秒で構えに戻す</td><td>右腕を同じ周期（1回0.24秒）で振り続ける（歩きの腕振りより優先）</td></tr>
+    <tr><td>置く・使う・刈る・持ち上げ・置き換えの完了</td><td colspan="2">1回だけ振る（<code>swingHands</code>）。壊している間は連続の振りを優先して重ねない</td></tr>
+    <tr><td>その他</td><td>歩いている間だけ小さく揺れる</td><td>三人称のキャラは見えているときだけ振る（一人称から切り替えた瞬間に残った振りが出ないように。build 24 前のパス5）</td></tr>
+  </table>
+  <p>三人称の振りは本人の build 23 での指摘「三人称で壊すときに壊す動作が無い。一人称と同じ形がよい」を受けて build 24（2026-10-02）で追加した。</p>
+
+  <h2>ひび割れ表示と揺れ</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>表示ノード</td><td>対象ブロックに追従するオーバーレイ（<code>breakOverlayNode</code>）。照準のハイライト（<code>highlightNode</code>）と同じ形状に合わせる（ハーフ・階段などは実際の形）</td></tr>
+    <tr><td>テクスチャ</td><td><code>TextureAtlas.crackStageImages</code>。seed 固定のノイズで生成した半透明の黒い線からなる4段階</td></tr>
+    <tr><td>段階</td><td><code>min(3, Int(progress × 4))</code>。progress 0.25 / 0.5 / 0.75 で次の段階へ。段階が変わったときだけ貼り替える</td></tr>
+    <tr><td>揺れ（breakMotionNode）</td><td>ブロック色の箱を重ね、進行度に応じて揺れ・沈み・つぶれを大きくする（揺れ幅 0.006〜0.024m、つぶれ最大 5.5%、不透明度 0.38〜0.80）</td></tr>
+    <tr><td>ハイライト</td><td>照準枠の不透明度を 0.4＋progress×0.6 にする</td></tr>
   </table>
 
   <h2>破片パーティクル</h2>
   <table>
     <tr><th>項目</th><th>仕様</th></tr>
-    <tr><td>発生タイミング</td><td>ブロックが壊れた瞬間にワンショットで 1 回バースト（<code>spawnBreakParticles</code>）</td></tr>
-    <tr><td>実装</td><td><code>SCNParticleSystem</code></td></tr>
-    <tr><td>破片の色</td><td>壊したブロックの色（<code>colorTop</code>）を使用</td></tr>
-    <tr><td>飛散方向</td><td>放射状（<code>spreadingAngle</code> 160 度）</td></tr>
-    <tr><td>運動</td><td>重力の影響を受けて落下する</td></tr>
-    <tr><td>寿命</td><td>約 0.55 秒後に自動消滅</td></tr>
-    <tr><td>対象</td><td>全ブロック種別で共通発生（松明・植生・チェスト・農地・小麦・通常ブロック）</td></tr>
+    <tr><td>発生タイミング</td><td>ブロックが壊れた瞬間に1回バースト（<code>spawnBreakParticles</code>）</td></tr>
+    <tr><td>実装</td><td><code>SCNParticleSystem</code>（放出0.05秒・毎秒300個・粒の大きさ0.07±0.03）</td></tr>
+    <tr><td>破片の色</td><td>壊したブロックの色（<code>colorTop</code>）</td></tr>
+    <tr><td>飛散</td><td>1m の箱の体積内から、<code>spreadingAngle</code> 160度・速さ 1.2±0.6、重力 −18</td></tr>
+    <tr><td>寿命</td><td>0.55秒（放出0.05＋粒0.5）で自動的にノードごと消える</td></tr>
+    <tr><td>対象</td><td>壊せた全ブロック共通</td></tr>
+  </table>
+
+  <h2>葉の自然消滅（CF18）</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>きっかけ</td><td>原木（針葉樹を含む）を壊した・持ち上げたときだけ、その周り各軸 ±5 の葉を調べる（自分で置いた生け垣は、すぐ横の木を切った場合だけ消えうる）</td></tr>
+    <tr><td>つながりの判定</td><td>葉だけを伝って原木へ <strong>10歩以内</strong>に届けば残す（本家は6。巨木は無傷でも最大8歩、上の2段を削ると10歩の葉があるため）</td></tr>
+    <tr><td>消え方</td><td>つながりを失った葉を 0.5〜6.0秒のばらした時間で1枚ずつ消す。消す直前にもう一度つながりを確かめる（待つ間に幹を置き直した場合は残す）。葉の音は0.35秒以上空けて鳴らす</td></tr>
+    <tr><td>描き直し</td><td>同じフレームで消える葉はまとめて書き換え、チャンクごとに1回だけ描き直す（<code>a98a349</code>）</td></tr>
+    <tr><td>所持品</td><td>自然に消えた葉は所持品に入らない</td></tr>
+  </table>
+
+  <h2>アクセシビリティ（VoiceOver）</h2>
+  <p>VoiceOver が有効な場合、「壊す」ボタンの操作方式は長押しからトグル式に切り替わる（編集モードの「持ち上げる」「置き換え」も同じ）。</p>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>1 回目の操作</td><td>採掘を開始する（以降、採掘中の progress が 0 から 1 へ進む）</td></tr>
+    <tr><td>2 回目の操作</td><td>採掘を停止する</td></tr>
+    <tr><td>採掘完了</td><td>progress が 1.0 に達した時点でブロックが壊れる。追加操作は不要</td></tr>
+    <tr><td>変更の背景</td><td>従来は固定 0.6 秒だけ採掘状態にしていたため、それより長くかかるブロック（素手の石 5 秒など）を壊し切れなかった。トグル式にして所要時間に依存せず完了できるようにした</td></tr>
   </table>
 
   <h2>ビジネスルール</h2>
   <ul>
-    <li>ひび割れは採掘進行度（progress: 0〜1）に連動し、progress 0.25 / 0.5 / 0.75 の閾値で 4 段階に切り替える</li>
-    <li>ひび割れテクスチャは決定論的ノイズで生成するため、生成結果はビルド間・プレイ間で一貫する</li>
-    <li>破片パーティクルはブロック種別を問わず必ず発生し、破片色は破壊したブロックの <code>colorTop</code> を採用する</li>
-    <li>クリエイティブモードでのブロック破壊は即時のため、ひび割れ段階が視認されないケースがある（破片バーストは発生しうる）</li>
+    <li>壊す・置く・使う・毛刈りの届く距離は1つの値（サバイバル 4.5・クリエイティブ 5）</li>
+    <li>採掘時間は採掘ティアで決まり、道具の効果説明も同じ関数から算出する</li>
+    <li>世界の底（高さ0）と最初から置いてあるリフトの乗り場は壊せない・動かせない。理由は押している間に1回だけ知らせる</li>
+    <li>指を離す・狙いを外すと進行度は消さずに 0.7秒だけ退避し、その間に同じブロックへ戻れば続きから再開する（退避枠は1つで、より進んでいる方を残す）</li>
+    <li>手の持ち物は一人称・三人称で同じ。壊している間は道具を持って振り続け、置く・使うときは1回振る</li>
+    <li>クリエイティブは 0.05秒で壊れるため、ひびの段階はほぼ見えない（破片は出る）</li>
   </ul>
 
   <h2>外部連携</h2>
   <table>
     <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
-    <tr><td>TextureAtlas（crackStageImages）</td><td>ひび割れ 4 段階テクスチャの供給</td><td>決定論的ノイズで生成</td></tr>
-    <tr><td>SceneKit（SCNParticleSystem）</td><td>破片バーストの描画</td><td>ワンショット・自動消滅</td></tr>
-    <tr><td>クラフト（VG-FEAT-CRAFTING）</td><td>採掘進行度を決めるツール別採掘速度</td><td>progress の進み方を規定</td></tr>
+    <tr><td>GameRules（<code>miningDuration</code>・<code>Reach</code>・<code>WorldFloor</code>・<code>LeafDecay</code>）</td><td>採掘時間・届く距離・壊せない段・葉の消滅判定</td><td>純粋関数・単体テスト対象</td></tr>
+    <tr><td>TextureAtlas（crackStageImages）</td><td>ひび割れ4段階のテクスチャ</td><td>seed 固定のノイズで生成</td></tr>
+    <tr><td>FirstPersonHand / PlayerModel</td><td>一人称の手・三人称のキャラの持ち物と振り</td><td>描画スレッドから更新</td></tr>
+    <tr><td>SceneKit（SCNParticleSystem）</td><td>破片バースト</td><td>ワンショット・自動消滅</td></tr>
+    <tr><td><a href="mob-ai.html">動物（VG-FEAT-MOBAI）</a></td><td>羊を狙っているときの置くボタンの横取り（毛刈り）</td><td>羊がブロックより手前にいるときだけ</td></tr>
   </table>
-
-  <h2>アクセシビリティ（VoiceOver）</h2>
-  <p>VoiceOver が有効な場合、「壊す」ボタンの操作方式は長押しからトグル式に切り替わる。</p>
-  <table>
-    <tr><th>項目</th><th>仕様</th></tr>
-    <tr><td>1 回目の操作</td><td>採掘を開始する（以降、採掘中の progress が 0 から 1 へ進む）</td></tr>
-    <tr><td>2 回目の操作</td><td>採掘を停止する（progress のリセット・ひび割れ表示のクリアを含む）</td></tr>
-    <tr><td>採掘完了</td><td>progress が 1.0 に達した時点でブロックが破壊される。追加操作は不要</td></tr>
-    <tr><td>変更の背景</td><td>従来は固定 0.6 秒だけ採掘状態にしていたが、ブロック・ツールの組み合わせによる実所要時間（石 5 秒、鉄鉱石/金鉱石 8 秒、非対応ツールでのダイヤモンド鉱石 12 秒など）を超えるブロックが採掘完了できない欠陥があった。トグル式に変更することで、所要時間に依存せず採掘を最後まで完了できる</td></tr>
-  </table>
-  <p>ひび割れ演出（breakOverlayNode）と破片パーティクルの動作はVoiceOver有効時も同様に機能する。</p>
 
   <h2>エラー処理</h2>
   <table>
     <tr><th>発生条件</th><th>対応</th></tr>
-    <tr><td>採掘中に対象ブロックが照準から外れた / 採掘が中断された</td><td>breakOverlayNode を除去し、progress をリセットする</td></tr>
-    <tr><td>crackStageImages の段階インデックスが範囲外</td><td>閾値ロジックで 0〜3 にクランプし、範囲外参照を避ける</td></tr>
+    <tr><td>採掘中に狙いが別のブロックへ移った</td><td>今の進行度を退避して新しいブロックへ切り替える（0.7秒以内に戻れば再開）</td></tr>
+    <tr><td>指を離した・何も狙っていない</td><td>進行度を退避して 0 に戻し、ひびと揺れを隠す</td></tr>
+    <tr><td>壊せない物を狙って長押し</td><td>理由を1回だけ知らせ、進行度は進めない</td></tr>
+    <tr><td>ひびの段階が範囲外</td><td><code>min(3, …)</code> で 0〜3 に収める</td></tr>
+    <tr><td>掘り切った瞬間に照準がずれている</td><td>進行度を貯めたブロックの座標を固定して壊す（レイを撃ち直さない）</td></tr>
   </table>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li>実装箇所: <code>GameView.swift</code>（<code>breakOverlayNode</code> の追従表示、<code>spawnBreakParticles</code> のバースト生成）</li>
-    <li>実装箇所: <code>TextureAtlas.swift</code>（<code>crackStageImages</code> のひび割れテクスチャ生成）</li>
-    <li>breakOverlayNode は highlightNode と同じく対象ブロックに毎フレーム追従させる</li>
-    <li>段階切り替えは progress を 0.25 刻みの閾値で 4 段階にマッピングする</li>
-    <li>破片パーティクルは spreadingAngle 160 度・重力あり・寿命約 0.55 秒でワンショット再生し、再生後は自動でノードを解放する</li>
+    <li>実装箇所: <code>GameSceneView.swift</code>（<code>updateMiningAndInteraction</code>・<code>holdBlockedReason</code>・<code>breakBlock</code>・<code>spawnBreakParticles</code>・<code>swingHands</code>・<code>updateLeafDecay</code>）</li>
+    <li>実装箇所: <code>GameRules.swift</code>（<code>miningDuration</code>・<code>toolEffectSummary</code>・<code>Reach</code>・<code>WorldFloor</code>・<code>LeafDecay</code>）、<code>GameDomain.swift</code>（<code>Tool.miningTier</code>）</li>
+    <li>実装箇所: <code>FirstPersonHand.swift</code>（一人称の手・<code>held</code> の決め方）、<code>PlayerModel.swift</code>（三人称の持ち物と振り、<code>swingDuration</code> 0.24秒）</li>
+    <li>長押しの種類は <code>currentHoldAction</code>（壊す / 持ち上げる / 置き換え）。リフト乗車中は nil</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
     <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
-    <li><a href="crafting.html">クラフト（採掘速度テーブル）</a></li>
+    <li><a href="crafting.html">クラフト</a></li>
+    <li><a href="mob-ai.html">動物（羊の毛刈り）</a></li>
     <li><a href="graphics.html">グラフィック設定</a></li>
   </ul>
 
@@ -127,6 +226,7 @@ sequenceDiagram
     <tr><td>1.0</td><td>2026-07-05</td><td>初版作成（採掘中のひび割れ表示・破壊完了時の破片パーティクルを追加）</td></tr>
     <tr><td>1.1</td><td>2026-07-15</td><td>VoiceOver 有効時の「壊す」操作をトグル式（開始/停止 2 タップ）に変更（042f27a）。アクセシビリティセクションを新設</td></tr>
     <tr><td>1.2</td><td>2026-09-17</td><td>建築特化への転換（2026-09-16）に伴う表記統一。アプリ表示名を CraftFrontier に揃えた（機能仕様の変更なし）</td></tr>
+    <tr><td>2.0</td><td>2026-10-02</td><td>演出だけでなく壊す操作全体を扱う改訂。タイトルを「採掘（壊す操作と演出）」に変更。「届く距離（CF-008：6→サバイバル4.5・クリエイティブ5）」「道具と採掘時間（ティア表・ハサミ追加・ダイヤのツルハシ廃止）」「壊せない物と断る知らせ（世界の底・リフトの乗り場）」「編集モードの長押しとの関係（CF17）」「手の振り（一人称 CF10・三人称 build 24）」「葉の自然消滅（CF18）」の各節を新設。進行度の0.7秒退避、揺れ演出、破片の数値を実装どおりに追記。実装箇所の GameView.swift を GameSceneView.swift に訂正</td></tr>
   </table>
 
   <script>
@@ -136,7 +236,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-09-17</footer>
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
 </div>
 </body>
 </html>

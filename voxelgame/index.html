@@ -9,7 +9,7 @@
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../">← Felix App Specs</a></div>
+  <div class="breadcrumb"><a href="../">← Personal App Specs</a></div>
 
   <header class="site-header">
     <h1>CraftFrontier</h1>
@@ -17,18 +17,18 @@
   </header>
 
   <h2>概要</h2>
-  <p>素材を集め、自分の作品を建てるためのボクセルゲーム。2026-09-16 に<strong>サバイバル型から建築特化へ全面転換</strong>し、戦闘・体力・空腹・死亡を廃止した。「自分の作品・アートを作る」という作り手の動機と、サバイバル実装（戦闘・生存）の方向がズレていたためである。設計の核心は「<strong>達成感の源泉は危険を越えることではなく、不可逆な投資（量と時間）が目に見えること</strong>」（Fable 5.1、2026-09-16）で、目標ガイドの終着点も作品カードの表示も「これまでに置いた量」に置き換えている。</p>
+  <p>素材を集め、自分の作品を建てるためのボクセルゲーム。2026-09-16 に<strong>サバイバル型から建築特化へ全面転換</strong>し、戦闘・体力・空腹・死亡を廃止した。「自分の作品・アートを作る」という作り手の動機と、サバイバル実装（戦闘・生存）の方向がズレていたためである。設計の核心は「<strong>達成感の源泉は危険を越えることではなく、不可逆な投資（量と時間）が目に見えること</strong>」（Fable 5.1、2026-09-16）で、目標ガイドの終着点も作品カードの表示も「これまでに置いた量」に置き換えている。2026-09-27 以降は「決まった地図」を増やす方針（本人）で、ステージ「岬の灯台」・島の世界・群島の世界（本島と雪山の島を船で渡る）を足している。</p>
   <ul class="kv-list">
     <li><span class="k">カテゴリ</span><span class="v">ゲーム / シミュレーション（建築）</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語</span></li>
     <li><span class="k">マネタイズ</span><span class="v">未定</span></li>
-    <li><span class="k">ステータス</span><span class="v">開発中（M1 判定ゲートは 2026-10末）</span></li>
+    <li><span class="k">ステータス</span><span class="v">開発中（TestFlight 1.0.0 (24) を 2026-10-02 に配信。M1 判定は 2026-09-28 に取りやめ）</span></li>
     <li><span class="k">リリース予定</span><span class="v">未定</span></li>
     <li><span class="k">技術スタック</span><span class="v">Swift 6 / SwiftUI / SceneKit / SwiftData</span></li>
   </ul>
   <div class="callout warn">
-    本ポータルの内容は<strong>2026-09-17 時点の実装</strong>を反映したもの。P2 以降（階段・ハーフブロック等）で機能・画面構成が変わる見込みがあるため、将来の拡張予定は原則として書かない。
+    本ポータルの内容は<strong>2026-10-02 時点の実装</strong>（TestFlight build 24 と、その後の修正＝群島では海面より上を掘らない・ジャンプの絵・所持品の同期）を反映したもの。将来の拡張予定は原則として書かない（群島の次の段の設計は、リポジトリの <code>docs/群島と雪山の島_設計案_2026-09-30.md</code> が正）。
   </div>
 
   <h2>全体仕様書</h2>
@@ -43,18 +43,43 @@
   <div class="card-grid">
     <a class="card" href="screens/world-select.html">
       <div class="title">ワールド選択</div>
-      <div class="desc">ワールドの新規作成・一覧・削除</div>
+      <div class="desc">ワールドの新規作成（地形の種類: 群島・島・無限）・一覧・削除・ステージ</div>
       <div class="meta"><span class="tag">VG-WORLD-01</span></div>
     </a>
     <a class="card" href="screens/gameplay.html">
       <div class="title">ゲームプレイ</div>
-      <div class="desc">3D ボクセルワールド・HUD・操作系</div>
+      <div class="desc">横向きの HUD・操作ボタン（置く／使う／乗る・ジャンプ）・上部のボタン・手と持ち物</div>
       <div class="meta"><span class="tag">VG-GAME-01</span></div>
     </a>
   </div>
 
   <h2>機能仕様書</h2>
   <div class="card-grid">
+    <a class="card" href="features/vehicles.html">
+      <div class="title">乗り物（船とリフト）</div>
+      <div class="desc">3マスの船（置き方・進み方・降り方・係留）と、雪山の崖のリフト</div>
+      <div class="meta"><span class="tag">VG-FEAT-VEHICLES</span></div>
+    </a>
+    <a class="card" href="features/map.html">
+      <div class="title">地図</div>
+      <div class="desc">全画面の地図・目印・拡大縮小・群島全体の地図</div>
+      <div class="meta"><span class="tag">VG-FEAT-MAP</span></div>
+    </a>
+    <a class="card" href="features/edit-mode.html">
+      <div class="title">編集モード</div>
+      <div class="desc">置き換え・持ち上げて移動・回す・できない理由の知らせ</div>
+      <div class="meta"><span class="tag">VG-FEAT-EDIT</span></div>
+    </a>
+    <a class="card" href="features/dyes.html">
+      <div class="title">植物と染料</div>
+      <div class="desc">野いちご・ひまわり・藍の草を育て、羊毛と石レンガを7色に染める</div>
+      <div class="meta"><span class="tag">VG-FEAT-DYES</span></div>
+    </a>
+    <a class="card" href="features/stage.html">
+      <div class="title">ステージと記念写真</div>
+      <div class="desc">ステージ「岬の灯台」（お題・着手前と完成の写真・作者の写真）と記念写真</div>
+      <div class="meta"><span class="tag">VG-FEAT-STAGE</span></div>
+    </a>
     <a class="card" href="features/objectives.html">
       <div class="title">目標ガイド</div>
       <div class="desc">建築特化の6段階ガイド（終着点は設置100個）</div>
@@ -62,32 +87,32 @@
     </a>
     <a class="card" href="features/building-assist.html">
       <div class="title">建築支援操作</div>
-      <div class="desc">設置プレビュー・スポイト・1手アンドゥ・視点パッド3分岐</div>
+      <div class="desc">設置プレビュー・足場積み・階段とハーフ・2マスのベッド・ランタン・柵と塀・アンドゥ</div>
       <div class="meta"><span class="tag">VG-FEAT-BUILD-ASSIST</span></div>
     </a>
     <a class="card" href="features/work-card.html">
       <div class="title">作品カード</div>
-      <div class="desc">これまでに置いた量の振り返りと設置の集計</div>
+      <div class="desc">これまでに置いた量の振り返り・ステージの写真（着手前・完成・作者）</div>
       <div class="meta"><span class="tag">VG-FEAT-WORKCARD</span></div>
     </a>
     <a class="card" href="features/crafting.html">
       <div class="title">クラフト</div>
-      <div class="desc">ツール・建材レシピ・精錬・採掘速度テーブル</div>
+      <div class="desc">加工の種類と時間制のジョブ・全レシピ（建材・染料・船・針葉樹と氷の形違い）・道具</div>
       <div class="meta"><span class="tag">VG-FEAT-CRAFTING</span></div>
     </a>
     <a class="card" href="features/mining.html">
-      <div class="title">採掘演出</div>
-      <div class="desc">ひび割れ表示・破壊完了時の破片パーティクル</div>
+      <div class="title">採掘（壊す操作と演出）</div>
+      <div class="desc">届く距離・道具と採掘時間・壊せない物・手の振り（一人称・三人称）・ひびと破片</div>
       <div class="meta"><span class="tag">VG-FEAT-MINING</span></div>
     </a>
     <a class="card" href="features/creative.html">
       <div class="title">クリエイティブモード</div>
-      <div class="desc">飛行・無限ブロック・全ブロック選択</div>
+      <div class="desc">飛行・全ブロックの並び・置き場所に制限がある物</div>
       <div class="meta"><span class="tag">VG-FEAT-CREATIVE</span></div>
     </a>
     <a class="card" href="features/terrain.html">
       <div class="title">地形生成</div>
-      <div class="desc">Perlin ノイズによるバイオーム・チャンク生成</div>
+      <div class="desc">ワールドの種類（群島・島・無限）・本島と雪山の島・洞窟・木・最初から置いてある物と入れ直し</div>
       <div class="meta"><span class="tag">VG-FEAT-TERRAIN</span></div>
     </a>
     <a class="card" href="features/sound.html">
@@ -97,12 +122,12 @@
     </a>
     <a class="card" href="features/graphics.html">
       <div class="title">グラフィック設定</div>
-      <div class="desc">画質プリセット・視点と画角・昼夜サイクル・実験的設定</div>
+      <div class="desc">画質・視点と画角・昼夜（1日20分）・ブロックの描き方・別ノードで描く物</div>
       <div class="meta"><span class="tag">VG-FEAT-GRAPHICS</span></div>
     </a>
     <a class="card" href="features/mob-ai.html">
       <div class="title">動物（景観モブ）</div>
-      <div class="desc">鶏・牛・豚の徘徊。殴れない・壊せない景観要素</div>
+      <div class="desc">鶏・牛・豚・羊の徘徊と、羊の毛刈り。殴れない・壊せない景観要素</div>
       <div class="meta"><span class="tag">VG-FEAT-MOBAI</span></div>
     </a>
   </div>
@@ -128,9 +153,10 @@
     <tr><td>1.5</td><td>2026-07-05</td><td>ワールド選択（v2.0）・ゲームプレイ（v2.0）を実装に合わせて全面改訂。全仕様書ファイルの実装乖離解消が完了</td></tr>
     <tr><td>2.0</td><td>2026-09-17</td><td>建築特化への転換（2026-09-16）を反映する全面改訂。アプリ名を CraftFrontier に統一し概要を建築特化へ更新。目標ガイド・建築支援操作・作品カードの3本を新設、モブAIを「動物（景観モブ）」へ書き換え、サバイバルシステムを廃止済みとして機能一覧から分離。データモデル（v3.0）・クラフト（v3.0）・グラフィック設定（v3.0）・ゲームプレイ（v3.0）・クリエイティブ（v2.0）・ワールド選択（v2.1）を同時更新</td></tr>
     <tr><td>2.1</td><td>2026-09-26</td><td>機能仕様書に効果音システム（VG-FEAT-SOUND）を追加。合成音から録音素材への差し替え、素材別の音色、再生ピッチの揺らぎ、音量の正規化基準、中断からの復帰を記載</td></tr>
+    <tr><td>3.0</td><td>2026-10-02</td><td>2026-09-17 以降の実装（TestFlight build 13〜24 とその後の修正）をまとめて反映。新設: 乗り物（船とリフト v1.0）・地図（v1.0）・編集モード（v1.0）・植物と染料（v1.0）・ステージと記念写真（v1.0）。改訂: データモデル v4.0・ゲームプレイ v4.0・ワールド選択 v3.0・地形生成 v3.0・クラフト v4.0・クリエイティブ v2.1・採掘（壊す操作と演出）v2.0・動物 v4.0・建築支援 v2.0・目標ガイド v1.1・グラフィック v4.0・作品カード v1.1・効果音 v1.0.2（1日20分に合わせた夜の時間）。概要・ステータス・注記を更新し、パンくずの表記を Personal App Specs に直した</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-09-26</footer>
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
 </div>
 </body>
 </html>

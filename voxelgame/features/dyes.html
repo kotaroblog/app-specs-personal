@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - 植物と染料</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / 植物と染料</div>
+
+  <header class="site-header">
+    <h1>植物と染料</h1>
+    <p>野生の植物を摘み、種を植えて育て、実から染料を作って羊毛と石レンガを染める。育てた物が建材の色として作品に残る</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-DYES</span>
+      <span class="tag">WBS: CF29</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>染料になる植物は3種（野いちご＝赤／ひまわり＝黄／藍の草＝青）。地帯ごとに生える植物が違うため、「その場所でしか取れない資材」にもなる。摘むと実と種が取れ、種を土に植えると若芽になり、次の夜明け（眠ったあとを含む）に実る。作業台で実から赤・黄・青、石炭から黒の染料を作り、混ぜて橙・紫・緑を作る。染料で羊毛と石レンガを7色に染められる（元の白・灰色と合わせて8色ずつ）。</p>
+  <p>本人のアイデア（2026-09-29「種を植えて作物が実り、そこから染料を作れるとより面白い」）を、2026-09-30 に本人が決定した内容で実装した。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01。摘む＝壊す、植える＝置く、置き場所の影）</a></li>
+    <li><a href="crafting.html">クラフト（作業台の「組み立て」で染料・色付き建材を作る）</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <h3>資材の流れ</h3>
+  <div class="mermaid">
+flowchart LR
+  W1[野生の野いちご] -->|摘む| S1[野いちごの実 1 + 種 2]
+  W2[野生のひまわり] -->|摘む| S2[ひまわりの花びら 1 + 種 2]
+  W3[野生の藍の草] -->|摘む| S3[藍の葉 1 + 種 2]
+  S1 -->|作業台| R[赤の染料 x2]
+  S2 -->|作業台| Y[黄の染料 x2]
+  S3 -->|作業台| B[青の染料 x2]
+  C[石炭] -->|作業台| K[黒の染料 x2]
+  R & Y -->|混ぜる| O[橙 x2]
+  R & B -->|混ぜる| P[紫 x2]
+  Y & B -->|混ぜる| G[緑 x2]
+  R & Y & B & O & P & G & K --> D[羊毛4 または 石レンガ4 + 染料1]
+  D --> T[色付きの羊毛4 / 石レンガ4]
+  </div>
+
+  <h3>植えて実らせる</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant GV as GameSceneView
+  participant CM as ChunkManager
+  participant DG as DyeGarden
+
+  U->>GV: 種を選んで土・草・耕地の上面をタップ
+  GV->>CM: 土・草なら耕地に変える
+  GV->>CM: placePlant（若芽を置き、交差した板のノードを足す）
+  GV->>DG: planted(at:)
+  Note over GV: 昼夜の一周の変わり目（夜明け）または眠ったあと
+  GV->>DG: ripenAll（今も若芽のマスだけ選ぶ）
+  DG-->>GV: 実った株に変えるマスの一覧（覚えていたマスはすべて忘れる）
+  GV->>CM: replacePlants（ブロックはまとめて書き換え、ノードだけ差し替え）
+  U->>GV: 実った株を壊す（摘む）
+  GV->>U: 実 1 + 種 2 を所持品へ
+  </div>
+
+  <h2>植物3種</h2>
+  <table>
+    <tr><th>植物</th><th>実った株</th><th>種</th><th>摘んだ実</th><th>染料</th></tr>
+    <tr><td>野いちご</td><td><code>wildStrawberry</code>（57）</td><td><code>strawberrySeed</code>（60）</td><td>野いちごの実 <code>strawberries</code>（63）</td><td>赤</td></tr>
+    <tr><td>ひまわり</td><td><code>sunflower</code>（58）</td><td><code>sunflowerSeed</code>（61）</td><td>ひまわりの花びら <code>sunflowerPetals</code>（64）</td><td>黄</td></tr>
+    <tr><td>藍の草</td><td><code>indigoPlant</code>（59）</td><td><code>indigoSeed</code>（62）</td><td>藍の葉 <code>indigoLeaves</code>（65）</td><td>青</td></tr>
+  </table>
+  <p>括弧内はセーブに入るブロックの番号。実った株と若芽は花と同じく交差した2枚の板で描く（別ノード）。実・染料は持ち物だけのアイテムで、置けず世界にも現れない。</p>
+
+  <h2>野生で生える場所</h2>
+  <p>世界の生成で、木を植えなかった陸地の列に1列ずつ判定する（<code>Chunk.placeWildDyePlant</code>）。地域と高さだけで決めるので、島・群島・無限の世界で同じ決まりが働く。木・花とは別のハッシュで散らす。道の上（<code>pathT</code> 0.45 以上）と、桟橋・船着き場のまわり 2 ブロックには生やさない。</p>
+  <table>
+    <tr><th>植物</th><th>条件（下の地面・列の高さ）</th><th>出現率</th></tr>
+    <tr><td>野いちご</td><td>草の上・高さ 10〜20（低い草原。浜の砂は高さ 11 未満なので実質 11〜20）</td><td>約 1/120 列</td></tr>
+    <tr><td>ひまわり</td><td>草の上・高さ 30 以上（台地・山）</td><td>約 1/60 列</td></tr>
+    <tr><td>藍の草</td><td>砂漠の地域の砂の上・高さ 9〜10（海面すれすれ＝水辺）。草原の地域の砂浜には生やさない</td><td>約 1/20 列</td></tr>
+  </table>
+
+  <h3>ワールドの種類ごとの場所</h3>
+  <table>
+    <tr><th>ワールド</th><th>野いちご</th><th>ひまわり</th><th>藍の草</th></tr>
+    <tr><td>群島の本島（城山と川の島）</td><td>草原（高さ 11〜15）</td><td>東のひまわりの丘（高さ 27〜35 のうち 30 以上）。条件上は城山の上部（頂は高さ 34）にも生えうる</td><td>南西の入り江のふちから 12 ブロックの砂地</td></tr>
+    <tr><td>群島の雪山の島</td><td colspan="3">生えない（雪原の地域は植生なし）</td></tr>
+    <tr><td>島</td><td>真ん中〜西の草原</td><td>東の台地（高さ 38〜42。石切り場の石の床を除く）</td><td>南西の入り江の砂地</td></tr>
+    <tr><td>無限の世界</td><td>低い草原</td><td>山の草地</td><td>砂漠の水辺</td></tr>
+  </table>
+
+  <h2>摘む（収穫）</h2>
+  <table>
+    <tr><th>摘んだ物</th><th>手に入る物</th></tr>
+    <tr><td>実った株</td><td>実 1 ＋ 種 2（植えて増やせる）</td></tr>
+    <tr><td>若芽（植えた種）</td><td>種 1（植え直せる）</td></tr>
+  </table>
+  <ul>
+    <li>「壊す」で摘む。下の地面を壊して支えが無くなった場合も、摘んだときと同じ物が所持品へ入る</li>
+    <li>摘んだ若芽は夜明けの対象から外す（<code>DyeGarden.removed</code>）</li>
+    <li>取れた物はトースト（例「野いちごの実 +1、野いちごの種 +2」）で知らせる</li>
+  </ul>
+
+  <h2>植える・実る</h2>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>植えられる所</td><td>土・草・耕地の<strong>上面</strong>で、その上のマスが空いていて、自分の体と重ならない所。土・草は植えた時点で耕地に変わる（小麦と同じ）。藍の草は野生では砂に生えるが、種は砂には植えられない</td></tr>
+    <tr><td>植えられない所を狙ったとき</td><td>置き場所の影が赤くなる（CF-019）。上面以外・空いていないマスを狙った場合はトースト「種は土か草の上に植えられます」「植える場所が空いていません」「土や草の上にだけ植えられます」</td></tr>
+    <tr><td>実るとき</td><td>昼夜の一周の変わり目（夜明け）と、ベッドで眠ったあと（朝から始まる）。その時点で若芽のままのマスがまとめて実った株になる。刈った羊の毛が生え戻るのと同じタイミング</td></tr>
+    <tr><td>読み込んでいない所</td><td>チャンクを離れると若芽を忘れ、戻って読み込んだときに拾い直して次の夜明けに実る（小麦と同じく、読み込んでいる間だけ育つ）</td></tr>
+    <tr><td>実った株の扱い</td><td>育てた結果としてだけ存在する。所持品から置くことはできず、編集モードで持ち上げる対象からも外している</td></tr>
+    <tr><td>クリエイティブ</td><td>植えても種は減らない</td></tr>
+  </table>
+
+  <h2>染料と色付きの建材（作業台）</h2>
+  <p>すべて作業台の「組み立て」（<code>dyeRecipes</code>）。実1つで染料2つ、染料1つで建材4つを染める（64個を染めるのに実8つ＝8回の収穫）。</p>
+  <table>
+    <tr><th>レシピ</th><th>材料</th><th>できる物</th></tr>
+    <tr><td>赤の染料</td><td>野いちごの実 1</td><td>赤の染料 2</td></tr>
+    <tr><td>黄の染料</td><td>ひまわりの花びら 1</td><td>黄の染料 2</td></tr>
+    <tr><td>青の染料</td><td>藍の葉 1</td><td>青の染料 2</td></tr>
+    <tr><td>黒の染料</td><td>石炭 1</td><td>黒の染料 2</td></tr>
+    <tr><td>橙の染料</td><td>赤の染料 1 ＋ 黄の染料 1</td><td>橙の染料 2</td></tr>
+    <tr><td>紫の染料</td><td>赤の染料 1 ＋ 青の染料 1</td><td>紫の染料 2</td></tr>
+    <tr><td>緑の染料</td><td>黄の染料 1 ＋ 青の染料 1</td><td>緑の染料 2</td></tr>
+    <tr><td>○の羊毛（7色）</td><td>羊毛 4 ＋ ○の染料 1</td><td>○の羊毛 4</td></tr>
+    <tr><td>○の石レンガ（7色）</td><td>石レンガ 4 ＋ ○の染料 1</td><td>○の石レンガ 4</td></tr>
+  </table>
+
+  <h3>染めた色（頂点色に掛ける値）</h3>
+  <table>
+    <tr><th>色</th><th>RGB（0〜1）</th></tr>
+    <tr><td>赤</td><td>0.86, 0.24, 0.22</td></tr>
+    <tr><td>橙</td><td>0.95, 0.55, 0.18</td></tr>
+    <tr><td>黄</td><td>0.96, 0.84, 0.25</td></tr>
+    <tr><td>緑</td><td>0.38, 0.68, 0.24</td></tr>
+    <tr><td>青</td><td>0.24, 0.40, 0.86</td></tr>
+    <tr><td>紫</td><td>0.58, 0.30, 0.74</td></tr>
+    <tr><td>黒</td><td>0.22, 0.22, 0.25</td></tr>
+  </table>
+  <p>色付きの建材は専用の絵を持たない。色付きの羊毛は羊毛の白い絵（アトラスの列 16）、色付きの石レンガは明るい石レンガの絵（列 17）を使い、メッシュを作るときに頂点色（面の明るさ × AO）へ上の色を掛ける（<code>Block.tint</code>）。7色×2種で絵の列を消費しない。染めていないブロックは白（そのまま）。石レンガの絵は、色を掛けても暗く濁らないよう明るめにし、目地は色を掛けても見える中間の灰色にしている。</p>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>植物は地帯ごとに分ける（野いちご＝低い草原／ひまわり＝高い台地・山／藍の草＝砂漠の水辺）。藍の草を島じゅうの浜に生やさないのは、場所の意味を薄めないため（本人決定「入り江の水辺」）</li>
+    <li>摘むと必ず種が取れる（実った株は種2、若芽は種1）ので、一度見つければ植えて増やせる</li>
+    <li>実るのは夜明け（眠ったあとを含む）の1回だけで、途中の成長段階は持たない</li>
+    <li>新しい資材は建物に残る物（色付きの建材）に行き着かせる。実・染料は置けない中間素材</li>
+    <li>染める対象は羊毛と石レンガの2種のみ</li>
+  </ul>
+
+  <h2>不具合と対処</h2>
+  <table>
+    <tr><th>ID</th><th>内容</th><th>対処</th></tr>
+    <tr><td>CF-018（高）</td><td>プレイヤーが置いた植物（花・背の高い草・キノコ・植えた種）が画面に出なかった。ブロックは置かれ、ノードは視野内・表示中・不透明度1だったが描かれない。世界の生成で生えた植物は見えていた。植物の素材が「alpha ブレンド＋深度を書かない」で、後から描いた地形に上書きされていたと見ている</td><td>植物の素材を「切り抜き＋深度を書く」に変更（<code>3d3a819</code>・09-30）。フラグメントでアルファ 0.5 未満を捨て（<code>discard_fragment</code>）、残りは深度を書く。絵は透明か不透明の2値なので切り抜きで足りる。素材の設定は単体テストで固定</td></tr>
+    <tr><td>CF-019（低）</td><td>種・小麦を持って植えられない所（若芽の横など）を狙っても、置き場所の影が普通の色で出た。影は「空いたマスか」しか見ておらず、植え付けの条件を見ていなかった</td><td>影の判定に植え付けの条件（土・草・耕地の上面で、上が空き）を加え、満たさなければ赤にする（<code>c0b061e</code>・09-30）</td></tr>
+  </table>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>連携先</th><th>用途</th><th>備考</th></tr>
+    <tr><td>クラフト（VG-FEAT-CRAFTING）</td><td>作業台の「組み立て」で染料・色付き建材を作る</td><td>レシピ一覧に <code>dyeRecipes</code> を連結</td></tr>
+    <tr><td>地形生成（VG-FEAT-TERRAIN）</td><td>野生の植物の配置</td><td>地域（biomeT）と列の高さで判定</td></tr>
+    <tr><td>昼夜・ベッド</td><td>夜明けに若芽を実らせる</td><td>羊の毛の生え戻り（CF23）と同じタイミング</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>発生条件</th><th>対応</th></tr>
+    <tr><td>夜明けまでに若芽が壊された・別のブロックになった</td><td>実らせる時点で今のブロックが若芽か確かめ、違えば何もしない</td></tr>
+    <tr><td>若芽のチャンクが読み込まれていない</td><td>書き換えない（ノードも足さない）。次に読み込んだときに若芽を拾い直す</td></tr>
+    <tr><td>下の地面が壊された</td><td>植物を連鎖で取り除き、摘んだときと同じ物を所持品へ戻す</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li><code>Dyes.swift</code>: <code>DyeColor</code>（7色・表示名・tint・染料/羊毛/石レンガのブロック）、<code>DyePlant</code>（実った株・種・実・染料の色）、<code>Harvest.dyePlantDrops</code>、<code>DyeGarden</code>（若芽の記憶と <code>ripenAll</code>）。描画・当たり判定から1マスごとに呼ばれる性質は一覧を探さず switch で答える</li>
+    <li><code>GameDomain.swift</code>: <code>dyeRecipes</code></li>
+    <li><code>Chunk.swift</code>: ブロック定義（57〜86。植物・種・実・染料・色付きの羊毛と石レンガ）、<code>placeWildDyePlant</code>・<code>dyePlantHash</code></li>
+    <li><code>GameSceneView.swift</code>: 植える（<code>placeBlock</code>）・摘む（<code>collectPlant</code>）・夜明け（<code>ripenDyePlants</code>）・置き場所の影（<code>unplantable</code>）</li>
+    <li><code>ChunkManager.swift</code>: <code>placePlant</code>・<code>replacePlants</code>（夜明けに1株ずつ描き直すと詰まるため、まとめて書き換え。build 22 のパス5で修正）、植物の素材（<code>plantCutoutModifier</code>）</li>
+    <li><code>ChunkMesher.swift</code>・<code>TextureAtlas.swift</code>: 頂点色への tint の掛け算と絵の列の割り当て</li>
+    <li>テスト: 単体 <code>DyeTests</code> 10件＋植物の描き方1件、UI 2件（色付き建材を並べて撮る／種を植えて若芽→実り→摘む）。UI テスト用の起動引数 <code>--ui-testing-quick-dawn</code> で、若芽が3つ以上あり最後に植えてから15秒たつと実る（DEBUG のみ）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+    <li><a href="crafting.html">クラフト</a></li>
+    <li><a href="terrain.html">地形生成</a></li>
+    <li><a href="map.html">地図（地図では草花・染料の植物を飛ばして下の地面を描く）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-02</td><td>初版作成（CF29 の植物3種・植える/実る/摘む・染料と色付き建材のレシピ・描き方、CF-018・CF-019、群島での生える場所を反映）</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
+</div>
+</body>
+</html>
