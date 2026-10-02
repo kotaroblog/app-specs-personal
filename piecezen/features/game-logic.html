@@ -9,7 +9,7 @@
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / ゲームロジック</div>
   <header class="site-header"><h1>ゲームロジック</h1><p>配置・消去・スコア・コンボ・ボーナスタイム・ゲームオーバー判定</p>
-  <div class="section-meta"><span class="tag done">v1.5.3</span><span class="tag">機能ID: PZ-FEAT-LOGIC</span></div></header>
+  <div class="section-meta"><span class="tag done">v1.5.4</span><span class="tag">機能ID: PZ-FEAT-LOGIC</span></div></header>
 
   <h2>グリッドサイズ</h2>
   <p>8×8（64マス、GridPosition で管理）</p>
@@ -42,6 +42,17 @@
     <tr><td>縦ライン</td><td>列の8マス全部 filled</td></tr>
     <tr><td>クロス</td><td>行+列同時 → 交差点を crossPositions Setに記録</td></tr>
   </table>
+
+  <h3>置くと消える列の予告（v1.5.4〜）</h3>
+  <p>ドラッグ中、またはタップで置く操作の仮置き中に、いまの位置に置いたらそろって消える行と列のマスを求める。画面ではそのマスを光らせる（見た目と読み上げは <a href="../screens/game.html">ゲーム画面</a>）。</p>
+  <ul>
+    <li>結果は <code>GameEngine.previewClearPositions: Set&lt;GridPosition&gt;</code>。<strong>置ける位置のときだけ計算</strong>し、置けない位置では空</li>
+    <li>計算は <code>positionsCompleted(byFilling:)</code>。<strong>置くマスを含む行と列だけ</strong>を調べ、既存のマス＋置くマスで全部埋まる行・列のマスをすべて返す</li>
+    <li>置くマスを含まない行・列は見ない。消去の演出の途中（消える行がまだ埋まっている約0.17秒の間）に、その行まで光らないようにするため</li>
+    <li>空に戻す場面: 仮置き・ドラッグの解除（<code>clearPreview</code>）、新しいゲーム、アンドゥ</li>
+    <li>ボーナスタイム中も通常時も同じく動く</li>
+    <li>単体テスト <code>DesignRefreshTests</code> で、行・十字・置けない位置で空・置くマスを含まない行は見ない、を確認している</li>
+  </ul>
 
   <h2>スコア計算</h2>
   <table>
@@ -151,6 +162,7 @@
   <ul>
     <li>8×8 の盤面と、置けば必ずラインが消える3個のピースの組。3個を正しい場所に置くと最後に全消しになるように作ってある。置き場所は光らせず、ピースと同じ形の隙間を自分で見つける</li>
     <li>型は <strong>24</strong>。回転4通り × 左右反転2通りの変化形からランダムに出す</li>
+    <li>盤面の色: v1.5.4〜 トレイ補充と同じ7色のパレット（<code>BlockColor.palette</code>）から選ぶ（v1.5.3 までは12色すべてから）。単体テスト <code>DesignRefreshTests</code> で確認している</li>
     <li>難しさは3段。分析ツールで手順を総当たりし、<strong>「毎回いちばん多く消える手を選んだときに全消しになる割合」</strong>で分けた</li>
   </ul>
   <table>
@@ -171,6 +183,7 @@
   <ul>
     <li>3ブロック全消費で <code>refillTray()</code> → <code>BlockShape.generateTray()</code></li>
     <li>フェアネス: 1トレイに5マス以上ブロックは最大1個</li>
+    <li>ピースの色: <strong>v1.5.4〜 7色のパレット</strong> <code>BlockColor.palette</code>（red, orange, yellow, green, blue, purple, pink）から選ぶ。v1.5.3 までは <code>BlockColor</code> の12色すべてから選んでいた。12色の定義は保存済みの盤面を読むために残している（<a href="../data-model.html">データモデル</a>）</li>
   </ul>
 
   <h2>アンドゥ</h2>
@@ -222,7 +235,8 @@
   <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
   <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: アンドゥの回数をユーザー区分別に整理（無料3回 / プレミアム無制限・広告視聴なし）。「もう1手」セクションを新設（無料1回 / プレミアム3回、広告なしで即付与するが上限は維持）</td></tr>
   <tr><td>1.2</td><td>2026-09-29</td><td>v1.5.2 対応＋以前からの実装とのずれの訂正: スコア計算を実装に合わせて修正（基本点は「20 × ライン数 × 連鎖の倍率」で倍率は ×1/×2/×4/×8、<strong>全消しは +1000</strong>。旧表の <code>max(1, comboCount)</code>・+500 は誤り）。十字の加点が最優先であることを明記。褒め言葉を実際の文言（十字消し！・◯ライン消し！・いいね！・すごい！・お見事！・全消し！）に修正。連鎖の数え方（消えたら +1、消えない手で 0 に戻る）を「v1.5.2 時点」として明記。<strong>タップで置くときの位置の決め方</strong>（タップしたマスを必ず覆う位置を、上の段・左のマスから順に試す）を追加</td></tr>
-  <tr><td>1.3</td><td>2026-10-01</td><td>v1.5.3 対応: 連鎖を<strong>消えない手を1回だけ見逃す</strong>ルールに更新（2回続けて消えないと 0 に戻る・「あと1手で切れる」表示・アンドゥで見逃した回数も戻る）。<strong>ボーナスタイム</strong>の節を新設（ゲージ8目盛り・制限時間15秒と時計が止まる条件・倍率 ×2〜×5・ボーナス中の得点と全消しの扱い・操作の制限・盤面の型24と難しさ3段）。「もう1手」をランダムに1マス消す方式から<strong>置けるピースを含む3個への入れ替え</strong>に修正。プレイ記録と広告のゲーム数を1ゲーム1件に。アンドゥの使えない場面を追記</td></tr></table>
+  <tr><td>1.3</td><td>2026-10-01</td><td>v1.5.3 対応: 連鎖を<strong>消えない手を1回だけ見逃す</strong>ルールに更新（2回続けて消えないと 0 に戻る・「あと1手で切れる」表示・アンドゥで見逃した回数も戻る）。<strong>ボーナスタイム</strong>の節を新設（ゲージ8目盛り・制限時間15秒と時計が止まる条件・倍率 ×2〜×5・ボーナス中の得点と全消しの扱い・操作の制限・盤面の型24と難しさ3段）。「もう1手」をランダムに1マス消す方式から<strong>置けるピースを含む3個への入れ替え</strong>に修正。プレイ記録と広告のゲーム数を1ゲーム1件に。アンドゥの使えない場面を追記</td></tr>
+  <tr><td>1.4</td><td>2026-10-02</td><td>v1.5.4 対応: 「置くと消える列の予告」を新設（<code>previewClearPositions</code> は置ける位置のときだけ計算、<code>positionsCompleted(byFilling:)</code> は置くマスを含む行と列だけを見る、空に戻す場面）。トレイ補充とボーナスタイムの盤面の色を、12色すべてから<strong>7色のパレット</strong>（<code>BlockColor.palette</code>）に変更。確認した単体テスト <code>DesignRefreshTests</code> を記載</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-10-01</footer>
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
 </div></body></html>

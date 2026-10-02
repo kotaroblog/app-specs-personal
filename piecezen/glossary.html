@@ -27,6 +27,7 @@
     <tr><td>ボーナスの倍率</td><td><code>bonusMultiplier</code></td><td>★ v1.5.3。ボーナスタイム中、連鎖の倍率の代わりに基本点に掛ける倍率。1枚目 ×2 から、全消しするたびに ×3 → ×4 → ×5（上限）</td></tr>
     <tr><td>盤面の型</td><td><code>BonusTemplate</code></td><td>★ v1.5.3。ボーナスタイムに出す盤面と3個のピースの組（24型 × 回転4・反転2）。難しさは素直（easy）／中くらい（medium）／罠あり（hard）の3段</td></tr>
     <tr><td>残り時間のバー</td><td><code>BonusTimerBar</code></td><td>★ v1.5.3。ボーナスタイム中に戻すボタンの行に出す、残り秒数・倍率・全消しの回数の表示</td></tr>
+    <tr><td>消える列の予告</td><td><code>previewClearPositions</code></td><td>★ v1.5.4。ドラッグ中・タップで置く操作の仮置き中に、いまの位置に置いたらそろって消える行と列のマス。画面ではそのマスを光らせ、VoiceOver は「置くと消える」と読む。置ける位置のときだけ求め、置くマスを含む行と列だけを見る</td></tr>
     <tr><td>アンドゥ / 戻す</td><td><code>UndoSnapshot</code></td><td>1手戻す（無料は3回/ゲーム、プレミアムは無制限）</td></tr>
     <tr><td>もう1手</td><td><code>rescueWithReward</code>（旧: Reward Ad）</td><td>ゲーム終了後に、手持ちを今の盤面に置けるピースを含む3個に入れ替えて続ける救済（★ v1.5.3 で「ランダムに1セル消去」から変更。入れ替え後はアンドゥ不可）。無料1回/ゲーム、プレミアム3回/ゲーム。★ v1.5.0 で広告視聴なしの即付与に変更。続けても1ゲームの記録は1件のまま</td></tr>
     <tr><td>プレミアム</td><td><code>isPremium</code></td><td>買い切りIAP購入済み状態。★ v1.5.0 で「広告除去」から改称・特典を差し替え</td></tr>
@@ -34,6 +35,7 @@
     <tr><td>広告配信可否</td><td><code>isAdDeliveryAvailable</code></td><td>広告を配信するかの単一スイッチ（<code>AdEnvironment.isAdDeliveryAvailable</code> = App Key 設定済み かつ App Store 配信版）。広告基盤は Unity LevelPlay（2026-08-20 移行）。<strong>広告のロード・表示は App Store 配信版のみ</strong>で、DEBUG・シミュレーター・TestFlight（審査ビルドを含む）では一切リクエストしない。ATT の表示はこの値では判定しない。詳細は <a href="features/ad-control.html">広告制御</a>（旧記述「v1.5.0 で恒久的に false」は AdMob 停止時の扱いで、現在は当てはまらない）</td></tr>
     <tr><td>トレイ</td><td><code>BlockTray</code></td><td>3スロットのピース配置エリア</td></tr>
     <tr><td>テーマ</td><td><code>ColorTheme</code></td><td>カラーパレット（10種）</td></tr>
+    <tr><td>色のパレット</td><td><code>BlockColor.palette</code></td><td>★ v1.5.4。新しく出るピースとボーナスタイムの盤面に使う7色（red, orange, yellow, green, blue, purple, pink）。<code>BlockColor</code> の12色は保存済みの盤面を読むために残している。テーマ（<code>ColorTheme</code>）とは別物</td></tr>
     <tr><td>ハイスコア</td><td><code>HighScoreRecord</code></td><td>過去最高スコア</td></tr>
     <tr><td>ストリーク</td><td><code>streakCount</code></td><td>連続プレイ日数</td></tr>
   </table>
@@ -80,7 +82,8 @@
   <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
   <tr><td>1.1</td><td>2026-07-30</td><td>v1.5.0 対応: ColorTheme を10種類に更新（プレミアム限定3種を追加・無料/有料区分を明示）。用語「プレミアム」「プレミアム限定テーマ」「広告配信可否」「もう1手」を追加し、アンドゥの回数定義を更新。ストア表示名の記載を「脳活ピース」に是正し、Product ID 名と商品内容の乖離を注記</td></tr>
   <tr><td>1.2</td><td>2026-10-01</td><td>v1.5.3 対応: 「ボーナスタイム」「ゲージ」「ボーナスの倍率」「盤面の型」「残り時間のバー」「連鎖の見逃し」を追加。「コンボ」に連鎖の倍率と見逃しを追記。「もう1手」を手持ちの入れ替え方式に更新。全消しの点を +500 → <strong>+1000</strong> に訂正（v2.0 で変更済みだったのに旧値のままだった）し、ボーナスタイム中は加点しないことを追記</td></tr>
-  <tr><td>1.3</td><td>2026-10-01</td><td>v1.5.3 対応: 「広告配信可否」を現在の扱いに更新。「v1.5.0 で恒久的に false」のままだったのを、Unity LevelPlay へ移行済みで、広告を出すのは App Store 配信版のみ（<code>AdEnvironment.isAdDeliveryAvailable</code>。DEBUG・シミュレーター・TestFlight では出さない）に直し、<a href="features/ad-control.html">広告制御</a>の記述と揃えた</td></tr></table>
+  <tr><td>1.3</td><td>2026-10-01</td><td>v1.5.3 対応: 「広告配信可否」を現在の扱いに更新。「v1.5.0 で恒久的に false」のままだったのを、Unity LevelPlay へ移行済みで、広告を出すのは App Store 配信版のみ（<code>AdEnvironment.isAdDeliveryAvailable</code>。DEBUG・シミュレーター・TestFlight では出さない）に直し、<a href="features/ad-control.html">広告制御</a>の記述と揃えた</td></tr>
+  <tr><td>1.4</td><td>2026-10-02</td><td>v1.5.4 対応: 「消える列の予告」（<code>previewClearPositions</code>）と「色のパレット」（<code>BlockColor.palette</code>・7色）を追加</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-10-01</footer>
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
 </div></body></html>
