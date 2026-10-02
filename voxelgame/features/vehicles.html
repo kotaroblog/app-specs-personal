@@ -236,7 +236,7 @@ sequenceDiagram
     <li>配置: <code>ArchipelagoTerrain.swift</code>（桟橋の係留の場所・<code>SnowIsland.lift</code>・<code>liftStructure</code>・<code>ArchipelagoMigration</code>）</li>
     <li>「乗る」の表示: <code>GameRules.swift</code> の <code>BlockUse</code>（<code>.boat</code>・<code>.lift</code>。動詞は「乗る」）</li>
     <li>🔴 船の分岐で <code>return</code> しないこと。末尾のチャンクの読み込み・定期保存・統計が止まる（CF-020）</li>
-    <li>船は <code>isRotatable</code> に含まれるため、編集モードで「回す」の対象になる（置いたまま90度回す。回したあとに胴が桟橋・岸にかかるかは確かめていない）</li>
+    <li>船は <code>isRotatable</code> に含まれるため、編集モードで「回す」の対象になる（置いたまま90度回す）。3マスの胴が桟橋・岸・ほかの船にかからない向きにだけ回し、かかる向きは飛ばす。どの向きもだめなら断る（2026-10-02 修正・CF-027）</li>
   </ul>
 
   <h2>関連</h2>
@@ -251,7 +251,8 @@ sequenceDiagram
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-10-02</td><td>初版作成（船＝CF31・build 24 の3マスの小舟、崖のリフト＝CF32）</td></tr>
-  </table>
+      <tr><td>1.1</td><td>2026-10-02</td><td>編集モードで船を回すとき、胴が桟橋・岸・ほかの船にかかる向きを飛ばすようにした（CF-027）</td></tr>
+</table>
 
   <script>
     mermaid.initialize({
