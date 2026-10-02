@@ -28,7 +28,7 @@
     <li><span class="k">マネタイズ</span><span class="v">広告（Banner/Interstitial/Rewarded・<strong>Unity LevelPlay</strong>） + プレミアムIAP。2026-08-20 に AppLovin MAX から LevelPlay へ移行。App Key・広告ユニットIDは設定済み（ironSource Ads アカウントの承認待ち・未配信は 2026-08-23 時点の記述）。広告を出すのは App Store 配信版の無料版のみ。プレミアムは買い切り</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
     <li><span class="k">リリース時期</span><span class="v">2026年4月</span></li>
-    <li><span class="k">バージョン</span><span class="v">v1.5.2 (build 32)・2026-09-28 公開</span></li>
+    <li><span class="k">バージョン</span><span class="v">v1.5.3 (build 36)・2026-10-02 公開</span></li>
     <li><span class="k">配信地域</span><span class="v">日本のみ</span></li>
     <li><span class="k">対応デバイス</span><span class="v">iPhone（縦向き専用）</span></li>
   </ul>
@@ -76,11 +76,11 @@
       <div class="desc">AdMob アカウント恒久停止に伴う広告配信の全面停止と、広告除去IAPからプレミアム（アンドゥ無制限・もう1手3回・限定テーマ3種）への商品差し替え</div>
       <div class="meta"><span class="tag">FEAT-V1-5-PREMIUM</span><span class="tag">v1.5.0</span><span class="tag">2026年7月30日</span></div>
     </a>
-    <a class="card" href="features/game-logic.html"><div class="title">ゲームロジック</div><div class="desc">配置・消去・スコア・コンボ</div></a>
+    <a class="card" href="features/game-logic.html"><div class="title">ゲームロジック</div><div class="desc">配置・消去・スコア・コンボ（1手の見逃し）・ボーナスタイム（15秒で何枚全消しできるか。v1.5.3〜）・もう1手</div></a>
     <a class="card" href="features/ad-control.html"><div class="title">広告制御</div><div class="desc">Unity LevelPlay 配信・App Store 配信版のみに限定する安全機構・ATT の表示条件・プライバシーマニフェストの方針</div></a>
     <a class="card" href="features/storekit.html"><div class="title">StoreKit課金</div><div class="desc">プレミアム（買い切り）IAP</div></a>
-    <a class="card" href="features/sound.html"><div class="title">サウンド</div><div class="desc">合成した専用の効果音16音（v1.5.2〜）</div></a>
-    <a class="card" href="features/haptic.html"><div class="title">ハプティクス</div><div class="desc">UIFeedbackGenerator</div></a>
+    <a class="card" href="features/sound.html"><div class="title">サウンド</div><div class="desc">合成した専用の効果音20音（v1.5.2〜。ボーナスタイムの4音は v1.5.3〜）</div></a>
+    <a class="card" href="features/haptic.html"><div class="title">ハプティクス</div><div class="desc">UIFeedbackGenerator（ボーナスタイムの振動は v1.5.3〜）</div></a>
     <a class="card" href="features/streak.html"><div class="title">ストリーク</div><div class="desc">連続プレイ日数</div></a>
     <a class="card" href="features/v2.0-roadmap.html">
       <div class="title">v2.0 大型アップデート企画書「静謐ドーパミン」（v3.0改訂）</div>
@@ -105,9 +105,10 @@
     <tr><td>1.0</td><td>2026-08-20</td><td>変更履歴セクションを新設。<strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）。マネタイズ表記と <a href="features/ad-control.html">広告制御</a> のカード説明を更新。App Key・広告ユニットID3種は設定済みだが、ironSource Ads アカウント承認待ちのため未配信。</td></tr>
     <tr><td>1.1</td><td>2026-08-23</td><td><strong>広告基盤を Unity LevelPlay に統一</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: <code>isAdDeliveryAvailable</code>（<code>isProduction</code> を含む）でガードしていたため、sandbox 環境で実行される審査ビルドでは ATT が表示されず、2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed でリジェクトされた。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を明記。 脳活ピースは App Key 設定済みのため、ironSource Ads の承認待ちで広告が未配信の間も <strong>ATT は表示する</strong>。詳細は <a href="features/ad-control.html">広告制御</a>。</td></tr>
     <tr><td>1.2</td><td>2026-09-29</td><td>v1.5.1/1.5.2 対応: 現行版を <strong>v1.5.2 (build 32)・2026-09-28 公開</strong> に更新（v1.5.1 は 2026-09-17 公開）。Paywall カードの説明を旧名「広告除去IAP」から「プレミアム（買い切り）」に、サウンドカードの説明を 1.5.2 の合成効果音に更新。マネタイズ欄の「承認待ち・未配信」が 2026-08-23 時点の記述であることを明記。各仕様書に 1.5.1/1.5.2 の変更（タップで置く操作・ドラッグの位置ずれ修正・通知のオプトイン・ATT の提示時期・返金時の扱い・効果音・ストア文言）と、スコア計算の実装とのずれを反映</td></tr>
+    <tr><td>1.3</td><td>2026-10-02</td><td>v1.5.3 対応: 現行版を <strong>v1.5.3 (build 36)・2026-10-02 公開</strong> に更新。ゲームロジックのカードにボーナスタイム・連鎖の見逃し・もう1手を、サウンドのカードに20音（ボーナスタイムの4音）を、ハプティクスのカードにボーナスタイムの振動を追記。ストアの名前は「脳活ピース - 大きな文字の脳トレブロックパズル」に変わった（ブランド名「脳活ピース」は据え置き。詳細は ASO 戦略書 v8.0）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-09-29</footer>
+  <footer class="site-footer">最終更新: 2026-10-02</footer>
 </div>
 </body>
 </html>
