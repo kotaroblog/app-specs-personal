@@ -44,6 +44,7 @@ erDiagram
     Data stageBeforePhoto "externalStorage"
     Data stageAfterPhoto "externalStorage"
     Data stageAuthorPhoto "externalStorage"
+    Data thumbnailPhoto "externalStorage"
     Bool isRidingBoat
     Int archipelagoRevision
   }
@@ -93,10 +94,11 @@ erDiagram
     <tr><td><strong>worldKindRaw</strong></td><td>String?</td><td>nil</td><td>地形の種類（<code>WorldKind</code> の rawValue: "archipelago" / "island" / "infinite"）。nil・読めない値は以前からの無限の世界として扱う（計算プロパティ <code>worldKind</code>）。新しいワールドの既定は群島（2026-09-28 追加）</td></tr>
     <tr><td><strong>isRidingBoat</strong></td><td>Bool</td><td>false</td><td>船に乗っているか。乗ると船のブロックを外すので、乗っている間は true にしておく。次に入ったとき true なら船を1つ所持品へ戻して false にする。「保存して出る」で出たときも同様に戻す（2026-10-01）</td></tr>
     <tr><td><strong>lakeRefreezePending</strong></td><td>Bool</td><td>false</td><td>雪山の湖の氷を、湖を読み込んだときに張り直す予定か。湖を読み込んでいない間に夜明けが来たら true にし、湖のチャンクがすべて読み込まれて張り直したら false に戻す（2026-10-02。FrozenLake）</td></tr>
+    <tr><td><strong>thumbnailPhoto</strong></td><td>Data?（externalStorage）</td><td>nil</td><td>ホームに出す写真。ワールドを出るときに操作ボタンなどを隠して撮った景色（幅640の JPEG）。ホームは完成の写真 → これ → 着手前の写真の順で出す（2026-10-03、CF33）</td></tr>
     <tr><td><strong>archipelagoRevision</strong></td><td>Int</td><td>0</td><td>群島の「最初から置いてある物」をどの改訂まで入れたか。現行は 1（build 24：凍った滝・崖のリフト）。新しい群島は作るときに最新にする（2026-10-02 追加）</td></tr>
   </table>
   <div class="callout warn">
-    <strong>09-17 以降に足した列はすべて既定値つきの追加</strong>（craftingJobData・toolCraftingJobData・stageID・stageCompletedAt・写真3枚・worldKindRaw・isRidingBoat・archipelagoRevision・lakeRefreezePending）。SwiftData の軽量マイグレーションは「既存レコードに新しい列の値を埋められること」が条件で、既定値の無い非 Optional が1つでもあると次に列を足した時点で移行が失敗し、ストアごと開けなくなる（＝全ワールド消失）。そのためスキーマは <code>VoxelSchemaV1</code> のまま、移行ステージを持たない。
+    <strong>09-17 以降に足した列はすべて既定値つきの追加</strong>（craftingJobData・toolCraftingJobData・stageID・stageCompletedAt・写真3枚・worldKindRaw・isRidingBoat・archipelagoRevision・lakeRefreezePending・thumbnailPhoto）。SwiftData の軽量マイグレーションは「既存レコードに新しい列の値を埋められること」が条件で、既定値の無い非 Optional が1つでもあると次に列を足した時点で移行が失敗し、ストアごと開けなくなる（＝全ワールド消失）。そのためスキーマは <code>VoxelSchemaV1</code> のまま、移行ステージを持たない。
   </div>
   <div class="callout warn">
     <strong>廃止された列</strong>: <code>hp</code>（体力）・<code>hunger</code>（満腹度）・<code>hasCraftedTorch</code>・<code>hasCraftedGoldenApple</code>。いずれも 2026-09-16 の建築特化への転換で、対応する仕組みごと削除した。
@@ -351,6 +353,7 @@ erDiagram
     <tr><td>4.0</td><td>2026-10-02</td><td>build 24 とその後の修正までを反映する改訂。Block 一覧を 0〜97 に拡張し、分類（地形・建材・形違い・家具/設備・植物と染料・雪山の資材・乗り物/仕掛け・素材）と性質（固体・立方体・置ける・形・透ける・向きの保存・編集）の表に作り直した（針葉樹・氷・船 87〜91、針葉樹/氷の形違い 92〜96、リフトの乗り場 97 を含む）。チャンクの保存形式に向きの追記（"VXOR"・版1）を追加し、ブロック配列のインデックス式の誤り（旧記載 x + 16*(y + 64*z) → 正 y×256 + z×16 + x）を修正。WorldRecord に craftingJobData・toolCraftingJobData・ステージ系5列（写真3枚は externalStorage）・worldKindRaw・isRidingBoat・archipelagoRevision を既定値つきで追記し、群島の改訂の入れ直し（ArchipelagoMigration）の節を新設。所持品の2つの写し（CF-025 の修正）・加工ジョブの JSON 形式・チェストの持ち上げ時の中身の扱いを追記</td></tr>
       <tr><td>4.1</td><td>2026-10-02</td><td>WorldRecord に lakeRefreezePending（雪山の湖の氷の張り直しの予定）を追加</td></tr>
     <tr><td>4.2</td><td>2026-10-02</td><td>所持品の写しが負になったら一覧へ映すときに 0 に丸めることを追記（build 25 前のパス5）</td></tr>
+    <tr><td>4.3</td><td>2026-10-03</td><td>WorldRecord に thumbnailPhoto（ホームに出す写真・外部保存）を追加</td></tr>
 </table>
 
   <script>
@@ -360,7 +363,7 @@ erDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-10-02</footer>
+  <footer class="site-footer">最終更新: 2026-10-03</footer>
 </div>
 </body>
 </html>

@@ -12,38 +12,41 @@
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / ワールド選択</div>
 
   <header class="site-header">
-    <h1>ワールド選択画面</h1>
-    <p>保存済みワールドとステージの一覧表示・新規作成（地形の選択）・名前変更・削除を行うエントリー画面</p>
+    <h1>ホーム（ワールド選択画面）</h1>
+    <p>「続きから」・ワールドとステージの一覧・新規作成（地形の選択）・設定の入口をまとめたエントリー画面</p>
     <div style="margin-top:8px;">
       <span class="tag">画面ID: VG-WORLD-01</span>
     </div>
   </header>
 
   <h2>目的・役割</h2>
-  <p>アプリ起動後に最初に表示される画面。紺色グラデーション背景に大きなタイトル「CRAFTFRONTIER」を表示し、プレイヤーが自分のワールドかステージ（舞台とお題が決まったワールド）を選ぶか、新規ワールドを作成してゲームプレイ画面へ遷移する。ワールドは SwiftData（WorldRecord）に永続化される。</p>
-  <p>アプリは横向き専用のため、<strong>左に自分のワールド、右にステージを横に並べる</strong>（2026-09-27〜、CF13）。縦に積むと横向き（高さ 約400pt）では下の段がほとんど見えず、ステージを上に置いた版では既存のワールドが画面外へ押し出されて「ワールドが消えた」ように見えた（シミュレーターで確認）。</p>
+  <p>アプリ起動後に最初に表示される画面。戻ってきた人が一番押す<strong>「続きから」を画面でいちばん大きく、唯一の緑</strong>にし、その右に一覧を置く（2026-10-03〜、CF33・本人決定の案A）。以前は「新しいワールドを作成」がいちばん目立ち、続きから入るには行の右下の小さな「&gt;」しか無く、設定や規約への入口がホームに無かった（本人 10-03「ホームがやや散らばっている」）。</p>
+  <p>アプリは横向き専用のため、<strong>左に「続きから」、右に一覧（幅290pt）を横に並べる</strong>。縦に積むと横向き（高さ 約400pt）では下の段がほとんど見えない（2026-09-27 に確認）。大きい文字（アクセシビリティサイズ）のときだけ、上の帯・続きから・一覧を1列の縦スクロールにする。</p>
 
   <h2>UI 構成</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>タイトル</td><td>Text</td><td>「CRAFTFRONTIER」（34pt・等幅極太）+「ワールドを選択してください」</td></tr>
-    <tr><td>左の列「ワールド」</td><td>ScrollView + カード行</td><td>ステージ以外のワールド（<code>stageID == nil</code>）を最終プレイ日時の降順（@Query）で並べる。残りの幅をすべてこの列へ回す</td></tr>
-    <tr><td>ワールド行</td><td>カード（タップで入る）</td><td>地球アイコン・ワールド名・<strong>「〈地形の種類〉・シード: N」</strong>（例「群島・シード: 12345」）・最終プレイ日時。下段に累計プレイ時間・累積探索距離・累計設置ブロック数（cube アイコン＋「N個」）のバッジ</td></tr>
-    <tr><td>行内メニュー（︙アイコン・44pt）</td><td>Menu</td><td>「名前を変更」「シードをコピー」「削除」の3アクション（左スワイプ削除ではない）</td></tr>
-    <tr><td>右の列「ステージ」</td><td>ScrollView + カード（幅290pt）</td><td>ステージ一覧（現在は1本「岬の灯台」）。各カードは写真（76×50pt）・ステージ名・お題・進み具合と右向きの山形。2列全体の高さは最大380pt</td></tr>
-    <tr><td>ステージカードの長押しメニュー</td><td>contextMenu</td><td>そのステージのワールドが既にあるときだけ「最初からやり直す」</td></tr>
-    <tr><td>新規ワールド作成ボタン</td><td>Button</td><td>「新しいワールドを作成」（緑背景・2列の下）。タップでワールド作成シートを表示</td></tr>
-    <tr><td>ワールド作成シート</td><td>Sheet（Form・高さ medium）</td><td>ワールド名（既定「新しいワールド」）・<strong>地形</strong>（下記）・シード値（空欄でランダム）・「作成」／「キャンセル」</td></tr>
+    <tr><td>上の帯</td><td>HStack</td><td>左にロゴ「CRAFTFRONTIER」（19pt・等幅極太・見出し）、右に「設定」（歯車・カプセル・高さ44pt・識別子 <code>homeSettingsButton</code>）。設定はゲーム中と同じ画面を全画面で開く（<a href="settings.html">設定画面</a>）</td></tr>
+    <tr><td>続きから（左の大きな1枚）</td><td>Button（識別子 <code>continueButton</code>）</td><td>最後に遊んだワールドかステージ（@Query の先頭）。写真・名前・「地形 · 最後に遊んだ日」・<strong>置いた数</strong>（大きく）・緑の「続きから」。どこを押しても入る</td></tr>
+    <tr><td>はじめての方へ（ワールドが0件のとき）</td><td>Button（識別子 <code>firstRunStageButton</code>）</td><td>「続きから」の代わりに最初のステージ（岬の灯台）をすすめる。お題と「はじめる」。押すとステージを作って入る</td></tr>
+    <tr><td>一覧の切り替え</td><td>segmented Picker（識別子 <code>homeListTab</code>）</td><td>「ワールド N」｜「ステージ N」。最後に遊んだのがステージなら「ステージ」側で開く。切り替えるのは起動したときとゲームから戻ったとき（path が空になったとき）だけで、設定を閉じても選んだタブは変わらない</td></tr>
+    <tr><td>新しいワールド</td><td>Button（点線の枠・識別子 <code>newWorldButton</code>）</td><td>「ワールド」の先頭。押すと作成シート（下記）</td></tr>
+    <tr><td>一覧の行（高さ58pt）</td><td>Button（ワールドは <code>worldRow</code>、ステージは <code>stage_〈id〉</code>）</td><td>写真（または地形の色と絵）・名前・2行目。<strong>行の数字は置いた数だけ</strong>（本人 10-03 決定）。ワールドは「地形 · 1,234個 · きのう」、ステージは進み具合（まだ始めていません／制作中 · N個／完成 · 〈日〉）。行のどこを押しても入る（「&gt;」は無くした）</td></tr>
+    <tr><td>行の「…」（44pt）</td><td>Menu（ラベル「〈名前〉の操作」）</td><td>ワールド: 作品カード・名前を変更・シードをコピー（〈シード〉）・削除。ステージ: 作品カード・最初からやり直す（そのステージのワールドがあるときだけ）</td></tr>
+    <tr><td>作品カード</td><td>オーバーレイ</td><td>ゲーム中と同じ<a href="../features/work-card.html">作品カード</a>。背景を押すか閉じるで閉じる</td></tr>
+    <tr><td>ワールド作成シート</td><td>Sheet（濃紺・全画面）</td><td>上に「キャンセル」・「新しいワールド」・緑の「作成」（<code>createWorldButton</code>）。名前（30字まで）・<strong>地形を絵つきのカード3枚から選ぶ</strong>（<code>worldKind_〈種類〉</code>。選んだカードは緑の枠とチェック）・<strong>「くわしい設定」を開くとシード値</strong>（数字だけ・9桁まで・空欄ならランダム。<code>worldSeedField</code>）</td></tr>
     <tr><td>名前変更シート</td><td>Sheet（Form）</td><td>ワールド名の再入力・「保存」ボタン（空欄なら「新しいワールド」）</td></tr>
-    <tr><td>エンプティビュー</td><td>VStack（左の列の中）</td><td>自分のワールドが0件の場合に「ワールドがありません」+「新しいワールドを作成して、最初の探索を始めましょう」を表示（ステージの列はそのまま出る）</td></tr>
     <tr><td>削除確認</td><td>confirmationDialog</td><td>「ワールドを削除しますか？」+「『〈名前〉』と保存済みチャンクを削除します。この操作は取り消せません。」。削除/キャンセル</td></tr>
     <tr><td>やり直し確認</td><td>confirmationDialog</td><td>「ステージを最初からやり直しますか？」+「建てた物と写真は消え、舞台は最初の状態に戻ります。この操作は取り消せません。」。やり直す/キャンセル</td></tr>
   </table>
 
+  <h3>ホームの写真（2026-10-03〜、CF33）</h3>
+  <p>ワールドを出るとき（メニューの「終了して戻る」→「保存して戻る」）に、操作ボタンなどを隠してその場の景色を撮り、幅640の JPEG で <code>WorldRecord.thumbnailPhoto</code>（外部保存）に入れる。ホームに出す写真は<strong>完成の写真 → 出たときの景色 → 着手前の写真</strong>の順。どれも無ければ地形の色のグラデーションと絵（群島＝帆船・島＝葉・どこまでも続く＝∞・ステージ＝旗）。</p>
+
   <h3>新しいワールドの地形（2026-09-28〜、CF25・CF31）</h3>
-  <p>作成シートの「地形」セクションで、3つから segmented Picker で選ぶ（識別子 <code>worldKindPicker</code>）。フッターに選んだ地形の説明を出す。<strong>既定は群島</strong>（本人 10-01）。</p>
+  <p>作成シートで、絵つきのカード3枚から選ぶ（識別子 <code>worldKind_archipelago</code>／<code>worldKind_island</code>／<code>worldKind_infinite</code>。2026-10-03 までは文字だけの segmented Picker）。各カードに地形の説明を出す。<strong>既定は群島</strong>（本人 10-01）。</p>
   <table>
-    <tr><th>選択肢</th><th>説明（フッターの文言）</th><th>作成時の処理</th></tr>
+    <tr><th>選択肢</th><th>説明（カードの文言）</th><th>作成時の処理</th></tr>
     <tr><td>群島</td><td>城山と川のある本島から、船で北の雪山の島へ渡れます。雪山では針葉樹と氷が取れ、山小屋を拠点にできます</td><td>スポーン地点を本島の南の草原（北に城山が見える）にし、最初から置いてある物の改訂番号を最新にする</td></tr>
     <tr><td>島</td><td>海に囲まれた島。東の崖の上に石切り場のある台地、南西に砂浜の入り江、真ん中に草原。場所ごとに取れる素材が違います</td><td>スポーン地点を島の真ん中（x=0.5, z=0.5）にする（地図の1画面に島全体が入るように）</td></tr>
     <tr><td>どこまでも続く</td><td>どこまでも続く世界（以前と同じ）</td><td>何もしない（従来の無限の世界）</td></tr>
@@ -55,16 +58,17 @@
     <tr><th>項目</th><th>岬の灯台</th></tr>
     <tr><td>お題</td><td>岬の先に、灯台を建てる</td></tr>
     <tr><td>シード</td><td>20261004（固定）</td></tr>
-    <tr><td>進み具合の表示</td><td>まだ始めていません／制作中 ・ 置いたブロック N／完成 ・ 〈日付〉（黄色）</td></tr>
-    <tr><td>写真</td><td>完成写真 → 着手前の写真 → どちらも無ければ空と砂のグラデーションに旗、の順で出す</td></tr>
+    <tr><td>進み具合の表示</td><td>まだ始めていません／制作中 · N個／完成 · 〈最後に遊んだ日の書き方〉</td></tr>
+    <tr><td>写真</td><td>完成写真 → 出たときの景色 → 着手前の写真 → どれも無ければ空と砂のグラデーションに旗、の順で出す</td></tr>
   </table>
   <p>ステージは地形の選択の対象外。舞台の定義（StageSpec）から専用の地形で作る（<code>worldKindRaw</code> は nil のまま）。ゲーム中のメニューではモード切り替えの代わりに「完成にする」が出る（<a href="gameplay.html">ゲームプレイ画面</a>）。</p>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>初期表示（ワールドあり）</td><td>左の列にワールドを最終プレイ日時降順、右の列にステージを表示</td></tr>
-    <tr><td>初期表示（ワールドなし）</td><td>左の列にアイコン+「ワールドがありません」+説明文。右の列のステージは常に出る</td></tr>
+    <tr><td>ワールドかステージが1つ以上ある</td><td>左に「続きから」（最後に遊んだもの）、右に一覧</td></tr>
+    <tr><td>1つも無い（はじめて開いたとき）</td><td>左に「はじめての方へ」（岬の灯台）、右の「ワールド」は「新しいワールド」だけ</td></tr>
+    <tr><td>最後に遊んだ日</td><td>きょう／きのう／N日前（6日まで）／M月d日（年が違えば yyyy年M月d日）</td></tr>
     <tr><td>シード値コピー時</td><td>「シード ○○○ をコピーしました」トーストを1.4秒表示</td></tr>
     <tr><td>ワールド作成失敗時</td><td>「ワールドを作成できませんでした」アラート</td></tr>
   </table>
@@ -72,27 +76,30 @@
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>ワールド行をタップ</td><td>ゲームプレイ画面（ContentView）へ push。lastPlayedAt を更新してから遷移</td></tr>
+    <tr><td>「続きから」・ワールドの行をタップ</td><td>ゲームプレイ画面（ContentView）へ push。lastPlayedAt を更新してから遷移</td></tr>
+    <tr><td>「設定」</td><td><a href="settings.html">設定画面</a>を全画面で開く。閉じるとホームへ戻る</td></tr>
     <tr><td>新規作成シートで「作成」</td><td>WorldRecord を作り、選んだ地形を設定（<code>setKind</code>）して保存 → シートを閉じてからゲームプレイ画面へ遷移（アニメーション競合を避けるため onDismiss 後に遷移）</td></tr>
-    <tr><td>ステージカードをタップ</td><td>そのステージのワールドがあれば lastPlayedAt を更新して入る。無ければ舞台の定義（名前・シード・スポーン地点・stageID）から作って入る</td></tr>
+    <tr><td>ステージの行・「はじめての方へ」をタップ</td><td>そのステージのワールドがあれば lastPlayedAt を更新して入る。無ければ舞台の定義（名前・シード・スポーン地点・stageID）から作って入る</td></tr>
     <tr><td>削除確認で「削除」／やり直し確認で「やり直す」</td><td>該当ワールドの ChunkRecord・ChestRecord・WorldRecord をまとめて削除（ステージは次にタップすると最初の状態で作り直される）</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
-  <p>累計設置ブロック数バッジは <code>WorldRecord.placedBlockCount</code> を読むだけで、集計は行わない（詳細は<a href="../features/work-card.html">作品カード</a>）。地形の種類は <code>worldKindRaw</code>、ステージは <code>stageID</code>・<code>stageCompletedAt</code>・<code>stageBeforePhoto</code>／<code>stageAfterPhoto</code>（外部保存）を使う。いずれも既定値つきで追加した項目なので、既存のワールドは軽量マイグレーションでそのまま読める。詳細は<a href="../data-model.html">データモデル（WorldRecord）</a>を参照。チャンクデータはドキュメントディレクトリの独自ファイルではなく SwiftData の ChunkRecord/ChestRecord に保存される。</p>
+  <p>置いた数は <code>WorldRecord.placedBlockCount</code> を読むだけで、集計は行わない（詳細は<a href="../features/work-card.html">作品カード</a>）。ホームの写真は <code>thumbnailPhoto</code>（2026-10-03 追加・既定値 nil・外部保存）。地形の種類は <code>worldKindRaw</code>、ステージは <code>stageID</code>・<code>stageCompletedAt</code>・<code>stageBeforePhoto</code>／<code>stageAfterPhoto</code>（外部保存）を使う。いずれも既定値つきで追加した項目なので、既存のワールドは軽量マイグレーションでそのまま読める。詳細は<a href="../data-model.html">データモデル（WorldRecord）</a>を参照。チャンクデータはドキュメントディレクトリの独自ファイルではなく SwiftData の ChunkRecord/ChestRecord に保存される。</p>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li>シード値を省略した場合は Int.random(in: 1...999_999) で自動生成する</li>
+    <li>シード値は数字だけを読む（<code>NewWorldInput.seed(from:)</code>）。空欄・数字なしは Int.random(in: 1...999_999)。入力欄でも数字以外を落とし9桁で切る</li>
+    <li>ホームの文字の決まり（置いた数・最後に遊んだ日・行の2行目・ステージの進み具合）は <code>HomeFormat</code> に集め、単体テストで確かめる</li>
     <li>ワールド削除時は worldID で紐づく ChunkRecord・ChestRecord を先にフェッチして削除してから WorldRecord を削除する</li>
     <li>一覧は @Query(sort: \WorldRecord.lastPlayedAt, order: .reverse) で取得し、左の列は <code>stageID == nil</code> で絞る</li>
-    <li>DEBUGビルド限定で起動引数による自動入場に対応（スクリーンショット自動化・UIテスト用）。<code>--autoworld</code> は既存の "AutoTest" ワールドを再利用し、無ければシード42で新規作成する（既定は無限の世界。<code>--autoworld-island</code>／<code>--autoworld-archipelago</code> で島・群島）。<code>--autoworld-fresh</code> で前回の "AutoTest" を消して作り直す。<code>--autostage &lt;id&gt;</code> でステージへ入る</li>
+    <li>DEBUGビルド限定で起動引数による自動入場に対応（スクリーンショット自動化・UIテスト用）。<code>--autoworld</code> は既存の "AutoTest" ワールドを再利用し、無ければシード42で新規作成する（既定は無限の世界。<code>--autoworld-island</code>／<code>--autoworld-archipelago</code> で島・群島）。<code>--autoworld-fresh</code> で前回の "AutoTest" を消して作り直す。<code>--autostage &lt;id&gt;</code> でステージへ入る。<code>--ui-testing-empty-store</code> はメモリ内の空の保存先で起動し、「はじめての方へ」を確かめる</li>
   </ul>
 
   <h2>関連</h2>
   <ul>
     <li><a href="../data-model.html">データモデル（WorldRecord）</a></li>
     <li><a href="gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+    <li><a href="settings.html">設定画面（VG-SETTINGS-01）</a></li>
     <li><a href="../features/work-card.html">作品カード</a></li>
     <li><a href="../features/terrain.html">地形生成</a></li>
     <li><a href="../features/stage.html">ステージ</a></li>
@@ -105,9 +112,10 @@
     <tr><td>2.0</td><td>2026-07-05</td><td>実装との乖離を解消する改訂。削除UI（スワイプ→行内メニュー）・タイトル名（CRAFTFRONTIER）・統計バッジ・データモデル記載（SwiftData）を実装どおりに修正</td></tr>
     <tr><td>2.1</td><td>2026-09-17</td><td>建築特化への転換を反映。ワールド行に累計設置ブロック数バッジを追加した旨を追記し、作品カードへのリンクを追加</td></tr>
     <tr><td>3.0</td><td>2026-10-02</td><td>build 24 までの実装を反映。一覧を「左にワールド・右にステージ（幅290pt）」の2列に変更（横向き専用化に伴う）。作成シートに地形の選択（群島〔既定〕／島／どこまでも続く）と各説明・作成時のスポーン地点を追加し、既存のワールドは無限のまま扱う（worldKindRaw が nil）ことを明記。ワールド行に地形の種類を表示。ステージ「岬の灯台」のカード（写真・お題・進み具合）、長押しの「最初からやり直す」と確認ダイアログ、ステージの作成・遷移を追加。DEBUG の起動引数（--autoworld-fresh / -island / -archipelago / --autostage）を追記。地形生成へのリンクを追加</td></tr>
+    <tr><td>4.0</td><td>2026-10-03</td><td>ホームを案A（CF33・本人決定）に作り替え。上の帯（ロゴ・設定）、左に「続きから」（唯一の緑）／ワールドが無いときは「はじめての方へ」、右に「ワールド｜ステージ」の切り替えと一覧。行の数字を置いた数だけにし、プレイ時間・距離のバッジとシード値の表示をやめた（シードは「…」の中）。「…」に作品カードを追加。出たときの景色をホームの写真にする（thumbnailPhoto）。作成シートを、絵つきのカードで地形を選び、シード値を「くわしい設定」にたたむ形に変更</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-10-02</footer>
+  <footer class="site-footer">最終更新: 2026-10-03</footer>
 </div>
 </body>
 </html>

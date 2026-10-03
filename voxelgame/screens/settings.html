@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - 設定</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / 設定</div>
+
+  <header class="site-header">
+    <h1>設定画面</h1>
+    <p>操作・画面と音・遊び方・このアプリについて、の4つに分けた設定。ホームとゲーム中の両方から開く</p>
+    <div style="margin-top:8px;">
+      <span class="tag">画面ID: VG-SETTINGS-01</span>
+    </div>
+  </header>
+
+  <h2>目的・役割</h2>
+  <p>以前はゲーム中のメニューからだけ開け、1枚に縦に長く項目が並び、検証用のつまみまで同じ重さで出ていた。2026-10-03（CF33・本人決定）に、<strong>左に分類・右に中身</strong>（iOS の設定アプリの型）へ分け、ホームの「設定」からも開けるようにした。開発者向けの設定は <strong>TestFlight と開発中だけ</strong>に出す（本人決定）。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>要素</th><th>種類</th><th>説明</th></tr>
+    <tr><td>見出し</td><td>Text + 閉じる</td><td>「設定」と右上の閉じる（×・ラベル「閉じる」）</td></tr>
+    <tr><td>分類（左・幅180pt）</td><td>Button ×4（識別子 <code>settingsCategory_〈分類〉</code>）</td><td>操作（controls）・画面と音（screenAndSound）・遊び方（howTo）・このアプリについて（about）。選んだ分類は明るい地。大きい文字では上に横並び</td></tr>
+    <tr><td>中身（右）</td><td>ScrollView</td><td>選んだ分類の項目。スクロールバーを常に出す</td></tr>
+  </table>
+
+  <h3>操作</h3>
+  <p>名前は遊ぶ人の言葉に変えた（旧「視点感度」「移動デッドゾーン」「採掘ボタン強調」）。<strong>配置に関わる物を上に置く</strong>（横向きの低い画面でも開いてすぐ見えるように。下に置いた版では「左利き配置」が画面外になり、UI テストで押せなかった）。</p>
+  <table>
+    <tr><th>項目</th><th>種類</th><th>範囲・既定</th></tr>
+    <tr><td>左利き配置</td><td>Toggle（説明「操作ボタンを左に、スティックを右に置きます」）</td><td>既定 OFF</td></tr>
+    <tr><td>ボタンの大きさ</td><td>segmented（小／標準／大）</td><td>既定 標準</td></tr>
+    <tr><td>壊しているときボタンを大きく</td><td>Toggle</td><td>既定 ON</td></tr>
+    <tr><td>見回す速さ</td><td>Slider（見出し・スライダー・値を横1行）</td><td>0.5〜1.8倍・既定 1.0倍</td></tr>
+    <tr><td>スティックの遊び</td><td>Slider（説明「スティックを少し倒しても動かない幅」）</td><td>0〜30%・既定 12%</td></tr>
+    <tr><td>操作の設定を標準に戻す</td><td>Button → 確認</td><td>確認「操作の設定を標準に戻しますか？」で「標準に戻す」を押すと、上の5つを既定へ</td></tr>
+  </table>
+
+  <h3>画面と音</h3>
+  <table>
+    <tr><th>項目</th><th>種類</th><th>範囲・既定</th></tr>
+    <tr><td>音量</td><td>Slider</td><td>0〜100%・既定 100%</td></tr>
+    <tr><td>画質</td><td>segmented（標準／高画質）</td><td>既定 標準。説明「高画質は影がくっきりします。電池の減りが早くなります」</td></tr>
+    <tr><td>画面と音を標準に戻す</td><td>Button → 確認</td><td>音量と画質を既定へ</td></tr>
+  </table>
+
+  <h3>遊び方</h3>
+  <p>8つの操作を絵と短い説明で並べる（動く・見回す・壊す・置く・使う／乗る・ジャンプ〔上向きの山形2つ〕・編集モード・地図と写真）。<strong>ゲーム中だけ</strong>「ゲーム中のヒントをもう一度出す」を出す（押すと設定を閉じて操作ヒントを最初から出す）。</p>
+
+  <h3>このアプリについて</h3>
+  <table>
+    <tr><th>項目</th><th>説明</th></tr>
+    <tr><td>サポート・お問い合わせ／利用規約／プライバシーポリシー</td><td>Link。<code>https://kotaroblog.github.io/app-policies/craftfrontier/</code> の support.html／terms.html／privacy-policy.html</td></tr>
+    <tr><td>App Store でレビューを書く</td><td>App Store から入ったと確かめられたときだけ出す（判定前・TestFlight では出さない）</td></tr>
+    <tr><td>バージョン</td><td>「1.0.0 (25)」の形（CFBundleShortVersionString と CFBundleVersion）</td></tr>
+    <tr><td>開発者向け（オレンジ）</td><td><strong>TestFlight と開発中だけ</strong>。パフォーマンス表示のスイッチ。ゲーム中はその下に検証用の設定（画角・1日の長さ・雨と雪の許可・検証用の設定を戻す。アプリを閉じると戻る）、ホームでは「ゲーム中の設定で変えられます」の案内</td></tr>
+  </table>
+
+  <h2>保存と反映</h2>
+  <ul class="checklist">
+    <li>保存先はゲーム中もホームも同じ UserDefaults のキー（<code>voxel_masterVolume</code>・<code>voxel_lookSensitivity</code>・<code>voxel_joystickDeadZone</code>・<code>voxel_miningButtonBoost</code>・<code>voxel_leftHandedControls</code>・<code>voxel_controlSize</code>・<code>voxel_graphicsQuality</code>・<code>voxel_showPerf</code>）。キー・既定値・範囲は <code>StoredSettings</code> に集めた</li>
+    <li>画面は <code>SettingsStore</code> プロトコルに対して書き、ゲーム中は <code>GameInput</code>（その場で効く）、ホームでは <code>HomeSettings</code>（次にゲームへ入ったとき GameInput が読む。音量はその場で効く）を渡す</li>
+    <li>配布の経路は起動時に StoreKit 2 の <code>AppTransaction</code> の environment で判定する（sandbox＝TestFlight、xcode＝開発中、production＝App Store。DEBUG は開発中）。判定が終わるまでと失敗したとき（オフラインなど）は「不明」として、開発者向けもレビューの案内も出さない。失敗したら「このアプリについて」を開いたときに問い合わせ直す</li>
+    <li>ホームの設定は開くたびに保存値を読み直す（ゲーム中に変えた値を反映する）</li>
+    <li>App Store 版と確かめられたら、TestFlight で ON にしたパフォーマンス表示を切る（App Store 版にはスイッチが無いため）</li>
+    <li>🔴 審査は sandbox 環境なので TestFlight と判定され、審査員に開発者向けが見える。App Store 提出前に対応する（ISSUES CF-029）</li>
+  </ul>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>開く場所</th><th>閉じたとき</th></tr>
+    <tr><td><a href="world-select.html">ホーム</a>の「設定」（全画面）</td><td>ホームへ戻る</td></tr>
+    <tr><td><a href="gameplay.html">ゲーム中</a>のメニュー → 設定（オーバーレイ・幅780pt まで）</td><td>ゲームへ戻る（開いている間はポーズ）</td></tr>
+  </table>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="world-select.html">ホーム（VG-WORLD-01）</a></li>
+    <li><a href="gameplay.html">ゲームプレイ画面（VG-GAME-01）</a></li>
+    <li><a href="../features/graphics.html">グラフィック設定</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-03</td><td>初版作成（CF33）。ゲーム中の設定シートを4分類に分け、ホームからも開けるようにした。名前の言い換え、配置に関わる項目を上へ、分類ごとの「標準に戻す」（確認つき）、遊び方、このアプリについて（規約・プライバシー・サポート・版数）、開発者向けを TestFlight と開発中だけに</td></tr>
+    <tr><td>1.1</td><td>2026-10-03</td><td>build 26 前のパス5の修正を反映。配布経路の「不明」（判定前・失敗時は開発者向けもレビューの案内も出さない・問い合わせ直し）、ホームの設定を開くたびに読み直す、App Store 版でパフォーマンス表示を切る、を追記。審査で開発者向けが見える課題（CF-029）を明記</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-10-03</footer>
+</div>
+</body>
+</html>
