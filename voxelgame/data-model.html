@@ -158,6 +158,7 @@ erDiagram
   <ul>
     <li><strong>描画スレッドの増減は写しを正とし</strong>、増減のたびにメインスレッドへ「写しを一覧へ映す」（<code>publishInventoryMirror</code>）を投げる。映している最中は一覧の didSet を通さない（写しへ戻し書きしない）</li>
     <li><strong>画面側の書き換えは、品ごとの差分（新 − 旧）だけを写しへ足す</strong>（<code>applyInventoryEdit</code>）</li>
+    <li>写しが負になったら、一覧へ映すときに 0 に丸める（描画スレッドが最後の1個を使った直後に、まだ古い一覧から画面側で同じ品を使うと −1 になり、そのあと拾っても 0 のままに見えたため。build 25 前のパス5）</li>
     <li>🔴 以前は画面側の書き換えで写しを一覧ごと上書きしていた。描画スレッドの増減は一覧へ遅れて届くので、別の品の書き込みで上書きされると、まだ届いていない増減とその間の増減が失われていた</li>
     <li>保存はメインスレッドで一覧（<code>input.inventory</code>）を <code>encodeInventory</code> して inventoryData に書く</li>
     <li>初期在庫は 松明2・チェスト1・小麦3（新規ワールドのみ）</li>
@@ -349,6 +350,7 @@ erDiagram
     <tr><td>3.0</td><td>2026-09-17</td><td>建築特化への転換を反映する改訂。WorldRecord から hp / hunger / hasCraftedTorch / hasCraftedGoldenApple を削除し、placedBlockCount・placedByBlockData・dailyPlacedData・firstPlacedAt を追加。Block 一覧に建材4種（34〜37）を追加し食料5種を欠番として明記。PlacementTally・SessionStats・日別設置数の直列化形式・スキーマ版管理（VoxelSchemaV1）の節を新設。GameInput の視点・実験的設定・ホットバー関連プロパティを更新</td></tr>
     <tr><td>4.0</td><td>2026-10-02</td><td>build 24 とその後の修正までを反映する改訂。Block 一覧を 0〜97 に拡張し、分類（地形・建材・形違い・家具/設備・植物と染料・雪山の資材・乗り物/仕掛け・素材）と性質（固体・立方体・置ける・形・透ける・向きの保存・編集）の表に作り直した（針葉樹・氷・船 87〜91、針葉樹/氷の形違い 92〜96、リフトの乗り場 97 を含む）。チャンクの保存形式に向きの追記（"VXOR"・版1）を追加し、ブロック配列のインデックス式の誤り（旧記載 x + 16*(y + 64*z) → 正 y×256 + z×16 + x）を修正。WorldRecord に craftingJobData・toolCraftingJobData・ステージ系5列（写真3枚は externalStorage）・worldKindRaw・isRidingBoat・archipelagoRevision を既定値つきで追記し、群島の改訂の入れ直し（ArchipelagoMigration）の節を新設。所持品の2つの写し（CF-025 の修正）・加工ジョブの JSON 形式・チェストの持ち上げ時の中身の扱いを追記</td></tr>
       <tr><td>4.1</td><td>2026-10-02</td><td>WorldRecord に lakeRefreezePending（雪山の湖の氷の張り直しの予定）を追加</td></tr>
+    <tr><td>4.2</td><td>2026-10-02</td><td>所持品の写しが負になったら一覧へ映すときに 0 に丸めることを追記（build 25 前のパス5）</td></tr>
 </table>
 
   <script>
