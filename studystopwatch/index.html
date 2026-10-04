@@ -18,7 +18,7 @@
 
 
   <div class="callout">
-    <p style="margin-top:0"><strong>2026-10-01 v1.4.0 (build 19) を TestFlight へ（審査は未提出）</strong></p>
+    <p style="margin-top:0"><strong>2026-10-04 v1.4.0 (build 19) を公開</strong>（2026-10-01 TestFlight → 2026-10-03 審査提出）</p>
     <p>「<strong>やること（計画）→ 計測 → 振り返り</strong>」を、勉強の前後と週1回の3か所でつないだ再設計（SS-017〜022）。
     書く場所は多いのに読む場所が無かったのが使いにくさの正体だった。</p>
     <ul>
@@ -71,7 +71,7 @@
     <li><span class="k">言語</span><span class="v">日本語のみ</span></li>
     <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（広告は <strong>Unity LevelPlay</strong> へ移行。App Key 未設定のため現在は配信なし）</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
-    <li><span class="k">バージョン</span><span class="v">v1.4.0 (build 19) TestFlight 配信・審査未提出（2026-10-01）／直前の審査提出は v1.3.4 (build 18)</span></li>
+    <li><span class="k">バージョン</span><span class="v">v1.4.0 (build 19) 公開中（2026-10-04）／前の版は v1.3.4 (build 18)</span></li>
     <li><span class="k">表示名</span><span class="v">学習ストップウォッチ</span></li>
     <li><span class="k">拡張ターゲット</span><span class="v">Live Activity / Widget</span></li>
     <li><span class="k">App Group</span><span class="v"><code>group.com.happyboy1002.StudyStopwatch</code></span></li>
@@ -140,6 +140,7 @@
     <tr><td>1.0</td><td>2026-08-20</td><td>変更履歴セクションを新設。<strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）。機能仕様書 <a href="features/ad-control.html">広告制御</a> を新規作成し、冒頭の告知とマネタイズ表記を更新。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない。</td></tr>
     <tr><td>1.1</td><td>2026-08-23</td><td><strong>広告基盤を Unity LevelPlay に統一</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: <code>isAdDeliveryAvailable</code>（<code>isProduction</code> を含む）でガードしていたため、sandbox 環境で実行される審査ビルドでは ATT が表示されず、2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed でリジェクトされた。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を明記。 詳細は <a href="features/ad-control.html">広告制御</a>。</td></tr>
     <tr><td>1.2</td><td>2026-10-01</td><td><strong>v1.4.0（TestFlight・未提出）</strong>を反映。冒頭に再設計の告知を追加し、バージョン表記を更新。新規3ページ（<a href="screens/after-session.html">計測を終えたあとの画面</a>・<a href="screens/weekly-review.html">週のふりかえり</a>・<a href="features/study-plan.html">学習計画の進み具合と配り直し</a>）のカードを追加。カレンダー・学習計画シート・やることリストのカード説明を更新</td></tr>
+    <tr><td>1.3</td><td>2026-10-04</td><td><strong>v1.4.0 (build 19) を公開</strong>（2026-10-03 審査提出・本人が手動公開）。冒頭の告知とバージョン表記を更新。各ページの変更履歴にある「1.4.0（TestFlight・未提出）」はその時点の記録のため残す</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-10-01</footer>
