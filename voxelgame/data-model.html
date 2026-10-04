@@ -169,7 +169,7 @@ erDiagram
   </ul>
 
   <h2>Block（UInt8 enum）</h2>
-  <p>rawValue が UInt8 として <code>blocksData</code>・<code>inventoryData</code>・<code>slotsData</code>・<code>placedByBlockData</code> に直接書き込まれる。現行の最大 rawValue は <strong>106</strong>（扉の上のマス）。<strong>欠番 16〜18・31・33 は建築特化への転換で廃止した食べ物</strong>（鶏肉・豚肉・牛肉・パン・金のリンゴ）で、値をずらさないため再利用しない。旧セーブに残っていても読み込み時に空気として読む（所持品では読み飛ばす）。テクスチャアトラスの列は <code>Block.atlasColumn</code> で rawValue から切り離してあり、形違い・色違いは素材の列を借りるので列を消費しない。</p>
+  <p>rawValue が UInt8 として <code>blocksData</code>・<code>inventoryData</code>・<code>slotsData</code>・<code>placedByBlockData</code> に直接書き込まれる。現行の最大 rawValue は <strong>111</strong>（市松のタイル）。<strong>欠番 16〜18・31・33 は建築特化への転換で廃止した食べ物</strong>（鶏肉・豚肉・牛肉・パン・金のリンゴ）で、値をずらさないため再利用しない。旧セーブに残っていても読み込み時に空気として読む（所持品では読み飛ばす）。テクスチャアトラスの列は <code>Block.atlasColumn</code> で rawValue から切り離してあり、形違い・色違いは素材の列を借りるので列を消費しない。</p>
 
   <h3>性質の定義</h3>
   <table>
@@ -245,6 +245,11 @@ erDiagram
     <tr><td><strong>104</strong></td><td>mooringPost（係留柱）</td><td>港の素材</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>ロープを巻いた太い杭（飾り）。流木2→1</td></tr>
     <tr><td><strong>105</strong></td><td>door（扉の下のマス）</td><td>家具</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>×</td><td>板材6→1。置くと上のマスに doorTop も置く。保存値＝向き（下2ビット）＋開いている印 0x04。移動の当たり判定は板だけ（閉じていれば奥の縁、開いていれば左の縁）、狙うときはマス全体。BlockUse.door（2026-10-04、CF40）</td></tr>
     <tr><td><strong>106</strong></td><td>doorTop（扉の上のマス）</td><td>家具</td><td>○</td><td>×</td><td>×</td><td></td><td>×</td><td>○</td><td>×</td><td>単独では置けない。下と同じ保存値を持つ。壊すと下も消えて扉1つ戻る</td></tr>
+    <tr><td><strong>107</strong></td><td>hayBale（干し草の束）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>草9→1（手作業）。列47に描く。掘るのは 0.3 秒（2026-10-04、CF51）</td></tr>
+    <tr><td><strong>108</strong></td><td>mushroomLamp（キノコのランプ）</td><td>家具</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>キノコ1＋ガラス1。ガラスの瓶の中で、かさが発光する（光源は足さない）。手に持つ立方体はガラスの絵</td></tr>
+    <tr><td><strong>109</strong></td><td>flowerPot（植木鉢）</td><td>家具</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>花1＋石レンガ1。手に持つ立方体は石レンガの絵</td></tr>
+    <tr><td><strong>110</strong></td><td>stoneTile（石のタイル）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>磨き石2→2（石切台）。列31（廃止したパンの空き列）に描く</td></tr>
+    <tr><td><strong>111</strong></td><td>checkerTile（市松のタイル）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>磨き石2＋石炭1→2（石切台）。列33（廃止した金のリンゴの空き列）に描く。🔴 アトラスの空き列は 55 だけになった</td></tr>
   </table>
   <ul>
     <li><strong>置き換えで置けるか</strong>（<code>canReplaceInto</code>）: isPlaceable の物のうち、bed・bedHead・wheat・wheatMature・boat・door・doorTop・交差した板の植物と種を除いたもの（ベッドと扉は2マス、植物は下の土が要る、船は海面だけ）</li>
@@ -367,6 +372,7 @@ erDiagram
     <tr><td>4.3</td><td>2026-10-03</td><td>WorldRecord に thumbnailPhoto（ホームに出す写真・外部保存）を追加</td></tr>
     <tr><td>4.4</td><td>2026-10-03</td><td>WorldRecord に blueprintDisplayRaw（ステージのお手本の出し方）を追加</td></tr>
     <tr><td>4.5</td><td>2026-10-04</td><td>ブロック 98〜106（港の素材 CF41・扉 CF40）を追加。扉は向きと開いている印を保存する（Chunk.storesOrientation。最初の版は漏れていて build 29 前に修正）</td></tr>
+    <tr><td>4.6</td><td>2026-10-04</td><td>ブロック 107〜111（干し草の束・キノコのランプ・植木鉢・石のタイル・市松のタイル。CF51）を追加</td></tr>
 </table>
 
   <script>
