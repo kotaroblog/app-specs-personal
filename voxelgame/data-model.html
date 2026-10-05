@@ -172,7 +172,7 @@ erDiagram
   </ul>
 
   <h2>Block（UInt8 enum）</h2>
-  <p>rawValue が UInt8 として <code>blocksData</code>・<code>inventoryData</code>・<code>slotsData</code>・<code>placedByBlockData</code> に直接書き込まれる。現行の最大 rawValue は <strong>138</strong>（コンクリートの菱形タイル）。<strong>欠番 16〜18・31・33 は建築特化への転換で廃止した食べ物</strong>（鶏肉・豚肉・牛肉・パン・金のリンゴ）で、値をずらさないため再利用しない。旧セーブに残っていても読み込み時に空気として読む（所持品では読み飛ばす）。テクスチャアトラスの列は <code>Block.atlasColumn</code> で rawValue から切り離してあり、形違い・色違いは素材の列を借りるので列を消費しない。</p>
+  <p>rawValue が UInt8 として <code>blocksData</code>・<code>inventoryData</code>・<code>slotsData</code>・<code>placedByBlockData</code> に直接書き込まれる。現行の最大 rawValue は <strong>139</strong>（煙突）。<strong>欠番 16〜18・31・33 は建築特化への転換で廃止した食べ物</strong>（鶏肉・豚肉・牛肉・パン・金のリンゴ）で、値をずらさないため再利用しない。旧セーブに残っていても読み込み時に空気として読む（所持品では読み飛ばす）。テクスチャアトラスの列は <code>Block.atlasColumn</code> で rawValue から切り離してあり、形違い・色違いは素材の列を借りるので列を消費しない。</p>
 
   <h3>性質の定義</h3>
   <table>
@@ -259,6 +259,7 @@ erDiagram
     <tr><td><strong>120</strong></td><td>mud（泥）</td><td>地形</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>水辺の底（CF44）。列 62</td></tr>
     <tr><td><strong>121</strong></td><td>wetConcrete（生コン）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>置くと次の夜明けにコンクリートへ（GameSceneView.hardenConcrete）。列 61</td></tr>
     <tr><td><strong>122〜129</strong></td><td>concrete と7色（赤・橙・黄・緑・青・紫・黒）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>灰色は列 59、7色は白い元（60）に色を掛ける</td></tr>
+    <tr><td><strong>139</strong></td><td>chimney（煙突）</td><td>家具</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>石レンガの四角い筒（家具ノード）。かまどにつながる煙突の一番上から煙（ChunkManager.syncChimneySmoke。CF59）。石レンガの絵を借りる</td></tr>
     <tr><td><strong>130〜138</strong></td><td>石・砂岩・コンクリート × 三角・縁・菱形のタイル</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>床のタイル（CF43）。置く向きを保存し、上面の模様を回す。列 55（三角）・63（縁）・64（菱形）に素材の色を掛ける</td></tr>
   </table>
   <ul>
