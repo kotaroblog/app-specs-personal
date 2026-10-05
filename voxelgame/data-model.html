@@ -76,6 +76,7 @@ erDiagram
     <tr><td>spawnX / spawnY / spawnZ</td><td>Float</td><td>8 / 62 / 8</td><td>スポーン座標。ベッド使用で更新される。<code>setKind</code> で島は (0.5, -, 0.5)、群島は本島の南の草原（<code>ArchipelagoTerrain.spawn</code>）に置き直す</td></tr>
     <tr><td>inventoryData</td><td>Data</td><td>空</td><td>所持品。形式は後述の「所持品・チェストの直列化」</td></tr>
     <tr><td>unlockedToolsData</td><td>Data</td><td>空</td><td>解放済みツール。Tool の rawValue（hand / woodPickaxe / stonePickaxe / ironPickaxe / shears）をカンマ区切りにした UTF-8。空なら hand・woodPickaxe として読み、読み込み時に hand を必ず足す</td></tr>
+    <tr><td><strong>saveVersion</strong></td><td>Int</td><td>0</td><td>保存データの版（2026-10-06）。0 は番号を入れる前（build 36 まで）。新しいワールドはいまの版（<code>SaveDataVersion.current</code>＝1）。開く前に <code>SaveDataMigration</code> が古い版を順に直す（版0→1 は番号を付けるだけ）。公開後に保存の中身の意味を変えたら版を上げ、直し方を1つ足す</td></tr>
     <tr><td><strong>builtLiftsData</strong></td><td>Data</td><td>空</td><td>自分で作ったリフト（リフトの滑車を置いて立てた物）。Lift（縦穴・ふもとと上の高さ・乗り場・降り立つ所・向き）の JSON の配列（2026-10-05、CF58）</td></tr>
     <tr><td><strong>authorsCrateData</strong></td><td>Data</td><td>空</td><td>作者の荷箱（ステージだけ）。前のステージを完成してから作ったワールドに、届ける素材・道具・どこから届いたかを JSON で入れる。届けたら空にする（2026-10-05、CF57）</td></tr>
     <tr><td><strong>toolConditionsData</strong></td><td>Data</td><td>空</td><td>道具ごとの状態（使った回数 wear・強化の段階 level）。Tool の rawValue をキーにした JSON。空なら全部新品（2026-10-04、CF55）</td></tr>
@@ -172,7 +173,7 @@ erDiagram
   </ul>
 
   <h2>Block（UInt8 enum）</h2>
-  <p>rawValue が UInt8 として <code>blocksData</code>・<code>inventoryData</code>・<code>slotsData</code>・<code>placedByBlockData</code> に直接書き込まれる。現行の最大 rawValue は <strong>139</strong>（煙突）。<strong>欠番 16〜18・31・33 は建築特化への転換で廃止した食べ物</strong>（鶏肉・豚肉・牛肉・パン・金のリンゴ）で、値をずらさないため再利用しない。旧セーブに残っていても読み込み時に空気として読む（所持品では読み飛ばす）。テクスチャアトラスの列は <code>Block.atlasColumn</code> で rawValue から切り離してあり、形違い・色違いは素材の列を借りるので列を消費しない。</p>
+  <p>rawValue が UInt8 として <code>blocksData</code>・<code>inventoryData</code>・<code>slotsData</code>・<code>placedByBlockData</code> に直接書き込まれる。現行の最大 rawValue は <strong>148</strong>（落とし格子）。<strong>欠番 16〜18・31・33 は建築特化への転換で廃止した食べ物</strong>（鶏肉・豚肉・牛肉・パン・金のリンゴ）で、値をずらさないため再利用しない。旧セーブに残っていても読み込み時に空気として読む（所持品では読み飛ばす）。テクスチャアトラスの列は <code>Block.atlasColumn</code> で rawValue から切り離してあり、形違い・色違いは素材の列を借りるので列を消費しない。</p>
 
   <h3>性質の定義</h3>
   <table>
@@ -259,6 +260,8 @@ erDiagram
     <tr><td><strong>120</strong></td><td>mud（泥）</td><td>地形</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>水辺の底（CF44）。列 62</td></tr>
     <tr><td><strong>121</strong></td><td>wetConcrete（生コン）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>置くと次の夜明けにコンクリートへ（GameSceneView.hardenConcrete）。列 61</td></tr>
     <tr><td><strong>122〜129</strong></td><td>concrete と7色（赤・橙・黄・緑・青・紫・黒）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>灰色は列 59、7色は白い元（60）に色を掛ける</td></tr>
+    <tr><td><strong>140〜147</strong></td><td>白い旗と7色の旗</td><td>家具</td><td>×</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>棒と布（家具ノード・通り抜けられる）。羊毛の白い絵（16）に色を掛ける。向きは回せる（2026-10-06）</td></tr>
+    <tr><td><strong>148</strong></td><td>portcullis（落とし格子）</td><td>家具</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>保存値は扉と同じ（向き＋開いている印 0x04）。閉じていれば真ん中の薄い格子、開いていれば通れる。アトラス 65（2026-10-06）</td></tr>
     <tr><td><strong>139</strong></td><td>chimney（煙突）</td><td>家具</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>石レンガの四角い筒（家具ノード）。かまどにつながる煙突の一番上から煙（ChunkManager.syncChimneySmoke。CF59）。石レンガの絵を借りる</td></tr>
     <tr><td><strong>130〜138</strong></td><td>石・砂岩・コンクリート × 三角・縁・菱形のタイル</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>床のタイル（CF43）。置く向きを保存し、上面の模様を回す。列 55（三角）・63（縁）・64（菱形）に素材の色を掛ける</td></tr>
   </table>
@@ -388,6 +391,7 @@ erDiagram
     <tr><td>4.8</td><td>2026-10-05</td><td>WorldRecord に authorsCrateData（作者の荷箱。CF57）を追加</td></tr>
     <tr><td>4.9</td><td>2026-10-05</td><td>ブロック 112（リフトの滑車）と WorldRecord.builtLiftsData（作ったリフト。CF58）を追加</td></tr>
     <tr><td>5.0</td><td>2026-10-05</td><td>ブロック 112〜138（リフトの滑車・神殿らしい砂岩・斜面・泥・生コン・コンクリート8色・床のタイル9種）を一覧に追加。アトラスは 72 列</td></tr>
+    <tr><td>5.1</td><td>2026-10-06</td><td>ブロック 140〜148（旗8色・落とし格子）と WorldRecord.saveVersion（保存データの版）を追加</td></tr>
 </table>
 
   <script>
@@ -397,7 +401,7 @@ erDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-10-05</footer>
+  <footer class="site-footer">最終更新: 2026-10-06</footer>
 </div>
 </body>
 </html>
