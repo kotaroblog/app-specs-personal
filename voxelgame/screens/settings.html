@@ -20,7 +20,7 @@
   </header>
 
   <h2>目的・役割</h2>
-  <p>以前はゲーム中のメニューからだけ開け、1枚に縦に長く項目が並び、検証用のつまみまで同じ重さで出ていた。2026-10-03（CF33・本人決定）に、<strong>左に分類・右に中身</strong>（iOS の設定アプリの型）へ分け、ホームの「設定」からも開けるようにした。開発者向けの設定は <strong>TestFlight と開発中だけ</strong>に出す（本人決定）。</p>
+  <p>以前はゲーム中のメニューからだけ開け、1枚に縦に長く項目が並び、検証用のつまみまで同じ重さで出ていた。2026-10-03（CF33・本人決定）に、<strong>左に分類・右に中身</strong>（iOS の設定アプリの型）へ分け、ホームの「設定」からも開けるようにした。開発者向けの設定は <strong>開発中と、TestFlight で版数を7回押して開いたときだけ</strong>に出す（本人決定）。</p>
 
   <h2>UI 構成</h2>
   <table>
@@ -59,7 +59,7 @@
     <tr><td>サポート・お問い合わせ／利用規約／プライバシーポリシー</td><td>Link。<code>https://kotaroblog.github.io/app-policies/craftfrontier/</code> の support.html／terms.html／privacy-policy.html</td></tr>
     <tr><td>App Store でレビューを書く</td><td>App Store から入ったと確かめられたときだけ出す（判定前・TestFlight では出さない）</td></tr>
     <tr><td>バージョン</td><td>「1.0.0 (25)」の形（CFBundleShortVersionString と CFBundleVersion）</td></tr>
-    <tr><td>開発者向け（オレンジ）</td><td><strong>TestFlight と開発中だけ</strong>。パフォーマンス表示のスイッチ。ゲーム中はその下に検証用の設定（画角・1日の長さ・雨と雪の許可・検証用の設定を戻す。アプリを閉じると戻る）、ホームでは「ゲーム中の設定で変えられます」の案内</td></tr>
+    <tr><td>開発者向け（オレンジ）</td><td><strong>開発中はいつも・TestFlight は「バージョン」の行を続けて7回押すと出る（もう7回で隠れる。端末ごとに覚える）</strong>。App Store 版では押しても出ない。パフォーマンス表示のスイッチ。ゲーム中はその下に検証用の設定（画角・1日の長さ・雨と雪の許可・検証用の設定を戻す。アプリを閉じると戻る）、ホームでは「ゲーム中の設定で変えられます」の案内</td></tr>
   </table>
 
   <h2>保存と反映</h2>
@@ -69,7 +69,7 @@
     <li>配布の経路は起動時に StoreKit 2 の <code>AppTransaction</code> の environment で判定する（sandbox＝TestFlight、xcode＝開発中、production＝App Store。DEBUG は開発中）。判定が終わるまでと失敗したとき（オフラインなど）は「不明」として、開発者向けもレビューの案内も出さない。失敗したら「このアプリについて」を開いたときに問い合わせ直す</li>
     <li>ホームの設定は開くたびに保存値を読み直す（ゲーム中に変えた値を反映する）</li>
     <li>App Store 版と確かめられたら、TestFlight で ON にしたパフォーマンス表示を切る（App Store 版にはスイッチが無いため）</li>
-    <li>🔴 審査は sandbox 環境なので TestFlight と判定され、審査員に開発者向けが見える。App Store 提出前に対応する（ISSUES CF-029）</li>
+    <li>🔴 審査は sandbox 環境なので TestFlight と判定される。以前は審査員にも開発者向けが見えていたため、2026-10-05（CF-029）から TestFlight では「バージョン」の行を 1.5 秒以内の間隔で7回押したときだけ出す（<code>DeveloperUnlockTaps</code>・UserDefaults キー <code>developerOptionsUnlocked</code>）。ゲーム中のメニューの「開発者向け: 素材無限」「お手本を書き出す」と、書き出したお手本を使うかどうかも同じ判定（<code>BuildChannelStore.showsDeveloperOptions</code>）</li>
   </ul>
 
   <h2>遷移</h2>
@@ -91,9 +91,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-10-03</td><td>初版作成（CF33）。ゲーム中の設定シートを4分類に分け、ホームからも開けるようにした。名前の言い換え、配置に関わる項目を上へ、分類ごとの「標準に戻す」（確認つき）、遊び方、このアプリについて（規約・プライバシー・サポート・版数）、開発者向けを TestFlight と開発中だけに</td></tr>
     <tr><td>1.1</td><td>2026-10-03</td><td>build 26 前のパス5の修正を反映。配布経路の「不明」（判定前・失敗時は開発者向けもレビューの案内も出さない・問い合わせ直し）、ホームの設定を開くたびに読み直す、App Store 版でパフォーマンス表示を切る、を追記。審査で開発者向けが見える課題（CF-029）を明記</td></tr>
+    <tr><td>1.2</td><td>2026-10-05</td><td>🔴 審査員に開発者向けが見える課題（CF-029）を修正: TestFlight では「バージョン」を7回押したときだけ開発者向けを出す（開発中はいつも・App Store は出ない）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-10-03</footer>
+  <footer class="site-footer">最終更新: 2026-10-05</footer>
 </div>
 </body>
 </html>
