@@ -173,7 +173,7 @@ erDiagram
   </ul>
 
   <h2>Block（UInt8 enum）</h2>
-  <p>rawValue が UInt8 として <code>blocksData</code>・<code>inventoryData</code>・<code>slotsData</code>・<code>placedByBlockData</code> に直接書き込まれる。現行の最大 rawValue は <strong>150</strong>（水入りバケツ）。<strong>欠番 16〜18・31・33 は建築特化への転換で廃止した食べ物</strong>（鶏肉・豚肉・牛肉・パン・金のリンゴ）で、値をずらさないため再利用しない。旧セーブに残っていても読み込み時に空気として読む（所持品では読み飛ばす）。テクスチャアトラスの列は <code>Block.atlasColumn</code> で rawValue から切り離してあり、形違い・色違いは素材の列を借りるので列を消費しない。</p>
+  <p>rawValue が UInt8 として <code>blocksData</code>・<code>inventoryData</code>・<code>slotsData</code>・<code>placedByBlockData</code> に直接書き込まれる。現行の最大 rawValue は <strong>156</strong>（磨いた安山岩）。<strong>欠番 16〜18・31・33 は建築特化への転換で廃止した食べ物</strong>（鶏肉・豚肉・牛肉・パン・金のリンゴ）で、値をずらさないため再利用しない。旧セーブに残っていても読み込み時に空気として読む（所持品では読み飛ばす）。テクスチャアトラスの列は <code>Block.atlasColumn</code> で rawValue から切り離してあり、形違い・色違いは素材の列を借りるので列を消費しない。</p>
 
   <h3>性質の定義</h3>
   <table>
@@ -261,6 +261,7 @@ erDiagram
     <tr><td><strong>121</strong></td><td>wetConcrete（生コン）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>置くと次の夜明けにコンクリートへ（GameSceneView.hardenConcrete）。列 61</td></tr>
     <tr><td><strong>122〜129</strong></td><td>concrete と7色（赤・橙・黄・緑・青・紫・黒）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>灰色は列 59、7色は白い元（60）に色を掛ける</td></tr>
     <tr><td><strong>140〜147</strong></td><td>白い旗と7色の旗</td><td>家具</td><td>×</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>棒と布（家具ノード・通り抜けられる）。羊毛の白い絵（16）に色を掛ける。向きは回せる（2026-10-06）</td></tr>
+    <tr><td><strong>151〜156</strong></td><td>granite・diorite・andesite と、それぞれ polished（磨いた〜）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>色違いの石（CF61）。石の中に塊で出る。掘る時間は石と同じ。石切台で磨く（2→2）。アトラス 68〜73（72 → 76 列に広げた）</td></tr>
     <tr><td><strong>149・150</strong></td><td>bucket（バケツ）・waterBucket（水入りバケツ）</td><td>道具</td><td>×</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>×</td><td>［置く］で汲む・水源を置く（ブロックとしては置かない・置き換え不可）。アトラス 66・67（CF60）</td></tr>
     <tr><td><strong>148</strong></td><td>portcullis（落とし格子）</td><td>家具</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>保存値は扉と同じ（向き＋開いている印 0x04）。閉じていれば真ん中の薄い格子、開いていれば通れる。アトラス 65（2026-10-06）</td></tr>
     <tr><td><strong>139</strong></td><td>chimney（煙突）</td><td>家具</td><td>○</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>石レンガの四角い筒（家具ノード）。かまどにつながる煙突の一番上から煙（ChunkManager.syncChimneySmoke。CF59）。石レンガの絵を借りる</td></tr>
@@ -394,6 +395,7 @@ erDiagram
     <tr><td>5.0</td><td>2026-10-05</td><td>ブロック 112〜138（リフトの滑車・神殿らしい砂岩・斜面・泥・生コン・コンクリート8色・床のタイル9種）を一覧に追加。アトラスは 72 列</td></tr>
     <tr><td>5.1</td><td>2026-10-06</td><td>ブロック 140〜148（旗8色・落とし格子）と WorldRecord.saveVersion（保存データの版）を追加</td></tr>
     <tr><td>5.2</td><td>2026-10-06</td><td>ブロック 149・150（バケツ・水入りバケツ）を追加。チャンクの保存値を 4 ビット（0x0F）に広げ、水に流れる水の状態（水源・距離1〜7・落ちている 0x08）を持たせた（CF60）</td></tr>
+    <tr><td>5.3</td><td>2026-10-07</td><td>ブロック 151〜156（色違いの石3種と磨いた3種。CF61）を追加。アトラスは 76 列</td></tr>
 </table>
 
   <script>
@@ -403,7 +405,7 @@ erDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-10-06</footer>
+  <footer class="site-footer">最終更新: 2026-10-07</footer>
 </div>
 </body>
 </html>
