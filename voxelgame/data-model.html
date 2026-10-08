@@ -261,6 +261,7 @@ erDiagram
     <tr><td><strong>121</strong></td><td>wetConcrete（生コン）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>置くと次の夜明けにコンクリートへ（GameSceneView.hardenConcrete）。列 61</td></tr>
     <tr><td><strong>122〜129</strong></td><td>concrete と7色（赤・橙・黄・緑・青・紫・黒）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>灰色は列 59、7色は白い元（60）に色を掛ける</td></tr>
     <tr><td><strong>140〜147</strong></td><td>白い旗と7色の旗</td><td>家具</td><td>×</td><td>×</td><td>○</td><td></td><td>×</td><td>○</td><td>○</td><td>棒と布（家具ノード・通り抜けられる）。羊毛の白い絵（16）に色を掛ける。向きは回せる（2026-10-06）</td></tr>
+    <tr><td><strong>159〜165</strong></td><td>limestone（白い石灰岩）・polishedLimestone（磨いた白い石）・limestoneStairs・limestoneSlab・seaGlass（シーグラス）・seaGlassBlock（海色のガラス）・lighthouseLamp（灯台の灯）</td><td>建材・家具</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>岬の灯台の名物（CF65）。階段と灯台の灯は家具ノード、ハーフはメッシュ。シーグラスは持ち物だけ（置けない・通り抜け）。アトラス 74 白い石灰岩・75 磨いた白い石（階段・ハーフも）・76 海色のガラス（シーグラスも）・77 灯台の灯（76 → 80 列に広げた）</td></tr>
     <tr><td><strong>157・158</strong></td><td>oakSapling（苗木）・spruceSapling（針葉樹の苗木）</td><td>植物</td><td>×</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>×</td><td>葉から10回に1回くらい落ちる。草・土（針葉樹は雪も）に植えると夜明けに木になる（CF63・植物と染料の仕様）。板2枚の植物ノードで描き、手に持つ立方体は葉の絵（列は増やさない）</td></tr>
     <tr><td><strong>151〜156</strong></td><td>granite・diorite・andesite と、それぞれ polished（磨いた〜）</td><td>建材</td><td>○</td><td>○</td><td>○</td><td></td><td>×</td><td>×</td><td>○</td><td>色違いの石（CF61）。石の中に塊で出る。掘る時間は石と同じ。石切台で磨く（2→2）。アトラス 68〜73（72 → 76 列に広げた）</td></tr>
     <tr><td><strong>149・150</strong></td><td>bucket（バケツ）・waterBucket（水入りバケツ）</td><td>道具</td><td>×</td><td>×</td><td>○</td><td></td><td>×</td><td>×</td><td>×</td><td>［置く］で汲む・水源を置く（ブロックとしては置かない・置き換え不可）。アトラス 66・67（CF60）</td></tr>
@@ -398,6 +399,7 @@ erDiagram
     <tr><td>5.2</td><td>2026-10-06</td><td>ブロック 149・150（バケツ・水入りバケツ）を追加。チャンクの保存値を 4 ビット（0x0F）に広げ、水に流れる水の状態（水源・距離1〜7・落ちている 0x08）を持たせた（CF60）</td></tr>
     <tr><td>5.3</td><td>2026-10-07</td><td>ブロック 151〜156（色違いの石3種と磨いた3種。CF61）を追加。アトラスは 76 列</td></tr>
     <tr><td>5.4</td><td>2026-10-08</td><td>ブロック 157・158（苗木2種。CF63）を追加</td></tr>
+    <tr><td>5.5</td><td>2026-10-09</td><td>ブロック 159〜165（岬の灯台の名物。CF65）を追加。アトラスは 80 列</td></tr>
 </table>
 
   <script>
@@ -407,7 +409,7 @@ erDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-10-08</footer>
+  <footer class="site-footer">最終更新: 2026-10-09</footer>
 </div>
 </body>
 </html>
