@@ -14,21 +14,21 @@
 
   <header class="site-header">
     <h1>ルーティン機能</h1>
-    <p>曜日固定のトレーニングテンプレートを「今日のルーティン」として自動提案する機能（v1.1.0）。v1.1.1 でピラミッドセット対応（TemplateSetEntry）を追加。v1.1.2 でルーティン画面から直接新規作成できる CreateTemplateView を追加。</p>
+    <p>曜日固定のトレーニングテンプレートを「今日のルーティン」として自動提案する機能（v1.1.0）。v1.1.1 でピラミッドセット対応（TemplateSetEntry）を追加。v1.1.2 でルーティン画面から直接新規作成できる CreateTemplateView を追加。アプリ 1.4.2 でカレンダータブを廃止し、これからの日の予定は記録画面の「この曜日のルーティン」の見出しで見せる。</p>
     <div class="section-meta">
-      <span class="tag done">v1.2</span>
+      <span class="tag done">v1.3</span>
       <span class="tag">機能ID: WD-FEAT-ROUTINE</span>
     </div>
   </header>
 
   <h2>概要</h2>
-  <p>「ルーティン機能」は WorkoutTemplate（旧称: テンプレート）に曜日割り当て（assignedWeekdays）を付与し、その日の曜日に対応したルーティンをトレーニング記録画面・カレンダー画面に自動提案する機能。ユーザーはワークアウトを開始する際に何をすべきかを迷わず、1タップでルーティンを適用できる。</p>
+  <p>「ルーティン機能」は WorkoutTemplate（旧称: テンプレート）に曜日割り当て（assignedWeekdays）を付与し、その日の曜日に対応したルーティンをトレーニング記録画面に自動提案する機能（アプリ 1.4.2 まではカレンダー画面にも予定の点を出していたが、カレンダータブの廃止とともに外した）。ユーザーはワークアウトを開始する際に何をすべきかを迷わず、1タップでルーティンを適用できる。</p>
 
   <h3>目的・ユーザー価値</h3>
   <ul>
     <li>「今日は何をやるべきか」迷いをなくし、記録開始までの摩擦を最小化する</li>
     <li>スプリット（胸の日/背中の日）を維持しやすくする</li>
-    <li>週間トレーニング計画をカレンダーで視覚的に確認できる（予定ドット）</li>
+    <li>先の日（や過去の日）を記録画面の月カレンダーで選ぶと、その曜日に割り当てたルーティンが「この曜日のルーティン: ○○」として見える（アプリ 1.4.2〜。旧: カレンダータブの予定ドット）</li>
   </ul>
 
   <h3>想定ユーザー</h3>
@@ -92,38 +92,51 @@ final class TemplateSetEntry {
   <h2>関連画面</h2>
   <ul>
     <li><a href="../screens/template-list.html">ルーティン選択（TemplateListView）</a> — ルーティン一覧・適用・曜日バッジ表示</li>
-    <li><a href="../screens/workout-session.html">トレーニング記録画面（WorkoutSessionView）</a> — エンプティCTA「今日のルーティン」プライマリ提案</li>
-    <li><a href="../screens/calendar.html">カレンダー画面（CalendarView）</a> — 未来日の予定ドット・BottomSheet ルーティンセクション</li>
+    <li><a href="../screens/workout-session.html">トレーニング記録画面（WorkoutSessionView）</a> — 記録がない日のルーティンボタン（今日は「今日のルーティン」、今日以外は「この曜日のルーティン」）</li>
+    <li><a href="../screens/calendar.html">カレンダー画面（CalendarView）</a> — <strong>アプリ 1.4.2 で廃止</strong>（旧: 未来日の予定ドット・BottomSheet ルーティンセクション）</li>
   </ul>
   <p>SaveTemplateView / EditTemplateView でも曜日選択 UI（WeekdayPicker）を表示する（別途仕様書なし、TemplateListView 仕様書参照）。</p>
 
-  <h2>処理フロー: 今日のルーティン適用</h2>
+  <h2>処理フロー: 記録がない日のルーティン適用（アプリ 1.4.2 時点）</h2>
   <div class="mermaid">
 sequenceDiagram
   participant U as ユーザー
   participant V as WorkoutSessionView
+  participant VM as WorkoutSessionViewModel
   participant RSS as RoutineSuggestionService
   participant DB as SwiftData
 
-  V->>RSS: todaysRoutine(for: selectedDate, in: templates)
-  RSS-->>V: WorkoutTemplate? (曜日一致の先頭1件)
+  U->>V: 月カレンダーで日を選ぶ（記録がない日）
+  V->>RSS: routines(for: selectedDate, in: templates)
+  RSS-->>V: [WorkoutTemplate]（選択日の曜日に該当するものすべて）
 
-  alt ルーティンあり
-    V->>V: エンプティCTA「今日のルーティン」プライマリカード表示
-    U->>V: カードをタップ
+  alt 該当ルーティンあり
+    loop 該当ルーティンごと
+      V->>VM: routineTitle(for: routine.name)
+      VM-->>V: 今日なら「今日のルーティン: ○○」／それ以外は「この曜日のルーティン: ○○」
+      V->>V: ルーティンボタンを表示（2行目は種目名の要約）
+    end
+    U->>V: ボタンをタップ
     V->>RSS: applyRoutine(_:to:existingSession:modelContext:exercises:)
     RSS->>DB: WorkoutSession INSERT (新規) or 既存に追記
     RSS->>DB: WorkoutSet × entries.sets 数だけ INSERT
     RSS-->>V: 挿入セット数を返す
     V->>V: currentSession が更新されワークアウトリスト表示
-  else ルーティンなし
-    V->>V: エンプティCTA「ルーティンから追加」セカンダリボタン表示
-    U->>V: ボタンをタップ
-    V->>V: TemplateListView sheet 表示
+  else 該当ルーティンなし
+    V->>V: 「記録なし」のみ表示（ルーティンは左上「ルーティン」メニュー、追加は右下の ＋ から。WD-013）
   end
   </div>
 
-  <h2>処理フロー: カレンダー予定ドット生成</h2>
+  <h2>ルーティンボタンの見出し（アプリ 1.4.2〜・WD-010）</h2>
+  <table>
+    <tr><th>選択日</th><th>見出し（日本語）</th><th>見出し（英語）</th></tr>
+    <tr><td>今日</td><td>今日のルーティン: ○○</td><td>Today's routine: ○○</td></tr>
+    <tr><td>今日以外（過去・未来）</td><td>この曜日のルーティン: ○○</td><td>Routine for this weekday: ○○</td></tr>
+  </table>
+  <p>ボタンは以前から<strong>選択日の曜日</strong>で出ていたが、見出しはどの日も「今日のルーティン」だった。カレンダータブ（予定の点）を外したので、これからの日の予定はこの1行で見せる。行は増やさず文言だけを変える。種目名の要約の区切りは日本語「・」、英語「, 」（WD-016）。</p>
+
+  <h2>処理フロー: カレンダー予定ドット生成（アプリ 1.4.2 で廃止）</h2>
+  <div class="callout warn">カレンダータブ（CalendarView）の廃止とともに、予定ドットも無くなった。代わりは上記「ルーティンボタンの見出し」。以下は旧仕様の記録。</div>
   <div class="mermaid">
 sequenceDiagram
   participant V as CalendarView
@@ -225,7 +238,8 @@ enum RoutineSuggestionService {
   <h2>ビジネスルール</h2>
   <ul>
     <li>1つのルーティンに複数曜日を割り当て可能（例: 月・水・金）</li>
-    <li>同一曜日に複数のルーティンが割り当てられている場合、<code>RoutineSuggestionService.todaysRoutine</code> は先頭1件のみを返す（作成日降順クエリ結果の先頭）</li>
+    <li>同一曜日に複数のルーティンが割り当てられている場合、記録画面は <code>RoutineSuggestionService.routines(for:in:)</code> で<strong>該当するものすべて</strong>をボタンとして並べる（WD-007。<code>todaysRoutine</code> は先頭1件のみを返す旧 API）</li>
+    <li>記録がない日のルーティンボタンの見出しは、選択日が今日なら「今日のルーティン: ○○」、それ以外なら「この曜日のルーティン: ○○」（アプリ 1.4.2〜・WD-010）</li>
     <li>assignedWeekdays が空配列のルーティンは「曜日固定なし」として、自動提案の対象外（TemplateListView から手動適用のみ）</li>
     <li>ルーティン適用は「末尾追加」。既存セッションがあれば既存セットの後ろに挿入し、上書きはしない</li>
     <li>TemplateEntry.exerciseName と一致する Exercise が見つからない場合、そのエントリはスキップ（名前変更・削除されたケースへの対応）</li>
@@ -254,7 +268,8 @@ enum RoutineSuggestionService {
     <li class="done">WorkoutSessionView の todaysRoutine は @Query から取得した templates を RoutineSuggestionService に渡す computed property</li>
     <li class="done">エンプティCTA のプライマリカードは AppTheme.accent 背景 + 黒文字 + shadow(accent.opacity(0.4), radius: 10)</li>
     <li class="done">WeekdayPicker は SaveTemplateView / EditTemplateView の「曜日選択」セクションに配置</li>
-    <li class="done">CalendarView の予定ドットは枠線スタイル（stroke）で実績ドット（fill）と区別</li>
+    <li class="done">CalendarView の予定ドットは枠線スタイル（stroke）で実績ドット（fill）と区別（アプリ 1.4.2 で CalendarView ごと廃止）</li>
+    <li class="done">1.4.2: 見出しの出し分けは <code>WorkoutSessionViewModel.routineTitle(for:now:)</code>、種目名の要約は <code>routineSummary(exerciseNames:)</code>（区切りは <code>common.middleDotSeparator</code>）。単体テスト RecordScreenTextTests で固定</li>
     <li>通知リマインダー（v1.2.0 実装予定）: ルーティン当日の朝に「今日は〇〇の日です」プッシュ通知</li>
   </ul>
 
@@ -315,6 +330,7 @@ enum RoutineSuggestionService {
     <tr><td>1.0</td><td>2026-05-23</td><td>初版作成（v1.1.0 実装内容をまとめて記載）</td></tr>
     <tr><td>1.1</td><td>2026-05-24</td><td>v1.1.1: TemplateSetEntry 新規モデル・ピラミッドセット対応を追記。TemplateMigrationService・EditTemplateView 全面リライト・AddTemplateEntrySheet・SaveTemplateView 改善・RoutineSuggestionService 改修を追記</td></tr>
     <tr><td>1.2</td><td>2026-06-06</td><td>v1.1.2 正式リリース（build 5）: CreateTemplateView（新規作成画面）・CreateTemplatePickerSheet・DraftEntrySectionView 追加を追記。TemplateListView toolbar「+」ボタン追加・AddWorkoutView 種目インライン新規登録・ExerciseFormView の initialCategory/onSaved 追加・ReleaseNotesService 更新を追記</td></tr>
+    <tr><td>1.3</td><td>2026-10-08</td><td>アプリ 1.4.2 (21): カレンダータブ廃止（WD-010）に伴い、予定ドットを廃止扱いに変更。記録がない日のルーティンボタンの見出しを「今日のルーティン」（今日）／「この曜日のルーティン」（今日以外）で出し分ける仕様を追加。処理フローを現行に書き直し（該当ルーティンをすべて並べる〔WD-007〕・中央の「ルーティンから追加」ボタンの撤去〔WD-013〕を含む）。種目名の要約の区切りの修正（WD-016）を追記</td></tr>
   </table>
 
   <script>
@@ -324,7 +340,7 @@ enum RoutineSuggestionService {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-06-06</footer>
+  <footer class="site-footer">最終更新: 2026-10-08</footer>
 </div>
 </body>
 </html>

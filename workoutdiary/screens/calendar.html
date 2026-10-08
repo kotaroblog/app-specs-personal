@@ -4,23 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>WorkoutDiary - カレンダー</title>
+<title>WorkoutDiary - カレンダー（廃止）</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / カレンダー</div>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">WorkoutDiary</a> / カレンダー（廃止）</div>
   <header class="site-header">
-    <h1>カレンダー画面（CalendarView）</h1>
+    <h1>カレンダー画面（CalendarView）【1.4.2 で廃止】</h1>
     <p>月単位のトレーニング履歴を部位ヒートマップで可視化</p>
-    <div class="section-meta"><span class="tag done">v1.2</span><span class="tag">画面ID: WD-CALENDAR-01</span></div>
+    <div class="section-meta"><span class="tag warn">廃止（アプリ 1.4.2）</span><span class="tag">画面ID: WD-CALENDAR-01</span></div>
   </header>
+
+  <div class="callout warn">
+    <strong>この画面（カレンダータブ / CalendarView）はアプリ 1.4.2 (21)（2026-10-08 審査提出）で廃止した。</strong>タブは5つから4つ（トレーニング・種目・統計・設定）になった（WD-010・本人決定）。<br>
+    理由: 1.4.0 で<a href="workout-session.html">トレーニング記録画面</a>の上部に月カレンダー（<code>MonthCalendar</code>）を置き、タブの中身がほぼ重複した。タブ単体は開かれていなかった。<br>
+    <code>CalendarView</code>・<code>CalendarViewModel</code>・<code>FlowLayout</code> はコードから削除した。この画面にあった役割の行き先は次のとおり。
+    <ul>
+      <li><strong>日の詳細の閲覧と共有</strong> → 記録画面の月カレンダーで日をタップし、その日の記録を開く（共有も記録画面から）</li>
+      <li><strong>これからの日の予定の点</strong> → 記録がない日の見出しを、今日以外は「この曜日のルーティン: ○○」にした（今日は従来どおり「今日のルーティン: ○○」）。詳細は<a href="../features/routine.html">ルーティン機能</a></li>
+      <li><strong>部位の色の凡例</strong> → 種目カードの色の点・種目タブの色の帯とバッジ（既存）で代える</li>
+      <li><strong>部位の判定</strong>（<code>CalendarViewModel.categoriesPerformed</code>）→ <code>WorkoutSession.performedCategories</code> へ移した（記録画面の月カレンダーの点の色に使う）</li>
+      <li><strong>PR の祝福表示</strong> → 中身を設定する処理が無く、一度も表示されていなかったため代替なしで削除</li>
+    </ul>
+    以下は廃止前の仕様の記録として残す。
+  </div>
 
   <!-- AUTO-SHOT:START -->
   <h2>画面イメージ <span class="screen-shot-meta">（fastlane snapshot 自動撮影 / iPhone 17 Pro Max）</span></h2>
   <figure class="screen-shot">
     <img src="_shots/calendar.png" alt="カレンダー画面のスクリーンショット" loading="lazy">
-    <figcaption><code>cd ios-apps/WorkoutDiary &amp;&amp; fastlane specs</code> で最新UIに自動更新</figcaption>
+    <figcaption>廃止前の撮影（2026-06-10）。1.4.2 で撮影対象（03_Calendar）から外したため、<code>fastlane specs</code> では更新されない</figcaption>
   </figure>
   <!-- AUTO-SHOT:END -->
 
@@ -140,9 +154,10 @@ enum ExerciseCategory: String {
     <tr><td>1.1</td><td>2026-05-14</td><td>v1.0.7: 日付選択後に種目リスト表示・タップでAddWorkoutViewプリセット起動、「ワークアウトを記録／編集」ボタン常設、PRセレブレーションオーバーレイ対応</td></tr>
     <tr><td>1.2</td><td>2026-05-23</td><td>v1.1.0: 編集機能を撤廃して閲覧専用化。日付セルに部位カラードット（最大3つ）、未来日に予定ドット（枠線）、日付タップ BottomSheet（部位タグ・サマリ・種目リスト・ルーティンセクション）、部位カラー凡例セクション追加</td></tr>
     <tr><td>1.3</td><td>2026-07-07</td><td>v1.2.1 UI/UX/A11y監査対応: PR祝福見出し .white→.primary（ライトモード白文字修正）、祝福オーバーレイに閉じるボタン・isModal・Reduce Motion対応、共有ボタンをdetailSheet内に移設（デッドコントロール解消）、部位カラーをExerciseCategory.colorに統一（BodyPartDigestCardView独自定義を削除）</td></tr>
+    <tr><td>1.4</td><td>2026-10-08</td><td>アプリ 1.4.2 (21) でカレンダータブを廃止（WD-010）。冒頭に廃止の告知と、各役割の行き先（記録画面の月カレンダー・「この曜日のルーティン」の見出し・種目カード/種目タブの部位の色・<code>WorkoutSession.performedCategories</code>）を追記。画面イメージは廃止前の撮影と明記。本文は旧仕様の記録として残す</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-07</footer>
+  <footer class="site-footer">最終更新: 2026-10-08</footer>
 </div>
 </body>
 </html>

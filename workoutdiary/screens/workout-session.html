@@ -15,7 +15,7 @@
     <h1>トレーニング記録画面（WorkoutSessionView）</h1>
     <p>1日分のトレーニングセッションを入力・編集する中心画面</p>
     <div class="section-meta">
-      <span class="tag done">v1.2</span>
+      <span class="tag done">v1.4</span>
       <span class="tag">画面ID: WD-TRAINING-01</span>
     </div>
   </header>
@@ -29,37 +29,37 @@
   <!-- AUTO-SHOT:END -->
 
   <h2>目的・役割</h2>
-  <p>選択した日付のトレーニングセッションを表示・編集する画面。種目ごとにセットを追加し、PR検出・ルーティン適用・インターバルタイマー・シェアを操作できる。アプリの主機能画面。v1.1.0 でホーム画面を全面リデザインし、最速記録 UX を実現した。</p>
+  <p>選択した日付のトレーニングセッションを表示・編集する画面。種目ごとにセットを追加し、PR検出・ルーティン適用・インターバルタイマー・シェアを操作できる。アプリの主機能画面。v1.1.0 でホーム画面を全面リデザインし、最速記録 UX を実現した。1.4.0 で画面上部に月カレンダー（<code>MonthCalendar</code>）を置き、<strong>1.4.2 でカレンダータブを廃止して月の表示をこの画面に統合した</strong>（タブは4つ: トレーニング・種目・統計・設定。WD-010）。</p>
 
-  <h2>UI 構成（v1.1.0 リデザイン後）</h2>
+  <h2>UI 構成（アプリ 1.4.2 時点）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>週間進捗バッジ</td><td>WeeklyProgressBadge</td><td>画面上部。今週のトレーニング回数・ストリーク表示。週間目標設定時のみ</td></tr>
-    <tr><td>日付セレクター</td><td>HStack + DatePicker popover</td><td>「今日」バッジ付き（Calendar.isDateInToday が true の日に緑Capsuleで表示）。前後矢印でも日付移動可</td></tr>
-    <tr><td>エンプティCTA（記録なし時）</td><td>VStack</td><td>「今日のルーティン」プライマリCTA（緑塗りカード + 種目プレビュー）を最優先表示。ルーティン未該当日は「ワークアウトを追加」をプライマリ（accent塗り+onAccent文字）、「ルーティンから追加」をセカンダリ（枠線テキストボタン）として視覚階層を分けて表示（v1.2.1修正）</td></tr>
-    <tr><td>クイックアクションチップ（記録あり時）</td><td>横スクロール HStack</td><td>workoutList 上部に表示。「ルーティンから追加」チップのみ。今日のルーティン該当日は非表示</td></tr>
-    <tr><td>ExerciseCard（記録あり時）</td><td>LazyVStack</td><td>種目ごとのカード View（ExerciseCard.swift）。種目ヘッダー右端に削除アイコン。各セット行に編集・削除アイコン常時表示</td></tr>
-    <tr><td>FAB（右下固定）</td><td>WorkoutFAB</td><td>56pt 円形。タップで AddWorkoutView を sheet 表示。safeAreaInset(edge: .bottom) で常時表示</td></tr>
-    <tr><td>ボトムアクションバー（左下、データあり時）</td><td>WorkoutBottomActionBar</td><td>「保存（テンプレート保存）」「シェア」の2ボタンをCapsule形状でまとめる。データなし時は非表示</td></tr>
-    <tr><td>ツールバー</td><td>NavigationStack toolbar</td><td>右端にインターバルタイマーボタン（timer アイコン）のみ。v1.0 の ≡メニューは廃止</td></tr>
-    <tr><td>PR祝賀</td><td>Overlay</td><td>PR検出時に PRCelebrationView を演出</td></tr>
-    <tr><td>実績祝賀</td><td>Overlay</td><td>AchievementService 経由でバッジ解除時</td></tr>
+    <tr><td>月カレンダー</td><td>MonthCalendar（Views/Components/MonthCalendar.swift）</td><td>記録の有無にかかわらず、スクロール領域の先頭に置く（画面に固定せず、記録と一緒に上へ抜ける）。月曜始まり。日のセルに「その日にやった部位」の色の点（<code>WorkoutSession.performedCategories</code> で判定）。日をタップすると選択日が変わる。見出しは「前月 ‹ 年月 › 次月」、右端に「今週 3/4 ✓」（今月を表示しているときだけ）、今日以外を見ているときだけ「今日」ボタン。1.4.2 でカレンダータブを廃止し、月の表示はここだけになった</td></tr>
+    <tr><td>ツールバー左「ルーティン」</td><td>Menu</td><td>「ルーティンから追加」「ルーティンを編集」「ルーティンを保存」（記録がない日は保存を無効）</td></tr>
+    <tr><td>ツールバー右</td><td>Button</td><td>インターバルタイマー（timer アイコン）</td></tr>
+    <tr><td>記録なしの表示</td><td>VStack</td><td>アイコン・「記録なし」の文言の下に、選択日の曜日に割り当てたルーティンのボタンを<strong>該当するものすべて</strong>並べる（WD-007）。見出しの規則は下記「ルーティンボタンの見出し」。中央の「ルーティンから追加」「ワークアウトを追加」の2ボタンは外した（WD-013。入口は左上の「ルーティン」と右下の ＋ に一本化）</td></tr>
+    <tr><td>ExerciseCard（記録あり時）</td><td>LazyVStack</td><td>種目ごとのカード View（ExerciseCard.swift）。部位の色の点を表示（旧カレンダータブの部位の凡例の代わりも兼ねる）</td></tr>
+    <tr><td>今日のまとめカード（記録あり時）</td><td>DailySummaryCard</td><td>リストの下。今週の達成・連続週（今週を表示しているときだけ）とシェアの入口</td></tr>
+    <tr><td>FAB（右下固定）</td><td>WorkoutFAB</td><td>タップで AddWorkoutView を sheet 表示。セット記録直後は上にクイック休憩タイマーチップを一時表示。常設のボトムアクションバーは廃止（WD-009）</td></tr>
+    <tr><td>PR祝賀 / 実績祝賀</td><td>Overlay</td><td>PRCelebrationView / AchievementCelebrationView</td></tr>
   </table>
 
-  <h2>エンプティ CTA 階層（v1.1.0）</h2>
+  <h2>ルーティンボタンの見出し（アプリ 1.4.2〜・WD-010）</h2>
+  <p>記録がない日に出すルーティンのボタンの1行目は、選択日によって次のように出し分ける。ボタンは以前から選択日の曜日で出ていたが、見出しはどの日も「今日のルーティン」だった。1.4.2 でカレンダータブ（これからの日の予定の点）を外したので、その代わりをこの1行が担う（行は増やさず、文言だけを変える）。</p>
   <table>
-    <tr><th>優先度</th><th>表示条件</th><th>UI</th><th>アクション</th></tr>
-    <tr><td>プライマリ</td><td>今日の曜日に割り当てられたルーティンが1件以上ある</td><td>緑塗りカード（AppTheme.accent）+ ルーティン名 + 種目プレビュー1行</td><td>RoutineSuggestionService.applyRoutine() を即時実行</td></tr>
-    <tr><td>プライマリ（非該当日）</td><td>ルーティン未該当（todaysRoutine == nil）</td><td>「ワークアウトを追加」accent塗り Capsule + onAccent文字（大きめCTA）</td><td>AddWorkoutView sheet 表示</td></tr>
-    <tr><td>セカンダリ（非該当日）</td><td>同上、「プライマリ」の下部に配置</td><td>「ルーティンから追加」枠線テキストボタン（視覚重量を下げて主従を明確化）</td><td>TemplateListView sheet 表示</td></tr>
+    <tr><th>選択日</th><th>見出し（日本語）</th><th>見出し（英語）</th><th>文言キー</th></tr>
+    <tr><td>今日</td><td>今日のルーティン: ○○</td><td>Today's routine: ○○</td><td><code>routine.today.title</code></td></tr>
+    <tr><td>今日以外（過去・未来）</td><td>この曜日のルーティン: ○○</td><td>Routine for this weekday: ○○</td><td><code>routine.thisWeekday.title</code></td></tr>
   </table>
+  <p>2行目は種目名の要約。種目が2つまでは区切って並べ、3つ以上は「先頭2つ＋残りの数」（日本語「ベンチプレス・スクワット 他3種目」／英語「Bench Press, Squat +3 more」）。区切りは日本語「・」、英語「, 」（<code>common.middleDotSeparator</code>。1.4.2 の WD-016 で、英語表示でも全角「・」が出ていたのを修正）。見出しと要約の組み立ては <code>WorkoutSessionViewModel.routineTitle(for:now:)</code> / <code>routineSummary(exerciseNames:)</code> に置き、単体テスト（RecordScreenTextTests）で固定している。</p>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>記録なし・ルーティン該当日</td><td>エンプティCTA（プライマリ：今日のルーティンカード）</td></tr>
-    <tr><td>記録なし・ルーティン非該当日</td><td>エンプティCTA（セカンダリ：「ルーティンから追加」）</td></tr>
-    <tr><td>記録あり</td><td>クイックアクションチップ + ExerciseCard リスト + FAB + ボトムアクションバー</td></tr>
+    <tr><td>記録なし・ルーティン該当日（今日）</td><td>月カレンダー + 「記録なし」+ 「今日のルーティン: ○○」ボタン（該当するものすべて）</td></tr>
+    <tr><td>記録なし・ルーティン該当日（今日以外）</td><td>月カレンダー + 「記録なし」+ 「この曜日のルーティン: ○○」ボタン（該当するものすべて）</td></tr>
+    <tr><td>記録なし・ルーティン非該当日</td><td>月カレンダー + 「記録なし」のみ（追加は右下の ＋、ルーティンは左上の「ルーティン」から）</td></tr>
+    <tr><td>記録あり</td><td>月カレンダー + ExerciseCard リスト + 今日のまとめカード + FAB</td></tr>
     <tr><td>PR検出</td><td>PRCelebrationView overlay（閉じるボタン付き・Reduce Motion対応・accessibilityAddTraits(.isModal)）→ シェアプロンプト（セッション内1回のみ）</td></tr>
     <tr><td>週間目標達成</td><td>週間目標達成アラート</td></tr>
     <tr><td>実績解除</td><td>AchievementCelebrationView overlay</td></tr>
@@ -68,12 +68,13 @@
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>FAB タップ</td><td>AddWorkoutView (sheet)</td></tr>
-    <tr><td>今日のルーティンCTA タップ</td><td>即時 applyRoutine（sheet なし）</td></tr>
-    <tr><td>「ルーティンから追加」タップ</td><td>TemplateListView (sheet)</td></tr>
-    <tr><td>セット編集アイコンタップ</td><td>EditWorkoutSetView (sheet)</td></tr>
-    <tr><td>テンプレート保存（ボトムバー「保存」）</td><td>SaveTemplateView (sheet)</td></tr>
-    <tr><td>シェア（ボトムバー「シェア」）</td><td>WorkoutShareSheet (sheet)</td></tr>
+    <tr><td>月カレンダーの日をタップ / 月送り / 「今日」</td><td>同画面内で選択日・表示月を切り替え</td></tr>
+    <tr><td>FAB（右下の ＋）タップ</td><td>AddWorkoutView (sheet)</td></tr>
+    <tr><td>ルーティンボタン（今日 / この曜日のルーティン）タップ</td><td>即時 applyRoutine（sheet なし）</td></tr>
+    <tr><td>「ルーティン」→「ルーティンから追加」</td><td>TemplateListView（追加用・sheet）</td></tr>
+    <tr><td>「ルーティン」→「ルーティンを編集」</td><td>TemplateListView（編集用・sheet）</td></tr>
+    <tr><td>「ルーティン」→「ルーティンを保存」</td><td>SaveTemplateView (sheet)</td></tr>
+    <tr><td>今日のまとめカードのシェア</td><td>WorkoutShareSheet (sheet)</td></tr>
     <tr><td>インターバルタイマー（ツールバー）</td><td>IntervalTimerView (sheet)</td></tr>
     <tr><td>PR検出 → Paywall</td><td>PaywallView (sheet)</td></tr>
   </table>
@@ -128,6 +129,10 @@
     <li class="done">v1.2.1: EditableSetRow 行を .accessibilityElement(children:.combine) 化・削除を accessibilityAction に移設</li>
     <li class="done">v1.2.1: 種目追加後シェア確認ダイアログをセッション内 1 回のみに制限（hasShownSharePrompt フラグ）</li>
     <li class="done">v1.2.1: 記録空状態 CTA の主従を視覚的に明確化（主=accent塗り「ワークアウトを追加」、副=枠線「ルーティンから追加」）</li>
+    <li class="done">1.4.0: 週ストリップを月カレンダー（MonthCalendar・月曜始まり）に置き換え、各 ScrollView の先頭に置く。週間進捗バッジ・ボトムアクションバー・クイックアクションチップは廃止し、ルーティン操作は左上「ルーティン」メニューへ（WD-009）。記録がない日の中央の2ボタンを外す（WD-013）</li>
+    <li class="done">1.4.2: カレンダータブ廃止（WD-010）。部位の判定を <code>CalendarViewModel.categoriesPerformed</code> から <code>WorkoutSession.performedCategories</code> へ移し、月カレンダーの点の色に使う</li>
+    <li class="done">1.4.2: 記録がない日のルーティンの見出しを、今日以外は「この曜日のルーティン: ○○」に（<code>WorkoutSessionViewModel.routineTitle</code>）</li>
+    <li class="done">1.4.2: 種目名の要約の区切りを <code>common.middleDotSeparator</code>（ja「・」/ en「, 」）へ（WD-016）</li>
     <li>非同期保存中の入力ロック（v1.x）</li>
   </ul>
 
@@ -135,7 +140,10 @@
   <ul>
     <li>Views/Workout/WorkoutSessionView.swift</li>
     <li>Views/Workout/ExerciseCard.swift（v1.1.0 新規切り出し）</li>
-    <li>Views/Workout/WorkoutBottomActionBar.swift（v1.1.0 新規）— WorkoutFAB / QuickActionChip も内包</li>
+    <li>Views/Workout/WorkoutBottomActionBar.swift（v1.1.0 新規）— WorkoutFAB を内包</li>
+    <li>Views/Components/MonthCalendar.swift（1.4.0 新規）— 上部の月カレンダー</li>
+    <li>ViewModels/WorkoutSessionViewModel.swift — 選択日・ルーティンの見出しと要約の文言（1.4.2）</li>
+    <li>Models/WorkoutSession.swift — <code>performedCategories</code>（1.4.2 で追加）</li>
     <li>Services/RoutineSuggestionService.swift（v1.1.0 新規）</li>
   </ul>
 
@@ -146,6 +154,7 @@
     <li><a href="interval-timer.html">インターバルタイマー</a></li>
     <li><a href="../features/routine.html">ルーティン機能</a></li>
     <li><a href="../features/pr-detection.html">PR検出機能</a></li>
+    <li><a href="calendar.html">カレンダー（1.4.2 で廃止）</a></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -155,9 +164,10 @@
     <tr><td>1.1</td><td>2026-05-14</td><td>v1.0.7: 編集・削除アイコンを各セット行右端に常時表示へ変更（左スワイプ削除・長押しコンテキストメニュー廃止）、種目削除ダイアログを日本語化</td></tr>
     <tr><td>1.2</td><td>2026-05-23</td><td>v1.1.0: ホーム画面リデザイン全体（ツールバー整理・FAB導入・ボトムアクションバー・日付セレクター「今日」バッジ・エンプティCTA階層化・クイックアクションチップ・ExerciseCard切り出し・ルーティン提案CTA）を反映</td></tr>
     <tr><td>1.3</td><td>2026-07-07</td><td>v1.2.1 UI/UX/A11y監査対応: PR祝福見出し .white→.primary（ライトモード白文字修正）、祝福オーバーレイに閉じるボタン・isModal・Reduce Motion対応、日付送りボタンVoiceOverラベル付与、EditableSetRow combine化、シェア確認ダイアログ1回制限、空状態CTA主従明確化</td></tr>
+    <tr><td>1.4</td><td>2026-10-08</td><td>アプリ 1.4.2 (21) に合わせて更新。カレンダータブ廃止（WD-010）により月の表示がこの画面の月カレンダーだけになったことを反映。記録がない日のルーティンボタンの見出しを「今日のルーティン」（今日）／「この曜日のルーティン」（今日以外）で出し分ける仕様と、種目名の区切りの修正（WD-016）を追記。未反映だった 1.4.0 までの変更（月カレンダー・左上「ルーティン」メニュー・ボトムアクションバーとクイックアクションチップの廃止〔WD-009〕・中央の2ボタンの撤去〔WD-013〕・今日のまとめカード）もあわせて UI 構成・状態・遷移を現行に書き直し。画面イメージを 2026-10-08 撮影（4タブ）に差し替え</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-07</footer>
+  <footer class="site-footer">最終更新: 2026-10-08</footer>
 </div>
 </body>
 </html>

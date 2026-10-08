@@ -21,36 +21,48 @@
     スマホでは横スクロールで全体を確認できます。ピンチ操作で拡大可能。
   </div>
 
-  <h2>全体フロー</h2>
+  <div class="callout warn">
+    アプリ 1.4.2（2026-10-08 審査提出）で<strong>カレンダータブを廃止</strong>し、タブは4つ（トレーニング・種目・統計・設定）になった（WD-010）。月の表示はトレーニング記録画面の上部の月カレンダーに統合した。旧画面は<a href="screens/calendar.html">カレンダー（廃止）</a>に記録として残す。
+  </div>
+
+  <h2>全体フロー（アプリ 1.4.2 時点）</h2>
   <div class="mermaid">
 flowchart TD
   Launch([起動]) --> Onboarding{初回起動?}
   Onboarding -- Yes --> OnbScreen[オンボーディング]
-  Onboarding -- No --> Home[ホーム画面]
-  OnbScreen --> Home
+  Onboarding -- No --> Tabs
+  OnbScreen --> Tabs
 
-  Home --> WorkoutDetail[ワークアウト詳細]
-  Home --> Calendar[カレンダー画面]
-  Home --> Settings[設定画面]
-  Home --> AddWorkout[新規記録]
+  subgraph Tabs[タブ 4つ]
+    Training[トレーニング記録<br/>上部に月カレンダー]
+    Exercises[種目一覧]
+    Stats[統計]
+    Settings[設定]
+  end
 
-  AddWorkout --> ExercisePicker[種目選択]
-  ExercisePicker --> SetEntry[セット入力]
-  SetEntry --> Home
+  Training -- 右下の ＋ --> AddWorkout[セット追加]
+  Training -- 左上「ルーティン」→ ルーティンから追加 --> TemplateAdd[ルーティン選択<br/>追加用]
+  Training -- 左上「ルーティン」→ ルーティンを編集 --> TemplateManage[ルーティン選択<br/>編集用]
+  Training -- 左上「ルーティン」→ ルーティンを保存 --> SaveTemplate[ルーティン保存]
+  Training -- 記録がない日のルーティンボタン --> ApplyRoutine((その場で展開))
+  Training -- 右上のタイマー --> Timer[インターバルタイマー]
+  Training -- 今日のまとめカードのシェア --> Share[シェア]
+  Training -- PR 達成 --> Paywall[Paywall]
+  TemplateAdd --> CreateTemplate[新規ルーティン作成]
+  TemplateManage --> CreateTemplate
 
-  WorkoutDetail --> Edit[編集画面]
-  Edit --> WorkoutDetail
-
-  Settings --> Paywall[Paywall]
-  Settings --> About[アプリについて]
-  Paywall --> Home
+  Settings --> Paywall
   </div>
 
   <h2>主要な遷移パターン</h2>
   <table>
     <tr><th>起点</th><th>遷移先</th><th>トリガー</th></tr>
-    <tr><td>ホーム</td><td>新規記録</td><td>＋ボタン</td></tr>
-    <tr><td>ホーム</td><td>カレンダー</td><td>カレンダーアイコン</td></tr>
+    <tr><td>タブバー</td><td>トレーニング / 種目 / 統計 / 設定</td><td>タブ選択（1.4.2 で5→4タブ。カレンダータブは廃止）</td></tr>
+    <tr><td>トレーニング記録</td><td>（同画面内で日付切り替え）</td><td>上部の月カレンダーで日をタップ・月送り・「今日」</td></tr>
+    <tr><td>トレーニング記録</td><td>セット追加（sheet）</td><td>右下の ＋</td></tr>
+    <tr><td>トレーニング記録</td><td>ルーティン選択 / ルーティン保存（sheet）</td><td>左上「ルーティン」メニュー</td></tr>
+    <tr><td>トレーニング記録</td><td>（遷移なし・その場で展開）</td><td>記録がない日の「今日のルーティン: ○○」／「この曜日のルーティン: ○○」ボタン</td></tr>
+    <tr><td>トレーニング記録</td><td>インターバルタイマー（sheet）</td><td>右上のタイマー</td></tr>
     <tr><td>設定</td><td>Paywall</td><td>「Pro版にアップグレード」セル</td></tr>
   </table>
 
@@ -58,6 +70,7 @@ flowchart TD
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-10-08</td><td>アプリ 1.4.2 に合わせて全体フローを書き直し。カレンダータブ（カレンダー画面）を外し、4タブ構成（トレーニング・種目・統計・設定）と、トレーニング記録画面の上部の月カレンダー・左上「ルーティン」メニュー・記録がない日のルーティンボタンからの遷移を反映。初版のホーム/詳細/編集という旧構成の図を置き換え</td></tr>
   </table>
 
   <script>
@@ -69,7 +82,7 @@ flowchart TD
   </script>
 
   <footer class="site-footer">
-    最終更新: 2026-05-09
+    最終更新: 2026-10-08
   </footer>
 </div>
 </body>

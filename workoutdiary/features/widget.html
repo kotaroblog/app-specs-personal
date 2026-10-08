@@ -13,7 +13,7 @@
   <header class="site-header">
     <h1>Widget機能</h1>
     <p>3種ウィジェット（Summary/Weekly/CategoryTracker）と本体同期</p>
-    <div class="section-meta"><span class="tag done">v1.0.5</span><span class="tag">機能ID: WD-FEAT-WIDGET</span></div>
+    <div class="section-meta"><span class="tag done">v1.0.5</span><span class="tag">機能ID: WD-FEAT-WIDGET</span><span class="tag">仕様書 v1.1</span></div>
   </header>
 
   <h2>概要</h2>
@@ -31,6 +31,16 @@
     <tr><td>Weekly</td><td>Medium</td><td>週間サマリ + トップ種目</td></tr>
     <tr><td>CategoryTracker</td><td>Medium</td><td>カテゴリ別の今週セッション数</td></tr>
   </table>
+
+  <h2>週間ウィジェット（Weekly）の部位の表示（アプリ 1.4.2〜）</h2>
+  <table>
+    <tr><th>表示箇所</th><th>内容</th></tr>
+    <tr><td>各曜日の下の1文字</td><td>その日の最初の部位の<strong>表示名</strong>の頭文字（日本語なら「胸」「背」など）</td></tr>
+    <tr><td>前回の部位（最大3つ）</td><td>部位の<strong>表示名</strong>を区切りでつなぐ。区切りは日本語「・」、英語「, 」（<code>common.middleDotSeparator</code>）</td></tr>
+  </table>
+  <div class="callout">
+    <strong>WD-017 / WD-016 の修正（アプリ 1.4.2）</strong>: 共有データの部位は保存値（<code>"chest"</code> など）で持っているため、そのまま出すと日本語表示でも英字（「c」「chest・back」）で出ていた。表示時に <code>WidgetData.localizedCategoryName</code> で表示名に直す。あわせて区切りの全角「・」の直書きを、言語ごとの区切りに替えた。
+  </div>
 
   <h2>共有データ</h2>
   <pre><code>// AppGroup UserDefaults
@@ -64,9 +74,9 @@ struct WeeklySummaryData {
   </ul>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr><tr><td>1.1</td><td>2026-10-08</td><td>アプリ 1.4.2 (21): 週間ウィジェットの部位が日本語表示でも保存値の英字で出ていたのを表示名に直した修正（WD-017）と、前回の部位の区切りを言語ごと（ja「・」/ en「, 」）にした修正（WD-016）を追記</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-10-08</footer>
 </div>
 </body>
 </html>

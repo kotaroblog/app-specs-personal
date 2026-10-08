@@ -83,6 +83,10 @@ final class WorkoutSession {
 
     @Relationship(deleteRule: .cascade, inverse: \WorkoutSet.session)
     var sets: [WorkoutSet] = []
+
+    /// このセッションでやった部位（種目の並び順・重複なし）。保存しない計算プロパティ。
+    /// アプリ 1.4.2 で CalendarViewModel.categoriesPerformed から移した（記録画面の月カレンダーの点の色）
+    var performedCategories: [ExerciseCategory] { ... }
 }</code></pre>
 
   <h2>WorkoutSet</h2>
@@ -130,7 +134,7 @@ enum ExerciseCategory: String, CaseIterable, Identifiable {
 
     var displayName: String { ... }  // 日本語表示名
 
-    /// 部位カラー（カレンダーヒートマップ・凡例で使用、v1.1.0）
+    /// 部位カラー（v1.1.0。記録画面の月カレンダーの点・種目カード・種目タブで使用。旧カレンダータブはアプリ 1.4.2 で廃止）
     var color: Color {
         switch self {
         case .chest:     Color(red: 0.95, green: 0.35, blue: 0.40)  // 赤
@@ -236,6 +240,7 @@ final class TemplateSetEntry {
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-05-23</td><td>v1.1.0: WorkoutTemplate に assignedWeekdays: [Int]（デフォルト空配列）と appliesTo(date:) を追加。ExerciseCategory に color プロパティ（8部位カラー定義）を追加。ER図を実装と整合するよう全面修正</td></tr>
     <tr><td>1.2</td><td>2026-05-24</td><td>v1.1.1: TemplateSetEntry 新規モデル追加（セットごとの重量・回数・有酸素値を保持）。TemplateEntry に setEntries リレーション追加・レガシーフィールドをコメントで明記。ER図に TemplateSetEntry を追加。マイグレーション方針に v1.1.1 内容を追記</td></tr>
+    <tr><td>1.3</td><td>2026-10-08</td><td>アプリ 1.4.2 (21): カレンダータブ廃止（WD-010）に伴い ExerciseCategory.color の使用箇所の注記を更新。部位の判定は <code>WorkoutSession.performedCategories</code>（このセッションでやった部位・種目の並び順・重複なし。計算プロパティで保存項目の追加なし）に移った</td></tr>
   </table>
 
   <script>
@@ -245,7 +250,7 @@ final class TemplateSetEntry {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-05-24</footer>
+  <footer class="site-footer">最終更新: 2026-10-08</footer>
 </div>
 </body>
 </html>
