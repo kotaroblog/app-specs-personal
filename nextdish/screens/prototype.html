@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>つぎの一皿 — 操作できる画面試作</title>
+  <link rel="stylesheet" href="prototype.css">
+  <script src="prototype.js" defer></script>
+</head>
+<body>
+  <aside class="studio">
+    <a class="back-link" href="../">← 企画・仕様一覧</a>
+    <div class="studio-mark" aria-hidden="true">一皿</div>
+    <p class="eyebrow">NEXT DISH / DESIGN STUDY 01</p>
+    <h1>あの味を、<br>もう一度。</h1>
+    <p class="studio-copy">次のお店選びよりも、<br>いつものお店で、次に何を頼むか。</p>
+    <div class="studio-notes">
+      <p><span>01</span> お店を開いて、注文メモを確認</p>
+      <p><span>02</span> 気になる料理を「次に試す」へ</p>
+      <p><span>03</span> 名前とひとことだけで記録</p>
+    </div>
+    <p class="prototype-note">ブラウザで操作する画面試作です。架空のお店・料理を使っています。編集はこのブラウザ内に保存されます。写真・注文履歴・購入・バックアップはiOS版の設計対象です。</p>
+    <button class="demo-reset" data-action="restore-samples">試作用のサンプルに戻す</button>
+    <p class="prototype-version">v1.0 · 2026.10.05</p>
+  </aside>
+  <main class="phone" aria-label="つぎの一皿の画面試作">
+    <div class="status-bar" aria-hidden="true"><span>9:41</span><div class="island"></div><span>▮▮▮ ▰</span></div>
+    <div id="app" class="app"></div>
+    <div class="home-indicator" aria-hidden="true"></div>
+  </main>
+  <dialog id="editor" aria-labelledby="editor-title"></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <noscript><p>この画面試作を操作するにはJavaScriptを有効にしてください。</p></noscript>
+</body>
+</html>

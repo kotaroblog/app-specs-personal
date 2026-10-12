@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>つぎの一皿 - アイコンとUI・UX評価</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body><div class="container">
+<div class="breadcrumb"><a href="./">← つぎの一皿 仕様一覧</a></div>
+<header class="site-header"><h1>アイコンとUI・UX評価</h1><p>注文前に、前回のメモをすぐ確認できるか。</p><span class="tag">2026-10-06 / アプリ 0.1.0 / 評価 v1.1</span></header>
+<div class="callout">評価で挙げた6件をローカル実装へ反映。料理・メモから詳細への直接移動、一覧の情報配置、価格の由来、履歴の操作、大きな文字の固定ボタン、アイコンを改善した。以下には改善前の評価と証拠も残している。実ユーザーの所要時間・成功率・継続率は未測定。</div>
+<h2>改善した操作と素材</h2>
+<table><tr><th>課題</th><th>改善後の動作</th></tr>
+<tr><td>ND-005 / 検索</td><td>料理結果に名前・該当メモ・店名と支店を表示し、1タップで詳細へ進む。次回メモだけでなく、過去の注文条件も検索し、該当する履歴を最初に表示する。</td></tr>
+<tr><td>ND-006 / 一覧</td><td>登録済みホームと候補の大きな説明を省いた。店舗絞り込みと並び順は通常文字で横並び、幅が足りない場合と大きな文字で縦に再配置する。</td></tr>
+<tr><td>ND-007 / 入力</td><td>入力済みでも注文条件・価格（円）の項目名を表示する。新規注文で引き継ぐ価格は元の来店日と金額を案内し、今回の価格の確認を促す。変更後は前回値を引き継いでいると表示しない。</td></tr>
+<tr><td>ND-008 / アイコン</td><td>「皿＋しおり」に簡略化し、次回の注文を覚える意味を加えた。通常・暗色・着色用の3素材をAsset Catalogへ登録。固有性・識別性の実ユーザー評価は今後行う。</td></tr>
+<tr><td>ND-009 / 履歴</td><td>「編集」を明示し、削除をその他メニューへ移した。確認前の削除は行わず、過去履歴の訂正で次回メモを上書きしない。</td></tr>
+<tr><td>ND-010 / 大きな文字</td><td>固定操作を「注文を記録」と短縮し、文字サイズを縮めずに高さを抑える。300文字メモと4件の履歴を使って読み進める操作・履歴編集・固定ボタンの到達を確認した。</td></tr></table>
+<h2>更新したアイコン</h2>
+<div style="display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap">
+<figure style="margin:0"><img src="screens/native-app-icon-v2.png" alt="皿としおりを表す新しい通常アイコン" width="120" height="120" style="border-radius:22%"><figcaption>通常 / 120px</figcaption></figure>
+<figure style="margin:0"><img src="screens/native-app-icon-v2.png" alt="60ピクセルで表示した皿としおり" width="60" height="60" style="border-radius:22%"><figcaption>通常 / 60px</figcaption></figure>
+<figure style="margin:0"><img src="screens/native-app-icon-v2.png" alt="32ピクセルで表示した皿としおり" width="32" height="32" style="border-radius:22%"><figcaption>通常 / 32px</figcaption></figure>
+<figure style="margin:0"><img src="screens/native-app-icon-dark-v2.png" alt="形を共通にした暗色用アイコン" width="60" height="60" style="background:#1d1916;border-radius:22%"><figcaption>暗色用</figcaption></figure>
+<figure style="margin:0"><img src="screens/native-app-icon-tinted-v2.png" alt="システムの着色に使うグレースケール素材" width="60" height="60" style="background:#323232;border-radius:22%"><figcaption>着色用素材</figcaption></figure></div>
+<p>3素材とも1024×1024。通常版は不透明、暗色・着色用は透明背景。着色用素材はグレースケールで、実際の色は端末が適用する。ビルド済みAssets.carに通常・UIAppearanceDark・ISAppearanceTintableの3素材が含まれることを確認した。表示サイズと背景はHTML上の比較用で、iOSホーム画面の実際の表示とは異なる。設定は<a href="https://developer.apple.com/documentation/xcode/configuring-your-app-icon">AppleのAsset Catalogによるアイコン設定</a>を参照した。</p>
+<h2>改善後の画面</h2>
+<div class="card-grid">
+<a class="card" href="screens/native-improved-home.png"><div class="title">お店を先に表示</div><img src="screens/native-improved-home.png" alt="説明カードを省いたお店一覧" width="230" style="max-width:100%;height:auto"></a>
+<a class="card" href="screens/native-improved-search.png"><div class="title">料理・メモから直接開く</div><img src="screens/native-improved-search.png" alt="辛さ2で検索して料理と該当メモを表示" width="230" style="max-width:100%;height:auto"></a>
+<a class="card" href="screens/native-improved-next.png"><div class="title">候補の操作を横に配置</div><img src="screens/native-improved-next.png" alt="絞り込みと並び順の下に料理を表示する一覧" width="230" style="max-width:100%;height:auto"></a>
+<a class="card" href="screens/native-improved-order.png"><div class="title">項目名と前回価格の由来</div><img src="screens/native-improved-order.png" alt="入力済みの注文条件と価格に項目名と前回来店の案内を表示" width="230" style="max-width:100%;height:auto"></a>
+<a class="card" href="screens/native-improved-dish.png"><div class="title">履歴の編集を明示</div><img src="screens/native-improved-dish.png" alt="履歴の編集とその他メニューを表示した料理詳細" width="230" style="max-width:100%;height:auto"></a>
+<a class="card" href="screens/native-improved-long-history.png"><div class="title">最大文字で履歴を読む</div><img src="screens/native-improved-long-history.png" alt="大きな文字の履歴と短い固定操作" width="230" style="max-width:100%;height:auto"></a>
+</div>
+<p id="validation-result">ビルドと単体46件・UI14件の操作を検証。全体の初回実行は59/60件成功し、削除確認の取り消し1件で失敗したため、明示的なキャンセル付きアラートへ修正した。修正後の関連UI5件（操作4件・撮影1件）は全て成功、失敗・スキップ0件。結果はUIUXImprovementValidation.xcresultとUIUXImprovementFinal.xcresultに保存。</p>
+<p>通常の候補2皿は、スクロールする前の画面で両方のメモと記録操作を確認できた。辛さ2の検索結果では該当メモをそのまま読め、料理詳細までのタップ数は1回。最大文字の固定ボタンは1行で表示され、高さ120pt未満で操作できた。これはサンプルとシミュレーターによる確認で、実ユーザーの所要時間を測った値ではない。</p><p><a href="screens/native-improved-long-memo.png">300文字メモの表示</a> · <a href="screens/native-improved-next-dark-large.png">最大文字の候補一覧</a> · <a href="screens/native-improved-restaurant.png">お店詳細</a> · <a href="screens/native-improved-settings.png">設定</a></p><h2>ホーム画面のアイコン確認</h2><div class="card-grid"><a class="card" href="screens/native-icon-home-light.png"><div class="title">ライトの背景</div><img src="screens/native-icon-home-light.png" alt="ホーム画面に表示した皿としおりのアイコン" width="230" style="max-width:100%;height:auto"></a><a class="card" href="screens/native-icon-home-dark.png"><div class="title">ダークの背景</div><img src="screens/native-icon-home-dark.png" alt="暗いホーム背景に表示した通常アイコン" width="230" style="max-width:100%;height:auto"></a></div><p>NextDish専用シミュレーターのホーム画面で通常アイコンを確認した。端末のシステム外観だけを切り替えた撮影で、ホームのアイコン設定は通常表示のまま。暗色・着色専用素材の実際の切り替えは別途確認する。</p><h2>作成済みの素材（改善前の確認）</h2>
+<table><tr><th>素材</th><th>状況と確認</th></tr>
+<tr><td>アプリアイコン</td><td>1024×1024の不透明PNGを作成済み。赤茶色の背景、皿、フォーク、ナイフ。Asset Catalogに登録し、ビルド済みInfo.plistのCFBundlePrimaryIconがAppIconを参照していることを確認。</td></tr>
+<tr><td>画面内のアイコン</td><td>検索・追加・編集・設定・状態の操作にはSF Symbolsを使用。写真なしの料理には皿とカトラリーの代替表示を用意。</td></tr>
+<tr><td>配色と文字</td><td>ライト／ダーク用の名前付きカラー、明朝の見出しとシステム本文。最小文字コントラスト5.11:1を既存の開発記録で確認。</td></tr>
+<tr><td>実画面の画像</td><td>通常のホーム・候補一覧、ダーク／最大文字の候補と料理詳細を作成済み。今回の評価で検索・店舗詳細・注文フォーム・設定も撮影済み。</td></tr>
+<tr><td>今後の素材</td><td>アイコンの専用ダーク／着色バリエーション、ストア掲載用の説明付きスクリーンショットは未作成。起動画面は背景色のみの構成。</td></tr></table>
+<h2>改善前のアイコンと目視評価</h2>
+<div style="display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap">
+<figure style="margin:0"><img src="screens/native-app-icon.png" alt="赤茶色の背景に皿・フォーク・ナイフを描いたアプリアイコン" width="120" height="120" style="border-radius:22%"><figcaption>120px</figcaption></figure>
+<figure style="margin:0"><img src="screens/native-app-icon.png" alt="60ピクセルで表示した現行アイコン" width="60" height="60" style="border-radius:22%"><figcaption>60px</figcaption></figure>
+<figure style="margin:0"><img src="screens/native-app-icon.png" alt="32ピクセルで表示した現行アイコン" width="32" height="32" style="border-radius:22%"><figcaption>32px</figcaption></figure></div>
+<p>小さな表示でも「食事」は認識しやすく、アプリの暖かい配色と一致する。皿・カトラリーは汎用的な食事の記号で、「次回のために覚えておく」という価値の表現は弱い。皿としおりを中心にした構成を検討し、外周の細線と細部を整理する。上の画像はCSSによる縮小表示で、iOSのホーム画面での比較は別途必要。</p>
+<h2>改善前の評価と方法</h2><p>実画面、SwiftUIの実装、既存テストの結果による点検。配色、情報の優先順位、検索、初回登録、再注文、編集・削除、最大文字サイズを対象にする。以下の評点は改善前の主観評価。実ユーザーの所要時間・操作成功率・継続率は未測定。実装の変更だけでは評点を引き上げず、実ユーザー検証で改めて判断する。</p>
+<table><tr><th>観点</th><th>評価 / 10</th><th>判断</th></tr>
+<tr><td>視覚の統一感</td><td>8</td><td>暖色と明朝の見出しに一貫性。写真なしでも読みやすい。</td></tr>
+<tr><td>再来店時の速さ</td><td>6</td><td>説明と操作が料理より先に多く表示され、ホームの料理検索は店舗経由となる。</td></tr>
+<tr><td>入力と誤操作への配慮</td><td>7</td><td>下書き・破棄確認・削除確認がある。前回価格の入力元と、編集操作の見つけやすさに改善余地。</td></tr>
+<tr><td>初回登録</td><td>7</td><td>店名・料理名から登録できる。候補タブでも店舗から追加可能。最短の登録時間は実ユーザーで確認する。</td></tr>
+<tr><td>アクセシビリティ</td><td>7</td><td>ダーク・最大文字の主要導線が操作可能。長いメモを読む領域と、実機のVoiceOver検証が残る。</td></tr>
+<tr><td>アイコンの固有性</td><td>6</td><td>食事は伝わるが、注文の記憶という価値を強められる。</td></tr></table>
+<p>10は日常利用と実ユーザー検証まで十分に仕上がった状態、7は基本操作が成立して改善点が残る状態、5は中心となる操作に継続的な迷いがある状態として採点。総合判断は「体験検証に使える。再来店時の導線を優先して磨く」。</p>
+<h2>良い点</h2><ul><li>未注文の候補と実際の注文履歴を分け、状態だけの変更で履歴を増やさない。</li><li>料理のメモを写真の有無にかかわらず一覧で読める。</li><li>注文記録をカードから直接開ける。料理詳細の記録操作も常に使える。</li><li>破棄・削除・復元には確認があり、復元前の退避も用意されている。</li></ul>
+<h2>改善前の指摘と確認条件</h2>
+<table><tr><th>順</th><th>課題</th><th>確認した事実</th><th>改善案と確認条件</th></tr>
+<tr><td>1 / ND-005</td><td>検索結果から料理へ進む導線</td><td>「辛さ2」で検索しても、結果に出るのは店舗。該当する料理名やメモは表示されない。店舗詳細で全料理を再確認する。</td><td>店舗結果に該当する料理とメモを出す。検索語を入力した後、該当する料理へ1回のタップで進めること。</td></tr>
+<tr><td>2 / ND-006</td><td>一覧の上部の情報量</td><td>登録済みホームでも大きな説明カードを表示。候補一覧の説明・店舗メニュー・並び順が縦に並び、料理の表示位置が下がる。</td><td>登録後の説明を短くし、直近の料理や店舗を優先。通常文字では候補のメニューを1段に、大きい文字では縦に配置する。メモへ到達するスクロール回数を前後で比較する。</td></tr>
+<tr><td>3 / ND-007</td><td>注文フォームの項目名と価格の入力元</td><td>チキンカレーの新しい注文フォームには前回の980円が入力される。入力済みの欄は980だけが表示され、価格・円の項目名が消える。注文条件も入力済みでは項目名が表示されない。前回からの複製とは案内しない。</td><td>入力済みでも「今回の注文条件」「価格（円）」を表示し、前回の値から入力した場合は日付と由来を明示する。利用者が今回の価格だと確認できること。</td></tr>
+<tr><td>4 / ND-008</td><td>アイコンの固有性</td><td>現行のAssetは皿とカトラリーのPNG1種類。専用の暗色・着色版は未設定。</td><td>皿としおりなど、次回の注文を覚える意味を加えた案を比較。小さいサイズと各外観で判別できること。</td></tr>
+<tr><td>5 / ND-009</td><td>履歴の操作の優先順位</td><td>各履歴の下に削除が常時表示される。編集は履歴の行をタップする操作で、行に編集の説明がない。</td><td>編集を明示し、削除は行のメニュー等へ移す。削除確認は維持し、編集と削除の入口を取り違えないこと。</td></tr>
+<tr><td>6 / ND-010</td><td>最大文字の固定操作の大きさ</td><td>最大文字では記録ボタンが2行に広がり、画面下部を大きく占める。現在の操作は成功するが、長いメモ・履歴を読む領域が狭い。</td><td>文字サイズを尊重しながら「注文を記録」など短いラベルを検討。300文字のメモと複数の履歴で読める領域・操作可能性を確認する。</td></tr>
+</table>
+<h2>確認画像</h2><div class="card-grid">
+<a class="card" href="screens/native-home.png"><div class="title">登録済みホーム</div><img src="screens/native-home.png" alt="説明カードと店舗の一覧" width="230" style="max-width:100%;height:auto"></a>
+<a class="card" href="screens/native-next.png"><div class="title">候補一覧の情報量</div><img src="screens/native-next.png" alt="説明と絞り込みの下にある料理カード" width="230" style="max-width:100%;height:auto"></a>
+<a class="card" href="screens/native-dish-dark-large.png"><div class="title">最大文字の料理詳細</div><img src="screens/native-dish-dark-large.png" alt="大きな文字のメモと固定された注文記録ボタン" width="230" style="max-width:100%;height:auto"></a>
+</div>
+<h2>追加で撮影した画面</h2><div class="card-grid"><a class="card" href="screens/native-audit-search.png"><div class="title">メモの検索結果</div><img src="screens/native-audit-search.png" alt="辛さ2で検索して店舗のみを表示する現在の検索結果" width="230" style="max-width:100%;height:auto"></a><a class="card" href="screens/native-audit-restaurant.png"><div class="title">お店詳細</div><img src="screens/native-audit-restaurant.png" alt="料理と次回メモ、注文記録操作を表示する店舗詳細" width="230" style="max-width:100%;height:auto"></a><a class="card" href="screens/native-audit-dish.png"><div class="title">注文履歴の操作</div><img src="screens/native-audit-dish.png" alt="各履歴の下に削除操作を表示する料理詳細" width="230" style="max-width:100%;height:auto"></a><a class="card" href="screens/native-audit-order.png"><div class="title">新しい注文の下書き</div><img src="screens/native-audit-order.png" alt="入力済みの欄に980を表示した注文記録フォーム" width="230" style="max-width:100%;height:auto"></a><a class="card" href="screens/native-audit-settings.png"><div class="title">設定・データ保全</div><img src="screens/native-audit-settings.png" alt="書き出しと復元、端末保存の説明、データ削除を分けた設定" width="230" style="max-width:100%;height:auto"></a></div><p>iPhone 17 / iOS 26.5の専用端末で、架空のサンプルを使って撮影。撮影用UIテスト1件が成功（失敗・スキップ0件）。結果：UIUXAuditFinal.xcresult。既存の機能確認はPolishValidation.xcresultの単体40件・UI9件が成功している。</p><h2>次の検証で測る項目</h2><table><tr><th>タスク</th><th>記録するもの</th></tr>
+<tr><td>店名・料理名・メモから次の注文を確認する</td><td>該当メモが読めるまでの時間、タップ数、スクロール数。</td></tr>
+<tr><td>初回に一店・一皿を残す</td><td>入力完了までの時間、状態の選択の迷い、未注文候補と履歴の理解。</td></tr>
+<tr><td>再注文・価格変更を記録する</td><td>前回の価格と今回の価格を区別できるか、保存後の確認。</td></tr>
+<tr><td>大きな文字・VoiceOverでメモを読み、記録する</td><td>300文字のメモ、複数履歴、文字の欠け、読み上げ順、各操作へ到達できるか。</td></tr></table>
+<h2>参照したAppleの基準</h2><ul>
+<li><a href="https://developer.apple.com/design/tips/">UI Design Dos and Don’ts</a>：44ptの操作領域、コントラスト、情報と操作の配置。</li>
+<li><a href="https://developer.apple.com/help/app-store-connect/manage-app-accessibility/larger-text-evaluation-criteria">Larger Text evaluation criteria</a>：大きな文字での主情報の優先、再配置、読める文字と操作。</li>
+<li><a href="https://developer.apple.com/design/human-interface-guidelines/app-icons/">App icons</a>：小さい表示での認識と外観のバリエーション。</li>
+</ul>
+<h2>変更履歴</h2><table class="history-table"><tr><th>版</th><th>日付</th><th>内容</th></tr><tr><td>1.1</td><td>2026-10-06</td><td>6件の改善内容、更新アイコン、改善後の実画面と検証結果を追加。改善前の評価と証拠を保持。</td></tr><tr><td>1.0</td><td>2026-10-06</td><td>アイコンと素材の状況、実画面による評価、改善6件と検証条件を記録。</td></tr></table>
+<footer class="site-footer">最終更新：2026-10-06 · 体験検証版のUI・UX評価</footer>
+</div></body></html>
