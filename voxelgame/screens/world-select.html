@@ -91,6 +91,7 @@
   <ul class="checklist">
     <li>シード値は数字だけを読む（<code>NewWorldInput.seed(from:)</code>）。空欄・数字なしは Int.random(in: 1...999_999)。入力欄でも数字以外を落とし9桁で切る</li>
     <li>ホームの文字の決まり（置いた数・最後に遊んだ日・行の2行目・ステージの進み具合）は <code>HomeFormat</code> に集め、単体テストで確かめる</li>
+    <li>ステージの行の完成イメージは、行を作るときに1回だけ <code>CompletionImages.thumbnail(forStage:)</code> で長い辺320に縮めて読む（元の1280のままだと6行で約18MB。build 46 前のパス5）。「はじめての方へ」は大きく出すので元の大きさ（<code>cover(forStage:)</code>）。どちらも <code>WorldThumbnail</code> の <code>fallback</code> に渡し、ワールドの写真がある間はそちらを出す</li>
     <li>ワールド削除時は worldID で紐づく ChunkRecord・ChestRecord を先にフェッチして削除してから WorldRecord を削除する</li>
     <li>一覧は @Query(sort: \WorldRecord.lastPlayedAt, order: .reverse) で取得し、左の列は <code>stageID == nil</code> で絞る</li>
     <li>DEBUGビルド限定で起動引数による自動入場に対応（スクリーンショット自動化・UIテスト用）。<code>--autoworld</code> は既存の "AutoTest" ワールドを再利用し、無ければシード42で新規作成する（既定は無限の世界。<code>--autoworld-island</code>／<code>--autoworld-archipelago</code> で島・群島）。<code>--autoworld-fresh</code> で前回の "AutoTest" を消して作り直す。<code>--autostage &lt;id&gt;</code> でステージへ入る。<code>--ui-testing-empty-store</code> はメモリ内の空の保存先で起動し、「はじめての方へ」を確かめる</li>
@@ -116,6 +117,7 @@
     <tr><td>4.0</td><td>2026-10-03</td><td>ホームを案A（CF33・本人決定）に作り替え。上の帯（ロゴ・設定）、左に「続きから」（唯一の緑）／ワールドが無いときは「はじめての方へ」、右に「ワールド｜ステージ」の切り替えと一覧。行の数字を置いた数だけにし、プレイ時間・距離のバッジとシード値の表示をやめた（シードは「…」の中）。「…」に作品カードを追加。出たときの景色をホームの写真にする（thumbnailPhoto）。作成シートを、絵つきのカードで地形を選び、シード値を「くわしい設定」にたたむ形に変更</td></tr>
     <tr><td>4.1</td><td>2026-10-05</td><td>新しいワールドの地形から「どこまでも続く」を外した（群島・島の2つ。以前のワールドは開ける）</td></tr>
     <tr><td>4.2</td><td>2026-10-12</td><td>ステージの行と「はじめての方へ」に完成イメージの写真を出す。ステージの行の「…」に「完成イメージを見る」と、見るカード（オーバーレイ）を追加</td></tr>
+    <tr><td>4.3</td><td>2026-10-12</td><td>実装メモに、ステージの行の写真を縮めて読むこと（build 46 前のパス5）を追加</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-10-12</footer>

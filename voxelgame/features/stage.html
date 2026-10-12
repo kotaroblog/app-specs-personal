@@ -396,7 +396,7 @@ sequenceDiagram
   <table>
     <tr><th>項目</th><th>内容</th></tr>
     <tr><td>出る所</td><td>ホームのステージの行（まだ写真の無いステージ＝1枚目）・「はじめての方へ」の背景（岬の灯台）・行の「…」の「完成イメージを見る」・遊んでいる途中のメニューの「完成イメージを見る」（<a href="../screens/world-select.html">ホーム</a>・<a href="../screens/gameplay.html">ゲームプレイ画面</a>）</td></tr>
-    <tr><td>見るカード</td><td>見出し「完成イメージ」とステージ名・閉じる（44pt）。写真を左右にめくる（ページ送り・下の「&lt;」「&gt;」でも）。写真の説明と「n / N　お手本と違う形に建ててもかまいません」。背景を押しても閉じる。ゲーム中は開いている間ゲームを止める。写真は開いたときに1回だけ読む</td></tr>
+    <tr><td>見るカード</td><td>見出し「完成イメージ」とステージ名・閉じる（44pt）。写真を左右にめくる（ページ送り・下の「&lt;」「&gt;」でも）。写真の説明と「n / N　お手本と違う形に建ててもかまいません」。背景を押しても閉じる。ゲーム中は開いている間ゲームを止める。前後のボタンも 44pt。写真は1枚ずつ「画像」として説明を読み上げる。写真は<strong>見ているページと前後の1枚だけ</strong>を読んで持ち、離れたページは手放す（開いたときに全部読むと7〜8枚で約24MB をゲームの上に足す。build 46 前のパス5）</td></tr>
     <tr><td>写真（43枚）</td><td>1枚目は完成写真と同じ角度（ステージのカメラ）。続いて正面・南東から・南西から・裏（海や湖の側）と中2枚。岬の灯台だけ夜の2枚（てっぺんに灯がともる・夜の灯室）を足して8枚、ほかは7枚。砂漠の泉の神殿は泉の側（北）を正面と呼ぶ</td></tr>
     <tr><td>作り方（開発者向け）</td><td>UI テスト（StageUITests の <code>test〈ステージ〉BlueprintPhotos</code>）が、DEBUG 専用の起動引数 <code>--ui-testing-build-blueprint</code>（設計図を全部置く）と <code>--ui-testing-photo-views</code>（置き終わりと形の作り直しを待ってから、完成写真の角度と4方向・<code>--ui-testing-photo-at</code> で決めた中の角度を撮る。<code>--ui-testing-photo-suffix night</code> で夜）で撮り、<code>tools/blueprints/export_completion_images.sh 〈シミュレーターの UDID〉</code> が名前ごとにいちばん新しい写真を幅1280の JPEG（品質65）にして <code>VoxelGame/CompletionImages/</code> に置く（5.5MB）。どれを何の説明で出すかは <code>CompletionImages.swift</code> が決め、一覧と同梱物の食い違いは <code>CompletionImagesTests</code> が見つける</td></tr>
   </table>
@@ -434,6 +434,7 @@ sequenceDiagram
     <li>UIテストでは起動引数 <code>--autostage cape_lighthouse</code>（<code>--autoworld-fresh</code> で作り直し）でステージへ直接入り、<code>--ui-testing-skip-photo-library</code> で「写真」アプリへの保存を省く（いずれも DEBUG のみ）</li>
     <li>一覧のカードの識別子は <code>stage_cape_lighthouse</code>、記念写真のボタンは <code>photoButton</code></li>
     <li>お手本: <code>Blueprint.swift</code>（読み書き・同梱と書き出しの読み分け・進み具合・書き出しの比較）、<code>BlueprintGhost.swift</code>（半透明の形と材質）、<code>BlueprintHUD.swift</code>（右上の表示・共有シート）、同梱は <code>Blueprints/blueprint_&lt;ステージID&gt;.json</code>（セルは [x, y, z, ブロックの番号, 向き]。向きは 0=北が高い・1=西・2=南・3=東）。render スレッドが 0.4 秒ごとに数え直し、描くセルが変わったときだけ形を作り直す。右上の表示の識別子は <code>blueprintHUD</code></li>
+    <li>完成イメージ: <code>CompletionImages.swift</code>（ステージごとの写真と説明の一覧・同梱の写真を読む・ホームの行用に長い辺320へ縮めて読む <code>thumbnail(forStage:)</code>）、<code>CompletionImageViewer.swift</code>（見るカード）。写真は <code>CompletionImages/completion_&lt;ステージID&gt;_&lt;向き&gt;.jpg</code>（1枚目は <code>official</code>＝完成写真の角度）。一覧と同梱物の食い違い・縮めた大きさは <code>CompletionImagesTests</code> で確かめる。開いている間の一時停止は <code>GameInput.showCompletionImages</code></li>
   </ul>
 
   <h2>関連</h2>
@@ -463,6 +464,7 @@ sequenceDiagram
     <tr><td>1.13</td><td>2026-10-09</td><td>入り江の船小屋の名物（浜の貝殻・貝殻のしっくい壁と小道・漁の網）</td></tr>
     <tr><td>1.14</td><td>2026-10-11</td><td>作者の荷箱に植えて増やせる物（種・苗木・小麦）を入れない（名物の持ち出しを防ぐ）</td></tr>
     <tr><td>1.15</td><td>2026-10-11</td><td>花の丘（build 44 で入っていたが未反映だった）・雪山・砂漠の泉・湖の城の名物。砂漠のオアシスの木をヤシに</td></tr>
+    <tr><td>1.17</td><td>2026-10-12</td><td>build 46 前のパス5の修正に合わせて、見るカードの写真の持ち方（見ているページと前後1枚）・前後のボタン44pt・読み上げを更新。実装メモに完成イメージのファイルを追加</td></tr>
     <tr><td>1.16</td><td>2026-10-12</td><td>6ステージのお手本（Claude が書いた設計図。岬の灯台は 267→366 に作り直し）と完成イメージ（外・中・夜の写真43枚・見る所・作り方）の節。資材のテストを6ステージの設計図で測り直した結果</td></tr>
   </table>
 
