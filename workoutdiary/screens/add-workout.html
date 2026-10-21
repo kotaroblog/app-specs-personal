@@ -34,6 +34,16 @@
     <tr><td>「追加」ボタン</td><td>ToolbarItem（confirmationAction）</td><td>WorkoutSet INSERT。入力未完了時は disabled</td></tr>
   </table>
 
+  <h2>1.4.5（未公開・2026-10-21）での変更</h2>
+  <table>
+    <tr><th>項目</th><th>1.4.4 まで</th><th>1.4.5〜</th></tr>
+    <tr><td>セット入力シートの初期値</td><td>前回があっても 0kg × 10回 × 3セット</td><td><strong>前回の記録がある筋トレ種目は前回の重量 × 回数（セット数も前回どおり）で開く</strong>。前回が無い種目・有酸素は従来どおり 0kg × 10回 × 3セット。0kg のまま追加して次回の前回値が 0kg に置き換わるのを防ぐ</td></tr>
+    <tr><td>1セット目の重量</td><td>そのセットだけ変わる</td><td>まだ触っていない他のセットにも同じ重量が入る。2セット目以降の重量を直接変えたセットは、以後は追従しない。前回からコピーした値・前回値で開いた値は追従させない。セット数を増やした分は最後のセットの値を引き継ぐ</td></tr>
+    <tr><td>「追加」ボタン</td><td>欄に触れるまで押せない（表示しただけの既定値の保存を防ぐため）</td><td><strong>欄に触れる前から押せる</strong>（表示中の値で追加する）。重量も回数も全セット 0 のときだけ無効。押したときは打ちかけの数字を確定してから追加する</td></tr>
+    <tr><td>即追加（稲妻）</td><td>絵だけ</td><td>「前回と同じ」の文字を付けた（VoiceOver も同じ言葉）</td></tr>
+  </table>
+  <p>追従と変換の規則は <code>SetInputDraft</code>（ViewModels/SetInputDraft.swift）と <code>SetValueText</code> に分け、単体テスト（SetInputDraftTests）で固定している。</p>
+
   <h2>前回をコピーボタン（v1.1.0）</h2>
   <table>
     <tr><th>項目</th><th>内容</th></tr>
@@ -78,8 +88,8 @@
     <tr><td>種目未選択</td><td>部位選択グリッド表示</td></tr>
     <tr><td>部位選択済（種目リスト）</td><td>該当種目リスト + 末尾「+ 新しい種目を追加」行（v1.1.2）</td></tr>
     <tr><td>種目選択済（セット入力シート）</td><td>「前回をコピー」ボタン（前回値あり時） + セット入力フォーム</td></tr>
-    <tr><td>未入力</td><td>追加ボタン disabled</td></tr>
-    <tr><td>入力済</td><td>追加ボタン有効</td></tr>
+    <tr><td>未入力</td><td>追加ボタン disabled（1.4.5〜: 全セットの重量・回数が 0 のときだけ）</td></tr>
+    <tr><td>入力済</td><td>追加ボタン有効（1.4.5〜: 表示中の値があれば欄に触れる前から有効）</td></tr>
     <tr><td>追加成功 + PR</td><td>祝賀演出（WorkoutSessionView overlay）</td></tr>
     <tr><td>追加成功（PRなし）</td><td>sheet を閉じる</td></tr>
   </table>
@@ -122,9 +132,10 @@
     <tr><td>1.4</td><td>2026-06-06</td><td>v1.1.2 正式リリース（build 5）確認。「v1.1.2候補」表記を確定に変更</td></tr>
     <tr><td>1.5</td><td>2026-07-07</td><td>v1.2.1 UI/UX/A11y監査対応: 有酸素入力欄（時間・距離）に Done キーボードツールバーを追加（WorkoutSessionView と同パターン）</td></tr>
     <tr><td>1.6</td><td>2026-10-08</td><td>アプリ 1.4.2 (21): 有酸素の前回値の表示（例「30min・5.0km」）の区切りを言語ごと（ja「・」/ en「, 」・<code>common.middleDotSeparator</code>）にした（WD-016。英語表示でも全角「・」が出ていた）。カレンダー画面の廃止に伴い呼び出し元の記述を修正</td></tr>
+    <tr><td>1.7</td><td>2026-10-21</td><td>1.4.5（未公開・2026-10-21）: 前回の記録がある筋トレ種目は前回値でシートを開く、1セット目の重量を触っていない他のセットへ反映、「追加」を欄に触れる前から押せる（全セット 0 のときだけ無効）、即追加に「前回と同じ」の文字、を「1.4.5 での変更」節と状態表に反映</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-10-08</footer>
+  <footer class="site-footer">最終更新: 2026-10-21</footer>
 </div>
 </body>
 </html>
