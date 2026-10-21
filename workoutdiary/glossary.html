@@ -23,8 +23,8 @@
     <tr><td>セット</td><td><code>WorkoutSet</code></td><td>1セット分の記録（重量・レップ or 時間・距離）</td></tr>
     <tr><td>種目</td><td><code>Exercise</code></td><td>「ベンチプレス」「スクワット」等の運動種目</td></tr>
     <tr><td>カテゴリ</td><td><code>ExerciseCategory</code></td><td>胸/背中/肩/腕/脚/腹筋/有酸素/その他</td></tr>
-    <tr><td>テンプレート</td><td><code>WorkoutTemplate</code></td><td>頻繁に行うメニューの保存・再利用</td></tr>
-    <tr><td>テンプレートエントリ</td><td><code>TemplateEntry</code></td><td>テンプレート内の1種目</td></tr>
+    <tr><td>ルーティン（旧称: テンプレート）</td><td><code>WorkoutTemplate</code></td><td>頻繁に行うメニューの保存・再利用。曜日を割り当てられる</td></tr>
+    <tr><td>ルーティンの種目</td><td><code>TemplateEntry</code></td><td>ルーティン内の1種目</td></tr>
     <tr><td>重量</td><td><code>weight</code></td><td>キログラム単位</td></tr>
     <tr><td>レップ</td><td><code>reps</code></td><td>1セットの回数</td></tr>
     <tr><td>時間</td><td><code>duration</code></td><td>有酸素種目の分単位</td></tr>
@@ -78,6 +78,7 @@
   <ul>
     <li>「セット」と「セッション」の混同注意 — セット = 1組、セッション = 1回のトレーニング全体</li>
     <li>「重量」と「ウェイト」 — UIは「重量」で統一</li>
+    <li>「ルーティン」と「テンプレート」 — 1.4.5（未公開）で UI は「ルーティン」に統一（空の一覧・削除確認・復元の確認・英語の既定文を含む）。コードの型名は <code>WorkoutTemplate</code> / <code>TemplateEntry</code> のまま</li>
     <li>「PR」と「自己ベスト」 — UIでは併記可、コードは <code>PR</code></li>
     <li>有酸素種目は <code>useCardioInput: Bool</code> で判定し、weight/reps の代わりに duration/distance を入力</li>
   </ul>
@@ -86,9 +87,10 @@
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
+    <tr><td>1.1</td><td>2026-10-21</td><td>1.4.5（未公開・2026-10-21）: UI の呼び名を「テンプレート」から「ルーティン」に統一したことを反映（用語表と使い分けの注意）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-10-21</footer>
 </div>
 </body>
 </html>

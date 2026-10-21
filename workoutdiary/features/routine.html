@@ -198,6 +198,18 @@ enum TemplateMigrationService {
   <h2>SaveTemplateView 保存ロジック改善（v1.1.1）</h2>
   <p>ワークアウトから「ルーティン保存」時、各 WorkoutSet を個別の TemplateSetEntry として保存するよう改善。均等セットでも変則セットでも実データをそのまま反映できる。</p>
 
+  <h2>ルーティン保存で中身を見て直す（WD-021・1.4.5〜・未公開）</h2>
+  <p>以前は保存画面の「保存する内容」が1種目1行の要約（1セット目の値 × セット数）だけで、2セット目以降の値は見えず、保存前に直せなかった。1.4.5 から、記録から<strong>下書き</strong>を作り、画面で直してから保存する。</p>
+  <table>
+    <tr><th>操作</th><th>内容</th></tr>
+    <tr><td>セットごとの行</td><td>種目ごとに見出し（種目名・セット数）と、セットごとの行（筋トレは重量・回数、有酸素は時間・距離）を並べる。数字をタップするとその場で直せる（「数字をタップすると保存前に直せます。」の案内を表示）。キーボードの上に「完了」</td></tr>
+    <tr><td>セットを足す</td><td>種目の最後の「セットを追加」で、最後のセットと同じ値のセットを1つ足す</td></tr>
+    <tr><td>セットを消す</td><td>各行のゴミ箱で消す。<strong>最後の1セットは消せない</strong>（種目ごと外すときは見出しの − を使う）</td></tr>
+    <tr><td>種目ごと外す</td><td>見出しの − で、その種目を保存しない</td></tr>
+    <tr><td>保存</td><td>名前が空、または残る種目が0件なら保存できない。セットが0件の種目は保存しない。値は入力の上限・下限に収めて保存する</td></tr>
+  </table>
+  <p>保存の形は従来どおり <code>TemplateEntry</code> + <code>TemplateSetEntry</code>（データモデルの変更なし）。保存処理は <code>SaveTemplateView</code> から <code>RoutineSaveService</code>（Services/RoutineSaveService.swift）へ移し、単体テスト（RoutineSaveServiceTests）を足した。画面の部品は <code>RoutineDraftExerciseSection</code>。</p>
+
   <h2>RoutineSuggestionService（v1.1.1 改修）</h2>
   <pre><code>/// 指定日のルーティン提案・適用を行うサービス（v1.1.0 / v1.1.1 改修）
 @MainActor
@@ -331,6 +343,7 @@ enum RoutineSuggestionService {
     <tr><td>1.1</td><td>2026-05-24</td><td>v1.1.1: TemplateSetEntry 新規モデル・ピラミッドセット対応を追記。TemplateMigrationService・EditTemplateView 全面リライト・AddTemplateEntrySheet・SaveTemplateView 改善・RoutineSuggestionService 改修を追記</td></tr>
     <tr><td>1.2</td><td>2026-06-06</td><td>v1.1.2 正式リリース（build 5）: CreateTemplateView（新規作成画面）・CreateTemplatePickerSheet・DraftEntrySectionView 追加を追記。TemplateListView toolbar「+」ボタン追加・AddWorkoutView 種目インライン新規登録・ExerciseFormView の initialCategory/onSaved 追加・ReleaseNotesService 更新を追記</td></tr>
     <tr><td>1.3</td><td>2026-10-08</td><td>アプリ 1.4.2 (21): カレンダータブ廃止（WD-010）に伴い、予定ドットを廃止扱いに変更。記録がない日のルーティンボタンの見出しを「今日のルーティン」（今日）／「この曜日のルーティン」（今日以外）で出し分ける仕様を追加。処理フローを現行に書き直し（該当ルーティンをすべて並べる〔WD-007〕・中央の「ルーティンから追加」ボタンの撤去〔WD-013〕を含む）。種目名の要約の区切りの修正（WD-016）を追記</td></tr>
+    <tr><td>1.4</td><td>2026-10-21</td><td>1.4.5（未公開・2026-10-21）: ルーティン保存で、保存される種目ごとのセット・重量・回数（有酸素は時間・距離）を一覧で見て直せる仕様（WD-021）を追加。保存処理の RoutineSaveService への移動を追記。記録がない日の「今日のルーティン」ボタンをカレンダー直下へ移して大きくしたことは記録画面の仕様書に記載</td></tr>
   </table>
 
   <script>
@@ -340,7 +353,7 @@ enum RoutineSuggestionService {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-10-08</footer>
+  <footer class="site-footer">最終更新: 2026-10-21</footer>
 </div>
 </body>
 </html>
