@@ -79,7 +79,7 @@
     </tr>
     <tr>
       <td>インタースティシャル</td>
-      <td><code>LPMInterstitialAd</code>。ゲーム終了後の「もう一度」「モード選択へ」タップ時。<strong>4ゲームに1回</strong>かつ<strong>前回表示から最低90秒</strong>空ける</td>
+      <td><code>LPMInterstitialAd</code>。ゲーム終了後の「もう一度」「モード選択へ」タップ時。<strong>4ゲームに1回</strong>かつ<strong>前回表示から最低90秒</strong>空ける。1.4.3〜（未公開）は加えて<strong>1日3回まで</strong>（実際に表示された回だけ数える）</td>
       <td>非表示</td>
     </tr>
     <tr>
@@ -141,11 +141,21 @@ static var shouldRequestTracking: Bool { !appKey.isEmpty }</code></pre>
   <h2>ATT の要求タイミング（CHROMATIC 固有）</h2>
   <ul>
     <li><code>shouldRequestTracking == true</code>（App Key が設定済み）であること<span class="note">（〜2026-08-22 は <code>isAdDeliveryAvailable</code> で判定していた）</span></li>
-    <li><strong>3ゲーム完了後</strong>のゲームオーバー時（初回ゲームオーバーからの変更）</li>
+    <li><strong>1.4.3〜（未公開）</strong>: 新しく入れた人は<strong>初回の結果画面を閉じた後</strong>（待機画面に戻してから）。応答までは待機画面を押せない（始めたゲームが消えないように）。2回目以降の起動でオンボーディング済みなら<strong>起動時</strong>に出す（遊ばずに閉じた人にいつまでも出ない状態を作らない）。旧版から使っている人も起動時。ウィンドウがアクティブになる前に要求すると出ないまま拒否として確定するため、少し待ってから要求する</li>
+    <li><span class="note">1.4.2 まではオンボーディングを終えた後の起動時（CHR-004）。それ以前は3ゲーム完了後のゲームオーバー時</span></li>
     <li>ステータスが <code>notDetermined</code> であること</li>
     <li>撮影モードでないこと</li>
   </ul>
   <p>許可・非許可いずれでも広告配信は可能で、非許可時は非パーソナライズ広告になる。</p>
+  <p>ATT → 広告 SDK の初期化 → 全画面広告のプリロードは <code>AdStartup</code> が1回だけ行う。Apple は「トラッキングに使いうるデータの収集より前」にダイアログを出すことを求めるため、SDK の初期化は必ず ATT の応答を待ってから行う（1.4.3〜。審査ビルドでも出す方針は変えない）。</p>
+
+  <h2>全画面広告の1日の上限（1.4.3〜・未公開）</h2>
+  <ul>
+    <li>従来の「4ゲームに1回」「前回表示から90秒」に加え、<strong>1日3回まで</strong>（<code>InterstitialDailyCap</code>・単体テストあり）</li>
+    <li>実際に表示されたときだけ回数に数える（ロードに失敗した回は数えない）</li>
+    <li>表示した日付（端末のタイムゾーンの日付）と回数を UserDefaults に保存し、日付が変わったら数え直す</li>
+  </ul>
+  <p>バナーは、待機中以外もパネルとの間を <strong>32pt</strong> あける（連打での誤タップ防止。1.4.3 で待機中もそろえた）。</p>
 
   <h2>ビジネスルール</h2>
   <ul>
@@ -155,7 +165,8 @@ static var shouldRequestTracking: Bool { !appKey.isEmpty }</code></pre>
     <li><strong>ATT ダイアログの表示は広告の配信可否と分離する</strong>。<code>shouldRequestTracking = !appKey.isEmpty</code> で判定し、審査ビルド（sandbox 環境）でも表示する。App Key 未設定の版では表示しない</li>
     <li><code>PrivacyInfo.xcprivacy</code> は <code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除の構成を維持する</li>
     <li>プレミアム購入者には広告を表示しない。<strong>今後広告を再開した場合も表示しない</strong>（購入時の保証）</li>
-    <li>全画面広告には必ず表示間隔（4ゲームに1回・最低90秒）を設ける</li>
+    <li>全画面広告には必ず表示間隔（4ゲームに1回・最低90秒）を設ける。1.4.3〜は1日3回まで</li>
+    <li>バナーとパネルの間は 32pt あける（1.4.3〜）</li>
     <li>バナーはアダプティブサイズの高さをそのまま使い、固定値でクリップしない（広告の一部が隠れるとポリシー違反）</li>
     <li>広告をボタンやタップ導線に隣接させない（誤クリック誘発の禁止）</li>
   </ul>
@@ -175,7 +186,8 @@ static var shouldRequestTracking: Bool { !appKey.isEmpty }</code></pre>
     <tr><td>2.0</td><td>2026-08-04</td><td>広告基盤を AdMob から AppLovin MAX へ全面移行（AdMob アカウントが恒久的に利用不可になったため）。SDK・使用フォーマット・ビルド設定・指数バックオフを記載。再発防止設計（<code>AdEnvironment.isAdDeliveryAvailable</code> = SDK Key 設定済み かつ App Store 配信版／レシート種別による判定／テスト広告IDの概念がないため開発中は広告を出さない方式）を追加。配信無効期間の挙動（バナー枠ごと非表示・全画面広告非呼出・SDK 初期化と ATT の抑止）を明文化。仕様書から広告ユニットID・パブリッシャー識別子の記載を削除</td></tr>
     <tr><td>3.0</td><td>2026-08-20</td><td><strong>広告基盤を AppLovin MAX から Unity LevelPlay へ移行</strong>（AppLovin の publisher アカウント承認が下りなかったため）。SDK を LevelPlay 9.6.0（SPM <code>LevelPlay-Swift-Package</code> / product <code>UnityMediationSDK</code>）+ LevelPlayUnityAdsAdapter 5.10.0（product <code>UnityAdsAdapter</code>）へ差し替え、Unity Ads は LevelPlay 経由の bidder として利用する構成を明記。使用クラスを <code>LPMBannerAdView</code> / <code>LPMInterstitialAd</code> に更新。判定式を <code>isAdDeliveryAvailable = !appKey.isEmpty &amp;&amp; isProduction</code> と明記し、<strong>SDK 初期化完了前は広告をロードしない</strong>制約を追加。CHROMATIC は <strong>App Key・広告ユニットIDが未設定</strong>のため広告は一切ロードされない。広告面（バナー / インタースティシャル4回に1回・90秒間隔）は変更なし。</td></tr>
     <tr><td>3.1</td><td>2026-08-23</td><td>広告基盤を <strong>Unity LevelPlay</strong> に統一（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: 従来は <code>isAdDeliveryAvailable</code> でガードしていたが、この値は <code>isProduction</code> を含むため、TestFlight と同じ sandbox 環境で実行される<strong>審査ビルドでは ATT が原理的に表示されなかった</strong>。実際に 2026-08-22、<strong>CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed によりリジェクト</strong>された。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。App Key 未設定＝広告を一切出さない版では表示しないため Guideline 5.1.2 の懸念も同時に満たす。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除／ITMS-91064 の回避／<code>NSPrivacyTrackingDomains</code> は申告ではなく実行時のブロックリストであり、Unity Ads は広告配信とトラッキングで同じドメインを使うため載せると ATT 拒否ユーザーに広告が出なくなる／トラッキングの申告は ASC の App Privacy 側で行う）を明記した。</td></tr>
+    <tr><td>1.4.3（未公開・2026-10-21）</td><td>2026-10-21</td><td>ATT の要求タイミングを、新規は初回の結果を閉じた後（応答まで操作を止める）・2回目の起動でオンボーディング済みなら起動時に変更したことを反映（ATT の応答を待ってから SDK を初期化）。全画面広告の1日3回の上限（表示された回だけ数える）とバナーとの間の32pt を追加</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-23</footer>
+  <footer class="site-footer">最終更新: 2026-10-21</footer>
 </div></body></html>
