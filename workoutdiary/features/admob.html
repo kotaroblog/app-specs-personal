@@ -86,6 +86,18 @@ static var shouldRequestTracking: Bool { !appKey.isEmpty }</code></pre>
   <p>App Key 未設定＝広告を一切出さない版では ATT を表示しない。
   これにより「広告がないのにトラッキング許可を求める」<strong>Guideline 5.1.2</strong> の懸念も同時に満たす。</p>
 
+  <h2>ATT ダイアログを出すタイミング（1.4.5〜・未公開）</h2>
+  <div class="callout">
+    以前は初回設定の直後（起動直後・タブ切り替え時）に出しており、<strong>記録に触れる前に広告の許可を求めていた</strong>。1.4.5 からは、広告が出る場所である<strong>統計タブを開いたときだけ</strong>事前説明を出し、続けて OS のダイアログを出す。
+  </div>
+  <table>
+    <tr><th>場面</th><th>1.4.4 まで</th><th>1.4.5〜</th></tr>
+    <tr><td>初回設定の直後（起動直後）</td><td>出す</td><td>出さない</td></tr>
+    <tr><td>タブの切り替え</td><td>どのタブでも出す</td><td>統計タブへ切り替えたときだけ</td></tr>
+    <tr><td>事前説明で「後で」</td><td>—</td><td>次の起動で統計タブを開いたときに再び出す</td></tr>
+  </table>
+  <p>表示してよいかの判定（<code>shouldRequestTracking</code>）は上の節のまま変えていない。審査では App Review の備考に「統計タブを開くと出る」と書く（出す場所が起動直後でなくなったため）。</p>
+
   <h2>プライバシーマニフェスト（PrivacyInfo.xcprivacy）の方針</h2>
   <div class="callout warn">
     <p style="margin-top:0"><strong><code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> はキーごと削除</strong>が正解。
@@ -168,9 +180,10 @@ final class RewardedAdManager {
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>    <tr><td>2.0</td><td>2026-08-04</td><td><strong>広告基盤を AdMob から AppLovin MAX へ全面移行</strong>（AdMob アカウントが恒久的に無効化され再審査も却下されたため）。<code>AdEnvironment.isAdDeliveryAvailable</code> により<strong>広告のロード・表示を App Store 配信版のみに限定</strong>（DEBUG・シミュレーター・TestFlight では一切リクエストしない）。SDK Key 未設定の間は自動的に無効。配信無効期間はバナーを枠ごと非表示にし、リワードの報酬は広告なしで即付与する。仕様書から広告ユニットIDの実値を削除</td></tr>
     <tr><td>3.0</td><td>2026-08-20</td><td><strong>広告基盤を AppLovin MAX から Unity LevelPlay へ移行</strong>（AppLovin の publisher アカウント承認が下りなかったため）。SDK を LevelPlay 9.6.0（SPM <code>LevelPlay-Swift-Package</code> / product <code>UnityMediationSDK</code>）+ LevelPlayUnityAdsAdapter 5.10.0（product <code>UnityAdsAdapter</code>）へ差し替え、広告クラスを <code>LPMBannerAdView</code> / <code>LPMRewardedAd</code> に更新。判定式を <code>isAdDeliveryAvailable = !appKey.isEmpty &amp;&amp; isProduction</code> と明記し、<strong>SDK 初期化完了前は広告をロードしない</strong>制約と、ATT も同じゲートの内側である点を追記。呼び出し側 API（<code>loadAd()</code> / <code>showAd() async -&gt; Bool</code> / <code>isAdReady</code>）は変更なし。WorkoutDiary は <strong>App Key・広告ユニットIDが未設定</strong>のため広告は一切ロードされない。広告面（バナー + リワードによるシェア機能の一時解放）は変更なし。</td></tr>
     <tr><td>3.1</td><td>2026-08-23</td><td>広告基盤を <strong>Unity LevelPlay</strong> に統一（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: 従来は <code>isAdDeliveryAvailable</code> でガードしていたが、この値は <code>isProduction</code> を含むため、TestFlight と同じ sandbox 環境で実行される<strong>審査ビルドでは ATT が原理的に表示されなかった</strong>（2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed によりリジェクト）。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。App Key 未設定＝広告を一切出さない版では表示しないため Guideline 5.1.2 の懸念も同時に満たす。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除／ITMS-91064 の回避／<code>NSPrivacyTrackingDomains</code> は申告ではなく実行時のブロックリストであり、Unity Ads は広告配信とトラッキングで同じドメインを使うため載せると ATT 拒否ユーザーに広告が出なくなる／トラッキングの申告は ASC の App Privacy 側で行う）を明記した。</td></tr>
+    <tr><td>3.2</td><td>2026-10-21</td><td>1.4.5（未公開・2026-10-21）: ATT の事前説明を初回設定の直後から<strong>統計タブを初めて開いたとき</strong>へ移した（「後で」なら次の起動で統計タブを開いたときに再び）。表示可否の判定は変更なし</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-23</footer>
+  <footer class="site-footer">最終更新: 2026-10-21</footer>
 </div>
 </body>
 </html>

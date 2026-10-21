@@ -17,10 +17,26 @@
   </header>
 
   <h2>目的・役割</h2>
-  <p>初回起動時に目標・経験・頻度を入力して、テンプレートやリマインダーを最適化するためのウィザード。
-  最後に Paywall でサブスク提示。</p>
+  <p>初回起動時に目標・経験・頻度を入力して、ルーティンやリマインダーを最適化するためのウィザード。
+  1.4.5（未公開）からは<strong>課金画面を出さず</strong>、通知ステップで終えて記録画面（今日のルーティン）へ入る。</p>
 
-  <h2>11ステップの構成</h2>
+  <h2>6ステップの構成（1.4.5〜・未公開）</h2>
+  <div class="callout">
+    記録に触れる前の待ちと課金画面が初回体験の減点だったため、<strong>Loading（3秒の「プランを作成しています」）と Paywall を外した</strong>。課金画面は設定とシェア画像の鍵から開く既存の入口だけに残す。あわせて「週週3日」の誤字を直した。
+  </div>
+  <ol>
+    <li>Welcome — アプリの紹介</li>
+    <li>Goal — 目標選択</li>
+    <li>Experience — 経験レベル</li>
+    <li>Frequency — 週間頻度（「次へ」で選択を保存。以前は Loading の最後で保存していた）</li>
+    <li>Result — 結果表示</li>
+    <li>Notification — 通知許可リクエスト。ボタンは「記録をはじめる」（「あとで」も可）。ここで初回設定を終える</li>
+  </ol>
+  <p>ページはスワイプでも送れるため、頻度の「次へ」を通らなかった場合に備えて完了時にも選択を保存する。完了フラグは従来どおり <code>@AppStorage("onboardingCompleted")</code>。完了の分析イベントは通知ステップの完了時に送る。</p>
+  <p>トラッキング許可（ATT）の事前説明は、初回設定の直後ではなく<strong>統計タブを初めて開いたとき</strong>に出す（<a href="../features/admob.html">広告</a>参照）。</p>
+  <p>終えた直後の記録画面では、記録がない日の「今日のルーティン」を人型の絵の<strong>上</strong>（カレンダー直下）に大きく出す（<a href="workout-session.html">トレーニング記録</a>参照）。</p>
+
+  <h2>11ステップの構成（1.4.4 まで・記録として残す）</h2>
   <ol>
     <li>Welcome — アプリの紹介</li>
     <li>Goal — 目標選択（筋肥大 / 減量 / 健康 / 筋力）</li>
@@ -62,7 +78,8 @@
   <ul class="checklist">
     <li class="done">完了時に <code>insertDefaultTemplates()</code> で目標・経験別の初期テンプレ挿入</li>
     <li class="done">通知ステップで UNUserNotificationCenter 許可リクエスト</li>
-    <li class="done">Paywall ステップでスキップ可（強制購入なし）</li>
+    <li class="done">Paywall ステップでスキップ可（強制購入なし）— 1.4.5 で Paywall ステップ自体を廃止（<code>PaywallStepView</code>・<code>PaywallFAQSection</code>・<code>LoadingStepView</code> を削除）</li>
+    <li class="done">1.4.5: <code>OnboardingViewModel.finish()</code> で選択の保存と完了イベント。<code>NotificationStepView</code> は <code>onFinish</code> を受け取る形に変更</li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -70,9 +87,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-07-07</td><td>v1.2.1 UI/UX/A11y監査対応: NotificationStepView の accent背景上 .white → AppTheme.onAccent に是正</td></tr>
+    <tr><td>1.2</td><td>2026-10-21</td><td>1.4.5（未公開・2026-10-21）: Loading と Paywall を外した6ステップ構成を追加（旧11ステップの記述は記録として残す）。通知ステップの「記録をはじめる」で記録画面へ入ること、頻度の「次へ」と完了時に選択を保存すること、ATT を統計タブを初めて開いたときへ移したことを反映</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-07</footer>
+  <footer class="site-footer">最終更新: 2026-10-21</footer>
 </div>
 </body>
 </html>
