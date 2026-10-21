@@ -22,6 +22,24 @@ flowchart TD
   Game --> GC[Game Center<br/>Leaderboard]
   </div>
 
+  <h2>初回の流れと ATT のタイミング（1.4.3・未公開）</h2>
+  <div class="callout">
+    1.4.3 から、初回は<strong>説明1枚</strong>（「光った順にタップ」）の「はじめる」で <strong>4パネル×NORMAL の1ゲームがすぐ始まる</strong>。トラッキング許可（ATT）は、新しく入れた人では<strong>初回の結果画面を閉じた後</strong>（待機画面に戻してから）に出し、応答までは待機画面を押せない。応答を待ってから広告 SDK を初期化する。
+  </div>
+  <div class="mermaid">
+flowchart TD
+  Launch([起動]) --> Seen{オンボーディング済み?}
+  Seen -- いいえ（新規） --> Onb[説明1枚<br/>光った順にタップ]
+  Onb -- はじめる --> Play[4パネル×NORMAL の<br/>1ゲーム]
+  Play --> Result[結果画面]
+  Result -- 閉じる（初回の結果） --> Idle1[待機画面<br/>応答まで操作を止める]
+  Idle1 --> ATT1{{ATT のダイアログ}}
+  ATT1 --> SDK1[広告 SDK の初期化]
+  Seen -- はい（2回目以降の起動・旧版から使っている人） --> ATT2{{起動時に ATT<br/>未回答のときだけ}}
+  ATT2 --> SDK2[広告 SDK の初期化]
+  </div>
+  <p>遊ばずに閉じた人にいつまでも出ない状態を作らないため、起動の時点でオンボーディングを済ませていれば、初回の結果を閉じていなくても起動時に出す。旧版でオンボーディング済みの人は「初回の結果を閉じた」扱い（新しいキー <code>chromatic_has_closed_first_result</code> で区別。既存のキーは変えない）。ATT を出してよいかの判定は従来どおり <code>shouldRequestTracking</code>。1.4.2 までは、オンボーディングを終えた後の起動時に出していた。</p>
+
   <h2>ゲーム状態遷移</h2>
   <div class="mermaid">
 flowchart LR
@@ -36,6 +54,9 @@ flowchart LR
   Milestone --> Showing
   GameOver -- RETRY --> Showing
   GameOver -- MODE SELECT --> Idle
+  Showing -- アプリが前面でなくなる（1.4.3〜） --> Paused[中断<br/>「続ける」]
+  Player -- アプリが前面でなくなる（1.4.3〜） --> Paused
+  Paused -- 続ける --> Showing
   </div>
 
   <h2>主要な遷移トリガー</h2>
@@ -46,7 +67,10 @@ flowchart LR
     <tr><td>GameView</td><td>パネルタップ（playerTurn中）</td><td>正解/不正解判定</td></tr>
     <tr><td>GameView</td><td>トロフィー</td><td>Game Center Leaderboard</td></tr>
     <tr><td>GameView</td><td>設定アイコン</td><td>SettingsView (sheet)</td></tr>
-    <tr><td>GameView</td><td>初回起動</td><td>OnboardingView (sheet)</td></tr>
+    <tr><td>GameView</td><td>初回起動</td><td>OnboardingView (sheet・1.4.3〜説明1枚)</td></tr>
+    <tr><td>OnboardingView（初回）</td><td>「はじめる」</td><td>4パネル×NORMAL の1ゲームを開始（1.4.3〜）</td></tr>
+    <tr><td>GameView（プレイ中）</td><td>アプリが前面でなくなる</td><td>中断画面 →「続ける」で同じラウンドの手本から（1.4.3〜）</td></tr>
+    <tr><td>記録カレンダー</td><td>今日のマス</td><td>今日のチャレンジを開始（1.4.3〜・無料）</td></tr>
     <tr><td>GameOver</td><td>SHARE</td><td>ShareCardView 経由 ShareSheet</td></tr>
   </table>
 
@@ -59,8 +83,9 @@ flowchart LR
   </table>
 
   <h2>変更履歴</h2>
-  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr></table>
+  <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>  <tr><td>1.4.3（未公開・2026-10-21）</td><td>2026-10-21</td><td>初回の流れと ATT のタイミングの図を追加（説明1枚 →「はじめる」で 4パネル×NORMAL の1ゲーム → 初回の結果を閉じた後に ATT・応答まで操作を止める／2回目の起動でオンボーディング済みなら起動時）。状態遷移に中断と「続ける」を追加。遷移表に初回の開始・中断・記録カレンダーの今日のマスを追加</td></tr>
+  </table>
 
   <script>mermaid.initialize({startOnLoad: true, theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default', flowchart: { curve: 'basis', useMaxWidth: true }});</script>
-  <footer class="site-footer">最終更新: 2026-05-09</footer>
+  <footer class="site-footer">最終更新: 2026-10-21</footer>
 </div></body></html>
