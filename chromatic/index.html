@@ -85,9 +85,10 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-08-20</td><td>変更履歴セクションを新設。<strong>広告基盤を Unity LevelPlay へ移行</strong>（AdMob 恒久停止 → AppLovin MAX の承認却下 → LevelPlay 9.6.0 + UnityAds アダプタ 5.10.0）。マネタイズ表記と <a href="features/ad-control.html">広告制御</a> のカード説明を更新。App Key・広告ユニットIDは未設定のため現在は広告を一切ロードしない。</td></tr>
     <tr><td>1.1</td><td>2026-08-23</td><td><strong>広告基盤を Unity LevelPlay に統一</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: <code>isAdDeliveryAvailable</code>（<code>isProduction</code> を含む）でガードしていたため、sandbox 環境で実行される審査ビルドでは ATT が表示されず、2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed でリジェクトされた。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を明記。 詳細は <a href="features/ad-control.html">広告制御</a>・<a href="screens/game.html">ゲーム画面</a>。</td></tr>
+    <tr><td>1.4.3（未公開・2026-10-21）</td><td>2026-10-21</td><td>ブランチ improve/score80-2026-10 の変更を仕様書に反映: 初回は説明1枚から 4パネル×NORMAL の1ゲーム、ATT は新規ユーザーだけ初回の結果を閉じた後（応答まで操作を止める・2回目の起動でオンボーディング済みなら起動時）、プレイ中の中断と「続ける」（同じラウンドの手本から）、アイコンの文字・ベストの見出し・「閉じる」を右上へ・記録の今日のマスから今日のチャレンジ、バナー上32pt・全画面広告は1日3回まで、課金の再試行・復元結果・承認待ち・起動中の購入の反映、日付をまたいだデイリーは始めた日の記録。仕様書: <a href="flow.html">画面遷移図</a>・<a href="screens/onboarding.html">オンボーディング</a>・<a href="screens/game.html">ゲーム画面</a>・<a href="features/ad-control.html">広告制御</a>・<a href="screens/premium.html">プレミアム画面</a>・<a href="screens/daily-calendar.html">記録カレンダー</a>・<a href="features/storekit.html">StoreKit</a>・<a href="screens/settings.html">設定</a></td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-23</footer>
+  <footer class="site-footer">最終更新: 2026-10-21</footer>
 </div>
 </body>
 </html>

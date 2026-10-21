@@ -45,6 +45,15 @@
     UserDefaults を直接書き換えても次回起動でリセットされる。
   </div>
 
+  <h2>1.4.3（未公開・2026-10-21）での変更</h2>
+  <ul>
+    <li>アプリの起動時から <code>Transaction.updates</code> を監視し、承認待ちの購入の承認・他の端末での購入・返金を<strong>再起動なしで</strong>プレミアムの状態に反映する</li>
+    <li>承認待ちの購入は、画面で「承認されると自動でプレミアムになります」と知らせる</li>
+    <li>商品情報が取れないときは、画面に理由と「再試行」を出す（商品情報を取り直す）</li>
+    <li>購入の復元の結果（復元した／復元できる購入が見つからない）を、復元を押した画面にだけ出す</li>
+  </ul>
+  <p>画面側の表示は <a href="../screens/premium.html">プレミアム画面</a> を参照。</p>
+
   <h2>関連</h2>
   <ul>
     <li><a href="premium.html">v1.4.0 プレミアム（買い切り）</a></li>
@@ -57,7 +66,8 @@
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
     <tr><td>1.1</td><td>2026-08-04</td><td>v1.4.0 対応: 商品名を「広告削除」から「プレミアム」へ差し替え（Product ID・価格・形式は不変）。内部エンタイトルメント名を <code>isAdsRemoved</code> → <code>isPremium</code> にリネーム（保存キーは互換のため据え置き）。API 定義の記載をユーザーから見た挙動の記述に置き換え</td></tr>
+    <tr><td>1.4.3（未公開・2026-10-21）</td><td>2026-10-21</td><td>起動中の購入・返金の反映（Transaction.updates の監視）、承認待ちの案内、価格取得失敗時の再試行、復元結果の表示を追加</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-04</footer>
+  <footer class="site-footer">最終更新: 2026-10-21</footer>
 </div></body></html>
