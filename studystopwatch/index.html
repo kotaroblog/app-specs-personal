@@ -18,6 +18,15 @@
 
 
   <div class="callout">
+    <p style="margin-top:0"><strong>2026-10-24 1.4.2 (22) を TestFlight 配信（未公開・実機確認の後に審査提出予定）</strong></p>
+    <p><strong>ホームを B 案に作り直し</strong>（SS-030）: 今日の要約カード（次にやること・「開始」・今日の合計と目標・試験まで・連続日数）＋一覧「勉強する／計画する／ふりかえる」。日曜18時からはふりかえりのカードが一番上。
+    <strong>予定</strong>（学校・塾・小テスト。8色・終日／時刻・毎日／毎週・この日だけ削除）をカレンダーの日・週・月に表示（SS-031・032）。
+    <strong>試験を期間で</strong>設定（N日目／全M日・SS-028）。学習計画に<strong>「範囲を並べる」</strong>入力（SS-034）と「続けて別の計画を作る」（SS-035）。
+    計測中だけ流す<strong>集中用 BGM</strong>（SS-029）。計測画面・手動の記録・計測後の画面の大きい文字対応、カレンダー上部の縮小、数字キーボードの「完了」。</p>
+    <p style="margin-bottom:0">関連: <a href="screens/home.html">ホーム</a>・<a href="features/schedule.html">予定</a>・<a href="features/exam-period.html">試験の期間</a>・<a href="features/focus-bgm.html">集中用 BGM</a>・<a href="screens/study-plan-sheet.html">学習計画の作成</a>・<a href="data-model.html">データモデル</a></p>
+  </div>
+
+  <div class="callout">
     <p style="margin-top:0"><strong>2026-10-04 v1.4.0 (build 19) を公開</strong>（2026-10-01 TestFlight → 2026-10-03 審査提出）</p>
     <p>「<strong>やること（計画）→ 計測 → 振り返り</strong>」を、勉強の前後と週1回の3か所でつないだ再設計（SS-017〜022）。
     書く場所は多いのに読む場所が無かったのが使いにくさの正体だった。</p>
@@ -71,7 +80,7 @@
     <li><span class="k">言語</span><span class="v">日本語のみ</span></li>
     <li><span class="k">マネタイズ</span><span class="v">サブスクリプション（広告は <strong>Unity LevelPlay</strong> へ移行。App Key 未設定のため現在は配信なし）</span></li>
     <li><span class="k">ステータス</span><span class="v">リリース済</span></li>
-    <li><span class="k">バージョン</span><span class="v">v1.4.0 (build 19) 公開中（2026-10-04）／前の版は v1.3.4 (build 18)</span></li>
+    <li><span class="k">バージョン</span><span class="v">v1.4.0 (build 19) 公開中（2026-10-04）／1.4.2 (22) TestFlight 配信済み・未公開（2026-10-24）</span></li>
     <li><span class="k">表示名</span><span class="v">学習ストップウォッチ</span></li>
     <li><span class="k">拡張ターゲット</span><span class="v">Live Activity / Widget</span></li>
     <li><span class="k">App Group</span><span class="v"><code>group.com.happyboy1002.StudyStopwatch</code></span></li>
@@ -96,7 +105,7 @@
 
   <h2>画面仕様書</h2>
   <div class="card-grid">
-    <a class="card" href="screens/home.html"><div class="title">ホーム（タイマー）</div><div class="desc">タイマー実行画面</div><div class="meta"><span class="tag">SS-HOME-01</span></div></a>
+    <a class="card" href="screens/home.html"><div class="title">ホーム</div><div class="desc">今日の要約カード＋勉強・計画・ふりかえりの一覧（1.4.2 で B 案）</div><div class="meta"><span class="tag">SS-HOME-01</span></div></a>
     <a class="card" href="screens/today.html"><div class="title">今日</div><div class="desc">本日の学習ダッシュボード</div><div class="meta"><span class="tag">SS-TODAY-01</span></div></a>
     <a class="card" href="screens/calendar-heatmap.html"><div class="title">カレンダーヒートマップ（旧）</div><div class="desc">月単位の学習日数可視化（廃止・SS-CAL-02 へ移行）</div><div class="meta"><span class="tag">SS-CAL-01</span></div></a>
     <a class="card" href="screens/calendar.html"><div class="title">カレンダー画面</div><div class="desc">日 / 週 / 月 3ビュー切替。v1.4 から最初は週（曜日ごとのやること）＋学習計画の欄</div><div class="meta"><span class="tag">SS-CAL-02</span></div></a>
@@ -111,10 +120,13 @@
     <a class="card" href="screens/widget.html"><div class="title">Widget</div><div class="desc">ホーム画面ウィジェット</div><div class="meta"><span class="tag">SS-WID-01</span></div></a>
     <a class="card" href="screens/focus-subject-mode.html"><div class="title">フォーカス科目モード</div><div class="desc">今日の1科目をピン留めし、選ぶ疲れをなくす</div><div class="meta"><span class="tag">SS-FOCUS-01</span><span class="tag">v1.1.0</span></div></a>
     <a class="card" href="screens/grades-tab.html"><div class="title">分析タブ / 成績セグメント</div><div class="desc">分析タブ（v1.3.0 で「レポート」から改称）内にセグメント追加。テスト記録の入力・グラフ可視化・履歴一覧（5タブ構成維持）</div><div class="meta"><span class="tag">SS-GRADES-01〜03</span><span class="tag">v1.1.0</span></div></a>
-    <a class="card" href="screens/study-plan-sheet.html"><div class="title">学習計画シート</div><div class="desc">総量・終了日から StudyPlan と日ごとの StudyTask を作る（v1.4 から合計ちょうどに配分）</div><div class="meta"><span class="tag">SS-PLAN-01</span></div></a>
+    <a class="card" href="screens/study-plan-sheet.html"><div class="title">学習計画シート</div><div class="desc">合計を割る／範囲を並べるで StudyPlan と日ごとの StudyTask を作る（1.4.2 で範囲・続けて作成）</div><div class="meta"><span class="tag">SS-PLAN-01</span></div></a>
     <a class="card" href="screens/after-session.html"><div class="title">計測を終えたあとの画面</div><div class="desc">「終わった？」「次はいつ・何を？」「メモ」を残し、次のやることを作る</div><div class="meta"><span class="tag">SS-AFTER-01</span><span class="tag">v1.4.0</span></div></a>
     <a class="card" href="screens/weekly-review.html"><div class="title">週のふりかえり</div><div class="desc">日曜18時からホームに出す。やることの結果・終わらなかったこと（来週へ／消す）・この週のメモ</div><div class="meta"><span class="tag">SS-REVIEW-01</span><span class="tag">v1.4.0</span></div></a>
     <a class="card" href="screens/task-creation-sheet.html"><div class="title">タスク作成シート</div><div class="desc">やること単体の新規作成・編集（プリセット候補・期限日設定）</div><div class="meta"><span class="tag">SS-TASK-01</span></div></a>
+    <a class="card" href="screens/schedule-edit.html"><div class="title">予定の追加・編集</div><div class="desc">学校・塾・小テストなど時間の決まった予定（8色・繰り返し・この日だけ削除）</div><div class="meta"><span class="tag">SS-SCHED-01</span></div></a>
+    <a class="card" href="screens/manual-entry.html"><div class="title">手動の記録</div><div class="desc">計測せずに記録。開始の初期値は今−学習時間・未来の記録は確認</div><div class="meta"><span class="tag">SS-MANUAL-01</span></div></a>
+    <a class="card" href="screens/exam-date-setup.html"><div class="title">試験日の画面</div><div class="desc">種別のチップ・複数日スイッチ・期間を塗ったカレンダー</div><div class="meta"><span class="tag">SS-EXAM-01</span></div></a>
   </div>
 
   <h2>機能仕様書</h2>
@@ -132,6 +144,9 @@
     <a class="card" href="features/focus-subject-mode.html"><div class="title">フォーカス科目モード</div><div class="desc">1科目ピン留め・タイマー即起動の処理フロー</div><div class="meta"><span class="tag">SS-FEAT-FOCUS-01</span><span class="tag">v1.1.0</span></div></a>
     <a class="card" href="features/grade-record.html"><div class="title">成績記録機能</div><div class="desc">テスト結果の登録・編集・削除・グラフ描画フロー（レポートタブ内セグメント統合）</div><div class="meta"><span class="tag">SS-FEAT-GRADE-01</span><span class="tag">v1.1.0</span></div></a>
     <a class="card" href="features/weekly-report.html"><div class="title">週次ふりかえりレポート</div><div class="desc">前週（月〜日）の学習実績をスナップショット保存。Premium ユーザーにコーチコメント付きで提示</div><div class="meta"><span class="tag">SS-FEAT-WEEKLY-01</span><span class="tag">v1.2.0</span><span class="tag">Premium</span></div></a>
+    <a class="card" href="features/schedule.html"><div class="title">予定</div><div class="desc">やることとは別の予定。カレンダーの日・週・月に帯で表示</div><div class="meta"><span class="tag">SS-FEAT-SCHED-01</span><span class="tag">1.4.2</span></div></a>
+    <a class="card" href="features/focus-bgm.html"><div class="title">集中用 BGM</div><div class="desc">計測中だけ流す3曲。画面ロックでも継続・休憩・広告・割り込みで停止</div><div class="meta"><span class="tag">SS-FEAT-BGM-01</span><span class="tag">1.4.2</span></div></a>
+    <a class="card" href="features/exam-period.html"><div class="title">試験の期間</div><div class="desc">1日／複数日の試験を ExamSchedule で同じ計算に</div><div class="meta"><span class="tag">SS-FEAT-EXAM-01</span><span class="tag">1.4.2</span></div></a>
   </div>
 
     <h2>変更履歴</h2>
@@ -141,9 +156,10 @@
     <tr><td>1.1</td><td>2026-08-23</td><td><strong>広告基盤を Unity LevelPlay に統一</strong>（2026-08-20 に7アプリ、2026-08-23 に ITPassportMaster を移行し全8アプリ）。<strong>ATT ダイアログの表示条件を変更</strong>: <code>isAdDeliveryAvailable</code>（<code>isProduction</code> を含む）でガードしていたため、sandbox 環境で実行される審査ビルドでは ATT が表示されず、2026-08-22 に CHROMATIC 1.4.0(7) が iPadOS 26.6 の審査で Guideline 2.1 - Information Needed でリジェクトされた。配信可否と ATT 表示可否を分離し、ATT は <code>shouldRequestTracking = !appKey.isEmpty</code> で判定する。あわせて <code>PrivacyInfo.xcprivacy</code> の方針（<code>NSPrivacyTracking: false</code> ＋ <code>NSPrivacyTrackingDomains</code> キーごと削除）を明記。 詳細は <a href="features/ad-control.html">広告制御</a>。</td></tr>
     <tr><td>1.2</td><td>2026-10-01</td><td><strong>v1.4.0（TestFlight・未提出）</strong>を反映。冒頭に再設計の告知を追加し、バージョン表記を更新。新規3ページ（<a href="screens/after-session.html">計測を終えたあとの画面</a>・<a href="screens/weekly-review.html">週のふりかえり</a>・<a href="features/study-plan.html">学習計画の進み具合と配り直し</a>）のカードを追加。カレンダー・学習計画シート・やることリストのカード説明を更新</td></tr>
     <tr><td>1.3</td><td>2026-10-04</td><td><strong>v1.4.0 (build 19) を公開</strong>（2026-10-03 審査提出・本人が手動公開）。冒頭の告知とバージョン表記を更新。各ページの変更履歴にある「1.4.0（TestFlight・未提出）」はその時点の記録のため残す</td></tr>
+    <tr><td>1.4</td><td>2026-10-24</td><td><strong>1.4.2 (22)（TestFlight 配信済み・未公開）</strong>を反映。冒頭に告知を追加しバージョン表記を更新。新規6ページ（予定の追加・手動の記録・試験日の画面・予定・集中用 BGM・試験の期間）のカードを追加。ホーム・学習計画の作成のカード説明を更新</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-10-01</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>

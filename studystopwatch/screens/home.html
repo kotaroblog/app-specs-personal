@@ -1,214 +1,117 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>StudyStopwatch - ホーム</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / ホーム</div>
-  <header class="site-header"><h1>ホーム画面（HomeView）</h1><p>タイマー実行の中心画面</p>
-  <div class="section-meta"><span class="tag todo">v1.4.0（TestFlight・未提出）</span><span class="tag">画面ID: SS-HOME-01</span></div></header>
+  <header class="site-header"><h1>ホーム画面（HomeView）</h1><p>今日の要約カード＋勉強・計画・ふりかえりの一覧</p>
+  <div class="section-meta"><span class="tag todo">1.4.2 (22)（TestFlight 配信済み・未公開）</span><span class="tag">画面ID: SS-HOME-01</span></div></header>
 
   <h2>目的・役割</h2>
-  <p>科目を選んでタイマーを開始・停止する画面。タイマー実行中はLive Activityとも連動。</p>
-  <p>
-    あわせて<strong>このアプリの中心価値「試験日から逆算して今日やる分が決まる」を最初に提示する場所</strong>でもある（v1.3〜）。
-    起動直後に目に入る位置で試験日までの残り日数を見せ、未設定ならそこから設定・学習計画作成まで繋ぐ。
-  </p>
-  <p>
-    v1.4 からは「<strong>やること（計画）→ 計測 → 振り返り</strong>」の入口でもある。未完了のやることがある日は一番上に「今日やること」を出し、
-    「開始」でそのやることの計測を始める。計測を終えると<a href="after-session.html">計測を終えたあとの画面</a>で次のやることを決め、
-    日曜の夜からは<a href="weekly-review.html">週のふりかえり</a>のカードを出す（SS-017 / SS-018）。
-  </p>
+  <p>起動して最初に見る画面。<strong>「今日、次に何をやるか」と「開始」を1か所にまとめた要約カード</strong>と、
+  勉強・計画・ふりかえりの入口を並べた一覧の2段で構成する（1.4.2 で B 案に作り直し。SS-030）。</p>
+  <p>計測はホームの「開始」か、一覧の「科目を選んで計測」から始める。計測中は<a href="../features/timer.html">計測画面</a>に切り替わる。</p>
 
-  <h2>UI 構成（v1.4）</h2>
-  <div class="callout info">
-    v1.4 で、試験日カウントダウンのすぐ下に「週のふりかえり」カードと「今日やること」を足した。<strong>未完了のやることが無い日は v1.3 と同じ並び</strong>（下の「UI 構成（v1.3）」）。
-    カウントダウンを最上部に置く決まり（v1.3）はそのまま。
-  </div>
+  <h2>UI 構成（1.4.2）</h2>
   <table>
-    <tr><th>順序</th><th>要素</th><th>説明</th></tr>
-    <tr><td>1</td><td>試験日カウントダウン（<code>ExamCountdownCard</code>）</td><td>v1.3 と同じ</td></tr>
-    <tr><td>2</td><td>週のふりかえりカード（<code>WeeklyReviewCard</code>）<span class="tag">v1.4</span></td><td>日曜18時から、ふりかえるか閉じるまで出す（前の週なら「先週のふりかえり」）。詳細は<a href="weekly-review.html">週のふりかえり</a></td></tr>
-    <tr><td>3</td><td>今日やること（<code>TodayTaskListCard</code>）<span class="tag">v1.4</span></td><td><strong>未完了のやることがある日だけ</strong>出す（下表）</td></tr>
-    <tr><td>4</td><td>今日目標カード（todayGoalCard）</td><td>v1.3 と同じ</td></tr>
-    <tr><td>5</td><td>科目を選んで始める</td><td>今日やることを出す日は「前回の続き」の開始CTAを出さず、<strong>前回の科目も含めた全科目</strong>を科目一覧に並べる（3件＋展開）。フォーカス科目モードならその科目のカード、科目が0件なら「科目が登録されていません」</td></tr>
-    <tr><td>6〜</td><td>今週・今月／ポモドーロ／ダッシュボード</td><td>v1.3 と同じ</td></tr>
+    <tr><th>順</th><th>部品</th><th>中身</th></tr>
+    <tr><td>0</td><td>週のふりかえりカード（<code>WeeklyReviewCard</code>）</td><td><strong>日曜18時から</strong>、ふりかえるか × で閉じるまで<strong>一番上</strong>に出す（<code>WeeklyReviewService.startHour = 18</code>）</td></tr>
+    <tr><td>1</td><td>今日の要約カード（<code>HomeSummaryCard</code>）上段</td><td>次にやること＋開始ボタン。出し分けは下の表</td></tr>
+    <tr><td>1</td><td>今日の要約カード 下段（<code>HomeSummaryStats</code>）</td><td>今日の合計と目標（達成率）／試験まで／連続日数。目標をタップで今日の目標の編集、試験をタップで<a href="exam-date-setup.html">試験日の画面</a></td></tr>
+    <tr><td>2</td><td>習慣づくりのカード（<code>HabitSetupCard</code>）</td><td>初めて記録したあとに1回だけ。1日の目標と通知を理由つきで提案</td></tr>
+    <tr><td>3</td><td>一覧「勉強する」</td><td>科目を選んで計測（科目数）／計測せず手動で記録／ポモドーロで計る（スイッチ。オンなら「N分集中 → N分休憩」）</td></tr>
+    <tr><td>3</td><td>一覧「計画する」</td><td>今日やること（終えた数/全体・無ければ「なし」）／学習計画（「進み N%」・無ければ「作る」）／試験日（月日・「今日」・「期間中」・「未設定」）／予定（学校・塾・小テスト）「足した予定はカレンダーで見られます」／目標（今日・今週・今月）（「今週 N%」・無ければ「未設定」）</td></tr>
+    <tr><td>3</td><td>一覧「ふりかえる」</td><td>週のふりかえり（日曜の夜からは「できます」、それ以外は「日曜の夜」）</td></tr>
   </table>
 
-  <h3>今日やること（TodayTaskListCard）</h3>
+  <h3>要約カード上段の出し分け（<code>HomeDashboard.Lead</code>）</h3>
   <table>
-    <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>見出し</td><td>「今日やること」＋右に「今日終えた数 / 全体 完了」</td></tr>
-    <tr><td>案内</td><td>「『開始』を押すと、そのやることで計測が始まります」（科目が1つも無いときは出さない）</td></tr>
-    <tr><td>並び</td><td>期限切れ（古い順）→ 今日（並び順・作成順）→ 今週中（作成順）。未完了は最大5件、超えた分は「ほか N 件はカレンダーの『週』で見られます」。その下に今日終えたものを最大3件（打ち消し線）</td></tr>
-    <tr><td>左の丸</td><td><strong>計測せずに完了</strong>にする／完了を未完了に戻す</td></tr>
-    <tr><td>科目の色の帯・題名</td><td>やることの科目の色（科目が無ければアクセント色）</td></tr>
-    <tr><td>説明の行</td><td>「科目・昨日の分／N日前の分（オレンジ）・今週中／先週までの分（オレンジ）・途中まで・学習計画／前回決めた／先週から」を「・」でつなぐ</td></tr>
-    <tr><td>前回のメモ</td><td>やることに残したメモ（<code>handoffNote</code>）があれば「前回のメモ：〜」を出す（未完了のときだけ）</td></tr>
-    <tr><td>「開始」ボタン</td><td>そのやることで計測を始める。計測と紐づいたことがある（途中まで）ものは「続き」。科目の色。科目が1つも無いときは出さない</td></tr>
-  </table>
-  <table>
-    <tr><th>対象</th><th>条件（「今日」は学習日の区切りで決める）</th></tr>
-    <tr><td>期限切れ</td><td>期限がその日のやること: 期限が今日より前。今週中のやること: その週が過ぎた。<strong>直近7日分まで</strong>（途中でやめた学習計画の古いやることが毎日並び続けないように。データは消さない）</td></tr>
-    <tr><td>今日</td><td>期限がその日で、期限が今日</td></tr>
-    <tr><td>今週中</td><td>期限の種類が「今週中」で、今日がその週（月〜日）の中</td></tr>
-    <tr><td>今日終えたもの</td><td>完了した時刻が今日の学習日の中</td></tr>
+    <tr><th>条件</th><th>表示</th></tr>
+    <tr><td>未完了のやることがある日</td><td>「次にやること」1件（前回のメモがあれば添える）＋開始。2件目以降は「ほかN件」→ 今日やることの画面</td></tr>
+    <tr><td>やることが無く、今日の1科目（フォーカス科目）を設定している</td><td>その科目＋開始＋「変更」（今日の1科目を選ぶシート）</td></tr>
+    <tr><td>やることが無く、記録がある</td><td>前回学習した科目＋開始</td></tr>
+    <tr><td>記録がまだ無い</td><td>先頭の科目＋開始</td></tr>
+    <tr><td>科目が1つも無い</td><td>「科目が登録されていません」＋「科目を追加」。<strong>開始は出さない</strong>（計測には科目が要る）</td></tr>
   </table>
 
-  <h2>UI 構成（v1.3）— v1.4 でも未完了のやることが無い日はこの並び</h2>
-  <div class="callout warn">
-    <strong>🔴 並び順を戻さないこと（v1.3・2026-09-05）</strong><br>
-    このアプリの中心価値は「<strong>試験日から逆算して今日やる分が決まる</strong>」こと。
-    v1.2.2 までは試験日カウントダウンが文脈カード群の中にあり、<strong>画面の6番目・スクロールしないと見えない</strong>位置だった。
-    機能としては実装済みなのに導線上ほぼ発見できず、結果として「カウントダウン付きのストップウォッチ」として使い始められる構造になっていた
-    （Fable 5.1 のUI評価 2026-09-02 で最重要と判定。SS-001 / SS-002）。<br>
-    そのため v1.3 でカウントダウンを <code>ExamCountdownCard</code> として切り出し、<strong>開始CTAより前・画面最上部</strong>に置いている。
-    「毎日使う開始CTAが最上部であるべき」という一般論でこの順序を戻すと、中心価値が再び埋没する。
-  </div>
-  <div class="callout info">
-    v1.2.2 でカード順序を再設計。「大型開始CTA → 今日目標リング（主表示）→ 今週・今月（補助）→ ポモドーロ → 文脈カード」に整理。
-    科目一覧の各行を主導線（計測ボタン）と副導線（…メニュー）に整理し視認負荷を低減。
-  </div>
+  <h3>「試験まで」の表示（<code>ExamSchedule.phase</code>）</h3>
   <table>
-    <tr><th>順序</th><th>要素</th><th>説明</th></tr>
-    <tr><td>1</td><td>試験日カウントダウン（examCountdownSection / <code>ExamCountdownCard</code>）<span class="tag">v1.3</span></td><td>通常カードスタイル（<code>softCardBorder</code>）。試験日設定済みなら残り日数を大型数字（<code>@ScaledMetric</code> 40pt・relativeTo: .largeTitle）で表示。<strong>未設定・期限切れ時はカード全体がボタン</strong>（下記「タップ挙動」参照）</td></tr>
-    <tr><td>2</td><td>大型計測開始CTA（startCTACard）</td><td>重要カードスタイル（太い枠線＋底面シャドウ）。前回続き（直近セッションの科目）がある場合は「前回の続き: [科目名]」、フォーカス科目モード時は「今日の1科目: [科目名]」を表示。大きな「計測スタート」ボタン＋弱い「計測せず手動で記録」テキストリンク。<strong>v1.3 でカウントダウン1枚ぶん下がった</strong>（押せることと順序を UIテストで固定済み）</td></tr>
-    <tr><td>3</td><td>今日目標カード（todayGoalCard）</td><td>重要カードスタイル。大リングで当日達成率を主表示。基準は <code>effectiveDailyGoalMinutes</code>（日次StudyGoal優先→設定の1日の目標にフォールバック）。計測中リング・達成演出・ホーム表示すべて同一基準を使用</td></tr>
-    <tr><td>4</td><td>科目候補リスト（subjectPickerList）</td><td>「科目を選んで始める」。通常モードかつ科目が2件以上のときのみ表示。CTA科目を除いた候補を3件に絞り、<code>showAllSubjects</code> で全件展開。主導線は「計測」ボタン、「手動で記録」・「編集」・「削除」は各行末の「…」メニューへ集約</td></tr>
-    <tr><td>5</td><td>今週・今月カード（2枚 / secondaryGoalsRow）</td><td>通常カードスタイル（影なし・軽い境界線のみ）。compact 表示で横並び</td></tr>
-    <tr><td>6</td><td>ポモドーロ設定トグル</td><td>集中25分/休憩5分の自動切替。通常カードスタイル</td></tr>
-    <tr><td>7</td><td>ダッシュボードカード（dashboardCard / <code>DashboardCard</code>）</td><td>連続日数（🔥 N日連続）とモチベーション引用のみ。<strong>v1.3 でカウントダウンを最上部へ移設したため中身が2つに減った</strong>。<strong>どちらも無いときはカード自体を描画しない</strong>（<code>hasContent</code> が false なら <code>EmptyView</code>）— そうしないと当日まだ記録していない新規ユーザーにホーム最下部の空の枠線カードだけが残る</td></tr>
-    <tr><td>—</td><td>科目未登録時</td><td>primaryStudySection が ContentUnavailableView「科目が登録されていません／設定タブから科目を追加してください」に切り替わる</td></tr>
-    <tr><td>—</td><td>タイマー実行中表示（timerRunningView）</td><td>タイマー実行中のみ全面切替。HH:MM:SS 大字 + 一時停止/停止ボタン（スタイルはタイマー機能仕様参照）</td></tr>
-    <tr><td>—</td><td>目標達成オーバーレイ</td><td>日次目標達成時に「目標達成！」フルスクリーンオーバーレイ（タップで閉じる）</td></tr>
-    <tr><td>—</td><td>ツールバー（右上）</td><td>共有ボタン（<code>accessibilityLabel: "学習記録を共有"</code>）</td></tr>
+    <tr><th>状態</th><th>表示</th></tr>
+    <tr><td>未設定</td><td>「設定する」</td></tr>
+    <tr><td>開始日の前</td><td>残り N日（「テストまで」「試験まで」は種別による）</td></tr>
+    <tr><td>複数日の試験の期間中</td><td>N日目／全M日</td></tr>
+    <tr><td>1日だけの試験の当日</td><td>今日は試験当日</td></tr>
+    <tr><td>終わった後</td><td>「次を設定」</td></tr>
   </table>
-
-  <h2>試験日カウントダウンのタップ挙動（v1.3）</h2>
-  <p>
-    <code>ExamCountdownCard</code> は「設定を促している状態＝押せなければならない」という原則で作る。
-    押せない状態で「タップして設定しよう」と書くと、案内文が嘘になる。
-  </p>
-  <table>
-    <tr><th>状態</th><th>判定（<code>isTappable</code>）</th><th>表示</th><th>タップ</th></tr>
-    <tr><td>試験日 未設定</td><td><code>examDate == nil</code> → true</td><td>「試験日を設定しよう」＋ chevron.right ／ サブ「タップして登録すると、試験日までの残り日数と1日にやる分が出ます」</td><td><strong>可</strong>（カード全体がボタン）→ 試験日設定シート</td></tr>
-    <tr><td>試験日 設定済み（残り1日以上）</td><td><code>daysLeft &gt; 0</code> → false</td><td>残り日数の大型数字＋試験名など</td><td>不可（表示のみ）</td></tr>
-    <tr><td>試験日 期限切れ（残り0日以下）</td><td><code>daysLeft &lt;= 0</code> → <strong>true</strong></td><td>「お疲れ様でした！」＋「タップして次の試験日を設定しよう」</td><td><strong>可</strong> → 試験日設定シート</td></tr>
-  </table>
-  <div class="callout warn">
-    <strong>🔴 期限切れ状態を条件から落とさないこと。</strong>
-    <code>isTappable</code> を <code>examDate == nil</code> だけで判定すると、期限切れ状態が抜ける。
-    そこも「タップして次の試験日を設定しよう」と促しているため、押せないと v1.2.2 と同じ欠陥（押せないカードで口頭指示だけする）を別の状態で作り直すことになる。
-    判定は必ず「<strong>未設定 または 残り0日以下</strong>」で行う。
-  </div>
-
-  <h2>ビジュアル階層方針（v1.2.2）</h2>
-  <div class="callout info">
-    「重要カードスタイル」（太い枠線＋底面シャドウ）は主役カードにのみ適用し、画面全体の情報階層を明確化。
-    通常カードは軽い境界線のみ（影なし）。Dynamic Type 上限の不必要な制限は設けない。
-  </div>
-  <table>
-    <tr><th>スタイル</th><th>適用対象</th></tr>
-    <tr><td>重要カードスタイル</td><td>開始CTA・今日目標カード</td></tr>
-    <tr><td>通常カードスタイル</td><td>試験日カウントダウン・科目候補リスト・今週・今月・ポモドーロ・ダッシュボードカード</td></tr>
-  </table>
-  <div class="callout info">
-    試験日カウントダウンは<strong>位置（最上部）で優先度を示し、装飾は通常カードスタイルに留める</strong>。
-    重要カードスタイルを重ねると開始CTA・今日目標カードとの階層が崩れるため。
-    ただし <code>.softCardBorder()</code> は必須（v1.3 の切り出し時に一度脱落し、最上部の一番目立たせたいカードだけ枠線なしになった）。
-  </div>
+  <p>計算は <code>ExamSchedule</code> 1か所（ホーム・カレンダー・週のレポート・ウィジェットで同じ答え）。詳細は<a href="../features/exam-period.html">試験の期間</a>。</p>
 
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示</th></tr>
-    <tr><td>停止中（科目あり）</td><td>examCountdownSection + startCTACard + todayGoalCard + subjectPickerList + 今週/今月 compact + ポモドーロ + dashboardCard</td></tr>
-    <tr><td>停止中（科目なし）</td><td>ContentUnavailableView「科目が登録されていません」</td></tr>
-    <tr><td>実行中</td><td>timerRunningView に全面切替（経過時間大字 + 完了ボタン（主）+ 一時停止/再開（弱））</td></tr>
-    <tr><td>一時停止中</td><td>timerRunningView 内に再開ボタン</td></tr>
-    <tr><td>ポモドーロ集中中</td><td>「集中タイム N分」表示</td></tr>
-    <tr><td>ポモドーロ休憩中</td><td>「休憩タイム N分」表示</td></tr>
-    <tr><td>フォーカス科目モード ON</td><td>startCTACard に「今日の1科目: [科目名]」を表示。ピン留め科目カードを上部強調。他科目は折りたたみ（showOtherSubjects トグルで展開）</td></tr>
-    <tr><td>学習日変更検出</td><td>scenePhase.active 復帰時に todayKey を更新し @Query を再構築</td></tr>
-    <tr><td>試験日未設定</td><td>最上部の <code>ExamCountdownCard</code> が「試験日を設定しよう」＋ chevron.right のボタンになる。タップで試験日設定シート</td></tr>
-    <tr><td>試験日 期限切れ（残り0日以下）</td><td>「お疲れ様でした！／タップして次の試験日を設定しよう」。カードはタップ可</td></tr>
-    <tr><td>未完了のやることがある日<span class="tag">v1.4</span></td><td>カウントダウン →（ふりかえりカード）→ 今日やること → 今日目標 → 全科目の一覧（開始CTAは出さない）</td></tr>
-    <tr><td>未完了のやることが無い日<span class="tag">v1.4</span></td><td>v1.3 と同じ並び（開始CTA「前回の続き」→ 今日目標 → 科目候補）</td></tr>
-    <tr><td>やることから計測中<span class="tag">v1.4</span></td><td>計測中の画面で、科目名の下にやることの題名を出す（2行まで）</td></tr>
-    <tr><td>日曜18時以降・ふりかえり未了<span class="tag">v1.4</span></td><td>カウントダウンの下に週のふりかえりカード</td></tr>
-    <tr><td>連続日数0かつモチベーション未設定</td><td><code>DashboardCard</code> を<strong>描画しない</strong>（<code>EmptyView</code>）。当日まだ記録していない新規ユーザーで発生する</td></tr>
+    <tr><td>停止中</td><td>上の UI 構成</td></tr>
+    <tr><td>計測中・一時停止中・ポモドーロ</td><td>計測画面に全面切り替え（<a href="../features/timer.html">タイマー機能</a>）。集中用 BGM の行を含む</td></tr>
+    <tr><td>日曜18時以降・ふりかえり未了</td><td>ふりかえりカードが要約カードより上</td></tr>
+    <tr><td>学習日の切り替わり</td><td>scenePhase.active 復帰時に今日の判定を更新して集計し直す</td></tr>
   </table>
 
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>先</th></tr>
-    <tr><td>試験日カウントダウンをタップ（未設定・期限切れ時）<span class="tag">v1.3</span></td><td>試験日設定シート（<code>ExamDateSetupSheet</code>）</td></tr>
-    <tr><td>試験日設定シートで保存 → シートが閉じきる<span class="tag">v1.3</span></td><td>アラート「学習計画を作りますか？」を提示</td></tr>
-    <tr><td>アラート「作る」<span class="tag">v1.3</span></td><td><a href="study-plan-sheet.html">学習計画シート（StudyPlanSheet）</a></td></tr>
-    <tr><td>アラート「あとで」<span class="tag">v1.3</span></td><td>同画面（何もしない）</td></tr>
-    <tr><td>計測スタートボタン</td><td>タイマー開始 → timerRunningView</td></tr>
-    <tr><td>「計測せず手動で記録」リンク</td><td>手動記録シート（sheet）</td></tr>
-    <tr><td>完了ボタン（実行中）</td><td>StudySession保存 → 同画面 + 完了トースト</td></tr>
-    <tr><td>「…」メニュー → 手動で記録</td><td>手動記録シート（sheet）</td></tr>
-    <tr><td>今日やることの「開始」「続き」<span class="tag">v1.4</span></td><td>そのやることで計測開始（科目はやることの科目。無ければ前回の科目、それも無ければ先頭の科目）→ timerRunningView</td></tr>
-    <tr><td>今日やることの左の丸<span class="tag">v1.4</span></td><td>同画面（計測せずに完了／未完了に戻す）</td></tr>
-    <tr><td>やることから始めた計測の完了<span class="tag">v1.4</span></td><td><a href="after-session.html">計測を終えたあとの画面</a>（sheet）。閉じたあと広告（出す回のみ）・祝賀・レビュー依頼</td></tr>
-    <tr><td>科目から始めた計測の完了 → トーストの「次にやることを決める」<span class="tag">v1.4</span></td><td><a href="after-session.html">計測を終えたあとの画面</a>（sheet・科目モード）</td></tr>
-    <tr><td>週のふりかえりカードの「ふりかえる」<span class="tag">v1.4</span></td><td><a href="weekly-review.html">週のふりかえり</a>（sheet）</td></tr>
-    <tr><td>週のふりかえりカードの ×<span class="tag">v1.4</span></td><td>同画面（その週のカードを出さなくなる）</td></tr>
+    <tr><td>要約カードの「開始」</td><td>やることなら、そのやることの計測（科目はやることの科目 → 前回の科目 → 先頭の科目）。科目ならその科目の計測</td></tr>
+    <tr><td>「ほかN件」／一覧「今日やること」</td><td>今日やることの画面（<code>HomeTaskListScreen</code>・push）</td></tr>
+    <tr><td>要約カードの目標</td><td><a href="goal-edit.html">目標の編集</a>（今日）</td></tr>
+    <tr><td>要約カードの試験／一覧「試験日」</td><td><a href="exam-date-setup.html">試験日の画面</a>（sheet）。保存後に「学習計画を作りますか？」</td></tr>
+    <tr><td>一覧「科目を選んで計測」</td><td>科目を選ぶ画面（<code>HomeSubjectListScreen</code>・計測モード）。行の「…」から手動の記録・編集・削除</td></tr>
+    <tr><td>一覧「計測せず手動で記録」</td><td>科目を選ぶ画面（手動モード）→ <a href="manual-entry.html">手動の記録</a></td></tr>
+    <tr><td>一覧「学習計画」</td><td>計画があれば学習計画の画面（<code>HomePlanScreen</code>・進み具合と新しい計画の作成）、無ければ直接<a href="study-plan-sheet.html">学習計画の作成</a></td></tr>
+    <tr><td>一覧「予定」</td><td><a href="schedule-edit.html">予定の追加</a>（sheet）</td></tr>
+    <tr><td>一覧「目標」</td><td>目標の管理（<code>GoalManagementView</code>・push）</td></tr>
+    <tr><td>ふりかえりカード／一覧「週のふりかえり」</td><td><a href="weekly-review.html">週のふりかえり</a>（sheet）</td></tr>
+    <tr><td>やることから始めた計測の完了</td><td><a href="after-session.html">計測を終えたあとの画面</a></td></tr>
+    <tr><td>科目から始めた計測の完了</td><td>短い計測後の画面（<code>RecordedSummarySheet</code>）。「次にやることを決める」で計測を終えたあとの画面へ</td></tr>
   </table>
 
   <h2>使用するデータモデル</h2>
-  <pre><code>StudySession（保存対象）+ Subject（科目選択）
-TimerViewModel { isRunning, isPaused, elapsedSeconds, currentSubject, isPomodoroMode, pomodoroPhase }
-effectiveDailyGoalMinutes: StudyGoal（日次）?.targetMinutes ?? settings.dailyGoalMinutes
-
-// v1.4
-TimerViewModel.currentTaskID: UUID?     // やることから始めた計測のとき（UserDefaults activeTimer_taskID にも保存）
-StudyTask（今日やること。dueScopeRawValue / originRawValue / handoffNote / linkedSessionID を表示に使う）
-HomeTaskList { overdue, today, thisWeek, doneToday }   // TaskScheduling.homeTasks(overdueWindowDays: 7)
-WeeklyReviewData?                        // WeeklyReviewService.availableReview</code></pre>
+  <pre><code>StudySession / Subject / StudyTask / StudyPlan / StudyGoal / UserSettings（@Query）
+HomeDashboard   // 要約カードと一覧に出す中身（純粋な計算・テスト可能）
+  lead: .task(StudyTask, otherCount) | .subject(Subject, kind: .focus/.lastStudied/.first) | .noSubjects
+  todayTotal, todayGoalMinutes, exam(.notSet/.upcoming/.inProgress/.finished), streakDays
+  taskDone/taskTotal, planPercent, weekGoalPercent
+UserSettings.examDate / examEndDate → ExamSchedule
+WeeklyReviewData?   // WeeklyReviewService</code></pre>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
-    <li class="done">UserDefaults 経由でタイマー永続化（24時間境界）</li>
-    <li class="done">scenePhase 監視でバックグラウンド時の経過時間補正 / 学習日変更時に <code>todayKey</code> を更新して @Query を再構築</li>
-    <li class="done">Live Activity と連動（startActivity / updateActivity / endActivity）</li>
-    <li class="done">フォーカス科目モード: <code>settings?.focusSubjectModeEnabled</code> + <code>settings?.focusSubjectID</code> で制御。FocusSubjectPickerSheet で変更</li>
-    <li class="done">dashboardCard は todaySessions / weekSessions / monthSessions を3つの独立 @Query で取得（パフォーマンス改善）</li>
-    <li class="done">goalsRow は activeGoals（isClosedでフィルタ）から日/週/月の StudyGoal を取得</li>
-    <li class="done">共有ボタンに <code>.accessibilityLabel("学習記録を共有")</code> を付与（HIG準拠）</li>
-    <li class="done">完了セッション数 <code>completedSessionCount</code>（AppStorage）をインクリメントし、閾値でレビューリクエスト（requestReview）</li>
-    <li class="done">effectiveDailyGoalMinutes: 日次StudyGoal優先→設定の dailyGoalMinutes にフォールバック（計測中リング・達成演出・カード表示で統一）</li>
-    <li class="done">科目一覧の「…」メニューに「手動で記録」・「編集」・「削除」を集約（主ボタンを「計測」のみに絞る）</li>
-    <li class="done"><strong>v1.3</strong> 試験日カウントダウンを <code>DashboardCard</code> から <code>ExamCountdownCard</code> として切り出し、<code>subjectListView</code> の最上部（開始CTAより前）へ配置</li>
-    <li class="done"><strong>v1.3</strong> 試験日設定シート＋学習計画シート＋提案アラートの一連の導線は <code>ExamPlanFlow</code>（ViewModifier）に切り出す。HomeView の body に直接書くと<strong>型推論が限界を超えてビルドが通らない</strong>。View を200行以下に保つ規約にも沿う</li>
-    <li class="done"><strong>v1.3</strong> 提案アラートは <code>sheet(onDismiss:)</code> で提示する。<code>ExamDateSetupSheet</code> の <code>onSaved</code> は <strong>dismiss の前</strong>に呼ばれるため、受け側は <code>didSaveExamDate</code> フラグを立てるだけにする。dismiss 後に直接 alert を出すと、シートが閉じるアニメーション中の提示になり UIKit の "already presenting" で黙って捨てられる余地が残る（シミュレーターでは通ってしまう）</li>
-    <li class="done"><strong>v1.3</strong> <code>ExamCountdownCard.isTappable</code> は「<code>examDate == nil</code> または 残り0日以下」。未設定のみで判定しない</li>
-    <li class="done"><strong>v1.3</strong> <code>DashboardCard.hasContent</code>（<code>streakDays &gt; 0 || motivation が非空</code>）が false なら <code>EmptyView</code> を返す</li>
-    <li class="done"><strong>v1.4</strong> やることの分け方は <code>TaskScheduling.homeTasks</code>（純粋関数）。ホームは期限切れを直近7日分（<code>overdueWindowDays</code>）に絞り、「今日」タブは全部出す</li>
-    <li class="done"><strong>v1.4</strong> 完了・未完了の切り替えは <code>TaskFlowService.complete / reopen</code> を通す</li>
-    <li class="done"><strong>v1.4</strong> 完了時は <code>stop()</code> でリセットされる前に <code>currentTaskID</code> を控え、やることが見つかれば計測を終えたあとの画面を出して return する（広告・祝賀・レビュー依頼は閉じたあと）。見つからなければ従来の流れ</li>
-    <li class="done"><strong>v1.4</strong> 取り消しトースト（記録したとき）に「次にやることを決める」を足し、表示時間を 8秒（目標達成の演出を挟んだときは残り 4秒）に延ばした。破棄のときは従来どおり 5秒</li>
-    <li class="done"><strong>v1.4</strong> 保存後のお知らせは <code>FlowToast</code>（4秒・VoiceOver に読み上げを送る）</li>
-    <li class="done"><strong>v1.4</strong> 起動時、本編を出す前に消えた科目への参照を外す（<code>SubjectReferenceService</code>。ホームがやることの科目名を読むため、先に外さないと起動直後に落ちうる。SS-022）</li>
-    <li class="done"><strong>v1.4</strong> 計測イベント <code>task_started_from_home</code>（今日やることから開始）、<code>weekly_review_shown</code> / <code>weekly_review_dismissed</code></li>
-    <li class="done"><strong>v1.3</strong> UIテストで「開始CTAが押せること」と「カウントダウンが開始CTAより上にあること」を固定。学習開始は毎日いちばん使う操作のため、順序変更で押し下げても壊れないことを保証する</li>
+    <li class="done">HomeView を分割（<code>HomeView+Content</code>・<code>HomeView+Modifiers</code>・<code>HomeSummaryCard</code>／<code>Leads</code>／<code>Stats</code>・<code>HomeMenuList</code>・<code>HomeDestinationScreens</code>・<code>TimerRunningView</code>・<code>TimerControls</code>・<code>SubjectRow</code>・<code>UndoToast</code>）。2,000行超から各200行前後へ</li>
+    <li class="done">計測の完了まわり（保存・取り消し・計測後の画面の出し分け）は <code>HomeViewModel</code>、上段の出し分けや集計は <code>HomeDashboard</code> に置く（シミュレーターなしでテストできる側）</li>
+    <li class="done">開始ボタンはホームで1か所。<strong>文言は「開始」、色は <code>AppTheme.startButton</code>（#368002）に固定</strong>。以前は「開始」「計測スタート」が混ざり、科目の色によっては白文字が読めなかった（UX チェック #11）。科目の色はアイコンで見せる</li>
+    <li class="done">一覧の行は <code>homeMenu.&lt;項目&gt;</code> の accessibilityIdentifier を持つ（UI テスト用）</li>
+    <li class="done">「試験当日」の読み上げは共通の文言にそろえた</li>
+    <li class="done">タイマーの永続化（UserDefaults・24時間境界）・Live Activity 連動・起動時の科目参照の修復（SS-022）は従来どおり</li>
   </ul>
+
+  <h2>以前の並びとの違い</h2>
+  <p>1.4.1 までは「試験日カウントダウン → 開始CTA（またはやることのカード）→ 今日の目標 → 科目候補 → 今週／今月 → ポモドーロ → 連続日数」を縦に並べていた。
+  1.4.2 では試験・目標・連続日数を要約カードの下段に、科目・計画の入口を一覧に寄せ、<strong>開始の場所を1つ</strong>にした。
+  試験日の設定 → 学習計画の提案の流れ（<code>ExamPlanFlow</code>）は残している。</p>
 
   <h2>関連</h2>
   <ul>
+    <li><a href="../features/timer.html">タイマー機能（計測画面）</a></li>
+    <li><a href="../features/focus-bgm.html">集中用 BGM</a></li>
     <li><a href="after-session.html">計測を終えたあとの画面</a></li>
+    <li><a href="manual-entry.html">手動の記録</a></li>
+    <li><a href="exam-date-setup.html">試験日の画面</a></li>
+    <li><a href="schedule-edit.html">予定の追加</a></li>
+    <li><a href="study-plan-sheet.html">学習計画の作成</a></li>
     <li><a href="weekly-review.html">週のふりかえり</a></li>
-    <li><a href="../features/task-list.html">やることリスト機能</a></li>
-    <li><a href="../features/timer.html">タイマー機能仕様書</a></li>
-    <li><a href="../features/live-activity.html">Live Activity機能</a></li>
-    <li><a href="focus-subject-mode.html">フォーカス科目モード</a></li>
-    <li><a href="study-plan-sheet.html">学習計画シート（試験日保存直後の提案から開く）</a></li>
-    <li><a href="calendar.html">カレンダー画面（もう一方の試験日設定入口）</a></li>
-    <li><a href="../flow.html">画面遷移図（試験日設定 → 学習計画作成）</a></li>
+    <li><a href="../flow.html">画面遷移図</a></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -219,7 +122,9 @@ WeeklyReviewData?                        // WeeklyReviewService.availableReview<
     <tr><td>1.2</td><td>2026-07-11</td><td>カード構成再設計: 大型開始CTA追加・今日目標を主表示・今週/今月をcompact補助に変更。effectiveDailyGoalMinutes基準統一。科目行を計測（主）+「…」メニュー（副）に整理。重要カード/通常カードのビジュアル階層方針を追記。試験日未設定時の文脈カード対応を記載</td></tr>
     <tr><td>1.3</td><td>2026-09-05</td><td>逆算をアプリの本線に戻す（SS-001 / SS-002）: 試験日カウントダウンを <code>ExamCountdownCard</code> として切り出しホーム最上部（開始CTAより前）へ移動。未設定・期限切れ時はカード全体をボタン化しタップで試験日設定シートを開く。試験日保存直後に学習計画の作成を提案するアラートを追加。<code>DashboardCard</code> は連続日数・モチベーションのみとなり、両方無い場合は非描画。セクション順・タップ挙動・<code>ExamPlanFlow</code>／<code>isTappable</code>／<code>hasContent</code> の実装メモ、および「並び順を戻さないこと」の背景を追記</td></tr>
     <tr><td>1.4</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）を反映（SS-017 / SS-018 / SS-022）: 未完了のやることがある日だけ一番上に「今日やること」（期限切れは直近7日分・今日・今週中・今日終えたもの）を出し、「開始」でそのやることの計測、左の丸で計測せずに完了。その日は開始CTAを出さず全科目を並べる。日曜18時から週のふりかえりカード。計測中の画面にやることの題名。やることから始めた計測の完了後に計測を終えたあとの画面、科目から始めた計測はトーストの「次にやることを決める」から。広告は保存画面を閉じたあと。起動時の科目参照の修復を追記</td></tr>
+    <tr><td>1.5</td><td>2026-10-24</td><td>1.4.2 (22)（TestFlight 配信済み・未公開）を反映: ホームを B 案（今日の要約カード＋「勉強する／計画する／ふりかえる」の一覧）に作り直した内容で全面改稿（SS-030）。旧 v1.3／v1.4 の並び（試験日カウントダウン最上部・開始CTA・科目候補・DashboardCard）とビジュアル階層方針の節は現行と食い違うため削除し、要点は「以前の並びとの違い」に残した。開始ボタンの文言・色の固定、予定の入口、HomeViewModel／HomeDashboard への分割を追記</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-10-01</footer>
-</div></body></html>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
+</div>
+</body></html>

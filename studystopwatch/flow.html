@@ -154,11 +154,14 @@ flowchart TD
   <table>
     <tr><th>起点</th><th>操作</th><th>遷移先</th></tr>
     <tr><td>RootView</td><td>onboarding完了済</td><td>ContentView</td></tr>
-    <tr><td>HomeView</td><td>STARTタップ</td><td>タイマー実行中UI</td></tr>
-    <tr><td>HomeView</td><td>STOPタップ</td><td>StudySession保存（やることから始めた計測は AfterSessionSheet。v1.4〜）</td></tr>
-    <tr><td>HomeView</td><td>今日やることの「開始」（v1.4〜）</td><td>タイマー実行中UI（やること紐づけ）</td></tr>
+    <tr><td>HomeView</td><td>要約カードの「開始」（1.4.2〜。ホームで計測を始めるのはここと「科目を選んで計測」）</td><td>計測画面</td></tr>
+    <tr><td>計測画面</td><td>完了</td><td>StudySession保存 → やることから始めた計測は AfterSessionSheet、科目から始めた計測は RecordedSummarySheet（1.4.2〜）</td></tr>
+    <tr><td>HomeView</td><td>要約カードの「次にやること」の開始（v1.4〜）</td><td>計測画面（やること紐づけ）</td></tr>
     <tr><td>HomeView</td><td>週のふりかえりカードの「ふりかえる」（v1.4〜）</td><td>WeeklyReviewView (sheet)</td></tr>
-    <tr><td>HomeView</td><td>試験日カウントダウンをタップ（未設定・期限切れ時）</td><td>ExamDateSetupSheet (sheet)</td></tr>
+    <tr><td>HomeView</td><td>要約カードの「試験まで」／一覧「試験日」（1.4.2〜）</td><td>ExamDateSetupSheet (sheet)</td></tr>
+    <tr><td>HomeView</td><td>一覧「予定（学校・塾・小テスト）」（1.4.2〜）</td><td>ScheduleEventEditSheet (sheet)</td></tr>
+    <tr><td>HomeView</td><td>一覧「計測せず手動で記録」→ 科目（1.4.2〜）</td><td>ManualStudyEntrySheet (sheet)</td></tr>
+    <tr><td>CalendarScreen</td><td>右上の＋ →「予定」（1.4.2〜）</td><td>ScheduleEventEditSheet (sheet)</td></tr>
     <tr><td>CalendarScreen</td><td>「試験日を設定」「次の試験日を設定」</td><td>ExamDateSetupSheet (sheet)</td></tr>
     <tr><td>ExamDateSetupSheet</td><td>保存してシートが閉じる</td><td>alert「学習計画を作りますか？」</td></tr>
     <tr><td>alert「学習計画を作りますか？」</td><td>「作る」</td><td>StudyPlanSheet (sheet)</td></tr>
@@ -179,7 +182,9 @@ flowchart TD
     <tr><td>SS-PLAN-01</td><td>学習計画シート</td><td><code>Views/Calendar/StudyPlanSheet.swift</code></td></tr>
     <tr><td>SS-AFTER-01</td><td>計測を終えたあとの画面（v1.4）</td><td><code>Views/Timer/AfterSessionSheet.swift</code> / <code>AfterSessionComponents.swift</code></td></tr>
     <tr><td>SS-REVIEW-01</td><td>週のふりかえり（v1.4）</td><td><code>Views/Review/WeeklyReviewCard.swift</code> / <code>WeeklyReviewView.swift</code></td></tr>
-    <tr><td>—</td><td>試験日設定シート（画面IDなし・コンポーネント扱い）</td><td><code>Views/Calendar/ExamDateSetupSheet.swift</code></td></tr>
+    <tr><td>SS-EXAM-01</td><td>試験日の画面（1.4.2 で画面IDを付与）</td><td><code>Views/Calendar/ExamDateSetupSheet.swift</code></td></tr>
+    <tr><td>SS-SCHED-01</td><td>予定の追加・編集（1.4.2）</td><td><code>Views/Calendar/Schedule/ScheduleEventEditSheet.swift</code></td></tr>
+    <tr><td>SS-MANUAL-01</td><td>手動の記録</td><td><code>Views/Timer/ManualStudyEntrySheet.swift</code></td></tr>
     <tr><td>SS-REPORT-01</td><td>レポート</td><td><code>Views/Report/ReportView.swift</code></td></tr>
     <tr><td>SS-SHARE-01</td><td>シェア</td><td><code>Views/Share/StudyShareSheet.swift</code></td></tr>
     <tr><td>SS-SET-01</td><td>設定</td><td><code>Views/Settings/SettingsView.swift</code></td></tr>
@@ -190,6 +195,31 @@ flowchart TD
     <tr><td>SS-WID-01</td><td>Widget</td><td><code>StudyStopwatchWidget/</code></td></tr>
   </table>
 
+  <h2>ホームの一覧から各画面へ（1.4.2・SS-030 B 案）<span class="tag todo">1.4.2 (22)</span></h2>
+  <div class="mermaid">
+flowchart TD
+  Home[HomeView] --> Card[今日の要約カード]
+  Card -- 開始 --> Running[計測画面]
+  Card -- 目標 --> Goal[今日の目標の編集]
+  Card -- 試験まで --> Exam[ExamDateSetupSheet 試験日]
+  Home --> Study[勉強する]
+  Study -- 科目を選んで計測 --> SubjTimer[HomeSubjectListScreen 計測] --> Running
+  Study -- 計測せず手動で記録 --> SubjManual[HomeSubjectListScreen 手動] --> Manual[ManualStudyEntrySheet]
+  Study -- ポモドーロで計る --> Home
+  Home --> Plan[計画する]
+  Plan -- 今日やること --> Tasks[HomeTaskListScreen]
+  Plan -- 学習計画 --> PlanScr[HomePlanScreen / 計画が無ければ StudyPlanSheet]
+  Plan -- 試験日 --> Exam
+  Plan -- 予定 --> Sched[ScheduleEventEditSheet]
+  Plan -- 目標 --> Goals[GoalManagementView]
+  Home --> Review[ふりかえる]
+  Review -- 週のふりかえり --> WR[WeeklyReviewView]
+  Exam -- 保存 --> Ask{学習計画を作りますか？} -- 作る --> PlanSheet[StudyPlanSheet]
+  Running -- やることから始めた計測の完了 --> After[AfterSessionSheet]
+  Running -- 科目から始めた計測の完了 --> Rec[RecordedSummarySheet] -- 次にやることを決める --> After
+  Cal[CalendarScreen] -- 右上の＋ → 予定 --> Sched
+  </div>
+
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
@@ -197,6 +227,7 @@ flowchart TD
     <tr><td>1.1</td><td>2026-07-11</td><td>オンボーディング必須フローを4画面（welcome/goalSelection/subjectSelection/examDate）に圧縮した遷移図を追記</td></tr>
     <tr><td>1.2</td><td>2026-09-05</td><td>「試験日設定 → 学習計画作成」経路を新設（SS-001 / SS-002）。ホーム最上部の <code>ExamCountdownCard</code> とカレンダーの <code>CountdownCard</code> の2入口から <code>ExamDateSetupSheet</code> へ、保存直後のアラートから <code>StudyPlanSheet</code> へ繋がる遷移を図・表に追加。主要な遷移トリガーに5行追加。画面ID対応表に SS-CAL-02 / SS-PLAN-01 / 試験日設定シートを追加</td></tr>
     <tr><td>1.3</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）を反映: 「やること → 計測 → 振り返り」の遷移図と表を新設（今日やることの開始 → 計測を終えたあとの画面、トーストの「次にやることを決める」、週のふりかえり、カレンダーの週・学習計画の欄）。主要な遷移トリガーに3行、画面ID対応表に SS-AFTER-01 / SS-REVIEW-01 を追加。タブ名「レポート」を現行の「分析」に修正</td></tr>
+    <tr><td>1.4</td><td>2026-10-24</td><td>1.4.2 (22)（TestFlight 配信済み・未公開）を反映: 「ホームの一覧から各画面へ」の遷移図を新設（要約カード・勉強する／計画する／ふりかえる・予定の追加・短い計測後の画面）。主要な遷移トリガーの旧ホームの行（STARTタップ・カウントダウンのタップ）を現行に直し、予定・手動の記録・試験日の行を追加。画面ID対応表に SS-SCHED-01 / SS-MANUAL-01 / SS-EXAM-01 を追加</td></tr>
   </table>
 
   <script>
@@ -207,7 +238,7 @@ flowchart TD
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-10-01</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>
