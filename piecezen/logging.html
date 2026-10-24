@@ -22,6 +22,7 @@
     <tr><td><code>AdManager</code></td><td>広告ロード・表示</td></tr>
     <tr><td><code>StoreManager</code></td><td>課金・トランザクション</td></tr>
     <tr><td><code>SoundManager</code></td><td>サウンド再生</td></tr>
+    <tr><td><code>BGMPlayer</code> ★ v1.5.6</td><td>BGM の曲の切り替えと拍待ち（info）／エンジンを開始できない・曲を読み込めない・1周の長さが合わない（error）</td></tr>
     <tr><td><code>StreakManager</code></td><td>ストリーク管理</td></tr>
     <tr><td><code>SettingsView</code></td><td>設定変更</td></tr>
     <tr><td><code>Analytics</code></td><td>計測イベントの送信内容（下記「計測イベント」）</td></tr>
@@ -68,7 +69,8 @@
 
   <h2>変更履歴</h2>
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
-  <tr><td>1.1</td><td>2026-10-01</td><td>v1.5.3 対応: 「計測イベント（AnalyticsManager）」節を新設し、既存イベントの一覧に <code>bonus_start</code>（<code>time_limit_seconds</code>）と <code>bonus_end</code>（<code>perfect_count</code>・<code>boards</code>・<code>score</code>）を追加。撮影モードでは送らないこと、ボーナスの途中で画面を離れると <code>bonus_end</code> が送られない既知の穴（BP-018）を記載。カテゴリ一覧に <code>Analytics</code> を追加</td></tr></table>
+  <tr><td>1.1</td><td>2026-10-01</td><td>v1.5.3 対応: 「計測イベント（AnalyticsManager）」節を新設し、既存イベントの一覧に <code>bonus_start</code>（<code>time_limit_seconds</code>）と <code>bonus_end</code>（<code>perfect_count</code>・<code>boards</code>・<code>score</code>）を追加。撮影モードでは送らないこと、ボーナスの途中で画面を離れると <code>bonus_end</code> が送られない既知の穴（BP-018）を記載。カテゴリ一覧に <code>Analytics</code> を追加</td></tr>
+  <tr><td>1.2</td><td>2026-10-24</td><td>v1.5.6 (40) 対応（TestFlight 配信済み・未公開）: カテゴリ一覧に <code>BGMPlayer</code>（BGM の読み込みと再生）を追加</td></tr></table>
 
   <footer class="site-footer">最終更新: 2026-10-01</footer>
 </div></body></html>
