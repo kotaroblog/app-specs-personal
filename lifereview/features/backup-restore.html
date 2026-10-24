@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LifeReview - バックアップと復元</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / バックアップと復元</div>
+
+  <header class="site-header">
+    <h1>バックアップと復元</h1>
+    <p>記録・写真・振り返り・大切な人・やりたいことを1つのファイルに書き出し、別の端末や再インストール後に戻す機能（1.1.0〜）。</p>
+    <div class="section-meta">
+      <span class="tag done">実装済</span>
+      <span class="tag">機能ID: LR-FEAT-BACKUP</span>
+      <span class="tag">1.1.0 (11)</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>
+    人生アルバムはアカウントもサーバーも持たず、記録はすべて端末内にある。機種変更や削除で記録を失わないよう、
+    <strong>利用者が自分でファイルとして持ち出し、戻せる</strong>ようにした。ファイルの置き場所（端末内・iCloud Drive・PC など）は
+    システムのファイル画面で利用者が選ぶ。アプリが外部へ送ることはない（App Privacy の「データを収集していません」と矛盾しない）。
+  </p>
+  <ul class="checklist">
+    <li><strong>書き出し:</strong> 設定 → バックアップ →「バックアップを書き出す」→ 保存先を選ぶ。ファイル名は <code>LifeReview-Backup-YYYYMMDD</code>（拡張子 <code>.lifereviewbackup</code>）。</li>
+    <li><strong>復元:</strong> 設定 → バックアップ →「バックアップから復元」→ ファイルを選ぶ → 件数入りの確認 →「復元」。<strong>現在のデータは置き換わる</strong>（足し合わせではない）。</li>
+    <li>対象: 記録（LogEntry）・添付写真・振り返り（ReflectionSession）・大切な人（Relation）・やりたいこと（BucketItem）・プロフィール（UserProfile）。設定値（通知・画面の明るさなど）は含まない。</li>
+  </ul>
+  <div class="callout">
+    <strong>公開の状況:</strong> 1.0.x（公開中）にはバックアップ機能は無い。1.1.0 (11) の TestFlight で初めて入った。
+  </div>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/settings.html">設定（LR-SETTINGS-01）</a> の「バックアップ」セクション（入口・確認アラート・エラー表示）</li>
+    <li><a href="../data-model.html">データモデル</a>（書き出す5モデル・<code>lastBackupTimestamp</code>）</li>
+  </ul>
+
+  <h2>利用者から見える挙動</h2>
+  <table>
+    <tr><th>場面</th><th>表示・挙動</th></tr>
+    <tr><td>設定のバックアップ節</td><td>「バックアップを書き出す」「バックアップから復元」の2行と、「前回の書き出し: 2026/10/24」（未実施なら「まだバックアップを書き出していません」）、説明「記録、写真、振り返り、大切な人、やりたいことを1つのファイルに保存します。復元すると現在のデータは置き換わります。」</td></tr>
+    <tr><td>書き出し成功</td><td>保存先を選び終えた時点で「前回の書き出し」が今日の日付に変わる（保存をキャンセル・失敗したら日付は変えない）。</td></tr>
+    <tr><td>書き出し失敗</td><td>「バックアップを作成できませんでした。」（中身を作れない）／「バックアップを書き出せませんでした。」（保存できない）</td></tr>
+    <tr><td>復元の確認</td><td>「バックアップから復元しますか？」／「2026/10/24 に書き出したバックアップです（記録 ○件・写真 ○枚・振り返り ○件）。現在の記録、写真、振り返り、大切な人、やりたいことはこの内容に置き換わります。」。写真が欠けていれば「写真 ○枚が見つかりません。その写真は記録から外れます。」を足す。ボタンは「復元」（destructive）／「キャンセル」。</td></tr>
+    <tr><td>復元成功</td><td>データが置き換わり、書きかけの振り返り（下書き）を消す。初回画面は出さない（<code>onboardingCompleted = true</code>）。</td></tr>
+    <tr><td>復元できないファイル</td><td>「このバックアップの形式には対応していません。」／「このバックアップは壊れているため復元できません。いまの記録はそのまま残っています。」／「このファイルは復元できません。」</td></tr>
+    <tr><td>復元の途中で失敗</td><td>「バックアップを復元できませんでした。もとのデータはそのまま残っています。」——記録も写真も復元前のまま。</td></tr>
+    <tr><td>記録は戻ったが写真の入れ替えが残った</td><td>「記録は復元しました。写真の入れ替えが終わっていないため、アプリを開き直すと写真が表示されます。」——次の起動で入れ替えを済ませる。</td></tr>
+  </table>
+
+  <h2>パッケージ形式（version 2）</h2>
+  <pre><code>LifeReview-Backup-20261024.lifereviewbackup/   ← ディレクトリだが com.apple.package 準拠でファイルアプリでは1つの書類
+├── manifest.json        ← 構造データ（写真のバイト列は含まない・ISO 8601 日付・prettyPrinted）
+└── photos/
+    ├── 0B7E…C1.jpg      ← 添付写真の実体（ImageStore のファイルをそのまま）
+    └── …</code></pre>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>型</td><td>UTType <code>com.happyboy1002.LifeReview.backup</code>（<code>project.yml</code> の UTExportedTypeDeclarations）・拡張子 <code>lifereviewbackup</code></td></tr>
+    <tr><td>manifest の中身</td><td><code>version</code>（= 2）・<code>exportedAt</code>・<code>profiles</code>・<code>logs</code>・<code>relations</code>・<code>bucketItems</code>・<code>reflections</code>。各要素は SwiftData モデルの全項目（id を含む）を写したもの。写真は <code>logs[].imagePaths</code> にファイル名だけを持つ</td></tr>
+    <tr><td>同梱する写真</td><td><code>referencedPhotoNames</code> = 全記録の <code>imagePaths</code> から、<strong>ファイル名として安全なもの</strong>（<code>ImageStore.isSafeFilename</code>）だけを重複なしで</td></tr>
+    <tr><td>version 1</td><td>写真を base64 で JSON に混ぜていた形式。一度も出荷していないので読み込みの受け口は無い（version が 2 以外なら「形式に対応していません」）</td></tr>
+  </table>
+
+  <h2>処理フロー</h2>
+  <h3>書き出し</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as 利用者
+  participant V as BackupSettingsSection
+  participant B as BackupService
+  participant D as BackupPackageDocument
+  U->>V: 「バックアップを書き出す」
+  V->>B: makeManifest(context:)（5モデルを fetch）
+  B-->>V: BackupManifest（version 2）
+  V->>D: manifest.json の Data ＋ 写真名の一覧
+  V->>U: fileExporter（保存先を選ぶ）
+  D->>D: fileWrapper: 写真は FileWrapper(url:) で遅延読み出し
+  alt 保存できた
+    V->>V: lastBackupTimestamp = 今
+  else 失敗
+    V-->>U: 「バックアップを書き出せませんでした。」
+  end
+  </div>
+
+  <h3>復元</h3>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as 利用者
+  participant V as BackupSettingsSection
+  participant B as BackupService
+  participant S as PhotoArchiveStaging
+  participant C as ModelContext
+  U->>V: 「バックアップから復元」→ ファイルを選ぶ
+  V->>B: readPackage（NSFileCoordinator で読む＝iCloud の写真を先に落とす）
+  B->>B: decodeManifest → version 確認 → validate（写真名の検査・LR-015）
+  B-->>V: manifest ＋ 欠けている写真の枚数
+  V-->>U: 確認アラート（件数・欠けた写真）
+  U->>V: 「復元」
+  V->>B: restore(manifest, photosDirectory)
+  B->>B: validate をもう一度
+  B->>S: begin（photos.staging を作る）
+  B->>S: 写真を1枚ずつ staging へコピー（無いものは飛ばす）
+  B->>C: 既存5モデルを1件ずつ delete（保存はまだ）
+  B->>C: manifest から insert（無かった写真は記録から外す）
+  B->>S: markSaved（staging に .db-saved の印）
+  B->>C: save()
+  alt 保存が失敗
+    B->>S: abort（staging を捨てる）
+    B->>C: rollback()
+    V-->>U: 「もとのデータはそのまま残っています」
+  else 保存が成功
+    B->>S: commit（staging → .incoming の rename がコミット点 → 本番と入れ替え）
+    alt 入れ替えが失敗
+      B-->>V: photoSwapPending
+      V-->>U: 「アプリを開き直すと写真が表示されます」
+    end
+    V->>V: 下書きを消す・onboardingCompleted = true
+  end
+  </div>
+
+  <h3>中断からの復旧（起動時）</h3>
+  <p>アプリの起動時（<code>LifeReviewApp.init</code>）に毎回 <code>ImageStore.recoverInterruptedRestore()</code> → <code>PhotoArchiveStaging.recover</code> を呼ぶ。</p>
+  <table>
+    <tr><th>起動時に残っていたもの</th><th>意味</th><th>処理</th></tr>
+    <tr><td><code>photos.staging</code>（印なし）</td><td>DB の保存より前に落ちた＝記録は復元前のまま</td><td>staging を捨てる。本番の写真は触っていないので元どおり</td></tr>
+    <tr><td><code>photos.staging</code>（<code>.db-saved</code> の印あり）</td><td>DB の保存の直前か後に落ちた＝記録は新旧どちらか分からない</td><td>本番の写真のうち staging に無いものを staging へ移してから切り替える（新旧どちらの記録でも写真を失わない）</td></tr>
+    <tr><td><code>photos.incoming</code></td><td>コミット点は過ぎたが入れ替えの途中で落ちた</td><td>入れ替え（本番 → <code>.outgoing</code>、<code>.incoming</code> → 本番）をやり切る</td></tr>
+    <tr><td><code>photos.outgoing</code></td><td>入れ替え済みの古い写真</td><td>消す</td></tr>
+  </table>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>復元は<strong>全置き換え</strong>。足し合わせ・選択復元はしない。必ず件数入りの確認を経由する。</li>
+    <li><strong>復元に失敗したら、元の記録も写真も1つも失わない。</strong>写真は staging に書き切ってから、DB の保存が成功した後で入れ替える。</li>
+    <li>パッケージに実体が無い写真は、復元全体を止めずに飛ばし、その写真の参照は記録から外す（実体の無い参照を残さない）。何枚欠けているかは確認の時点で知らせる。</li>
+    <li>写真名に <code>../</code> や <code>.</code> / <code>..</code> を含む（＝ファイル名1つでない）バックアップは、壊れているか細工されたものとして<strong>何も置き換えずに断る</strong>（LR-015）。</li>
+    <li>復元の成功後は書きかけの振り返りを消す（別のデータに対する下書きを残さない）。</li>
+    <li>「前回の書き出し」は、保存先に書き出せたときだけ更新する。</li>
+  </ul>
+
+  <h2>外部連携</h2>
+  <table>
+    <tr><th>対象</th><th>用途</th><th>備考</th></tr>
+    <tr><td>システムのファイル画面（<code>fileExporter</code> / <code>fileImporter</code>）</td><td>保存先・読み込み元の選択</td><td>置き場所は利用者が選ぶ。アプリからの送信は無い</td></tr>
+    <tr><td><code>NSFileCoordinator</code></td><td>iCloud Drive 等にあるパッケージを読む前に端末へ落とす</td><td>確認（枚数を数える）と復元の両方で使う</td></tr>
+    <tr><td>os.log（Logger）</td><td>写真の入れ替え失敗の記録</td><td>subsystem: com.happyboy1002.LifeReview・category: Backup</td></tr>
+  </table>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>エラー</th><th>原因</th><th>対応</th></tr>
+    <tr><td><code>BackupError.unsupportedVersion</code></td><td>manifest の version が 2 でない</td><td>何もせず「このバックアップの形式には対応していません。」</td></tr>
+    <tr><td><code>BackupError.corrupted</code></td><td>写真名が安全でない／読み取りの結果が得られない</td><td>何も置き換えず「壊れているため復元できません。いまの記録はそのまま残っています。」</td></tr>
+    <tr><td>デコード失敗など</td><td>人生アルバムのバックアップでない・JSON が壊れている</td><td>「このファイルは復元できません。」</td></tr>
+    <tr><td>復元中の失敗（コピー・保存）</td><td>容量不足・保存の失敗など</td><td>staging を捨て rollback。「もとのデータはそのまま残っています。」</td></tr>
+    <tr><td><code>BackupError.photoSwapPending</code></td><td>DB は保存できたが写真の入れ替えだけ失敗</td><td>復元は成功扱い。次の起動の recover が入れ替えを済ませる旨を表示</td></tr>
+  </table>
+
+  <h2>経緯（LR-001 / LR-002 / LR-015）</h2>
+  <table>
+    <tr><th>課題</th><th>以前の作り</th><th>直し方</th><th>コミット</th></tr>
+    <tr><td>LR-001 復元の失敗で写真が全損</td><td>「全消し → 書き戻し」。書き戻しや save で失敗すると SwiftData は rollback できても、削除済みの画像ファイルは戻らなかった</td><td>新しい写真を staging に書き切り、DB 保存の成功後に rename で切り替える（PhotoArchiveStaging）。中断は起動時に後始末</td><td><code>1e3fbfa</code></td></tr>
+    <tr><td>LR-002 メモリ超過</td><td>1枚の JSON に全写真を base64 で詰めていた（書き出しも復元も全写真が一度にメモリへ）</td><td>manifest.json と photos/ のパッケージに分け、写真はファイル単位でコピー・遅延読み出し。ピークは写真1枚ぶん</td><td><code>1e3fbfa</code></td></tr>
+    <tr><td>LR-015 細工したバックアップで記録が全部消える</td><td>写真名をそのまま信じていたため、<code>../</code> を含む名前を戻すと、後で記録を消したときに画像ディレクトリの外（DB を含む）まで消えうる</td><td>ImageStore はファイル名1つだけを受け付ける。復元前に manifest を検査し、1件でも危ない名前があれば何も置き換えずに断る</td><td><code>747f129</code></td></tr>
+    <tr><td>レビューでの追加修正</td><td>iCloud の写真が落ちていないと「無い写真」として消える／保存途中の中断で写真がずれる／一括削除が rollback で戻らず、保存の失敗で元の記録が消えていた</td><td>NSFileCoordinator で読む・欠けた枚数を確認に出す／<code>.db-saved</code> の印と photoSwapPending／1件ずつの削除に変更</td><td><code>16c2621</code></td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li>書き出しは <code>BackupPackageDocument</code>（FileDocument）。写真は <code>FileWrapper(url:options: [])</code>（<code>.immediate</code> なし＝遅延読み出し）で、書き出しの瞬間に全写真をメモリへ載せない。</li>
+    <li>読み込みは FileDocument を使わない（パッケージ全体をメモリに載せるため）。<code>fileImporter</code> の URL からファイル単位で読む。セキュリティスコープは確認と復元の各回で開け閉めする。</li>
+    <li><code>context.delete(model:)</code> はストアへの一括削除で rollback が効かないため使わない。<code>deleteAll</code> は fetch して1件ずつ <code>context.delete</code> する。</li>
+    <li>ファイル名の日付は <code>Date.ymd</code>（"2026/9/20"・スラッシュ入り）を使わず <code>%04d%02d%02d</code>。</li>
+    <li>テスト: 細工したバックアップの拒否・現データの維持・削除の封じ込め・保存失敗時に元の記録が残ること など（<code>LifeReviewTests/BackupTests.swift</code>）。</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../index.html">LifeReview アプリトップ</a></li>
+    <li><a href="../screens/settings.html">設定（LR-SETTINGS-01）</a></li>
+    <li><a href="../data-model.html">データモデル</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-24</td><td>初版作成。アプリ 1.1.0 (11) の実装（BackupService / BackupDocument / BackupSettingsSection / ImageStore の PhotoArchiveStaging）をもとに、書き出し・復元の流れ、パッケージ形式 version 2、staging とコミット点、起動時の復旧、LR-001 / LR-002 / LR-015 の経緯を記述</td></tr>
+  </table>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+    });
+  </script>
+
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
+</div>
+</body>
+</html>

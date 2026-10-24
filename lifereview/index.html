@@ -51,8 +51,8 @@
 
   <h2>1.1.0 の変更（TestFlight 1.1.0 (11)・未公開）</h2>
   <div class="callout">
-    <strong>注意:</strong> 下の画面仕様書・機能仕様書（S01〜S04・振り返りセッション ほか）は <strong>1.0.x 時点の記述のまま</strong>で、1.1.0 の作り変えはまだ個別に反映していない。
-    1.1.0 の挙動はこの節と各コミットが正。個別の仕様書は 1.1.0 を公開する前に順に直す。
+    1.1.0 (11) の実装は、下の画面仕様書・機能仕様書（S01〜S04・振り返りセッション・設定・リマインダー・データモデル）に反映済み（2026-10-24）。
+    バックアップと復元は新設の機能仕様書 <a href="features/backup-restore.html">LR-FEAT-BACKUP</a> にまとめた。この節は変更点の索引。
   </div>
   <table>
     <tr><th>範囲</th><th>変更</th><th>コミット</th></tr>
@@ -86,10 +86,11 @@
   <h2>タブ構成（3タブ）</h2>
   <table>
     <tr><th>タブ</th><th>役割</th><th>内容</th></tr>
-    <tr><td>今日 Today</td><td>毎日の入口</td><td>簡素化したホーム・ログ記録（写真は1件につき最大3枚）・残り時間ミニ表示・過去の今日</td></tr>
-    <tr><td>ふりかえり Reflect ★中核</td><td>立ち止まり、言葉にする</td><td>週/月/年レビュー・振り返りセッション・蓄積タイムライン・道具箱（カレンダー/統計）</td></tr>
-    <tr><td>人生 Life</td><td>長期視点・有限性</td><td>週グリッド（Your Life in Weeks）・カウントダウン・バケットリスト・大切な人・設定（右上歯車）</td></tr>
+    <tr><td>今日 Today</td><td>毎日の入口</td><td>記録した日数・一行入力（「書く→残す」・写真1枚）・毎日のお知らせの誘い・直近の記録・過去の今日・残り時間ミニ。カテゴリ等は「くわしく」から（写真は1件につき最大3枚）</td></tr>
+    <tr><td>ふりかえり Reflect ★中核</td><td>立ち止まり、言葉にする</td><td>週/月/年レビュー・振り返りセッション（見返して選ぶ→問い1つから）・記録をながめる（カレンダー/統計）・これまでの軌跡（星図）</td></tr>
+    <tr><td>人生 Life</td><td>長期視点・有限性</td><td>大切な人・バケットリスト・（生年月日を入れた人だけ）カウントダウンといまの52週（「ひらく」で80年ぶん）</td></tr>
   </table>
+  <p>設定は3タブ共通の右上の歯車から開く（1.1.0〜）。</p>
 
   <h2>全体仕様書</h2>
   <div class="card-grid">
@@ -104,22 +105,22 @@
   <div class="card-grid">
     <a class="card" href="screens/S01_onboarding.html">
       <div class="title">オンボーディング（S01）</div>
-      <div class="desc">初回起動・生年月日/目標年齢入力・UserProfile 作成。C案ダーク天体トーン適用版の完全仕様</div>
+      <div class="desc">初回起動の1画面。「一行でいい。今日を、ひとつ残す。」と「はじめる」だけ（生年月日の入力は人生タブへ移した）</div>
       <div class="meta"><span class="tag">LR-S01</span> <span class="tag done">実装済</span></div>
     </a>
     <a class="card" href="screens/S02_today.html">
       <div class="title">今日タブ（S02）</div>
-      <div class="desc">毎日の記録入口。残り時間ミニ・記録CTA・直近3件・○年前の今日・LogFormView・LogDetailView・週グリッド全画面</div>
+      <div class="desc">毎日の記録入口。一行入力・記録した日数・毎日のお知らせの誘い・直近3件・過去の今日・LogFormView（カテゴリ任意）・LogDetailView</div>
       <div class="meta"><span class="tag">LR-S02</span> <span class="tag done">実装済</span></div>
     </a>
     <a class="card" href="screens/S03_reflect_home.html">
       <div class="title">ふりかえりタブ（S03）</div>
-      <div class="desc">週/月/年リズムカード（isDue判定）・振り返りセッション5ステップ・道具箱・これまでの軌跡。アプリ中核タブ</div>
+      <div class="desc">週/月/年リズムカード（isDue判定）・振り返りセッション・記録をながめる（カレンダー/統計）・これまでの軌跡（空でも星図へ）。アプリ中核タブ</div>
       <div class="meta"><span class="tag">LR-S03</span> <span class="tag done">実装済</span></div>
     </a>
     <a class="card" href="screens/S04_life.html">
       <div class="title">人生タブ（S04）</div>
-      <div class="desc">残り時間カウントダウン・週グリッド（Canvas）・大切な人・バケットリスト・設定（プロフィール編集/データ削除）</div>
+      <div class="desc">大切な人・バケットリスト・人生の時間を表示する（ProfileSetupSheet）・カウントダウン・いまの52週と「ひらく」</div>
       <div class="meta"><span class="tag">LR-S04</span> <span class="tag done">実装済</span></div>
     </a>
   </div>
@@ -129,7 +130,7 @@
   <div class="card-grid">
     <a class="card" href="screens/reflection-session.html">
       <div class="title">振り返りセッション</div>
-      <div class="desc">5ステップフロー（記録0件の期間は「選ぶ」を省いて4ステップ）・下書き保存・完了画面で星が灯る</div>
+      <div class="desc">4ステップ（見返して選ぶ→問い1つから→総括→気づき。記録0件の期間は3ステップ）・続きから／最初から・完了画面で星が灯る</div>
       <div class="meta"><span class="tag">LR-SESSION-01</span></div>
     </a>
     <a class="card" href="screens/reflection-timeline.html">
@@ -149,12 +150,12 @@
     </a>
     <a class="card" href="screens/settings.html">
       <div class="title">設定</div>
-      <div class="desc">プロフィール編集（目標年齢／生年月日シート）・リマインダー導線・表示トグル・アプリ情報とポリシー3リンク（Safari で開く）・全データ削除</div>
+      <div class="desc">プロフィール編集・リマインダー導線・画面の明るさ・表示トグル・バックアップ・アプリ情報とポリシー3リンク・全データ削除</div>
       <div class="meta"><span class="tag">LR-SETTINGS-01</span> <span class="tag done">新規</span></div>
     </a>
     <a class="card" href="screens/reminder-settings.html">
       <div class="title">リマインダー設定</div>
-      <div class="desc">週次振り返りの曜日・時刻を設定するローカル通知設定画面（端末内完結・サーバー不要）</div>
+      <div class="desc">週次振り返りの曜日・時刻と、毎日のお知らせの時刻を設定するローカル通知設定画面（端末内完結・サーバー不要）</div>
       <div class="meta"><span class="tag">LR-REMINDER-01</span> <span class="tag done">S3新規</span></div>
     </a>
   </div>
@@ -163,8 +164,13 @@
   <div class="card-grid">
     <a class="card" href="features/reflection-session-flow.html">
       <div class="title">振り返りセッション機能</div>
-      <div class="desc">5ステップフロー・保存・ハイライト更新・期間計算ロジック</div>
+      <div class="desc">状態遷移（続きから／最初から）・下書き・保存（upsert）・レビュー依頼・期間計算ロジック</div>
       <div class="meta"><span class="tag">LR-FEAT-SESSION</span></div>
+    </a>
+    <a class="card" href="features/backup-restore.html">
+      <div class="title">バックアップと復元</div>
+      <div class="desc">書き出し・復元の流れ・パッケージ形式 v2（manifest.json＋photos/）・写真は staging から切り替え・中断からの復旧・LR-001/002/015</div>
+      <div class="meta"><span class="tag">LR-FEAT-BACKUP</span> <span class="tag done">1.1.0 新規</span></div>
     </a>
   </div>
 
@@ -229,6 +235,7 @@
     <tr><td>v1.4</td><td>2026-07-26</td><td>提出前の実装（S5）に合わせてポータル全体を更新。<strong>Bundle ID の誤記を修正</strong>（<code>com.happyboy1002.lifeReviewApp</code> → <code>com.happyboy1002.LifeReview</code>）。タブ統合版と重複していた旧 <code>onboarding.html</code> / <code>reflect-home.html</code> を削除し、画面仕様書を「タブ単位」「個別画面」の2区分に整理（リンク切れを解消）。ナビゲーションUIの記述を実装に合わせて全面改訂（iOS 26 でタイトルが描画されない問題への対応として <code>minchoNavigationTitle</code> 方式へ、tint を amber から moonWhite へ、明朝フォント名を <code>HiraMinProN-W3</code> に訂正）。Launch 画面を storyboard 方式から <code>UILaunchScreen</code> + カラーセット方式の記述に修正。スクショ自動化を ja-JP 単独・テンプレv2ローカルコピー・再現性設定（<code>ios_version</code> 固定 / <code>erase_simulator</code> / <code>only_testing</code>）に更新。ステータスを「提出準備完了・未リリース」に、技術スタックを「Flutter 移行中」から移行済みに修正。「○年前の今日」を「過去の今日」に訂正</td></tr>
     <tr><td>v1.5</td><td>2026-08-26</td><td>初回提出直前の UI/UX 修正13件（コミット <code>4dcdba4</code>・2026-08-25）をポータルに反映。<strong>設定画面の単独仕様書 <code>screens/settings.html</code>（LR-SETTINGS-01）を新規作成</strong>し、人生タブ（LR-S04）に埋まっていた設定の記述を移設（子の LR-REMINDER-01 に仕様書があるのに親が無い状態を解消）。更新: 今日タブ（記録フォームの破棄確認・スワイプ抑止・チップの修飾子順・「クリア」の配色）／振り返りセッションと機能仕様（STEP3 回答の打鍵ごと確定・下書きの期間重なり判定で週次の翌日再開が可能に・下書き periodStart の固定）／オンボーディング（現在年齢の常時表示）／人生タブ（残り0回の文言置換・想定年齢到達時の編集保存の免除規則）。ステータス行にテスト実績を追記</td></tr>
     <tr><td>v1.6</td><td>2026-10-24</td><td><strong>アプリ 1.1.0 (11)（TestFlight 配信・未公開）</strong>を反映。アプリアイコンを「重ねた写真」へ差し替えた件（<code>fd328c2</code>・LR-016）の節を新設し、新旧のアイコン画像と暗い表示用・色付き表示用の3種を掲載。1.1.0 のそれ以外の変更（一行入力の今日タブ・初回画面の簡略化・毎日のお知らせ・振り返りの統合・入口の配置・人生タブの要約表示・明るい表示・バックアップ/復元の修正 LR-001/002/015）を一覧の節にまとめた（個別の画面仕様書は未反映と明記）。ステータスを「未リリース」から「1.0.2 公開中・1.1.0 TestFlight」に、ストア表示名・デザインテーマ・ロードマップを更新</td></tr>
+    <tr><td>v1.7</td><td>2026-10-24</td><td>1.1.0 (11) の内容を個別の仕様書へ反映した（S01 オンボーディング・S02 今日・S03 ふりかえり・S04 人生・振り返りセッション（画面・機能）・設定・リマインダー・データモデル）。<strong>バックアップと復元の機能仕様書 <code>features/backup-restore.html</code>（LR-FEAT-BACKUP）を新規作成</strong>しカードを追加。「1.1.0 の変更」節の「個別の仕様書は未反映」の注意書きを外し、タブ構成表と各カードの説明を 1.1.0 に合わせて更新</td></tr>
   </table>
 
   <footer class="site-footer">最終更新: 2026-10-24</footer>
