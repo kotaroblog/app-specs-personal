@@ -13,17 +13,19 @@
 
   <header class="site-header">
     <h1>今日タブ（S02）</h1>
-    <p>毎日開いて軽く記録する入口。残り時間ミニ表示・記録 CTA・直近の記録・○年前の今日を集約する。</p>
+    <p>毎日開いて一行で書き終わる入口。記録した日数・一行入力・毎日のお知らせの誘い・直近の記録・過去の今日・残り時間ミニを集約する（1.1.0〜）。</p>
     <div style="margin-top:8px;">
       <span class="tag done">実装済</span>
       <span class="tag">画面ID: LR-S02</span>
+      <span class="tag">1.1.0 (11)</span>
     </div>
   </header>
 
   <h2>目的・役割</h2>
   <p>
     ユーザーが毎日起動したときの最初の受け皿。「記録する」という行動を最小摩擦で促すことが主目的。
-    主役は画面最上部の「今日を記録する」CTA。
+    主役は画面最上部の<strong>一行入力（QuickEntryCard）</strong>で、「書く→残す」の2操作で記録が終わる。
+    カテゴリ・気持ち・日付・2枚目以降の写真は「くわしく」から従来の記録フォームで入れる。
     直近 3 件の記録プレビューと「過去の今日」で、過去の記録との縦断的なつながりも提供する。
     残り時間のミニ表示は<strong>画面最下部</strong>に置き、設定でオフにもできる（有限性を毎日突きつけない）。
   </p>
@@ -32,13 +34,27 @@
     画面で最も明るい「面」は明朝見出しの moonWhite。グロー効果・星・絵文字は出さない。
   </div>
 
+  <div class="callout warn">
+    <strong>1.1.0 の変更（2026-10-20〜23）</strong>
+    <ul class="checklist" style="margin-top:8px;">
+      <li>主CTA「今日を記録する」（LineButton → フォームのシート）を廃止し、<strong>一行入力 QuickEntryCard</strong> に置き換えた（<code>b9a54bf</code>）。1.0.x では1件残すのにシートを開いてカテゴリを選ぶ必要があった。</li>
+      <li><strong>カテゴリを任意にした。</strong>選ばなかった記録は「その他」（<code>LogEntryService.defaultCategory</code>）で残す。データの形は変えていない。</li>
+      <li>上部に「記録した日 ○日 ・ ○日つづけて」（<code>c23afd1</code>）。1件目を残した後に<strong>毎日のお知らせの誘い</strong>（DailyReminderPromptCard）。</li>
+      <li>一行入力の写真と書きかけを「くわしく」へ引き継ぐ・写真を読み込めなかったときに知らせる（<code>4fe014c</code>・LR-009）。</li>
+      <li>設定の歯車を右上に置いた（3タブ共通・<code>3243961</code>）。記録フォームの確定ボタンを「保存」から「残す」に統一。</li>
+      <li>毎日のお知らせを押すと、このタブの入力欄にカーソルが入る（<code>entryFocusToken</code>）。</li>
+    </ul>
+  </div>
+
   <h2>UI 構成（上から順）</h2>
   <table>
     <tr><th>要素</th><th>種類</th><th>説明</th></tr>
-    <tr><td>NavigationStack</td><td>コンテナ</td><td><code>.minchoNavigationTitle("今日")</code>（明朝インライン・principal 自前描画）。<strong>ツールバーの「+」ボタンは廃止</strong>（入口は主CTAに一本化）。</td></tr>
+    <tr><td>NavigationStack</td><td>コンテナ</td><td><code>.minchoNavigationTitle("今日")</code>（明朝インライン・principal 自前描画）。右上に<strong>設定の歯車</strong>（<code>settingsToolbar()</code>・44pt・「設定を開く」）。「+」ボタンは置かない（入口は一行入力に一本化）。</td></tr>
     <tr><td>背景</td><td>screenBackground()</td><td>AppColors.background ＋ フィルムの粒（2.5%）。</td></tr>
-    <tr><td>「今日を記録する」CTA</td><td>LineButton</td><td>「square.and.pencil」アイコン＋テキスト（15pt semibold・amber）。面は night2・角丸 14px・goldDim 1px 罫・minHeight 52pt。タップで LogFormView（新規）をシート表示。</td></tr>
-    <tr><td>今日の記録状態（todayStatusSection）</td><td>Text</td><td>当日の記録が1件以上あるとき「今日は○件残しました」（13pt medium・textMuted）。0件のときは何も出さない（空状態は直近の記録セクションが担う）。</td></tr>
+    <tr><td>記録した日（continuitySection）</td><td>Text</td><td>記録が1件以上あるとき「記録した日 ○日」、2日以上つづいていれば「記録した日 ○日 ・ ○日つづけて」（13pt medium・onSurfaceVariant）。同じ日の複数記録は1日。つづけては今日（今日まだ無ければ昨日）からさかのぼって数える（<code>LogEntryService.recordedDayCount</code> / <code>currentStreak</code>）。記録の日付が変わったときと表示時だけ数え直す。</td></tr>
+    <tr><td>一行入力（QuickEntryCard）</td><td>AppCard（padding 16）</td><td>TextField（縦に伸びる・1〜4行・16pt・プレースホルダー「今日のこと、一行で」・minHeight 44）。下の段に <strong>写真ボタン</strong>（photo.badge.plus／選択後は photo.fill・44pt・1枚だけ）・<strong>「くわしく」</strong>（footnote semibold・textMuted）・保存直後2秒だけ「残しました」・<strong>「残す」</strong>（CompactLineButtonStyle・15pt semibold・minHeight 44）。選んだ写真は 72×72 のサムネイル（右上の「×」は 44pt）。フォーカス中はキーボード上に「閉じる」「残す」。カード全体のタップで入力欄にフォーカス。</td></tr>
+    <tr><td>今日の記録状態（todayStatusSection）</td><td>Text</td><td>当日の記録が1件以上あるとき一行入力の下に「今日は○件残しました」（13pt medium・textMuted）。</td></tr>
+    <tr><td>毎日のお知らせの誘い（DailyReminderPromptCard）</td><td>AppCard（padding 16）</td><td>記録が1件以上あり、毎日のお知らせがオフで、まだ断っていないときだけ出す。見出し「毎日、一言だけお知らせしましょうか」＋説明「書き忘れた日も、決めた時刻にそっと声をかけます。押すとすぐ書けます。」＋時刻の DatePicker（既定 21:00）＋「お知らせする」「いまはしない」。通知の許可はこの「お知らせする」で初めて求める。拒否されたら案内文と「設定を開く」（44pt）を出す。「いまはしない」で以後出さない（<code>dailyReminderPromptDismissed</code>）。</td></tr>
     <tr><td>直近の記録セクション（recentSection）</td><td>VStack + ForEach</td><td>見出し「直近の記録」（明朝 18pt）＋総件数。右端に<strong>「記録カレンダー ›」導線</strong>（CalendarView へ push）。直近 3 件を LogCardView で表示。各カードは NavigationLink → LogDetailView。記録0件のときは EmptyStateView（moon.stars・「今日のことを、ひとつ残してみませんか」）。</td></tr>
     <tr><td>過去の今日セクション（onThisDaySection）</td><td>VStack + ForEach</td><td>見出し「<strong>過去の今日</strong>」（明朝 18pt）。同月日の過年度記録を「○年前」バッジ付きの LogCardView で表示。<strong>最大5件</strong>。該当が無ければセクションごと非表示。</td></tr>
     <tr><td>残り時間ミニカード（RemainingTimeMiniView）</td><td>NavigationLink → LifeTimelineScreen</td><td>「のこり時間」ラベル（caption・tracking 2）＋残り年数・ヶ月数（monospacedDigit）＋ThinProgressBar（amber 細線）。タップで人生の週グリッド全画面へ。<strong>UserProfile があり、かつ <code>showLifeCountdown == true</code> のときのみ表示</strong>。</td></tr>
@@ -59,12 +75,14 @@
   <h3>記録フォーム（LogFormView）</h3>
   <table>
     <tr><th>要素</th><th>説明</th></tr>
-    <tr><td>カテゴリ選択（必須）</td><td><strong>8種</strong>（体験・達成・人間関係・作品・創作・学び・旅・日常の幸せ・<strong>その他</strong>）を LazyVGrid（adaptive minimum 104）のチップで選択。未選択時は「保存」ボタン disabled。チップは <code>minHeight: 44</code>。</td></tr>
+    <tr><td>カテゴリ選択（<strong>任意</strong>・1.1.0〜）</td><td><strong>8種</strong>（体験・達成・人間関係・作品・創作・学び・旅・日常の幸せ・<strong>その他</strong>）を LazyVGrid（adaptive minimum 104）のチップで選択。ラベルの横に「任意」。<strong>選ばなければ「その他」で残す</strong>（1.0.x は必須で、未選択だと保存できなかった）。チップは <code>minHeight: 44</code>。</td></tr>
     <tr><td>気持ち選択（任意）</td><td>5種（喜び・充実・穏やか・疲れ・不安）をアイコン＋ラベル縦並びチップで選択（<code>minHeight: 44</code>）。同じチップの再タップでも解除できる。「クリア」ボタンは <code>minHeight: 44</code> + <code>contentShape</code> でタップ領域を確保し、文字色は <code>AppColors.textMuted</code>（罫線色 <code>outline</code> は面の上で 1.2:1 程度しかなく、ボタンとして読めないため 2026-08-25 に変更）。</td></tr>
     <tr><td>メモ入力（任意）</td><td>TextEditor（minHeight 120）。最大 500 文字想定。<strong>プレースホルダー「今日、心に残ったことを書いてみましょう」</strong>を重ねて表示（<code>allowsHitTesting(false)</code>）。</td></tr>
     <tr><td>写真（任意・最大3枚）</td><td>PhotosPicker（<code>matching: .images</code>・<code>maxSelectionCount</code> は残り枠）。88×88 のサムネイル横スクロール。取り消しの「×」は見た目 20pt のまま<strong>当たり判定を 44pt</strong> に広げる。実体は <code>ImageStore</code> がアプリ内領域へ保存し、パスのみ <code>imagePaths</code> に持つ。</td></tr>
     <tr><td>日付選択（任意）</td><td>DatePicker（in: ...Date()・displayedComponents: .date）。既定は本日。過去日付への記録も可能。</td></tr>
-    <tr><td>ツールバー</td><td>「閉じる」（cancellationAction・<code>attemptClose()</code> 経由）・「保存」（confirmationAction・カテゴリ未選択で disabled）・<strong>キーボード上「完了」</strong>（フォーカス解除）。</td></tr>
+    <tr><td>ツールバー</td><td>「閉じる」（cancellationAction・<code>attemptClose()</code> 経由）・<strong>「残す」</strong>（confirmationAction・1.1.0 で「保存」から改称）・<strong>キーボード上「完了」</strong>（フォーカス解除）。「残す」が押せるのは、編集時は常に／新規はカテゴリを選んだか、本文か写真が1つでもあるとき（<code>canSave</code>）。</td></tr>
+    <tr><td>一行入力からの引き継ぎ</td><td>「くわしく」で開いたときは、一行入力の書きかけ（<code>initialContent</code>）と写真1枚（<code>initialPhoto</code>）を入れた状態で始まる。一行入力の側は空に戻る。</td></tr>
+    <tr><td>写真の読み込み失敗</td><td>選んだ写真を読めなかった枚数があれば「写真を○枚読み込めませんでした。iCloud にある写真は、通信できる場所でもう一度選んでください。」を出す（LR-009）。エラーの見出しは「うまくいきませんでした」。</td></tr>
     <tr><td>破棄確認（confirmationDialog）</td><td><strong>書きかけがあるときだけ</strong>「書きかけの記録を破棄しますか？」（<code>titleVisibility: .visible</code>／本文「入力した内容は保存されません。」）。選択肢は<strong>「破棄する」（destructive・dismiss）</strong>と<strong>「書き続ける」（cancel・フォームに留まる）</strong>。書きかけが無ければ確認を出さずそのまま閉じる。</td></tr>
     <tr><td>スワイプで閉じる</td><td><code>.interactiveDismissDisabled(hasChanges)</code>。書きかけがあるあいだは下スワイプでシートを閉じられず、必ず「閉じる」→ 破棄確認の経路を通る。書きかけが無ければ従来どおりスワイプで閉じられる。</td></tr>
     <tr><td>編集モード</td><td>LogEntry を引数に渡すと編集モード（既存値でフォームを初期化）。タイトル「記録を編集」／新規は「新しい記録」。</td></tr>
@@ -117,8 +135,13 @@
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>初期表示（記録なし）</td><td>CTA → recentSection に EmptyStateView（moon.stars）→（表示設定 ON かつ UserProfile あり）残り時間ミニ。</td></tr>
-    <tr><td>当日に記録あり</td><td>CTA の直下に「今日は○件残しました」を表示。</td></tr>
+    <tr><td>初期表示（記録なし）</td><td>一行入力 → recentSection に EmptyStateView（moon.stars）→（表示設定 ON かつ UserProfile あり）残り時間ミニ。記録した日・お知らせの誘いは出さない。</td></tr>
+    <tr><td>今日まだ記録が無い</td><td>開いた時点で一行入力にカーソルが入る（<code>shouldFocusOnAppear</code>）。</td></tr>
+    <tr><td>一行入力: 空</td><td>「残す」は押せない。本文（前後の空白を除いて非空）か写真のどちらかがあれば押せる（<code>LogEntryService.canSaveQuickEntry</code>）。</td></tr>
+    <tr><td>一行入力: 保存成功</td><td>入力欄と写真を空にしてフォーカスを外し、「残しました」を2秒出す。カテゴリは「その他」・気持ちなし・日付は今。</td></tr>
+    <tr><td>一行入力: 保存失敗</td><td>写真の保存に失敗→「写真を保存できませんでした」。記録の保存に失敗→書いた写真ファイルを消して rollback し「記録を保存できませんでした」。どちらも書いた文は残る。</td></tr>
+    <tr><td>当日に記録あり</td><td>一行入力の直下に「今日は○件残しました」を表示。</td></tr>
+    <tr><td>記録1件以上・お知らせ未設定</td><td>毎日のお知らせの誘いを表示（断るかオンにすると消える）。</td></tr>
     <tr><td>記録あり</td><td>直近 3 件の LogCardView を表示。同月日の過去記録があれば「過去の今日」セクション（最大5件）も表示。</td></tr>
     <tr><td>UserProfile 未設定 / 表示設定 OFF</td><td>残り時間ミニカードを非表示。CTA と記録セクションのみ。</td></tr>
     <tr><td>LogFormView 表示中</td><td>.sheet でオーバーレイ表示。背後のタブはそのまま残る。</td></tr>
@@ -129,7 +152,10 @@
   <h2>遷移</h2>
   <table>
     <tr><th>操作</th><th>遷移先</th></tr>
-    <tr><td>「今日を記録する」ボタンタップ</td><td>LogFormView（新規作成）を .sheet で表示</td></tr>
+    <tr><td>一行入力の「残す」</td><td>その場で保存（画面遷移なし）</td></tr>
+    <tr><td>一行入力の「くわしく」</td><td>LogFormView（新規・書きかけと写真を引き継ぐ）を .sheet で表示</td></tr>
+    <tr><td>毎日のお知らせ（通知）をタップ</td><td>今日タブへ切り替え、各タブを根元へ戻して一行入力にカーソル（<code>NotificationRouter</code> → <code>RootTabView</code> の <code>entryFocusToken</code>）</td></tr>
+    <tr><td>右上の歯車</td><td>SettingsView（<a href="settings.html">LR-SETTINGS-01</a>）へ push</td></tr>
     <tr><td>「記録カレンダー ›」タップ</td><td>CalendarView（道具箱のカレンダーと同一画面）へ NavigationLink push</td></tr>
     <tr><td>LogCardView タップ</td><td>LogDetailView を NavigationLink push</td></tr>
     <tr><td>LogDetailView 内「編集」</td><td>LogFormView（編集モード）を .sheet で表示</td></tr>
@@ -146,6 +172,14 @@
 @Query(sort: \LogEntry.date, order: .reverse) private var logs: [LogEntry]
 @Query private var profiles: [UserProfile]
 @AppStorage("showLifeCountdown") private var showLifeCountdown = true
+@AppStorage("dailyReminderEnabled") private var dailyReminderEnabled = false
+@AppStorage("dailyReminderPromptDismissed") private var dailyReminderPromptDismissed = false
+var entryFocusToken = 0   // 通知から来たときに RootTabView が増やす
+
+// QuickEntryCard の保存（書き込み）は LogEntryService に置く
+//   LogEntryService.canSaveQuickEntry(content:photoCount:) -> Bool
+//   LogEntryService.createEntry(content:imagePaths:category:mood:date:in:)  // category nil → .other
+//   LogEntryService.recordedDayCount(_:) / currentStreak(_:)
 
 // 直近 3 件
 private var recent: [LogEntry] { Array(logs.prefix(3)) }
@@ -179,14 +213,17 @@ private static let onThisDayLimit = 5
     <li>LogFormView のカテゴリ／気持ちチップ: <code>.accessibilityAddTraits(isSelected ? .isSelected : [])</code>。写真の取り消しは <code>.accessibilityLabel("写真を外す")</code>、詳細のサムネイルは「写真○枚目」。</li>
     <li>LogDetailView のメニューボタン: <code>.accessibilityLabel("記録の操作メニュー")</code>。PhotoViewer の閉じるは「閉じる」。</li>
     <li><strong>Dynamic Type:</strong> 本文・ラベルは <code>scaledFont</code>（基準サイズを保ったまま追従）、見出しは <code>AppFont.mincho(_:relativeTo:)</code>。</li>
-    <li><strong>44pt タップ領域:</strong> 主CTA（minHeight 52）・記録カレンダー導線・カテゴリ/気持ちチップ・気持ちの「クリア」・写真の取り消し。</li>
+    <li>一行入力の TextField は <code>.accessibilityLabel("今日のことを一行で書く")</code>、写真ボタンは「写真を1枚添える」／「写真を選び直す」、「くわしく」は「カテゴリや気持ち、日付も入れられる画面を開きます」のヒント付き。記録した日は「・」を「、」に置き換えて読み上げる。</li>
+    <li><strong>44pt タップ領域:</strong> 一行入力の写真ボタン・「くわしく」・「残す」・写真の「×」・お知らせの「設定を開く」・記録カレンダー導線・カテゴリ/気持ちチップ・気持ちの「クリア」・写真の取り消し。</li>
   </ul>
 
   <h2>実装メモ</h2>
   <ul class="checklist">
     <li>TodayView は NavigationStack を持つ。今日タブ内のすべての遷移はこの NavigationStack 内で完結する。</li>
     <li>背景は共通の <code>screenBackground()</code>（背景色＋グレイン）。ナビタイトルは <code>minchoNavigationTitle(_:)</code>。<strong>この2つを画面ごとに手で書かない</strong>（漏れを構造的に防ぐための共通部品）。</li>
-    <li>LogFormView は新規・編集兼用。<code>entry: LogEntry? = nil</code> が nil なら新規、non-nil なら編集。</li>
+    <li>LogFormView は新規・編集兼用。<code>entry: LogEntry? = nil</code> が nil なら新規、non-nil なら編集。新規の作成は一行入力と同じ <code>LogEntryService.createEntry</code> を通す（保存の判定と作成を1か所に）。</li>
+    <li>QuickEntryCard は、応えた <code>focusToken</code> を覚えておき、同じ依頼で何度も入力欄へ入らない（<code>1e140c0</code>）。</li>
+    <li>写真ボタンの label は MainActor の値を Sendable なクロージャから読まないよう、<code>hasPhoto</code> を先に取り出して渡す（Release の警告対策・<code>d9c7a11</code>）。</li>
     <li>onThisDay の計算は <code>@Query</code> の結果（逆順全件）をフィルターしているため、記録件数が増えると計算コストが上がる。将来的にはクエリを分離すること。</li>
     <li><strong>PhotoViewer には <code>screenBackground()</code> を付けない。</strong> グレインは白ノイズを <code>.overlay</code> 合成で乗せるため、明るい写真のハイライトを飛ばす（素の黒地のまま）。</li>
   </ul>
@@ -207,9 +244,10 @@ private static let onThisDayLimit = 5
     <tr><td>1.0</td><td>2026-06-30</td><td>初版作成。ソースコード（TodayView / LogFormView / LogDetailView / RemainingTimeMiniView / WeekGridView）を元に実装済み仕様を記述</td></tr>
     <tr><td>1.1</td><td>2026-07-26</td><td>画面構成の変更を反映: 残り時間ミニを最下部へ移動＋<code>showLifeCountdown</code> で非表示可・ナビバー「+」廃止・主CTAを LineButton 化・「今日は○件残しました」追加・「○年前の今日」→「過去の今日」（最大5件）・「記録カレンダー ›」導線（44pt）追加。LogFormView にカテゴリ8種／写真添付（最大3枚）／メモのプレースホルダー／キーボード「完了」を追記。LogDetailView に写真表示と<strong>削除時の cascade cleanup</strong> を追記。データモデルから <code>isHighlight</code> を削除。共通部品（screenBackground / minchoNavigationTitle）・Dynamic Type・44pt タップ領域を追記</td></tr>
     <tr><td>1.2</td><td>2026-08-26</td><td>提出前の UI/UX 修正（コミット <code>4dcdba4</code>）を反映。LogFormView に<strong>書きかけの破棄確認</strong>（<code>hasChanges</code> が真のときだけ「書きかけの記録を破棄しますか？」／「破棄する」「書き続ける」）と <code>interactiveDismissDisabled(hasChanges)</code> による下スワイプ抑止を追記し、<code>hasChanges</code> の判定規則（新規＝いずれか入力済み／編集＝元の値から変化。本文は <code>entry.content ?? ""</code> と比較する）を明記。カテゴリ／気持ちチップの <code>minHeight: 44</code> を <code>background</code> より<strong>前</strong>に置く規則（塗りと枠のズレ是正）と、「クリア」ボタンの文字色を <code>outline</code> から <code>textMuted</code> に変更した旨を追記。状態・遷移の表に閉じる操作の分岐を追加</td></tr>
+    <tr><td>1.3</td><td>2026-10-24</td><td><strong>アプリ 1.1.0 (11) に合わせて改訂。</strong>主CTA「今日を記録する」を一行入力 QuickEntryCard に置き換え（「書く→残す」・写真1枚・今日まだ無ければ自動でカーソル・「くわしく」で書きかけと写真を引き継ぐ）。カテゴリを任意にし未選択は「その他」で保存。「記録した日 ○日 ・ ○日つづけて」と毎日のお知らせの誘い（許可はその場で初めて求める・拒否時は「設定を開く」）を追加。右上に設定の歯車。記録フォームの確定ボタンを「残す」に改称し、押せる条件（canSave）と写真の読み込み失敗の通知（LR-009）を追記。通知からの遷移を追加。状態・遷移・データモデル・アクセシビリティを更新（コミット <code>b9a54bf</code> <code>c23afd1</code> <code>4fe014c</code> <code>3243961</code> <code>1e140c0</code> <code>d9c7a11</code>）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-26</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>
