@@ -4,19 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>LifeReview - 道具箱: 統計</title>
+<title>LifeReview - 記録をながめる: 統計</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / 道具箱: 統計</div>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / 記録をながめる: 統計</div>
 
   <header class="site-header">
-    <h1>道具箱: 統計</h1>
+    <h1>記録をながめる: 統計</h1>
     <p>サマリー4カード・カテゴリ円グラフ・感情の移ろい（月別スタック棒）・カテゴリ内訳。</p>
     <div style="margin-top:8px;">
       <span class="tag done">実装済</span>
       <span class="tag">画面ID: LR-TOOLBOX-STATS</span>
+      <span class="tag">1.1.0 (11)</span>
     </div>
   </header>
 
@@ -24,7 +25,7 @@
   <p>
     日々の記録（LogEntry）を集計し、カテゴリ分布・記録の積み重なり・感情の移ろいをビジュアルで把握する画面。
     振り返りの「道具箱」として「自分はどんなことをよく記録しているか」「感情がどう変化しているか」を俯瞰する用途。
-    ふりかえりタブ（<a href="S03_reflect_home.html">LR-S03</a>）の道具箱セクションから NavigationLink で push される。
+    ふりかえりタブ（<a href="S03_reflect_home.html">LR-S03</a>）の「記録をながめる」セクション（1.0.x の道具箱）から NavigationLink で push される。
   </p>
   <div class="callout">
     <strong>この画面が集計するのは記録（LogEntry）だけ。</strong>
@@ -46,8 +47,8 @@
     <tr><td>画面の地</td><td><code>screenBackground()</code></td><td>背景色（night1）＋フィルムの粒（grainOverlay）を一括で敷く共通 modifier。</td></tr>
     <tr><td>ナビタイトル</td><td><code>minchoNavigationTitle("統計")</code></td><td>明朝17pt を <code>ToolbarItem(.principal)</code> に自前描画（inline）。iOS 26 でラージタイトルにカスタムフォントを指定すると描画されないための対処。</td></tr>
     <tr><td>サマリーカード（4枚）</td><td>LazyVGrid × SummaryCard</td><td>総記録数 / 今月記録した日 / 最多カテゴリ / 記録した日（累計）。列数は Dynamic Type に応じて可変（下記）。</td></tr>
-    <tr><td>カテゴリ別割合（円グラフ）</td><td>Swift Charts SectorMark</td><td>ドーナツ型。<code>innerRadius: .ratio(0.5)</code> / <code>angularInset: 1.5</code> / <code>cornerRadius: 3</code>。高さ 200。見出しは明朝16pt。</td></tr>
-    <tr><td>カテゴリ凡例</td><td>LazyVGrid（adaptive minimum 96）</td><td>円グラフ直下。10×10 の角丸（cornerRadius 2）色サンプル＋カテゴリ名（12pt・textMuted）。<strong>breakdown と同じ件数降順</strong>で並ぶ（0件のカテゴリは出ない）。</td></tr>
+    <tr><td>カテゴリ別割合（円グラフ）</td><td>Swift Charts SectorMark</td><td>ドーナツ型。<code>innerRadius: .ratio(0.5)</code> / <code>angularInset: 1.5</code> / <code>cornerRadius: 3</code>。高さ 200。見出しは明朝16pt。<strong>1.1.0 から読み上げ対象外</strong>（<code>.accessibilityHidden(true)</code>・円の角度は読んでも意味がないため。内訳は直下の凡例が件数つきで読む・LR-008）。</td></tr>
+    <tr><td>カテゴリ凡例</td><td>LazyVGrid（adaptive minimum 96）</td><td>円グラフ直下。10×10 の角丸（cornerRadius 2）色サンプル＋<strong>「カテゴリ名 ○件」</strong>（12pt・textMuted・1.1.0 で件数を追加）。各項目は <code>.accessibilityElement(children: .combine)</code> で「日常の幸せ 12件」のように1つに読む。<strong>breakdown と同じ件数降順</strong>で並ぶ（0件のカテゴリは出ない）。</td></tr>
     <tr><td>感情の移ろい</td><td>Swift Charts BarMark（スタック棒）</td><td>見出し「感情の移ろい」（明朝16pt）＋サブテキスト「直近6か月の記録から」（12pt・textMuted）。グラフ高さ 180。</td></tr>
     <tr><td>感情凡例（MoodLegend）</td><td>LazyVGrid（adaptive minimum 78）</td><td>グラフの 16pt 下。<strong>LogMood.allCases の5種を常に全部表示</strong>（その月に出現しない感情も並ぶ）。色サンプル10×10＋ラベル12pt。</td></tr>
     <tr><td>カテゴリ内訳リスト</td><td>ForEach + HStack</td><td>件数降順。アイコン（20pt・カテゴリ色・幅24）＋カテゴリ名（14pt）＋件数（14pt semibold）＋割合（13pt・幅56右寄せ・小数1桁）。</td></tr>
@@ -183,6 +184,7 @@ static func totalRecordedDays(_ logs: [LogEntry], calendar: Calendar = .current)
   <h2>アクセシビリティ対応</h2>
   <ul class="checklist">
     <li>3つのセクション見出し（カテゴリ別割合 / 感情の移ろい / カテゴリ内訳）に <code>.accessibilityAddTraits(.isHeader)</code> を付与。VoiceOver のローター見出し送りで各ブロックへ跳べる。</li>
+    <li><strong>グラフの読み上げ（LR-008・1.1.0〜）:</strong> 円グラフは読み上げ対象から外し、凡例の「カテゴリ名 ○件」で読ませる。感情の移ろいの棒は、各帯に <code>accessibilityLabel</code>（月）と <code>accessibilityValue</code>（「喜び 3件」）を付け、記録0件の月の薄い土台は「記録なし」と読む。</li>
     <li>サマリーの値・ラベル、凡例、内訳リストのテキストを <code>scaledFont(_:weight:)</code> にして Dynamic Type に追従させる。見出しは <code>AppFont.mincho(16, relativeTo: .headline)</code> で追従。<strong>例外</strong>: グラフの軸ラベル（Y 10pt / X 11pt）とアイコン（サマリー24pt・内訳20pt）は <code>.font(.system(size:))</code> の固定サイズのままで、文字サイズ設定には追従しない。</li>
     <li>サマリーカードは固定高ではなく <code>minHeight 96</code>。文字が拡大しても値・ラベルが切れずカードが伸びる。</li>
     <li><code>accessibility1</code> 以上でサマリーグリッドを1列に落とし、2列のまま横方向に潰れるのを避ける。</li>
@@ -211,7 +213,7 @@ static func totalRecordedDays(_ logs: [LogEntry], calendar: Calendar = .current)
   <ul>
     <li><a href="../data-model.html">データモデル（LogEntry / LogCategory / LogMood）</a></li>
     <li><a href="S03_reflect_home.html">ふりかえりタブ（LR-S03）</a></li>
-    <li><a href="toolbox-calendar.html">道具箱: カレンダー（LR-TOOLBOX-CAL）</a></li>
+    <li><a href="toolbox-calendar.html">記録をながめる: カレンダー（LR-TOOLBOX-CAL）</a></li>
     <li><a href="reflection-timeline.html">これまでの軌跡（LR-TIMELINE-01）</a></li>
     <li><a href="S02_today.html">今日タブ（LR-S02）</a></li>
   </ul>
@@ -223,9 +225,10 @@ static func totalRecordedDays(_ logs: [LogEntry], calendar: Calendar = .current)
     <tr><td>1.1</td><td>2026-06-15</td><td>Phase S3 実装済み: 感情の移ろいグラフ（Swift Charts 月別スタック棒グラフ・直近6か月・5感情色分け・凡例・空状態メッセージ）を追加</td></tr>
     <tr><td>1.2</td><td>2026-06-16</td><td>Phase S4 実装済み: ナビゲーションバーをダーク天体背景＋明朝インラインタイトルに統一。</td></tr>
     <tr><td>1.3</td><td>2026-07-26</td><td>サマリー4枚目の「記録率（今月記録日÷経過日数）」を廃止し <code>totalRecordedDays</code>「記録した日（累計）」に差し替え（同一日の複数記録は1日。純粋関数化＋テスト2件）。記録率カードの青 #2563EB と「今月の記録」カードのオレンジを撤去し、色を持つアイコンを「最多カテゴリ」1枚のみに限定。カテゴリ8色・感情5色を輝度階段の和色パレットへ全面差し替え（旧・原色パレットの記述を削除。HEX と和色名の表を新設）。縦積み順を実装どおり サマリー→円グラフ→感情の移ろい→カテゴリ内訳 に訂正。円グラフ直下のカテゴリ凡例（件数降順）を追記。感情グラフの記録0件月に高さ 0.4 の薄い土台を描く仕様・<code>.chartLegend(.hidden)</code>＋自前 MoodLegend（5種固定表示）・空状態文言を実装に合わせて修正。<code>screenBackground()</code> / <code>minchoNavigationTitle()</code> への集約と Dynamic Type 対応（scaledFont・minHeight 96・accessibility1 で1列化）を追記。「振り返り頻度グラフ（S4以降）」を削除し、v1.0.0 の非対象を明示。関連リンクの <code>reflect-home.html</code> を <code>S03_reflect_home.html</code> に修正</td></tr>
+    <tr><td>1.4</td><td>2026-10-24</td><td><strong>アプリ 1.1.0 (11) に合わせて改訂（LR-008）。</strong>円グラフを読み上げ対象から外し、カテゴリ凡例に件数（「カテゴリ名 ○件」）を足してひとまとまりで読む形に。感情の移ろいの棒に月と「感情 ○件」／「記録なし」の読み上げを追記（<code>6d9474e</code>）。入口の名前「道具箱」を「記録をながめる」に</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>

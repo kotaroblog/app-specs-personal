@@ -4,19 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>LifeReview - 道具箱: カレンダー</title>
+<title>LifeReview - 記録をながめる: カレンダー</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
-  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / 道具箱: カレンダー</div>
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">LifeReview</a> / 記録をながめる: カレンダー</div>
 
   <header class="site-header">
-    <h1>道具箱: カレンダー</h1>
+    <h1>記録をながめる: カレンダー</h1>
     <p>記録の積み重なりをヒートマップで可視化し、日付選択でその日のログを展開する。</p>
     <div style="margin-top:8px;">
       <span class="tag done">実装済</span>
       <span class="tag">画面ID: LR-TOOLBOX-CAL</span>
+      <span class="tag">1.1.0 (11)</span>
     </div>
   </header>
 
@@ -77,10 +78,11 @@
   <h2>曜日ラベルの色</h2>
   <table>
     <tr><th>曜日</th><th>色</th><th>和名</th></tr>
-    <tr><td>土</td><td>#7590A0</td><td>錆浅葱</td></tr>
-    <tr><td>日</td><td>#A87E82</td><td>梅鼠</td></tr>
-    <tr><td>平日</td><td>textMuted（#8E8B84）</td><td>暖グレー</td></tr>
+    <tr><td>土</td><td>暗い表示 #7590A0 ／ 明るい表示 #4F6C80</td><td>錆浅葱</td></tr>
+    <tr><td>日</td><td>暗い表示 #A87E82 ／ 明るい表示 #9C5A60</td><td>梅鼠</td></tr>
+    <tr><td>平日</td><td>textMuted（暗い表示 #8E8B84。明るい表示ではトークンの値が切り替わる）</td><td>暖グレー</td></tr>
   </table>
+  <p>1.1.0 で明るい表示（書斎トーン）を追加したため、土日の2色は <code>Color.adaptive(light:dark:)</code> で表示に合わせて切り替える。明るい表示の値は生成りの紙の上で読める濃い同系色。</p>
   <p>一般的なカレンダーの「土＝青／日＝赤」は使わない。C案の禁止色（原色）を避け、和色鼠に寄せた土日色を当てている。</p>
 
   <h2>カレンダーグリッド計算ロジック</h2>
@@ -164,6 +166,7 @@ private func dailyCounts(year: Int, month m: Int) -> [Int: Int]
 
   <h2>実装メモ</h2>
   <ul class="checklist">
+    <li><strong>暦は <code>Calendar(identifier: .gregorian)</code> 固定</strong>（1.1.0〜・<code>a940fb6</code>）。<code>Calendar.current</code> だと和暦などを選んだ端末で年・月の数え方が変わるため、端末の暦の設定によらず西暦で数える。</li>
     <li><code>month</code> は常に <code>startOfMonth</code>（その月の1日 0:00）を保持する。</li>
     <li>曜日ラベルは固定配列 <code>["月", "火", "水", "木", "金", "土", "日"]</code>（月曜起点）。</li>
     <li>ヒートマップ色は <code>AppColors.heatmap0〜4</code> に集約。View 側に16進を直書きしない。</li>
@@ -178,7 +181,7 @@ private func dailyCounts(year: Int, month m: Int) -> [Int: Int]
     <li><a href="../data-model.html">データモデル</a></li>
     <li><a href="S03_reflect_home.html">ふりかえりタブ（LR-S03）</a></li>
     <li><a href="S02_today.html">今日タブ（LR-S02）</a></li>
-    <li><a href="toolbox-stats.html">道具箱: 統計（LR-TOOLBOX-STATS）</a></li>
+    <li><a href="toolbox-stats.html">記録をながめる: 統計（LR-TOOLBOX-STATS）</a></li>
   </ul>
 
   <h2>変更履歴</h2>
@@ -187,9 +190,10 @@ private func dailyCounts(year: Int, month m: Int) -> [Int: Int]
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S2 実装済み内容（CalendarView）を反映</td></tr>
     <tr><td>1.1</td><td>2026-06-16</td><td>Phase S4 実装済み: ナビゲーションバーをダーク天体背景＋明朝インラインタイトルに統一。</td></tr>
     <tr><td>1.2</td><td>2026-07-26</td><td>ヒートマップ5段階の実値（#161C28 / #20293C / #26324A / #3A4A66 / #54627E）と相対輝度の階段を明記。heatmap1 を night3 流用から専用値 #20293C へ切り離した理由（0件との輝度差が .0052 しかなく判別不能だった）を追記。グリッド直下に5段階の凡例（heatmapLegend）を常時表示する仕様を追加。月送りボタンを 44×44 frame + contentShape でタップ領域確保・今月では「次の月」を disabled・月変更で選択日を解除する仕様を追記。選択中の枠を amber から moonWhite .5 の 2pt ストロークへ訂正し、今日＝丸ドット／選択中＝角丸四角の形による区別を追記。土日の色を「青／赤」から錆浅葱 #7590A0 / 梅鼠 #A87E82 へ訂正。セル高を固定44pxから minHeight 44 へ変更し、全テキストを scaledFont 化（Dynamic Type 追従）。3件以上で日付数字を moonWhite に切り替える閾値を明記。背景を screenBackground()（背景色+グレイン）に、タイトルを minchoNavigationTitle に統一。LogEntry.isHighlight 廃止（ハイライトは ReflectionSession.highlightLogIds が唯一の真実源）を反映し、件数集計がハイライトに依存しないことを明記。VoiceOver 読み上げ文言・削除時の highlightLogIds 後始末を追記。選択日見出しの日付書式を weekdayWideMD（曜日完全形「金曜日 6/15」）へ明記し、編集・削除は push 先 LogDetailView のツールバーにある旨を補足</td></tr>
+    <tr><td>1.3</td><td>2026-10-24</td><td><strong>アプリ 1.1.0 (11) に合わせて改訂。</strong>暦を <code>Calendar(identifier: .gregorian)</code> に固定し、和暦などの端末でも西暦で数える旨を追記（<code>a940fb6</code>）。明るい表示の土日の色（土 #4F6C80・日 #9C5A60）を追加（<code>f2d8189</code>）。入口の名前「道具箱」を「記録をながめる」に</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>
