@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 試験日の画面</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 試験日の画面</div>
+  <header class="site-header"><h1>試験日の画面（ExamDateSetupSheet）</h1><p>種別・1日または期間を決める</p>
+  <div class="section-meta"><span class="tag todo">1.4.2 (22)（TestFlight 配信済み・未公開）</span><span class="tag">画面ID: SS-EXAM-01</span></div></header>
+
+  <h2>目的・役割</h2>
+  <p>試験の種別・日付（1日または期間）を決める画面。保存すると「学習計画を作りますか？」を出し、逆算の計画づくりへつなぐ。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>セクション</th><th>内容</th></tr>
+    <tr><td>試験の種別</td><td>チップ（定期テスト・入試・模試・資格試験・その他）。以前の選び方では「定期テスト」が見切れていた（SS-027）</td></tr>
+    <tr><td>複数日</td><td>スイッチ「定期テスト・模試など、何日かに分かれている試験」</td></tr>
+    <tr><td>試験日／開始日</td><td>複数日がオフなら「試験日」、オンなら「開始日」</td></tr>
+    <tr><td>試験の期間（複数日のとき）</td><td>最終日と、<strong>期間を塗ったカレンダー</strong>（<code>ExamRangeCalendar</code>）</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示</th></tr>
+    <tr><td>未設定</td><td>1か月後が初期値。今日より前の日は選べない</td></tr>
+    <tr><td>設定済み・期間あり</td><td>複数日がオンで開き、期間を塗って見せる</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>先</th></tr>
+    <tr><td>入口</td><td>ホームの要約カードの「試験まで」・一覧「試験日」／カレンダーのカウントダウンのカード／設定の試験日の行</td></tr>
+    <tr><td>保存（閉じきったあと）</td><td>アラート「学習計画を作りますか？」→「作る」で<a href="study-plan-sheet.html">学習計画の作成</a></td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <p><code>UserSettings.examDate</code>（開始日）・<code>examEndDate</code>（最終日・nil＝1日）・<code>goalType</code>（種別）。</p>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done"><code>ExamDateSetupSheet</code>・<code>ExamTypeChipPicker</code>・<code>ExamPeriodFields</code>・<code>ExamRangeCalendar</code>。設定画面は <code>ExamDateSettingsRows</code></li>
+    <li class="done">提案アラートは <code>sheet(onDismiss:)</code> で出す（<code>ExamPlanFlow</code>。v1.3 から）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/exam-period.html">試験の期間（機能仕様書）</a></li>
+    <li><a href="calendar.html">カレンダー</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-24</td><td>初版作成（1.4.2 (22)・TestFlight 配信済み・未公開の内容）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
+</div>
+</body></html>

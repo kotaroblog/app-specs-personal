@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 試験の期間</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 試験の期間</div>
+  <header class="site-header"><h1>試験の期間（ExamSchedule）</h1><p>1日の試験と複数日の試験を同じ計算で扱う</p>
+  <div class="section-meta"><span class="tag todo">1.4.2 (22)（TestFlight 配信済み・未公開）</span><span class="tag">SS-FEAT-EXAM-01</span></div></header>
+
+  <h2>概要</h2>
+  <p>試験を「1日」だけでなく、定期テスト・模試のような<strong>複数日の期間</strong>で持てるようにする（SS-028）。
+  開始日は従来の <code>UserSettings.examDate</code>、最終日を新しい <code>examEndDate</code>（nil＝1日だけ）に持つ。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/exam-date-setup.html">試験日の画面</a></li>
+    <li><a href="../screens/home.html">ホーム</a>（要約カードの「試験まで」・一覧の「試験日」）</li>
+    <li><a href="../screens/calendar.html">カレンダー</a>（カウントダウンのカード・日／週の試験の帯・月のマス）</li>
+    <li><a href="../screens/widget.html">ウィジェット</a></li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant V as ホーム／カレンダー／ウィジェット
+  participant U as UserSettings
+  participant E as ExamSchedule
+  V->>U: examDate, examEndDate
+  U-->>V: examSchedule（examDate が nil なら無し）
+  V->>E: phase(on: 今日)
+  E-->>V: upcoming(残り日数) / inProgress(何日目, 全日数) / finished
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <table>
+    <tr><th>ルール</th><th>内容</th></tr>
+    <tr><td>日数</td><td>最終日 − 開始日 + 1。最終日が無い・開始日と同じ・開始日より前なら1日</td></tr>
+    <tr><td>判定</td><td>時刻は見ず日付だけ。開始日の前＝残りN日、期間中＝N日目／全M日、最終日の翌日から＝終わった</td></tr>
+    <tr><td>1日だけの試験の当日</td><td>「今日は試験当日」（期間の「1日目／全1日」とは言わない）</td></tr>
+    <tr><td>表示名</td><td>学校名 → 試験の種別 → 「試験」の順で使う（<code>examDisplayName</code>）</td></tr>
+    <tr><td>学習計画との関係</td><td>学習計画の終了日の初期値は<strong>試験（開始日）の前日</strong></td></tr>
+  </table>
+
+  <h2>外部連携</h2>
+  <p>ウィジェットのターゲットにも <code>ExamSchedule.swift</code> を入れ、アプリと同じ計算で残り日数を出す（Foundation 以外を import しない）。</p>
+
+  <h2>エラー処理</h2>
+  <p>不正な期間（最終日 &lt; 開始日）は1日として扱い、落とさない。</p>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done"><code>examEndDate</code> は既定値 nil の追加項目。既存の利用者は1日の試験として読める</li>
+    <li class="done">年の表示が「2,026年」と区切られて出る不具合を修正（試験の期間のカレンダー）</li>
+    <li class="done">テストあり（日数・判定・境界）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-24</td><td>初版作成（1.4.2 (22)・TestFlight 配信済み・未公開の内容）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+  });
+</script>
+</body></html>
