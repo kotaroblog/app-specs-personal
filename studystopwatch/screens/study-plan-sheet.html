@@ -51,7 +51,7 @@
     <tr><td>カレンダーのツールバーメニュー（従来経路）</td><td><a href="calendar.html">カレンダー画面</a>右上「＋」→「学習計画を作成」</td><td>v1.0 からある経路。メニュー内の2番目</td></tr>
   </table>
   <p>
-    どちらの経路から開いても<strong>シートの内容・初期値は同じ</strong>（終了日の初期値は <code>settings?.examDate</code>、未設定なら今日+30日）。
+    どちらの経路から開いても<strong>シートの内容・初期値は同じ</strong>（終了日の初期値は試験の前日〔1.4.2〜〕、未設定なら今日+30日）。
     試験日保存直後に開いた場合は、いま保存した試験日がそのまま終了日の初期値になる。
   </p>
 
@@ -64,10 +64,10 @@
     <tr><th>要素</th><th>説明</th></tr>
     <tr><td>科目セレクター</td><td>登録済み Subject から選択（任意）。未選択時は「未分類」タスク生成</td></tr>
     <tr><td>タイトル入力</td><td>計画タイトル（例: 数学ワーク Chapter3）。キーボード自動フォーカス（<code>@FocusState titleFocused</code>）</td></tr>
-    <tr><td>総量入力 + 単位プリセット（改善）</td><td>総量を数値入力。単位は「ページ」「問」「回」「章」「時間」のプリセットボタンで即選択。「カスタム」選択時はフリー入力欄を表示</td></tr>
+    <tr><td>総量入力 + 単位プリセット（改善）</td><td>総量を数値入力。単位は「ページ」「問」「語」「回」「章」「時間」のプリセットで即選択（「語」は 1.4.2〜）。「カスタム」選択時はフリー入力欄を表示</td></tr>
     <tr><td>入力ガイド（改善）</td><td>各フィールドにプレースホルダーとサブテキスト（例: 「例: 数学ワーク」「例: 50」）を追加</td></tr>
-    <tr><td>開始日・終了日 DatePicker</td><td>開始日（デフォルト今日）と終了日（デフォルト試験日 or 30日後）の DatePicker</td></tr>
-    <tr><td>分割方法セグメント</td><td>毎日 / 曜日を選ぶ / 1タスク の3種類（v1.4 から <code>PlanSplitMode</code>。計画に保存する）</td></tr>
+    <tr><td>開始日・終了日 DatePicker</td><td>開始日（デフォルト今日）と終了日（デフォルト試験の前日〔1.4.2〜〕 or 30日後）の DatePicker</td></tr>
+    <tr><td>分割方法（1.4.2 からチップ）</td><td>毎日 / 曜日を選ぶ / 1タスク の3種類（v1.4 から <code>PlanSplitMode</code>。計画に保存する）</td></tr>
     <tr><td>曜日選択（曜日モード時）</td><td>日〜土の曜日チェックボックス（<code>includedWeekdays: Set&lt;Int&gt;</code>）</td></tr>
     <tr><td>プレビューサマリ</td><td>「1日あたり 3〜4 ページ × N 日間」を計算してリアルタイム表示（v1.4 から合計ちょうどの配分で計算）</td></tr>
     <tr><td>生成ボタン</td><td>「学習計画を作る」。<code>canGenerate</code>（タイトル+総量+日付が有効）のときのみ有効</td></tr>
@@ -76,7 +76,7 @@
   <h2>状態</h2>
   <table>
     <tr><th>状態</th><th>表示内容</th></tr>
-    <tr><td>初期表示</td><td>各フィールド空欄。終了日 = 試験日（未設定なら今日+30日）。プレビューは「- 日間」</td></tr>
+    <tr><td>初期表示</td><td>各フィールド空欄。終了日 = 試験の前日〔1.4.2〜〕（未設定なら今日+30日）。プレビューは「- 日間」</td></tr>
     <tr><td>タイトル・総量入力済み</td><td>プレビューサマリが更新される</td></tr>
     <tr><td>生成可能（canGenerate = true）</td><td>「学習計画を作る」ボタンが有効化</td></tr>
     <tr><td>生成完了</td><td>dismiss() でシートを閉じる。カレンダー画面にタスクが反映され、学習計画の欄に計画が加わる（v1.4）</td></tr>
@@ -137,7 +137,7 @@
     <li class="done">分割ロジック: <code>targetDays</code> 計算プロパティ。<code>splitMode == .single</code> のときは <code>[endDate]</code> のみ返す</li>
     <li class="done"><strong>v1.4</strong> 配分は <code>StudyPlanService.distribute</code>: 総量 ÷ 日数の商を全日に、余りを前の日から1ずつ足す。0 の日は作らない（v1.3 までは切り上げた量を全日に入れており、合計が総量を超えていた）</li>
     <li class="done"><strong>v1.4</strong> 作成は <code>StudyPlanService.createPlan</code>（計画を insert → やることを日数分 insert）。保存に成功したら計測イベント <code>plan_created</code>（作ったやることの数）</li>
-    <li class="done">単位プリセット: <code>["ページ", "問", "回", "章", "時間"]</code>。カスタム選択時は <code>useCustomUnit = true</code></li>
+    <li class="done">単位プリセット: <code>["ページ", "問", "語", "回", "章", "時間"]</code>（1.4.2 で「語」を追加）。カスタム選択時は <code>useCustomUnit = true</code></li>
     <li class="done">生成した StudyTask は modelContext.insert で一括登録後 <code>try modelContext.save()</code></li>
     <li class="done">試験日（<code>settings?.examDate</code>）が設定済みの場合、終了日の初期値として使用（init() では SwiftData 未ロードのため <code>nil</code> を渡し、onAppear で上書き）</li>
     <li class="done"><code>titleFocused = true</code> を onAppear で設定してキーボードを自動表示</li>
@@ -156,15 +156,29 @@
     <li><a href="../data-model.html">データモデル</a></li>
   </ul>
 
+  <h2>1.4.2 での変更 <span class="tag todo">1.4.2 (22)</span></h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>入力の方法</td><td>「<strong>合計を割る</strong>」（従来）／「<strong>範囲を並べる</strong>」（SS-034）。範囲は「1章」「2章」…のように項目を並べ、日程に順番に割り振る。連番は「1〜5章を追加」でまとめて足せる（200個まで）</td></tr>
+    <tr><td>範囲の割り振り</td><td>項目が日数より多ければ1日に複数（前の日から多め）。<strong>少なければ期間全体に均等な間隔</strong>で1つずつ（例: 3項目・18日 → 1日目・7日目・13日目）。以前は最初の数日に固まっていた（UI/UX #4）</td></tr>
+    <tr><td>単位</td><td>ページ・問・<strong>語</strong>・回・章・時間（英単語帳のため「語」を追加。UI/UX #3）。範囲の計画の単位は「項目」</td></tr>
+    <tr><td>終了日の初期値</td><td><strong>試験（開始日）の前日</strong>（UI/UX #2）</td></tr>
+    <tr><td>分割方法</td><td>セグメントからチップ（<code>OptionChipPicker</code>）へ</td></tr>
+    <tr><td>保存後</td><td>「<strong>続けて別の計画を作る</strong>」。期間・分割方法・曜日・単位・入力の方法は前回の値を残す（英語→数学のように続けて作る。SS-035）</td></tr>
+    <tr><td>見た目</td><td>上部の題名の見切れを修正（SS-033）。大きい文字の崩れを修正（UI/UX #9）。作成ボタンを下に固定。数字キーボードに「完了」</td></tr>
+  </table>
+  <p>やることの題名の例: 合計型「英単語帳: 10語（3日目/30日）」、範囲型「英語ワーク 3章」「英語ワーク 1章・2章」。実装: <code>StudyPlanSheet</code> を <code>StudyPlanFormSections</code>・<code>StudyPlanItemsSection</code>・<code>StudyPlanPreviewSection</code> に分割、入力は <code>StudyPlanFormViewModel</code>、計算は <code>StudyPlanService</code>。</p>
+
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-06-20</td><td>初版作成（UI/UX改善: 入力ガイド・単位プリセット候補追加を含む）</td></tr>
     <tr><td>1.1</td><td>2026-09-05</td><td>到達経路の拡張を反映（SS-001）: 従来のカレンダーのツールバーメニューに加え、<strong>試験日を保存した直後の提案アラートからも開く</strong>ようになった（ホーム・カレンダーの両方が入口）。「到達経路」セクションを新設し、主導線が保存直後の提案であることを明記。閉じたときの戻り先が呼び出し元依存になった点、呼び出し元が2箇所になった点を実装メモに追記</td></tr>
     <tr><td>1.2</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）を反映（SS-020）: 計画そのもの（StudyPlan）を保存し、日ごとのやることに planID・planAmount を持たせる。量を合計ちょうどに配るよう変更（以前は切り上げで合計を超えていた）。「1日あたり」の幅表示、分割方法の PlanSplitMode 化、1.4.0 より前の計画は進み具合に出ないことを追記</td></tr>
+    <tr><td>1.3</td><td>2026-10-24</td><td>1.4.2 (22)（TestFlight 配信済み・未公開）を反映: 「範囲を並べる」入力と均等な割り振り、単位「語」、終了日の初期値を試験の前日に変更、分割方法のチップ化、保存後の「続けて別の計画を作る」、題名の見切れ・大きい文字の修正。上の節の終了日の初期値・単位プリセットの記述を現行に修正</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-10-01</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>

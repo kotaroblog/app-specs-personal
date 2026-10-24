@@ -152,10 +152,20 @@ sequenceDiagram
     <li class="done">カレンダーの欄は <code>PlanProgressSection</code>。表示中のビュー（日・週・月）によらず、試験日カードと表示切替タブの間に出す</li>
   </ul>
 
+  <h2>範囲を並べる計画（1.4.2・SS-034）<span class="tag todo">1.4.2 (22)</span></h2>
+  <ul>
+    <li><code>StudyPlan.inputMode</code> が items のとき、<code>itemsText</code> の項目を配る日に順番に割り振り、各やることの <code>planItemsText</code> に持たせる</li>
+    <li>計画の合計は項目の数・単位は「項目」、やることの量は割り振った項目の数（進み具合の計算を合計型と同じにする）</li>
+    <li>項目が日数より多ければ1日に複数（前の日から多め）、少なければ期間全体に均等な間隔</li>
+    <li>次にやる項目＝まだ終わっていないやることのうち期限のいちばん早いもの（カレンダーの学習計画の欄に出す）</li>
+    <li>配り直しは未完了のやることを期限の早い順に付け替える（合計型と同じ）</li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-10-01</td><td>初版作成。1.4.0（TestFlight・未提出）で追加した計画の保存・進み具合・配り直し（SS-020）</td></tr>
+    <tr><td>1.1</td><td>2026-10-24</td><td>1.4.2 (22)（TestFlight 配信済み・未公開）を反映: 範囲を並べる計画（items）の割り振り・進み具合・次にやる項目を追記</td></tr>
   </table>
 
   <script>
@@ -165,7 +175,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-10-01</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>
