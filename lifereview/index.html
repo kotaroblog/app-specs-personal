@@ -12,8 +12,8 @@
   <div class="breadcrumb"><a href="../">← Personal App Specs</a></div>
 
   <header class="site-header">
-    <h1>LifeReview</h1>
-    <p>振り返り中心の人生記録アプリ · Bundle ID: <code>com.happyboy1002.LifeReview</code></p>
+    <h1><img src="_img/app-icon-1.1.0.png" alt="人生アルバムのアプリアイコン（1.1.0）" width="64" height="64" style="vertical-align:middle;border-radius:14px;margin-right:12px">LifeReview（人生アルバム）</h1>
+    <p>一言日記・写真日記と、週末の振り返り · Bundle ID: <code>com.happyboy1002.LifeReview</code></p>
   </header>
 
   <h2>概要</h2>
@@ -22,15 +22,51 @@
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語のみ（ローカライズファイルを持たず、locale も ja_JP 固定）</span></li>
     <li><span class="k">マネタイズ</span><span class="v">v1.0 は無料・広告なし。実ユーザーデータを蓄積後、v1.1 以降で課金/広告を設計</span></li>
-    <li><span class="k">ステータス</span><span class="v"><strong>v1.0.0 (build 1) 提出準備完了・未リリース</strong>（2026-08-25 に全6画面の UI/UX レビューとパス5を再実施し13件修正。ビルド緑（Debug/Release）・ユニット26緑・UIテスト13緑／スクショ5枚生成済み／残るは Archive とストア入力）</span></li>
+    <li><span class="k">ストア表示名</span><span class="v">一言日記・写真日記 - 人生アルバム（サブタイトル「一行でいい。週末の振り返りと気分ログ」。1.0.2 で変更）</span></li>
+    <li><span class="k">ステータス</span><span class="v"><strong>公開中は 1.0.2</strong>（1.0.0 を 2026-09-02 に公開）。<strong>1.1.0 (11) を TestFlight 配信済み・未公開</strong>（2026-10-24。ブランチ <code>improve/score80-2026-10</code>。内容は下の「1.1.0 の変更」）</span></li>
     <li><span class="k">技術スタック</span><span class="v">Swift 6 / SwiftUI / SwiftData / XcodeGen（2026-06-15 に Flutter から全面移行済み）</span></li>
-    <li><span class="k">デザインテーマ</span><span class="v">C案「ダーク天体」— 墨と藍、琥珀の真鍮、明朝×ゴシック二層</span></li>
+    <li><span class="k">デザインテーマ</span><span class="v">C案「ダーク天体」— 墨と藍、琥珀の真鍮、明朝×ゴシック二層。1.1.0 で明るい表示（書斎トーン＝生成りの紙・墨藍の文字・濃い真鍮）を追加（既定は暗い表示のまま）</span></li>
   </ul>
 
   <div class="callout">
     <strong>コンセプト一文:</strong>「記録するアプリ」から「定期的に立ち止まり、人生を振り返るアプリ」へ。<br>
     日々の記録は素材集め。アプリの主役を <strong>週次・月次・年次の振り返り（リフレクション）</strong> に据える。
   </div>
+
+  <h2>アプリアイコン（1.1.0 で差し替え）</h2>
+  <p>
+    <img src="_img/app-icon-1.1.0.png" alt="通常のアイコン" width="128" height="128" style="border-radius:28px;margin-right:12px">
+    <img src="_img/app-icon-1.1.0-dark.png" alt="暗い表示用のアイコン" width="96" height="96" style="border-radius:21px;margin-right:12px">
+    <img src="_img/app-icon-1.1.0-tinted.png" alt="色付き表示用のアイコン" width="96" height="96" style="border-radius:21px">
+  </p>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>図柄</td><td><strong>「重ねた写真」</strong>。夕方の写真と夜空の写真の2枚が重なり、手前の写真の中に星と金の地平線、写真の下の余白に一行（一言日記の一行を表す）。背景は夜の藍</td></tr>
+    <tr><td>差し替えの理由</td><td>旧アイコン（星と地平線だけ）は天体・瞑想系のアプリに見え、<strong>写真日記・アルバムだと伝わらなかった</strong>（ISSUES LR-016）。ストア表示名を「一言日記・写真日記 - 人生アルバム」にした（1.0.2）こととも合っていなかった。星と金の地平線は手前の写真の中に残し、ダーク天体の意匠とのつながりを保つ</td></tr>
+    <tr><td>表示ごとの3種</td><td>通常（<code>AppIcon.png</code>）／暗い表示用（<code>AppIcon-Dark.png</code>・背景を透過）／色付き表示用（<code>AppIcon-Tinted.png</code>・グレースケール）。いずれも 1024×1024 で <code>Assets.xcassets/AppIcon.appiconset</code> に置き、<code>Contents.json</code> の <code>appearances</code>（dark / tinted）で切り替える。1.0.x までは通常の1種だけだった</td></tr>
+    <tr><td>コミット</td><td><code>fd328c2</code>（アイコン差し替え）・<code>0372671</code>（版を 1.1.0 (11) に）</td></tr>
+    <tr><td>作図の元データ</td><td><code>workspace/research/lifereview/icon_2026-10/</code>（<code>B_final.svg</code> / <code>B_final_dark.svg</code> / <code>B_final_tinted.svg</code>。ほかに比較した案 A_cover・C_spread）</td></tr>
+    <tr><td>旧アイコン（1.0.x）</td><td><img src="_img/app-icon-1.0.png" alt="旧アイコン（星と地平線）" width="64" height="64" style="vertical-align:middle;border-radius:14px;margin-right:8px">夜空に星と金の地平線だけ。1.0.2 まで公開中のストアではこちらが表示される</td></tr>
+  </table>
+
+  <h2>1.1.0 の変更（TestFlight 1.1.0 (11)・未公開）</h2>
+  <div class="callout">
+    <strong>注意:</strong> 下の画面仕様書・機能仕様書（S01〜S04・振り返りセッション ほか）は <strong>1.0.x 時点の記述のまま</strong>で、1.1.0 の作り変えはまだ個別に反映していない。
+    1.1.0 の挙動はこの節と各コミットが正。個別の仕様書は 1.1.0 を公開する前に順に直す。
+  </div>
+  <table>
+    <tr><th>範囲</th><th>変更</th><th>コミット</th></tr>
+    <tr><td>今日タブ</td><td>一番上に一行入力（「書く→残す」の2操作で保存・写真はボタン1つで1枚・今日まだ記録が無ければ開いた時点でカーソル）。カテゴリは任意にし、選ばなければ「その他」で残す。カテゴリ・気持ち・日付・2枚目以降の写真は「くわしく」から従来のフォームで（書きかけと写真を引き継ぐ）。上部に「記録した日 ○日・○日つづけて」</td><td><code>b9a54bf</code> <code>4fe014c</code> <code>c23afd1</code></td></tr>
+    <tr><td>初回画面</td><td>生年月日・目標年齢の入力を外し、「一行でいい。今日を、ひとつ残す。」と「はじめる」だけにした。生年月日は人生タブの案内から入れる（残り時間と人生の週は入れた人だけに出す）</td><td><code>b9a54bf</code></td></tr>
+    <tr><td>毎日のお知らせ</td><td>1件目を残した直後に「毎日○時に一言お知らせ」を時刻つきで選べる（通知の許可はこの時に初めて求める。拒否されたら「設定を開く」）。設定→リマインダーにも追加。押すと今日タブの入力欄へ、週のお知らせはふりかえりタブへ</td><td><code>c23afd1</code> <code>1e140c0</code></td></tr>
+    <tr><td>振り返り</td><td>「見返す」と「選ぶ」を1画面に統合。問いは最初の1問だけで、答えたい人は「もう1問答える」（空でも約5タップで終わる）。入力のある下書きがあれば開いた時点で「続きから／最初から」を聞く（LR-005）。振り返りを書き終えた直後にだけレビューを依頼（累計2回・90日間隔・同じ版で1回まで）</td><td><code>85e39ea</code> <code>1e140c0</code> <code>c5b3f46</code></td></tr>
+    <tr><td>入口の配置</td><td>ふりかえりタブの星図を最初から入口として出す。カレンダー・統計を振り返りカードの直下へ（「道具箱」→「記録をながめる」）。人生タブは大切な人・バケットリストを人生の週より上に。設定の歯車を3タブ共通の右上に。記録フォームの確定ボタンを「残す」に統一</td><td><code>3243961</code></td></tr>
+    <tr><td>人生タブ</td><td>ふだんは「いまの52週」（今年の段・経過・残り）だけを出し、80年ぶんのマス目は「ひらく」で別画面に。今週のマスに 1pt の輪郭、残りの週を少し濃くして経過との差を保つ</td><td><code>7768499</code> <code>a940fb6</code></td></tr>
+    <tr><td>明るい表示</td><td>設定の「表示」に「画面の明るさ」（端末に合わせる／明るい／暗い・既定は暗い）。明るい表示は生成りの紙（<code>#FFFDF9</code>）・墨藍の文字・濃い真鍮。カテゴリ8色・気持ち5色にも紙の上で読める濃い色を用意。星図と人生の週は明るい表示でも紙に墨藍で描き、ほかの画面と揃える</td><td><code>f2d8189</code> <code>e4d519c</code></td></tr>
+    <tr><td>バックアップと復元</td><td>LR-001/002: 写真を staging に書き切り、DB 保存の成功後に切り替える方式（失敗しても本番の写真に触れない）・写真をファイル単位で持つパッケージ形式（メモリは写真1枚ぶんで頭打ち）。<strong>LR-015: 写真名に <code>../</code> を含む細工したバックアップで記録が全部消える経路を塞いだ</strong>（ファイル名1つだけを受け付ける・復元前にマニフェストを検査し、壊れていれば何も置き換えずに断る）。iCloud にある写真は落としてから読む・保存に失敗しても元の記録が消えないよう1件ずつ削除する</td><td><code>1e3fbfa</code> <code>747f129</code> <code>16c2621</code></td></tr>
+    <tr><td>アクセシビリティほか</td><td>和暦の端末でも西暦で出す・閉じるボタン 44pt・大きな文字・グラフの読み上げ（LR-004/007/008/009）。振り返りで段階が変わったら読み上げ位置を新しい見出しへ（LR-006）。全データ削除で毎日のお知らせも解除</td><td><code>6d9474e</code> <code>73160df</code> <code>1e140c0</code></td></tr>
+    <tr><td>アイコン</td><td>「重ねた写真」へ差し替え（上の節）</td><td><code>fd328c2</code></td></tr>
+  </table>
 
   <h2>プライバシー / データの扱い（v1.0 提出時に確定）</h2>
   <p>広告SDK・解析SDK・外部通信をいずれも持たない。記録・添付写真・プロフィールはすべて端末内にのみ保存し、
@@ -178,7 +214,9 @@
     <tr><td>S3 拡張</td><td>感情の移ろいグラフ・リズムカードdue判定・星図段階表現・週次リマインダー通知</td><td><span class="tag done">完了</span></td></tr>
     <tr><td>S4 仕上げ</td><td>オンボーディング刷新（ダーク天体）・ナビゲーションUIの統一（明朝タイトル）・Launch 画面（白フラッシュ抑止）・スクショ自動化パイプライン導入</td><td><span class="tag done">完了</span></td></tr>
     <tr><td>S5 提出前の作り込み</td><td>星図の座標安定化（starSeq + Halton）・Relation の生年月日化・ハイライト件数の実体化・カテゴリ/感情の配色再設計・grain 全画面適用・Dynamic Type 対応・タップ領域44pt化・iOS 26 ナビタイトル修正</td><td><span class="tag done">完了</span></td></tr>
-    <tr><td>v1.0 リリース</td><td>無料・広告なし・App Store 提出</td><td><span class="tag">Archive とストア入力のみ</span></td></tr>
+    <tr><td>v1.0 リリース</td><td>無料・広告なし・App Store 提出</td><td><span class="tag done">2026-09-02 公開</span></td></tr>
+    <tr><td>1.0.1〜1.0.2</td><td>ストア表示の見直し（スクショ・名前・サブタイトル・キーワード）。コード変更なし</td><td><span class="tag done">公開</span></td></tr>
+    <tr><td>1.1.0</td><td>一行で書き終わる今日タブ・毎日のお知らせ・振り返りの簡略化・明るい表示・バックアップ/復元の修正（LR-015 ほか）・アイコン差し替え</td><td><span class="tag">TestFlight 1.1.0 (11)・未公開</span></td></tr>
   </table>
 
   <h2>変更履歴</h2>
@@ -190,9 +228,10 @@
     <tr><td>v1.3</td><td>2026-06-30</td><td>タブ統合仕様書（LR-S01〜S04）新規追加: オンボーディング・今日タブ・ふりかえりタブ・人生タブの全サブ画面を網羅。データモデル仕様書に UserProfile・BucketItem・Relation を追記（v1.3）。全体仕様書カードの説明文を更新</td></tr>
     <tr><td>v1.4</td><td>2026-07-26</td><td>提出前の実装（S5）に合わせてポータル全体を更新。<strong>Bundle ID の誤記を修正</strong>（<code>com.happyboy1002.lifeReviewApp</code> → <code>com.happyboy1002.LifeReview</code>）。タブ統合版と重複していた旧 <code>onboarding.html</code> / <code>reflect-home.html</code> を削除し、画面仕様書を「タブ単位」「個別画面」の2区分に整理（リンク切れを解消）。ナビゲーションUIの記述を実装に合わせて全面改訂（iOS 26 でタイトルが描画されない問題への対応として <code>minchoNavigationTitle</code> 方式へ、tint を amber から moonWhite へ、明朝フォント名を <code>HiraMinProN-W3</code> に訂正）。Launch 画面を storyboard 方式から <code>UILaunchScreen</code> + カラーセット方式の記述に修正。スクショ自動化を ja-JP 単独・テンプレv2ローカルコピー・再現性設定（<code>ios_version</code> 固定 / <code>erase_simulator</code> / <code>only_testing</code>）に更新。ステータスを「提出準備完了・未リリース」に、技術スタックを「Flutter 移行中」から移行済みに修正。「○年前の今日」を「過去の今日」に訂正</td></tr>
     <tr><td>v1.5</td><td>2026-08-26</td><td>初回提出直前の UI/UX 修正13件（コミット <code>4dcdba4</code>・2026-08-25）をポータルに反映。<strong>設定画面の単独仕様書 <code>screens/settings.html</code>（LR-SETTINGS-01）を新規作成</strong>し、人生タブ（LR-S04）に埋まっていた設定の記述を移設（子の LR-REMINDER-01 に仕様書があるのに親が無い状態を解消）。更新: 今日タブ（記録フォームの破棄確認・スワイプ抑止・チップの修飾子順・「クリア」の配色）／振り返りセッションと機能仕様（STEP3 回答の打鍵ごと確定・下書きの期間重なり判定で週次の翌日再開が可能に・下書き periodStart の固定）／オンボーディング（現在年齢の常時表示）／人生タブ（残り0回の文言置換・想定年齢到達時の編集保存の免除規則）。ステータス行にテスト実績を追記</td></tr>
+    <tr><td>v1.6</td><td>2026-10-24</td><td><strong>アプリ 1.1.0 (11)（TestFlight 配信・未公開）</strong>を反映。アプリアイコンを「重ねた写真」へ差し替えた件（<code>fd328c2</code>・LR-016）の節を新設し、新旧のアイコン画像と暗い表示用・色付き表示用の3種を掲載。1.1.0 のそれ以外の変更（一行入力の今日タブ・初回画面の簡略化・毎日のお知らせ・振り返りの統合・入口の配置・人生タブの要約表示・明るい表示・バックアップ/復元の修正 LR-001/002/015）を一覧の節にまとめた（個別の画面仕様書は未反映と明記）。ステータスを「未リリース」から「1.0.2 公開中・1.1.0 TestFlight」に、ストア表示名・デザインテーマ・ロードマップを更新</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-26</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>
