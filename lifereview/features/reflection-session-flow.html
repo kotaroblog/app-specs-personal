@@ -18,12 +18,13 @@
     <div style="margin-top:8px;">
       <span class="tag done">実装済</span>
       <span class="tag">機能ID: LR-FEAT-SESSION</span>
+      <span class="tag">1.1.0 (11)</span>
     </div>
   </header>
 
   <h2>概要</h2>
   <p>
-    LifeReview の中核機能。「立ち止まり、見返し、言葉にする」儀式を最大5ステップで提供し、
+    LifeReview の中核機能。「立ち止まり、見返し、言葉にする」儀式を最大4ステップ（1.1.0〜。1.0.x は5）で提供し、
     完了時に <code>ReflectionSession</code> を SwiftData へ保存する。
     週次・月次・年次を <code>ReflectionType</code> で統一フローとして扱い、
     期間計算・問い文言・ラベル表示だけを type に応じて切り替える。
@@ -32,6 +33,14 @@
     本ドキュメントは<strong>フローと状態遷移・データの流れ</strong>を扱う。
     各ステップの画面構成・文言・配色は <a href="../screens/reflection-session.html">LR-SESSION-01</a> を参照。
   </p>
+  <div class="callout warn">
+    <strong>1.1.0 の変更（2026-10-23）:</strong>
+    ①「見返す」（step 0）を「選ぶ」（step 1）に統合し「見返して、選ぶ」の1画面に。
+    ② 問いは最初の1問だけ出し、残りは「もう1問答える」で任意に。「次へ」はどの問いからでも総括へ（空でも約5タップで終わる）。
+    ③ 入力のある下書きがあれば、開いた時点で「続きから／最初から」を聞く（LR-005）。
+    ④ 完了保存の直後にだけレビューを依頼する。
+    （コミット <code>85e39ea</code> <code>1e140c0</code> <code>c5b3f46</code>）
+  </div>
 
   <h2>関連画面</h2>
   <ul>
@@ -54,35 +63,41 @@ flowchart TD
   A["起動: sessionType に ReflectionType を代入"] --> B["init(type:) で period(for:) を確定<br>ReflectionDraftStore.load(type:periodStart:)"]
   B --> C{"下書きあり かつ<br>対象期間が重なる<br>（週次: ずれ6日以内 / 月次・年次: 同日）"}
   C -->|あり| D["step / highlightIds / answers / mood / note を復元"]
-  C -->|なし| E["step = 0 で開始<br>期間が重ならない下書きはキーごと削除"]
-  D --> F["onAppear: activeSteps に無い step は 2 へ補正"]
+  C -->|なし| E["step = 0 で開始（画面は step 1 と同じ）<br>期間が重ならない下書きはキーごと削除"]
+  D --> R{"入力のある下書き？<br>（hasContent）"}
+  R -->|はい| Q["「前回の続きがあります」<br>続きから / 最初から"]
+  R -->|いいえ| F
+  Q -->|続きから| F
+  Q -->|最初から| Z["下書きを clear・入力を空に<br>step = activeSteps の先頭・resetToken += 1"]
+  Z --> F
+  F["onAppear: activeSteps に無い step は先頭へ補正"]
   E --> F
   F --> G["ステップ進行<br>step/highlightIds/answers/mood/note の変化ごとに下書きを保存"]
   G -->|"× かつ 入力あり"| H["中断アラート → 下書きを保存して閉じる"]
   G -->|"× かつ 入力なし"| I["確認なしで dismiss"]
   G -->|"最終ステップの CTA"| J["finish(): upsert して modelContext.save()"]
-  J -->|成功| K["下書きを clear → 完了画面（step = 5）→ onCompleted"]
-  J -->|失敗| L["rollback → 保存エラーアラート → STEP5 に留まる"]
+  J -->|成功| K["下書きを clear → 完了画面（step = 5）→ onCompleted → レビュー依頼（条件つき）"]
+  J -->|失敗| L["rollback → 保存エラーアラート → 最終ステップに留まる"]
   </div>
 
   <h2>ステップ進行モデル</h2>
   <p>
-    内部の <code>step</code> は 0〜4 の固定 ID（0=見返す / 1=選ぶ / 2=問い / 3=総括 / 4=気づき）で、
+    内部の <code>step</code> は 1〜4 の固定 ID（1=見返して選ぶ / 2=問い / 3=総括 / 4=気づき。0 は 1.0.x の「見返す」で、1.1.0 では step 1 と同じ画面を出す）で、
     <code>step &gt;= 5</code>（<code>ReflectionSessionView.stepCount</code>）が完了画面を意味する。
     ユーザーに見える「STEP n」と進捗（n/m）は、この固定 ID ではなく
     <strong>実際に通るステップの並び <code>activeSteps</code> の中での位置</strong>から作る。
   </p>
   <table>
     <tr><th>対象期間の記録</th><th>activeSteps</th><th>プログレスの分割数</th><th>ユーザーに見える番号</th></tr>
-    <tr><td>0件</td><td><code>[0, 2, 3, 4]</code></td><td>4</td><td>見返す=STEP 1 / 問い=STEP 2 / 総括=STEP 3 / 気づき=STEP 4</td></tr>
-    <tr><td>1件以上</td><td><code>[0, 1, 2, 3, 4]</code></td><td>5</td><td>見返す=STEP 1 / 選ぶ=STEP 2 / 問い=STEP 3 / 総括=STEP 4 / 気づき=STEP 5</td></tr>
+    <tr><td>0件</td><td><code>[2, 3, 4]</code></td><td>3</td><td>問い=STEP 1 / 総括=STEP 2 / 気づき=STEP 3</td></tr>
+    <tr><td>1件以上</td><td><code>[1, 2, 3, 4]</code></td><td>4</td><td>見返して選ぶ=STEP 1 / 問い=STEP 2 / 総括=STEP 3 / 気づき=STEP 4</td></tr>
   </table>
   <div class="callout warn">
     <strong>記録0件の期間は「選ぶ」を飛ばす。</strong>
-    <code>next()</code> / <code>back()</code> は <code>activeSteps</code> 上の前後へ移動するため、0件なら STEP1「見返す」の次は「問い」になる。
+    <code>next()</code> / <code>back()</code> は <code>activeSteps</code> 上の前後へ移動するため、0件なら最初の段が「問い」になる（1.0.x は空の「見返す」を通ってから問いへ進んだ）。
     番号を各ステップ側に固定するとアイブロウの「STEP n」とプログレス（n/m）が食い違うので、
     親（<code>ReflectionSessionView</code>）が <code>stepLabel</code> を作って各ステップに渡す。
-    古い下書きが飛ばすべき <code>step = 1</code> を指していた場合は <code>onAppear</code> で <code>step = 2</code> に補正し、空の「選ぶ」画面を出さない。
+    古い下書きが飛ばすべき <code>step = 1</code>（または 0）を指していた場合は <code>onAppear</code> で <code>activeSteps</code> の先頭（0件なら 2）に補正し、空の「選ぶ」画面を出さない。
   </div>
   <table>
     <tr><th>関数</th><th>挙動</th></tr>
@@ -91,8 +106,8 @@ flowchart TD
     <tr><td><code>go(to:)</code></td><td>遷移の実体。Reduce Motion がオンなら即時、オフなら <code>.easeOut(duration: 0.35)</code>。演出はフェード＋上方8pxのみ（横スライドは使わない）。</td></tr>
   </table>
   <p>
-    STEP3「問い」だけは内部にさらに問い単位のカーソル（<code>index</code>）を持ち、3問を1画面で送る。
-    最終問での「次へ」で STEP4 に進み、最初の問いでの「戻る」で STEP2（または STEP1）へ戻る。
+    「問い」の段だけは内部にさらに問い単位のカーソル（<code>index</code>）を持つ。<strong>1.1.0 から最初は1問だけ</strong>を出し、
+    「もう1問答える」で次の問いへ（最後の問いでは出ない）。<strong>「次へ」はどの問いからでも</strong>回答を確定して総括へ進み、最初の問いでの「戻る」で前の段へ戻る。
     回答は<strong>打鍵のたびに</strong> <code>answers[index]</code> へ確定し、問いの移動時にも確定する（移動まで未確定だと、×で閉じたときに入力中の1問分が消える）。
   </p>
 
@@ -109,7 +124,8 @@ flowchart TD
     <tr><td>再利用の判定</td><td><strong>週次は開始日のずれが6日以内（＝対象期間が重なる）なら再開可</strong>。7日ずれると重なりが無くなるので別の週として扱う。<strong>月次・年次は同日一致</strong>（periodStart が月初／年初で固定のため、ずれ＝別の月・年）。</td></tr>
     <tr><td>期限切れ</td><td>上の判定に外れた下書きは<strong>読み込まずキーごと削除</strong>する（古い期間の入力を新しい期間に持ち込まない）。</td></tr>
     <tr><td>下書きの periodStart</td><td><strong>初回保存時の値を保持</strong>する（<code>draftPeriodStart</code>）。保存のたびに「今日」基準へ書き換えると、6日以内に開き続けるかぎり下書きが無期限に前へスライドし、何週間も前の入力が「今週の下書き」として生き残る。<strong>この固定値は下書き専用</strong>で、完了保存する <code>ReflectionSession.periodStart</code> にはセッション自身の（今日基準の）periodStart を使う。</td></tr>
-    <tr><td>破棄</td><td>完了保存に成功した時のみ <code>clear(type:)</code>。保存失敗時は下書きを残す。</td></tr>
+    <tr><td>続きの確認（1.1.0〜）</td><td>復元した下書きに入力がある（<code>hasContent</code>）ときだけ、開いた時点で「前回の続きがあります」を出す。「続きから」はそのまま、「最初から」は下書きを消して最初の段へ（LR-005）。</td></tr>
+    <tr><td>破棄</td><td>完了保存に成功した時と、「最初から」を選んだ時に <code>clear(type:)</code>。保存失敗時は下書きを残す。</td></tr>
   </table>
   <table>
     <tr><th>種別</th><th>periodStart</th><th>下書きが再開できる範囲</th></tr>
@@ -151,10 +167,11 @@ sequenceDiagram
     S->>S: step = 5（完了画面）
     S-->>U: 星がひとつ灯る（0.6s ease-out）
     S->>S: onCompleted?()
+    S->>S: ReviewRequestService.recordMoment() → requestIfEligible(delay: 1.2)
   else 失敗
     S->>C: rollback()
     S-->>U: 「保存エラー」アラート
-    Note over S: isSaving を戻し STEP5 に留まる（下書きは残る）
+    Note over S: isSaving を戻し最終ステップに留まる（下書きは残る）
   end
   </div>
 
@@ -213,7 +230,9 @@ flowchart TD
   <h2>ビジネスルール</h2>
   <ul>
     <li>周期は強制しない。「やりたい時に」できる設計。ホームは前回からの経過日数と「そろそろ」バッジ（最優先の1枚のみ）で静かに促すだけ。</li>
-    <li>記録0件の期間でも振り返れる（「今週は記録が少なかった」も気づき）。0件のときは STEP1 の CTA が「問いから始める ›」になり、「選ぶ」を飛ばす。</li>
+    <li>記録0件の期間でも振り返れる（「今週は記録が少なかった」も気づき）。0件のときは「見返して選ぶ」を飛ばし、問いから始まる。</li>
+    <li>問いは1問だけ答えれば足りる。2問目・3問目は「もう1問答える」を押した人だけに出す（1.1.0〜）。</li>
+    <li>レビュー依頼は完了保存の直後だけ。累計2回目以降・前回から90日・同じ版で1回まで（<code>ReviewRequestService</code>）。</li>
     <li>各入力（ハイライト選択・問い回答・感情・メモ）はすべて任意。ひとつも入力せず完了してもよい。CTA は入力状態に応じて「選ばずに進む ›」「このまま終える ✓」等に変わる。</li>
     <li>回答は前後の空白を除去し、空になったものは保存しない（<code>answers</code> に含めない）。</li>
     <li>ノートは前後の空白を除去し、空なら <code>nil</code> で保存する。</li>
@@ -282,6 +301,7 @@ flowchart TD
     <tr><td>1.1</td><td>2026-06-16</td><td>Phase S4 実装済み: オンボーディング（LR-ONBOARD-01）完了後にセッション起動導線が繋がることを補足。エラー処理のエラーアラートを S4 で実装済みとして更新。</td></tr>
     <tr><td>1.2</td><td>2026-07-26</td><td>本書の軸足を「フローと状態遷移・データの流れ」に変更（画面構成は LR-SESSION-01 に委譲）。①中断を「破棄」から「下書き保存」に変更し、ReflectionDraftStore の保存契機・periodStart 同日判定による復元/期限切れ削除・種別ごとの再開可能範囲を追加。②完了時の保存を insert から <strong>upsert</strong>（同種別・periodStart 差1秒未満なら上書き）に修正し、上書き/新規の判定表を追加。③<code>starSeq</code> の採番（既存最大+1・一度だけ・失敗時は -1 で id 由来フォールバック）と Halton(2,3) による座標決定を追加。④ハイライトの真実源を <code>ReflectionSession.highlightLogIds</code> に一本化（<code>LogEntry.isHighlight</code> 削除）し、生存照合（<code>survivingHighlightCount(in:)</code> / <code>TimelineTally</code>）と記録削除時の cascade cleanup を追加。⑤記録0件時に「選ぶ」を飛ばす <code>activeSteps</code> と STEP 番号の動的採番、古い下書きの step 補正を追加。⑥起動ポイントを2経路（ホーム／軌跡の空状態）に整理し、<code>onCompleted</code> → リマインダー提案の判定タイミングを明記。⑦エラー処理に rollback・照合失敗・採番失敗・下書きデコード失敗・掃除失敗を追加。⑧根拠のない「セッション所要時間」行と、実在しないリンク先（reflect-home.html）を削除。入力上限（回答500字・ノート1000字）、Reduce Motion 時の挙動、STEP3/STEP5 にキーボード「完了」を置かない方針、periodLabel の実表記（M/D – M/D）を追記</td></tr>
     <tr><td>1.3</td><td>2026-08-26</td><td>提出前の UI/UX 修正（コミット <code>4dcdba4</code>）を反映。①下書きの再利用判定を「periodStart の同日一致」から <code>ReflectionDraftStore.isReusable(draftStart:periodStart:type:)</code> による<strong>期間の重なり判定</strong>へ変更（週次はずれ6日以内まで再開可／月次・年次は同日一致のまま）。週次の再開可能範囲を「中断したその日のうち」から「6日以内（翌日再開が可能）」に訂正し、状態遷移図の判定ノードも書き換え。②下書きの <code>periodStart</code> を<strong>初回保存時の値で固定</strong>する仕様と、その固定値が下書き専用（完了保存するセッションは今日基準の periodStart を使う）である点を追記。③STEP3 の回答確定を「問いの移動時」から<strong>打鍵ごと＋移動時</strong>に変更した旨を追記（下書きと <code>hasAnyInput</code> の取りこぼし防止）</td></tr>
+    <tr><td>1.4</td><td>2026-10-24</td><td><strong>アプリ 1.1.0 (11) に合わせて改訂。</strong>step 0「見返す」を「見返して、選ぶ」（step 1）に統合し、activeSteps を [1,2,3,4]（記録あり）／[2,3,4]（0件）に訂正。問いは最初の1問だけ・「もう1問答える」・どの問いからでも「次へ」。状態遷移図に「続きから／最初から」（LR-005）を追加し、下書きの破棄契機に「最初から」を追加。保存のシーケンスに完了直後のレビュー依頼を追加（コミット <code>85e39ea</code> <code>1e140c0</code> <code>c5b3f46</code>）</td></tr>
   </table>
 
   <script>
@@ -291,7 +311,7 @@ flowchart TD
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-08-26</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>

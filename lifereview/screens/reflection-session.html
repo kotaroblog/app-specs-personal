@@ -13,12 +13,25 @@
 
   <header class="site-header">
     <h1>振り返りセッション</h1>
-    <p>週/月/年の共通フロー（最大5ステップ）。完了画面で星がひとつ灯る。</p>
+    <p>週/月/年の共通フロー（最大4ステップ・1.1.0〜）。見返して選ぶ → 問い（1問から）→ 総括 → 気づき。完了画面で星がひとつ灯る。</p>
     <div style="margin-top:8px;">
       <span class="tag done">実装済</span>
       <span class="tag">画面ID: LR-SESSION-01</span>
+      <span class="tag">1.1.0 (11)</span>
     </div>
   </header>
+
+  <div class="callout warn">
+    <strong>1.1.0 の変更（2026-10-23・コミット <code>85e39ea</code> <code>1e140c0</code> <code>73160df</code> <code>c5b3f46</code>）</strong>
+    <ul class="checklist" style="margin-top:8px;">
+      <li><strong>「見返す」と「選ぶ」を1画面に統合</strong>（step 0 を廃止）。1.0.x は同じ記録の一覧を2回めくらせていた。</li>
+      <li><strong>問いは最初の1問だけ</strong>を出し、答えたい人は「もう1問答える」で次へ。「次へ」はどの問いからでも総括へ進む。空でも約5タップで終わる「週末に3分」に。</li>
+      <li>入力のある下書きがあると、開いた時点で<strong>「続きから／最初から」</strong>を聞く（LR-005）。「最初から」で捨てた回答が入力欄から戻る不具合は <code>resetToken</code> で解消。</li>
+      <li>主 CTA を金ソリッドの面から <strong>LineButton（線のボタン）</strong>にそろえた（金は面で塗らない規律）。</li>
+      <li>VoiceOver: 段階が変わったら読み上げ位置を新しい見出しへ移す（LR-006）。完了画面のボタン幅を固定 220 から 220〜360 に（大きな文字で切れる・LR-007）。</li>
+      <li>完了保存の直後にだけ App Store のレビューを依頼する（<code>ReviewRequestService</code>）。</li>
+    </ul>
+  </div>
 
   <h2>目的・役割</h2>
   <p>
@@ -36,17 +49,17 @@
   <h2>ステップ構成</h2>
   <table>
     <tr><th>step 値</th><th>View</th><th>内容</th></tr>
-    <tr><td>0</td><td>ReflectionStepReview</td><td>見返す。対象期間のログを日付グループで一覧表示（記録0件でも進行可能）</td></tr>
-    <tr><td>1</td><td>ReflectionStepChoose</td><td>選ぶ。心に残ったログを複数選択（任意）。<strong>記録0件の期間ではこの step を通らない</strong></td></tr>
-    <tr><td>2</td><td>ReflectionStepPrompts</td><td>問い。種別ごとの3問を<strong>1問ずつ</strong>表示し自由記述で答える（空欄可・1問500文字まで）</td></tr>
+    <tr><td>（0）</td><td>—</td><td>1.0.x の「見返す」（ReflectionStepReview）。<strong>1.1.0 で廃止</strong>し step 1 に統合。古い下書きが step 0 を指していても step 1 の画面を出す</td></tr>
+    <tr><td>1</td><td>ReflectionStepChoose</td><td><strong>見返して、選ぶ。</strong>期間の記録を読みながら、心に残ったログを複数選択（任意）。<strong>記録0件の期間ではこの step を通らない</strong></td></tr>
+    <tr><td>2</td><td>ReflectionStepPrompts</td><td>問い。種別ごとの3問のうち<strong>まず1問だけ</strong>を出し、「もう1問答える」で次の問いへ（空欄可・1問500文字まで）</td></tr>
     <tr><td>3</td><td>ReflectionStepMood</td><td>総括。<code>LogMood</code> 5種から1つ選ぶ（未選択でも進める）</td></tr>
     <tr><td>4</td><td>ReflectionStepNote</td><td>気づき（任意）。自由メモ（1000文字まで）→ 完了ボタン</td></tr>
     <tr><td>5（= stepCount）</td><td>ReflectionCompletionView</td><td>星が1つふわりと灯る。期間・総括感情・累計振り返り回数を表示</td></tr>
   </table>
 
   <div class="callout warn">
-    <strong>ステップ数は5固定ではない（記録0件の分岐）:</strong>
-    <code>activeSteps</code> は記録0件の期間で <code>[0, 2, 3, 4]</code>（4ステップ）、それ以外は <code>[0, 1, 2, 3, 4]</code>（5ステップ）。
+    <strong>ステップ数は固定ではない（記録0件の分岐）:</strong>
+    <code>activeSteps</code> は記録0件の期間で <code>[2, 3, 4]</code>（3ステップ）、それ以外は <code>[1, 2, 3, 4]</code>（4ステップ）。1.0.x はどちらも先頭に 0 があった。
     「選ぶ」に何も並ばない空画面を通過させないため。<code>next()</code> / <code>back()</code> は <code>activeSteps</code> 上の位置で前後する。
   </div>
   <div class="callout warn">
@@ -63,9 +76,10 @@
     <tr><td>背景</td><td>ZStack</td><td><code>AppColors.night1</code> を <code>ignoresSafeArea()</code> で敷き、ルートに <code>.grainOverlay()</code>。ナビバーを持たない全画面表示のため <code>screenBackground()</code> ではなく自前で組む。</td></tr>
     <tr><td>プログレスバー</td><td>ReflectionProgressBar</td><td><strong>左端</strong>に閉じる（×）ボタン（44×44）→ セグメント（Capsule 高さ2px）→ 右端に「<code>n/m</code>」（monospacedDigit）。完了画面では非表示。</td></tr>
     <tr><td>セグメント色</td><td>—</td><td>完了済み: amber ／ 現在: goldDim ／ 未了: warmShadow。</td></tr>
-    <tr><td>コンテンツエリア</td><td><code>step</code> 値で @ViewBuilder 切替</td><td><code>.id(step)</code> ＋ <code>.transition(.opacity.combined(with: .offset(y: 8)))</code>。</td></tr>
-    <tr><td>ステップ見出し</td><td>ReflectionStepHeader</td><td>アイブロウ（明朝12.5・tracking 3・textMuted）＋ 明朝21の見出し（moonWhite）＋ ヘルプ文（13・textMuted）。</td></tr>
-    <tr><td>ステップフッター</td><td>ReflectionStepFooter</td><td>背景 night0 ＋ 上辺に warmShadow の1pxヘアライン。左に戻る（52×52・chevron.left・角丸14の罫）、右に金ソリッドの主 CTA（<code>minHeight 52</code>・文字色 #14110A・角丸14）。</td></tr>
+    <tr><td>コンテンツエリア</td><td><code>step</code> 値で @ViewBuilder 切替</td><td><code>.id([step, resetToken])</code>（「最初から」で段の画面を作り直す）＋ <code>.transition(.opacity.combined(with: .offset(y: 8)))</code>。</td></tr>
+    <tr><td>ステップ見出し</td><td>ReflectionStepHeader</td><td>アイブロウ（明朝12.5・tracking 3・textMuted）＋ 明朝21の見出し（moonWhite）＋ ヘルプ文（13・textMuted）。ひとまとまりの見出し要素として読み上げ、表示されたら読み上げ位置をここへ移す（1.1.0〜）。</td></tr>
+    <tr><td>ステップフッター</td><td>ReflectionStepFooter</td><td>背景 night0 ＋ 上辺に warmShadow の1pxヘアライン。左に戻る（52×52・chevron.left・角丸14の罫・先頭の段では出さない）、右に主 CTA = <strong>LineButton</strong>（1.1.0〜。1.0.x は金ソリッドの面・文字色 #14110A）。保存中は amber の ProgressView。問いの段では CTA の下に副操作「もう1問答える」。</td></tr>
+    <tr><td>続きの確認</td><td>Alert（1.1.0〜）</td><td>開いた時点で入力のある下書きがあれば「前回の続きがあります」／本文「書きかけの振り返りが残っています。続きから書くか、消して最初からやり直すかを選べます。」／「続きから」（cancel）・「最初から」（destructive）。</td></tr>
     <tr><td>中断アラート</td><td>Alert</td><td>「振り返りを中断しますか？」／選択肢は「続ける」と「下書きを保存して閉じる」。</td></tr>
     <tr><td>保存エラーアラート</td><td>Alert</td><td>「保存エラー」／本文「振り返りを保存できませんでした。もう一度お試しください。」／「OK」で閉じる。</td></tr>
     <tr><td>期間ラベル</td><td>periodLabel</td><td>週次「6/9 – 6/15」（<code>shortMD</code>）／月次「2026年6月」（<code>yearMonth</code>）／年次「2026年」（<code>yearOnly</code>）。</td></tr>
@@ -79,19 +93,14 @@
   <table>
     <tr><th>step</th><th>アイブロウ</th><th>見出し</th><th>ヘルプ</th><th>主 CTA</th></tr>
     <tr>
-      <td>0 見返す</td><td>STEP n — 見返す</td><td>この期間を、<br>そっとめくる。</td>
-      <td>〔期間ラベル〕 に残した記録です。読み返すだけで大丈夫。</td>
-      <td>記録あり:「読み返した　›」／記録0件:「問いから始める　›」</td>
-    </tr>
-    <tr>
-      <td>1 選ぶ</td><td>STEP n — 選ぶ</td><td>心に残ったものを、<br>選んでみる。</td>
-      <td>いくつでも。ひとつも無くてもいい。</td>
+      <td>1 見返して、選ぶ</td><td>STEP n — 見返して、選ぶ</td><td>この期間を、<br>そっとめくる。</td>
+      <td>〔期間ラベル〕 に残した記録です。心に残ったものがあれば選んでください。ひとつも無くてもいい。</td>
       <td>未選択:「選ばずに進む　›」／選択あり:「〔件数〕件を選んだ　›」</td>
     </tr>
     <tr>
       <td>2 問い</td><td>STEP n — 問い</td><td>静かな問いに、<br>答えてみる。</td>
       <td>—（ヘルプなし）</td>
-      <td>最終問:「次へ　›」／それ以外:「次の問いへ　›」</td>
+      <td>どの問いでも「次へ　›」（総括へ）。最後の問い以外は下に「もう1問答える」</td>
     </tr>
     <tr>
       <td>3 総括</td><td>STEP n — 総括</td><td>この期間を、<br>ひとことで言うなら。</td>
@@ -105,14 +114,7 @@
     </tr>
   </table>
 
-  <h3>step 0（見返す）の一覧</h3>
-  <ul class="checklist">
-    <li>ログを <code>startOfDay</code> でグループ化し、日付の降順で並べる。見出しは <code>weekdayWideMD</code>（例: 金曜日 6/15）を明朝12.5で表示。</li>
-    <li>各行は共通の <code>LogCardView</code>（カテゴリ記号＋ラベル・感情アイコン・日付・本文2行・写真サムネイル）。</li>
-    <li>記録0件のとき: 「この期間の記録はまだありません。／記録がなくても、今の気持ちから振り返れます。」</li>
-  </ul>
-
-  <h3>step 1（選ぶ）の一覧</h3>
+  <h3>step 1（見返して、選ぶ）の一覧</h3>
   <ul class="checklist">
     <li>期間内のログを日付降順でフラットに並べ、行タップで <code>highlightIds</code>（<code>Set&lt;UUID&gt;</code>）をトグルする。</li>
     <li>行の1行目は「〔曜日略 M/d〕 ・ 〔カテゴリ名〕」、2行目は本文（本文が無い記録は「（カテゴリのみ）」）。</li>
@@ -121,14 +123,14 @@
 
   <h3>step 2（問い）の進行</h3>
   <ul class="checklist">
-    <li>3問を<strong>1問ずつ</strong>表示する。問いは「“」「”」だけ amber、本文 moonWhite の明朝20（<code>lineSpacing 19</code>＝読む速度を落とす余白）。</li>
+    <li><strong>最初は1問だけ</strong>表示する（1.1.0〜）。問いは「“」「”」だけ amber、本文 moonWhite の明朝20（<code>lineSpacing 19</code>＝読む速度を落とす余白）。</li>
     <li>入力欄は <code>TextEditor</code>（<code>minHeight 112</code>・プレースホルダ「ことばにならなくても、断片で。」）。フォーカス時は枠が goldDim。</li>
     <li>1問あたり<strong>500文字</strong>で切り詰める（<code>onChange</code> で prefix）。切り詰めた場合は <code>onChange</code> がもう一度走るので、確定はそちらに任せる。</li>
-    <li>下部に進行ドット（現在 amber・他 warmShadow）と「問い 〔n〕 / 3 ・ 答えたいものだけで」。</li>
+    <li>下部に進行ドット（<strong>出した問いの数だけ</strong>・現在 amber・他 warmShadow・読み上げ対象外）と案内「1問だけで大丈夫 ・ 空欄のままでも進めます」（最後の問いでは「問いは以上です ・ 空欄のままでも進めます」）。1.0.x は「問い 〔n〕 / 3 ・ 答えたいものだけで」。</li>
     <li><strong>入力のたびに（打鍵ごとに）<code>answers[index]</code> へ確定する</strong>（<code>onChange</code> → <code>commitCurrent()</code>）。
       「次の問いへ／戻る」まで未確定にしておくと、×で閉じたときに<strong>入力中の1問分がまるごと消え</strong>、
       下書きにも <code>hasAnyInput</code>（中断アラートを出すかの判定）にも乗らない。2026-08-25 に是正。</li>
-    <li>「次の問いへ」でも確定してから次の問いへ移り、最終問の「次へ」で step 3 へ進む（移動時の確定は残してある）。</li>
+    <li>「もう1問答える」（footnote semibold・textMuted・幅いっぱい・minHeight 44）で確定してから次の問いへ。<strong>「次へ」はどの問いからでも確定して step 3 へ進む</strong>（1.0.x は最終問まで「次の問いへ」をたどる必要があった）。</li>
     <li>戻るボタンは、2問目以降なら<strong>前の問い</strong>へ、1問目なら<strong>前のステップ</strong>へ戻る。</li>
   </ul>
 
@@ -216,7 +218,9 @@
     <tr><td>星</td><td>120×120 の中に淡い既存星5点（固定座標）と、新しい星1つ（微光ブラー＋芯）。<strong>新星のみ</strong>フェード＋上方8pxで灯る（<code>easeOut 0.6秒</code>）。Reduce Motion 時は最初から灯った状態。</td></tr>
     <tr><td>見出し</td><td>「振り返りを、／ひとつ積みました。」（明朝22・moonWhite・中央）</td></tr>
     <tr><td>サブテキスト</td><td>週次は「〔期間ラベル〕 の週」、月次・年次は期間ラベルそのまま。総括感情があれば「 ・ 総括「〔ラベル〕」」を続ける。改行して「これで 〔N〕回目 の振り返りです。」（回数のみ textBody・monospacedDigit）。</td></tr>
-    <tr><td>主ボタン</td><td>「軌跡を見る　›」（LineButton・幅220・goldDim の細罫）</td></tr>
+    <tr><td>主ボタン</td><td>「軌跡を見る　›」（LineButton・幅 220〜360・左右 24pt・goldDim の細罫。1.0.x の幅220固定は大きな文字で切れた＝LR-007）</td></tr>
+    <tr><td>読み上げ</td><td>見出しを <code>.isHeader</code> にし、表示されたら読み上げ位置を見出しへ移す（LR-006）。</td></tr>
+    <tr><td>レビュー依頼</td><td>完了保存の直後に <code>ReviewRequestService.recordMoment()</code> → <code>requestIfEligible(delay: 1.2)</code>。累計2回目以降・前回から90日・同じ版で1回まで。スクショ撮影時（起動引数 <code>-uiTestSnapshot</code>）は出さない。</td></tr>
     <tr><td>副ボタン</td><td>「閉じる」（テキストのみ・textMuted）</td></tr>
     <tr><td>非表示</td><td>プログレスバーは出さない。リマインダー提案もここでは行わない（ホームへ戻ってから提案する）。</td></tr>
   </table>
@@ -225,9 +229,10 @@
   <table>
     <tr><th>状態</th><th>表示・挙動</th></tr>
     <tr><td>通常（step が activeSteps 内）</td><td>プログレスバー表示。各ステップをフェード＋8pxオフセットで切替。</td></tr>
-    <tr><td>下書きあり</td><td><code>init</code> で step・選択・回答・感情・ノート・<code>periodStart</code> を復元して<strong>途中から再開</strong>する。</td></tr>
-    <tr><td>週次を翌日に再開</td><td>下書きの <code>periodStart</code> が1日ずれていても<strong>期間が重なるため復元する</strong>（6日以内）。7日以上ずれた下書きは破棄して step 0 から始まる。</td></tr>
-    <tr><td>下書きが無効な step を指す</td><td>記録0件の期間で step 1 が復元された場合、<code>onAppear</code> で step 2 に補正する。</td></tr>
+    <tr><td>下書きあり</td><td><code>init</code> で step・選択・回答・感情・ノート・<code>periodStart</code> を復元する。<strong>入力のある下書きなら「前回の続きがあります」を出し</strong>、「続きから」で途中から再開／「最初から」で下書きを消し、最初の段から（1.1.0〜）。</td></tr>
+    <tr><td>「最初から」</td><td><code>ReflectionDraftStore.clear</code> → 選択・回答・感情・ノート・<code>draftPeriodStart</code> を空に → step を activeSteps の先頭へ → <code>resetToken += 1</code> で段の画面を作り直す（記録0件で step 2 のままでも、入力欄の文字が残らない）。</td></tr>
+    <tr><td>週次を翌日に再開</td><td>下書きの <code>periodStart</code> が1日ずれていても<strong>期間が重なるため復元する</strong>（6日以内）。7日以上ずれた下書きは破棄して最初の段から始まる。</td></tr>
+    <tr><td>下書きが無効な step を指す</td><td>記録0件の期間で step 1 が復元された場合、<code>onAppear</code> で step 2 に補正する。1.0.x の下書きの step 0 は step 1 の画面（見返して選ぶ）で表示する。</td></tr>
     <tr><td>保存中（isSaving: true）</td><td>主 CTA が <code>ProgressView</code> になり、再タップしても <code>finish()</code> が走らない。</td></tr>
     <tr><td>保存成功</td><td>累計件数を取得し、下書きを破棄して完了画面（step 5）へ。<code>onCompleted</code> 発火。</td></tr>
     <tr><td>保存失敗</td><td><code>rollback()</code> ＋「保存エラー」アラート。最終ステップに留まり、再試行できる。</td></tr>
@@ -241,6 +246,7 @@
     <tr><th>操作</th><th>遷移</th></tr>
     <tr><td>主 CTA（最終ステップ以外）</td><td><code>next()</code> → <code>activeSteps</code> 上の次の step へ</td></tr>
     <tr><td>戻る（先頭ステップ以外）</td><td><code>back()</code> → <code>activeSteps</code> 上の前の step へ（step 2 では前の問いが優先）</td></tr>
+    <tr><td>「もう1問答える」（step 2）</td><td>今の回答を確定して次の問いへ（最後の問いでは出ない）</td></tr>
     <tr><td>主 CTA（step 4）</td><td><code>finish()</code> → 保存 → 完了画面（step 5）</td></tr>
     <tr><td>×ボタン（入力なし）</td><td>そのまま dismiss</td></tr>
     <tr><td>×ボタン（入力あり）</td><td>中断アラート →「下書きを保存して閉じる」で dismiss ／「続ける」で留まる</td></tr>
@@ -269,7 +275,9 @@ _entries = Query(
 @State private var note: String
 
 // 記録0件の期間は「選ぶ」を通らない
-private var activeSteps: [Int] { entries.isEmpty ? [0, 2, 3, 4] : [0, 1, 2, 3, 4] }
+private var activeSteps: [Int] { entries.isEmpty ? [2, 3, 4] : [1, 2, 3, 4] }
+@State private var showResumeChoice: Bool   // = draft?.hasContent ?? false
+@State private var resetToken = 0           // 「最初から」のたびに増やし、.id に混ぜる
 private var progressStep: Int { activeSteps.firstIndex(of: step) ?? 0 }
 private var stepLabel: String { "STEP \(progressStep + 1)" }
 
@@ -297,6 +305,7 @@ modelContext.insert(session)
     <li>完了画面の星（LightingStar）は <code>.accessibilityHidden(true)</code>（装飾のため読み上げない）。</li>
     <li>Reduce Motion 時はステップ遷移のアニメーションを行わず即座に切り替え、完了画面の星も最初から灯った状態で出す。</li>
     <li>進捗はプログレスバー右端の「<code>n/m</code>」テキストで示す（Capsule セグメント自体にはラベルを付けていない）。</li>
+    <li><strong>段階が変わったら読み上げ位置を新しい見出しへ移す</strong>（LR-006・1.1.0〜）。VoiceOver が動いているときだけ、フェード（0.35秒）が終わる 0.45秒後に <code>@AccessibilityFocusState</code> で移す（途中で移すと前の画面の要素に戻されることがある）。共通処理は <code>ReflectionAccessibilityFocus.move</code>。</li>
   </ul>
 
   <h2>実装メモ</h2>
@@ -324,9 +333,10 @@ modelContext.insert(session)
     <tr><td>1.1</td><td>2026-06-16</td><td>Phase S4 実装済み: ナビゲーションバーをダーク天体背景＋明朝タイトルに統一（UINavigationBarAppearance）。セッション内はインライン明朝タイトル表示。</td></tr>
     <tr><td>1.2</td><td>2026-07-26</td><td>ステップ数が5固定でない分岐（記録0件の期間は <code>activeSteps = [0,2,3,4]</code>）と STEP 番号の動的採番を追記。ハイライト更新（<code>LogEntry.isHighlight = true</code>）の記述を削除し <code>highlightLogIds</code> 一本化を明記。中断を「破棄」から「下書きを保存して閉じる」（<code>ReflectionDraftStore</code>・UserDefaults・期間が変わったら破棄）へ書き換え。完了時の upsert（同一期間は上書き・<code>starSeq</code> を保持して星を増やさない）と <code>starSeq</code> 採番／フォールバックを追加。保存失敗時の <code>rollback()</code> ＋保存エラーアラートを追記（「エラーアラートは S3 以降で追加予定」を削除）。プログレスバーの×が<strong>左端</strong>である点を修正し、遷移演出を横スライド0.28秒からフェード＋上方8px 0.35秒へ訂正。各ステップの実装文言・CTA・文字数上限（問い500／気づき1000）・問いの1問ずつ進行・総括感情の再タップ解除・完了画面の構成・LogMood 5色（輝度階段）・Dynamic Type／44pt／Reduce Motion 対応を追記。未使用の mermaid CDN 読み込みを削除し、リンク切れの <code>reflect-home.html</code> を <code>S03_reflect_home.html</code> に修正。上書き（upsert）時の更新範囲を「<code>completedAt</code> のみ」から「内容＋<code>completedAt</code>（<code>id</code> / <code>createdAt</code> / <code>starSeq</code> は保持）」に訂正</td></tr>
     <tr><td>1.3</td><td>2026-08-26</td><td>提出前の UI/UX 修正（コミット <code>4dcdba4</code>）を反映。①step 2（問い）の回答を<strong>打鍵ごとに <code>answers</code> へ確定</strong>するよう変更（「次へ／戻る」まで未確定だと、×で閉じたときに入力中の1問分が消え、下書きにも <code>hasAnyInput</code> にも乗らなかった）。②下書きの期限切れ判定を「periodStart の同日一致」から <code>isReusable(draftStart:periodStart:type:)</code> による<strong>期間の重なり判定</strong>へ変更（週次は6日以内のずれを許容＝中断して翌日に再開できる／月次・年次は同日一致のまま）。③下書きの <code>periodStart</code> を<strong>初回保存時の値で固定</strong>する仕様（無期限スライドの防止）を追記。④保存タイミングが打鍵ごとになる旨と、500文字切り詰め時の再 <code>onChange</code> による確定を追記</td></tr>
+    <tr><td>1.4</td><td>2026-10-24</td><td><strong>アプリ 1.1.0 (11) に合わせて改訂。</strong>「見返す」（step 0・ReflectionStepReview）を廃止して「見返して、選ぶ」に統合し、activeSteps を [1,2,3,4]／[2,3,4] に。問いは最初の1問だけ・「もう1問答える」・どの問いからでも「次へ」。下書きの「続きから／最初から」（LR-005）と resetToken。主 CTA を LineButton に。段階が変わったときの読み上げ位置の移動（LR-006）・完了画面のボタン幅（LR-007）・完了直後のレビュー依頼を追記（コミット <code>85e39ea</code> <code>1e140c0</code> <code>73160df</code> <code>c5b3f46</code>）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-08-26</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>
