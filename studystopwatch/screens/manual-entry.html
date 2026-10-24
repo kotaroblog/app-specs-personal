@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 手動の記録</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 手動の記録</div>
+  <header class="site-header"><h1>手動の記録（ManualStudyEntrySheet）</h1><p>計測せずに勉強した時間を記録する</p>
+  <div class="section-meta"><span class="tag todo">1.4.2 (22)（TestFlight 配信済み・未公開）</span><span class="tag">画面ID: SS-MANUAL-01</span></div></header>
+
+  <h2>目的・役割</h2>
+  <p>タイマーを使わずに勉強した時間をあとから記録する画面（<code>ManualStudyEntrySheet</code>）。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>科目</td><td>開く前に選んだ科目</td></tr>
+    <tr><td>学習時間</td><td>ホイール。<strong>大きい文字の設定ではステッパー</strong>（時間は1ずつ・分は5ずつ。<code>ManualDurationSteppers</code>。UX チェック #19）</td></tr>
+    <tr><td>開始</td><td>日時。<strong>初期値は「今 − 学習時間」</strong>（終わりがちょうど今）</td></tr>
+    <tr><td>メモ</td><td>任意</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>挙動</th></tr>
+    <tr><td>学習時間を変えた</td><td>開始も「今 − 学習時間」に合わせる。<strong>本人が開始を手で変えた後は合わせない</strong></td></tr>
+    <tr><td>終わり（開始＋学習時間）が今より後</td><td>保存の前に確認を出す（入力にかかる時間のぶれ程度は許す）</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>先</th></tr>
+    <tr><td>ホームの一覧「計測せず手動で記録」→ 科目を選ぶ</td><td>この画面（sheet）</td></tr>
+    <tr><td>科目を選ぶ画面の行の「…」→ 手動で記録</td><td>この画面（sheet）</td></tr>
+    <tr><td>保存</td><td>StudySession を保存して閉じる</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <p><code>StudySession</code>・<code>Subject</code>。開始時刻の計算は <code>ManualEntryTiming</code>（Service・テストあり）。</p>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">以前は開始の初期値が「今」で、学習時間1時間のまま保存すると終わりが1時間後＝未来の記録になっていた（UX チェック #7）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="home.html">ホーム</a></li>
+    <li><a href="../features/timer.html">タイマー機能</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-24</td><td>初版作成（1.4.2 (22)・TestFlight 配信済み・未公開の内容）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
+</div>
+</body></html>

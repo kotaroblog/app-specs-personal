@@ -149,13 +149,20 @@ enum AfterSessionResult { case saved(message:), skipped(message:), undone }</cod
     <li><a href="../data-model.html">データモデル</a></li>
   </ul>
 
+  <h2>1.4.2 での変更 <span class="tag todo">1.4.2 (22)</span></h2>
+  <ul>
+    <li><strong>科目から始めた計測のあと</strong>にも短い画面（<code>RecordedSummarySheet</code>）を出す: 「記録しました」「今日の合計」と「次にやることを決める」「閉じる」だけ。「次にやることを決める」でこの画面（科目モード）へ。以前はお知らせだけで、目標達成のお祝いと重なって記録できたことに気づけなかった（UX チェック #8）。ボタンは1回だけ受け付ける</li>
+    <li>大きい文字で見出しが折れる・中身が下に固定したボタンに隠れるのを直した（UX チェック #10）</li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
     <tr><td>1.0</td><td>2026-10-01</td><td>初版作成。1.4.0（TestFlight・未提出）で新設した画面（SS-017 / SS-018）</td></tr>
+    <tr><td>1.1</td><td>2026-10-24</td><td>1.4.2 (22)（TestFlight 配信済み・未公開）を反映: 科目から始めた計測後の短い画面（RecordedSummarySheet）、大きい文字の崩れの修正</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-10-01</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>
