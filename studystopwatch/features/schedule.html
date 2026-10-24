@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 予定</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 予定</div>
+  <header class="site-header"><h1>予定（学校・塾・小テスト）</h1><p>やることとは別の、時間が決まった予定</p>
+  <div class="section-meta"><span class="tag todo">1.4.2 (22)（TestFlight 配信済み・未公開）</span><span class="tag">SS-FEAT-SCHED-01</span></div></header>
+
+  <h2>概要</h2>
+  <p>やること（StudyTask＝終わらせるもの）とは別に、<strong>時間が決まっている予定</strong>（学校・塾・部活・小テスト・定期テスト）を持てるようにする（SS-031・SS-032）。
+  勉強できる時間がどこに残っているかをカレンダーで見せるのが目的。予定は学習時間の集計・やることの進みには影響しない。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/schedule-edit.html">予定の追加・編集</a>（入口: カレンダー右上の＋／ホームの一覧「予定」）</li>
+    <li><a href="../screens/calendar.html">カレンダー</a>（日・週・月に表示）</li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  actor U as 利用者
+  participant S as ScheduleEventEditSheet
+  participant VM as ScheduleEventFormViewModel
+  participant SV as ScheduleService
+  participant DB as SwiftData
+  participant C as カレンダー
+  U->>S: 名前・色・時刻・繰り返しを入れて保存
+  S->>VM: 検査（名前あり・終了 > 開始）
+  VM->>SV: 保存
+  SV->>DB: ScheduleEvent を insert / 更新
+  C->>SV: この日（週・月）に出る予定は？
+  SV-->>C: 繰り返しを展開し、終了日・この日だけ消した日を除いた一覧
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <table>
+    <tr><th>ルール</th><th>内容</th></tr>
+    <tr><td>繰り返し</td><td>しない（その日だけ）／毎日／毎週（曜日を複数）。<code>date</code> は1回の予定の日付、繰り返しでは開始日</td></tr>
+    <tr><td>終わり</td><td>繰り返しの終了日（無し＝ずっと）。終了日の当日までは出る</td></tr>
+    <tr><td>この日だけ削除</td><td>繰り返しの1日だけを <code>excludedDatesText</code>（yyyy-MM-dd）に足して消す。「すべての日の予定を削除」は予定ごと消す</td></tr>
+    <tr><td>時刻</td><td>0時からの分。日付をまたがない（終了 > 開始）。終日なら時刻は使わない</td></tr>
+    <tr><td>色</td><td>決まった8色（赤・オレンジ・黄色・緑・水色・青・紫・グレー）。色の名前も保存し、読み上げに使う</td></tr>
+  </table>
+
+  <h3>カレンダーでの見せ方</h3>
+  <table>
+    <tr><th>表示</th><th>見せ方</th></tr>
+    <tr><td>日</td><td>「この日の予定」（<code>DayScheduleCard</code>）。終日は上に帯、時刻のある予定は時間軸に色の帯。重なる予定は横に並べる</td></tr>
+    <tr><td>週</td><td>各曜日の欄に帯（<code>ScheduleEventBar</code>）</td></tr>
+    <tr><td>月</td><td>マスの中に細い帯（<code>MonthScheduleBars</code>）</td></tr>
+  </table>
+  <p>試験の日・期間は予定とは別に「定期テスト 1日目／全3日」の帯（<code>ExamDayBar</code>）で出す（<a href="exam-period.html">試験の期間</a>）。</p>
+
+  <h2>外部連携</h2>
+  <p>なし（端末内の SwiftData のみ。iCloud・端末のカレンダーとは連携しない）。</p>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>ケース</th><th>挙動</th></tr>
+    <tr><td>名前が空</td><td>保存できない。入力欄の下に案内（開いた瞬間には出さない）</td></tr>
+    <tr><td>終了が開始以前</td><td>保存できない</td></tr>
+    <tr><td>保存に失敗</td><td>Logger に記録する</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done"><code>ScheduleEvent</code> は新しい @Model。全項目に既定値（あとから項目を足しても既存データが読める）。ModelContainer のスキーマに追加</li>
+    <li class="done">曜日は 1=日〜7=土 をカンマ区切りで <code>weekdaysText</code> に持つ</li>
+    <li class="done">展開の計算は <code>ScheduleService</code>（純粋な計算部分はテストあり）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-24</td><td>初版作成（1.4.2 (22)・TestFlight 配信済み・未公開の内容）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+  });
+</script>
+</body></html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 予定の追加</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 予定の追加</div>
+  <header class="site-header"><h1>予定の追加・編集（ScheduleEventEditSheet）</h1><p>学校・塾・小テストなど時間の決まった予定</p>
+  <div class="section-meta"><span class="tag todo">1.4.2 (22)（TestFlight 配信済み・未公開）</span><span class="tag">画面ID: SS-SCHED-01</span></div></header>
+
+  <h2>目的・役割</h2>
+  <p>学校・塾・部活・小テストなど、<strong>時間が決まっている予定</strong>を足す・直す画面。やること（終わらせるもの）とは別物で、カレンダーに帯で出る（SS-031・SS-032）。</p>
+
+  <h2>UI 構成</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>よく使う例</td><td>学校・塾・部活・小テスト・定期テスト（押すと名前などが入る）</td></tr>
+    <tr><td>名前</td><td>必須。開いた瞬間には赤字の「名前を入れてください」を出さない（UI/UX #12）</td></tr>
+    <tr><td>色</td><td>8色（赤・オレンジ・黄色・緑・水色・青・紫・グレー）。既定は青</td></tr>
+    <tr><td>終日</td><td>スイッチ。オンなら時刻を出さない</td></tr>
+    <tr><td>開始・終了</td><td>時刻（日付をまたがない。終了は開始より後）。既定 9:00〜10:00</td></tr>
+    <tr><td>繰り返し</td><td>しない／毎日／毎週。毎週なら曜日を複数選ぶ</td></tr>
+    <tr><td>繰り返しの終了日</td><td>繰り返しのときだけ。無し＝終わりなし</td></tr>
+    <tr><td>メモ</td><td>任意</td></tr>
+    <tr><td>予定を削除（編集時）</td><td>1回の予定は「削除」。繰り返しは「この日だけ削除」「すべての日の予定を削除」</td></tr>
+  </table>
+
+  <h2>状態</h2>
+  <table>
+    <tr><th>状態</th><th>表示</th></tr>
+    <tr><td>新規</td><td>日付は開いた日（カレンダーから開いたときはその日）</td></tr>
+    <tr><td>編集</td><td>保存済みの値＋削除ボタン</td></tr>
+    <tr><td>名前が空で保存しようとした</td><td>入力欄の下に「名前を入れてください」</td></tr>
+  </table>
+
+  <h2>遷移</h2>
+  <table>
+    <tr><th>操作</th><th>先</th></tr>
+    <tr><td>カレンダー右上の＋ → 予定</td><td>この画面（新規・sheet）</td></tr>
+    <tr><td>ホームの一覧「予定（学校・塾・小テスト）」</td><td>この画面（新規・sheet）</td></tr>
+    <tr><td>カレンダーの予定の帯をタップ</td><td>この画面（編集）</td></tr>
+    <tr><td>保存・削除・キャンセル</td><td>閉じて元の画面</td></tr>
+  </table>
+
+  <h2>使用するデータモデル</h2>
+  <p><code>ScheduleEvent</code>（<a href="../data-model.html">データモデル</a>）。入力の保持と検査は <code>ScheduleEventFormViewModel</code>。</p>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done"><code>ScheduleEventEditSheet</code> ＋ <code>ScheduleEventFormSections</code>（View）／<code>ScheduleEventFormViewModel</code>（入力と検査）／<code>ScheduleService</code>（保存・その日に出る予定の計算）</li>
+    <li class="done">時刻は「0時からの分」で持つ（例 8:30 → 510）</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="../features/schedule.html">予定（機能仕様書）</a></li>
+    <li><a href="calendar.html">カレンダー</a></li>
+    <li><a href="home.html">ホーム</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-24</td><td>初版作成（1.4.2 (22)・TestFlight 配信済み・未公開の内容）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
+</div>
+</body></html>

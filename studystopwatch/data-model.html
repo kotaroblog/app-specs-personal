@@ -386,6 +386,43 @@ enum TestType: String, Codable, CaseIterable {
     SwiftDataの@Modelは全プロパティに<strong>デフォルト値必須</strong>。新規プロパティ追加時は必ずデフォルト値を設定する。
   </div>
 
+  <h2>1.4.2 で足したモデル・項目 <span class="tag todo">1.4.2 (22)</span></h2>
+  <p>🔴 足したものはすべて既定値つきで、<strong>既存の項目は変えていない</strong>（1.4.1 までのデータはそのまま読める）。</p>
+  <h3>ScheduleEvent（新しい @Model・SS-031／SS-032）</h3>
+  <p>やること（StudyTask）とは別の、時間が決まった予定。ModelContainer のスキーマに追加。詳細は<a href="features/schedule.html">予定</a>。</p>
+  <table>
+    <tr><th>項目</th><th>型</th><th>既定値</th><th>説明</th></tr>
+    <tr><td>id</td><td>UUID</td><td>UUID()</td><td></td></tr>
+    <tr><td>title</td><td>String</td><td>""</td><td>名前（学校・塾・小テストなど）</td></tr>
+    <tr><td>colorRawValue</td><td>String</td><td>"blue"</td><td>色（<code>ScheduleColor</code>: red / orange / yellow / green / teal / blue / purple / gray）</td></tr>
+    <tr><td>colorName</td><td>String</td><td>"青"</td><td>色の名前（読み上げ・一覧用）</td></tr>
+    <tr><td>isAllDay</td><td>Bool</td><td>false</td><td>終日</td></tr>
+    <tr><td>startMinute</td><td>Int</td><td>540</td><td>開始（0時からの分）</td></tr>
+    <tr><td>endMinute</td><td>Int</td><td>600</td><td>終了（0時からの分・開始より後・日付をまたがない）</td></tr>
+    <tr><td>repeatRuleRawValue</td><td>String</td><td>"once"</td><td>once（しない）/ daily（毎日）/ weekly（毎週）</td></tr>
+    <tr><td>weekdaysText</td><td>String</td><td>""</td><td>毎週の曜日（1=日〜7=土 をカンマ区切り）</td></tr>
+    <tr><td>date</td><td>Date</td><td>Date()</td><td>1回の予定の日付。繰り返しでは開始日</td></tr>
+    <tr><td>repeatEndDate</td><td>Date?</td><td>nil</td><td>繰り返しの終了日（nil＝終わりなし）</td></tr>
+    <tr><td>memo</td><td>String</td><td>""</td><td>メモ</td></tr>
+    <tr><td>excludedDatesText</td><td>String</td><td>""</td><td>「この日だけ削除」した日（yyyy-MM-dd をカンマ区切り）</td></tr>
+    <tr><td>createdAt</td><td>Date</td><td>Date()</td><td></td></tr>
+  </table>
+  <h3>既存モデルに足した項目</h3>
+  <table>
+    <tr><th>モデル</th><th>項目</th><th>型</th><th>既定値</th><th>説明</th></tr>
+    <tr><td>UserSettings</td><td>examEndDate</td><td>Date?</td><td>nil</td><td>試験の最終日（nil＝1日だけ）。開始日は従来の <code>examDate</code>。計算は <code>ExamSchedule</code>（<a href="features/exam-period.html">試験の期間</a>）</td></tr>
+    <tr><td>StudyPlan</td><td>inputModeRawValue</td><td>String</td><td>"total"</td><td>入力の方法。total（合計を割る）/ items（範囲を並べる）</td></tr>
+    <tr><td>StudyPlan</td><td>itemsText</td><td>String</td><td>""</td><td>範囲を並べる計画の項目（改行区切り）</td></tr>
+    <tr><td>StudyTask</td><td>planItemsText</td><td>String?</td><td>nil</td><td>範囲の計画から作ったやることに割り振った項目（改行区切り）</td></tr>
+  </table>
+  <h3>UserDefaults に足したキー（集中用 BGM・SS-029）</h3>
+  <table>
+    <tr><th>キー</th><th>型</th><th>既定値</th></tr>
+    <tr><td>focusBGM_isEnabled</td><td>Bool</td><td>false</td></tr>
+    <tr><td>focusBGM_track</td><td>String</td><td>"piano"（piano / fire / forest）</td></tr>
+    <tr><td>focusBGM_volume</td><td>Double</td><td>0.6（0〜1）</td></tr>
+  </table>
+
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
@@ -396,6 +433,7 @@ enum TestType: String, Codable, CaseIterable {
     <tr><td>1.4</td><td>2026-06-09</td><td>v1.3.0対応: StudyTask に subject（Subject?）フィールドを追加。ER 図に Subject → StudyTask リレーションを追加</td></tr>
     <tr><td>1.5</td><td>2026-06-12</td><td>v1.2.0対応: WeeklyCoachReport @Model を新規追加。ER 図に WeeklyCoachReport エンティティを追加。PaywallSource enum を追加。modelContainer に WeeklyCoachReport.self 登録</td></tr>
     <tr><td>1.6</td><td>2026-10-01</td><td>1.4.0（TestFlight・未提出）対応: StudyTask に planID / planAmount / dueScopeRawValue / originRawValue / handoffNote を追加。StudyPlan @Model を新規追加。ER 図に StudyPlan と planID の関係を追加。StudySession の旧「次回やること」の扱い（やることへの移行・書かない）、科目削除時の参照外し（SubjectReferenceService）、v1.4 の UserDefaults キーと Enum（TaskDueScope / TaskOrigin / PlanSplitMode / NextWhen）を追記。すべて追加のみであることを明記</td></tr>
+    <tr><td>1.7</td><td>2026-10-24</td><td>1.4.2 (22)（TestFlight 配信済み・未公開）を反映: 新しいモデル ScheduleEvent、UserSettings.examEndDate、StudyPlan.inputModeRawValue / itemsText、StudyTask.planItemsText、集中用 BGM の UserDefaults キーを追記（すべて既定値つき・既存項目は変更なし）</td></tr>
   </table>
 
   <script>
@@ -405,7 +443,7 @@ enum TestType: String, Codable, CaseIterable {
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-10-01</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>
