@@ -2,14 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex, nofollow">
-<title>PieceZen - サウンド</title>
+<title>PieceZen - サウンド（効果音・BGM）</title>
 <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
 <body>
 <div class="container">
   <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">PieceZen</a> / サウンド</div>
-  <header class="site-header"><h1>サウンド機能（SoundManager）</h1><p>合成した専用の効果音20音（マリンバ系）を AVAudioPlayer で再生（v1.5.2〜。v1.5.3 でボーナスタイム用の4音を追加）</p>
-  <div class="section-meta"><span class="tag done">v1.5.3</span><span class="tag">機能ID: PZ-FEAT-SOUND</span></div></header>
+  <header class="site-header"><h1>サウンド機能（SoundManager・BGMPlayer）</h1><p>合成した専用の効果音20音（マリンバ系）を AVAudioPlayer で再生（v1.5.2〜。v1.5.3 でボーナスタイム用の4音を追加）。v1.5.6 から BGM（通常プレイ・ボーナス・ボーナスの残り5秒からの加速版）を AVAudioEngine で継ぎ目なく流す</p>
+  <div class="section-meta"><span class="tag done">v1.5.3</span><span class="tag">v1.5.6 (40) TestFlight 配信済み・未公開</span><span class="tag">機能ID: PZ-FEAT-SOUND</span></div></header>
 
   <div class="callout">
     <strong>v1.5.2（2026-09-28 公開）で効果音を全面的に差し替えた。</strong>
@@ -35,9 +35,47 @@
     <tr><th>イベント</th><th>ファイル</th><th>音</th></tr>
     <tr><td>ボーナスタイムに入る</td><td><code>sfx_bonus_start.caf</code></td><td>「ソ・ソ・ドー」のファンファーレに、和音と鐘の音を重ねる。全消しの駆け上がりと聞き分けられるよう、はっきりした3拍にしている</td></tr>
     <tr><td>全消しして次の盤面へ進む</td><td><code>sfx_bonus_board.caf</code></td><td>ド→ミと高く上がり、きらっと抜ける短い音。全消しの音と重ならないよう<strong>約0.45秒遅らせて</strong>鳴らす。全消しできずに次の盤面へ進むときは鳴らさない</td></tr>
-    <tr><td>残り時間</td><td><code>sfx_bonus_tick.caf</code></td><td>残り3秒から1秒ごとに鳴る木の「コッ」（約0.18秒）。消去の音とぶつからないよう軽くしつつ、聞き取れる長さの余韻を残す。同時に軽い振動も出す</td></tr>
+    <tr><td>残り時間</td><td><code>sfx_bonus_tick.caf</code></td><td>残り3秒から1秒ごとに鳴る木の「コッ」（約0.18秒）。消去の音とぶつからないよう軽くしつつ、聞き取れる長さの余韻を残す。同時に軽い振動も出す。v1.5.6 から残り時間の表示は残り5秒から朱色になるが、この音は残り3秒からのまま</td></tr>
     <tr><td>時間切れ</td><td><code>sfx_bonus_end.caf</code></td><td>全部の音を重ねた和音を下から順に鳴らし、鐘の音で締める。ゲームオーバー（下がって終わる）とは逆に「よくできました」の合図。残り時間がわずかで次の盤面へ進まずにまとめへ移るときも、この音を鳴らす</td></tr>
   </table>
+
+  <h2>BGM（v1.5.6〜）</h2>
+  <p>効果音とは別に、ゲーム画面で BGM を流す。曲は 2026-10-24 に聴き比べて決めた。</p>
+  <table>
+    <tr><th>場面</th><th>ファイル</th><th>曲</th></tr>
+    <tr><td>通常プレイ</td><td><code>bgm_normal.m4a</code></td><td>ハープの分散和音（80BPM・ループ1周 72.00秒）</td></tr>
+    <tr><td>ボーナスタイム</td><td><code>bgm_bonus.m4a</code></td><td>おまつり（126BPM・ループ1周 15.24秒）</td></tr>
+    <tr><td>ボーナスタイムの残り5秒から</td><td><code>bgm_bonus_hurry.m4a</code></td><td>おまつりの加速版（138BPM・ループ1周 6.96秒）</td></tr>
+  </table>
+  <p>ファイルは <code>BlockPuzzle/Resources/Sounds/</code>。どれもループ1周ぴったりの AAC（m4a・モノラル・44.1kHz）。</p>
+
+  <h3>いつ何を流すか</h3>
+  <table>
+    <tr><th>場面</th><th>BGM</th></tr>
+    <tr><td>ゲーム画面で通常プレイ中</td><td>通常プレイの曲</td></tr>
+    <tr><td>ボーナスタイムに入る</td><td>入るファンファーレ（<code>sfx_bonus_start</code>・1.8秒）が<strong>鳴り終わってから</strong>ボーナスの曲に切り替える</td></tr>
+    <tr><td>ボーナスタイムの残り5秒</td><td>加速版に切り替える。<strong>次の拍の頭</strong>まで待ってから入れ替える（拍の頭まで 0.06秒未満なら、その次の拍）</td></tr>
+    <tr><td>時間切れのまとめ以降</td><td>通常プレイの曲に戻す。通常プレイの曲はボーナス中は一時停止しておき、<strong>続きから</strong>流す（ボーナスの曲は最初に戻す）</td></tr>
+    <tr><td>ホーム・ゲームオーバー・アプリが前面にない間</td><td>止める</td></tr>
+    <tr><td>全画面広告（インタースティシャル・リワード）を出している間</td><td>止める。広告を閉じたとき・出せなかったときに再開する</td></tr>
+    <tr><td>他のアプリで音楽が鳴っているとき</td><td>BGM は流さない（効果音はそのまま鳴る）</td></tr>
+    <tr><td>撮影モード（UI テスト・スクリーンショット）</td><td>流さない</td></tr>
+  </table>
+  <p>音量はフェードで動かす: 無音から流し始めるとき 1.0秒、曲から曲へ 0.4秒、ボーナスの曲から加速版へ 0.25秒、止めるとき 0.6秒。どの曲を流したいかは <code>GameEngine.bgmTrack</code> が決め、BGM の設定・全画面広告・他のアプリの音楽の条件は <code>BGMPlayer</code> がかける。</p>
+
+  <h3>BGM の再生の仕様</h3>
+  <table>
+    <tr><th>項目</th><th>仕様</th></tr>
+    <tr><td>再生方式</td><td><code>AVAudioEngine</code>＋<code>AVAudioPlayerNode</code> に、1周を全部デコードした <code>AVAudioPCMBuffer</code> をループで流す（<code>BGMPlayer</code>・アプリ全体で1つ）。AVAudioPlayer のループ再生は AAC の先頭の無音で継ぎ目に隙間が出るおそれがあるため使わない。曲ごとにプレイヤーを1つ持つ</td></tr>
+    <tr><td>読み込み</td><td>ゲーム画面を開いたときに先に読み込む（BGM がオフなら読まない）。読み込めなかった曲は毎回読み直さず、その曲を流したい場面では、いま鳴っている曲をそのまま続ける</td></tr>
+    <tr><td>オーディオセッション</td><td>効果音と同じ <code>.ambient</code>。<strong>消音モード（マナーモード）では鳴らない</strong>・他のアプリの音楽を止めない</td></tr>
+    <tr><td>電話などの割り込み・出力先の変更</td><td>エンジンが止められた後は、プレイヤーを全部止めて最初から流し直す</td></tr>
+    <tr><td>オン/オフ</td><td>設定画面の<strong>「BGM」スイッチ</strong>（既定 ON・端末に保存）。効果音の「サウンド」スイッチとは別で、片方だけ切れる</td></tr>
+  </table>
+  <ul>
+    <li>曲はすべて数式から合成しており、外部の音素材は使っていない。BlockPuzzle リポジトリ内の <code>tools/sound-lab/bgm/generate_bgm.py --export</code> でアプリに入れる3曲を書き出す。<strong>音声ファイルは手で差し替えず、必ずこのスクリプトで作り直す</strong>（同じフォルダに聴き比べページの雛形がある。候補の書き出し先 <code>out/</code> は git に入れない）</li>
+    <li>単体テスト <code>BGMTests</code> で、場面ごとの曲の決め方・設定と広告と他のアプリの音楽の条件・拍待ちの判定・1周のサンプル数を確かめている</li>
+  </ul>
 
   <h2>ライン消去の音（4段 × 3種 = 12音）</h2>
   <p>1回の消去で鳴らす音は1つだけ。<strong>連鎖の段階を音程</strong>、<strong>一度に消したライン数を和音の厚み</strong>で表し、1つの音で両方が伝わるようにしている。</p>
@@ -87,13 +125,15 @@
   <ul>
     <li><a href="game-logic.html">ゲームロジック</a>（連鎖・ライン数の数え方）</li>
     <li><a href="haptic.html">ハプティクス</a></li>
-    <li><a href="../screens/settings.html">設定画面</a></li>
+    <li><a href="../screens/settings.html">設定画面</a>（「サウンド」「BGM」スイッチ）</li>
+    <li><a href="../screens/game.html">ゲーム画面</a>（ボーナスタイム中の画面）</li>
   </ul>
 
   <h2>変更履歴</h2>
   <table class="history-table"><tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr><tr><td>1.0</td><td>2026-05-09</td><td>初版作成</td></tr>
   <tr><td>2.0</td><td>2026-09-29</td><td>v1.5.2 対応: 全面改訂。効果音を iOS のシステム音から<strong>合成した専用の16音（マリンバ系）</strong>に差し替えたことを反映（置く・回転・全消し・ゲームオーバーの4音＋ライン消去12音）。消去音は連鎖の段階で音程が上がり（ド→ミ→ソ→高いド）、消えたライン数で和音の厚みが増す（1本＝単音／2〜3本＝和音／十字・4本以上＝和音＋オクターブ）。再生は AVAudioPlayer、オーディオセッション <code>.ambient</code>（他アプリの音楽を止めない・消音モードでは鳴らない）、消える音は約0.04秒後・ゲームオーバーは約0.35秒後。<code>tools/sound-lab/generate_sfx.py --export</code> での再生成と、v2.0 ロードマップの「自然素材系SE」との関係を記載。旧記述（Tock.caf 等のシステム音・activePlayers 配列）は実装と合わないため削除</td></tr>
-  <tr><td>2.1</td><td>2026-10-01</td><td>v1.5.3 対応: ボーナスタイム用の4音（<code>sfx_bonus_start</code>＝入るときのファンファーレ「ソ・ソ・ドー」＋和音と鐘／<code>sfx_bonus_board</code>＝全消しして次の盤面へ進む合図・全消しの音の約0.45秒後／<code>sfx_bonus_tick</code>＝残り3秒から1秒ごとの木の「コッ」・約0.18秒／<code>sfx_bonus_end</code>＝時間切れ・全部の音を重ねた和音と鐘）を追加し、全20音に。再生の仕様と再生成の記述を20音に更新</td></tr></table>
+  <tr><td>2.1</td><td>2026-10-01</td><td>v1.5.3 対応: ボーナスタイム用の4音（<code>sfx_bonus_start</code>＝入るときのファンファーレ「ソ・ソ・ドー」＋和音と鐘／<code>sfx_bonus_board</code>＝全消しして次の盤面へ進む合図・全消しの音の約0.45秒後／<code>sfx_bonus_tick</code>＝残り3秒から1秒ごとの木の「コッ」・約0.18秒／<code>sfx_bonus_end</code>＝時間切れ・全部の音を重ねた和音と鐘）を追加し、全20音に。再生の仕様と再生成の記述を20音に更新</td></tr>
+  <tr><td>2.2</td><td>2026-10-24</td><td>v1.5.6 (40) 対応（TestFlight 配信済み・未公開）: 「BGM」の節を新設（通常プレイ＝ハープの分散和音・80BPM・72秒ループ／ボーナス＝おまつり・126BPM／残り5秒から加速版・138BPM・次の拍の頭で切り替え／時間切れで通常の曲に戻る）。AVAudioEngine＋PCM ループで継ぎ目なし、<code>.ambient</code>（消音モードでは鳴らない）、他のアプリの音楽・全画面広告・ホーム・ゲームオーバー・撮影モードでは流さない、設定の「BGM」スイッチ（既定 ON・「サウンド」とは別）、<code>tools/sound-lab/bgm/generate_bgm.py --export</code> での書き出しを記載。残り時間の音（<code>sfx_bonus_tick</code>）は残り3秒からのままであることを追記</td></tr></table>
 
-  <footer class="site-footer">最終更新: 2026-10-01</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div></body></html>
