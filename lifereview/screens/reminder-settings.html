@@ -13,26 +13,27 @@
 
   <header class="site-header">
     <h1>リマインダー設定</h1>
-    <p>週次振り返りの曜日・時刻を指定する端末内ローカル通知の設定画面。</p>
+    <p>週次振り返りの曜日・時刻と、毎日のお知らせ（1.1.0〜）の時刻を指定する端末内ローカル通知の設定画面。</p>
     <div style="margin-top:8px;">
       <span class="tag done">実装済</span>
       <span class="tag">画面ID: LR-REMINDER-01</span>
+      <span class="tag">1.1.0 (11)</span>
     </div>
   </header>
 
   <h2>目的・役割</h2>
   <p>
     週次の振り返りを習慣にできるよう、毎週きまった曜日・時刻にローカル通知を出すための設定画面。
-    設定（人生タブ右上の歯車）→「通知」セクションの「リマインダー」行から NavigationLink で push する。
+    設定（各タブ右上の歯車）→「通知」セクションの「リマインダー」行から NavigationLink で push する。
     通知は端末内の <code>UNUserNotificationCenter</code> で完結し、サーバー送信・外部共有は行わない。
     実装は <code>ReminderSettingsView</code>（UI・永続化）と <code>NotificationService</code>（許可・登録・解除）に分かれている。
   </p>
 
   <div class="callout warn">
-    <strong>実装されている通知は週次1本だけ（v1.0.0）:</strong>
-    <code>NotificationService</code> が持つスケジュール API は <code>scheduleWeekly</code> / <code>cancelWeekly</code> の2つのみで、
-    識別子も <code>"weekly_reflection"</code> の1本だけ。<strong>月次・年次のリマインダーは未実装</strong>で、通知の種類を選ぶ UI も存在しない。
-    ふりかえりタブの月次・年次カードはユーザーが自分で開くもので、通知は出ない。
+    <strong>1.1.0 で通知が2本になった（2026-10-23・コミット <code>c23afd1</code> <code>1e140c0</code>）:</strong>
+    週次の振り返り（識別子 <code>"weekly_reflection"</code>）に加えて、<strong>毎日のお知らせ</strong>（識別子 <code>"daily_log"</code>）を追加した。
+    どちらも<strong>押したときの行き先</strong>を <code>userInfo["destination"]</code> に持ち、週次はふりかえりタブ、毎日は今日タブの一行入力へ開く。
+    月次・年次のリマインダーは引き続き無い。
   </div>
 
   <div class="callout">
@@ -50,6 +51,7 @@
     <tr><td>曜日ピッカー</td><td>Picker「曜日」（スタイル未指定＝List 既定）</td><td><code>ForEach(1...7)</code>。ラベルは <code>JapaneseWeekday.fullSymbol</code>（「日曜日」〜「土曜日」）。タグは Calendar 準拠の 1=日〜7=土。変更で即再スケジュール。</td></tr>
     <tr><td>時刻ピッカー</td><td>DatePicker「時刻」（<code>displayedComponents: .hourAndMinute</code>）</td><td>選択値から <code>Calendar.current</code> で hour / minute を取り出して保存し、即再スケジュール。表示用の Date は「今日の hour:minute」を都度組み立てている。</td></tr>
     <tr><td>次回表示</td><td>Section footer（footnote・textMuted）</td><td>「次回：日曜日 21:00」の形式。<strong>保存済みの曜日・時刻をそのまま整形しているだけ</strong>で、実際の日付計算はしていない。</td></tr>
+    <tr><td>毎日のお知らせ Section（1.1.0〜）</td><td>DailyReminderSettingsSection</td><td>Toggle「毎日のお知らせ」＋（ON のときだけ）DatePicker「時刻」（既定 21:00）。footer「毎日きまった時刻に「今日のこと、一行だけ」とお知らせします。押すと今日の入力欄が開きます。」。トグルを ON にした瞬間に許可を求め、得られたら予約。拒否されたら OFF に戻して下の許可なしアラートを出す。時刻を変えると即座に予約し直す。トグルを触った時点で今日タブの誘いカードは以後出さない（<code>dailyReminderPromptDismissed = true</code>）。</td></tr>
     <tr><td>許可なしアラート</td><td>alert</td><td>タイトル「通知が許可されていません」／本文「リマインダーを使うには、設定アプリで「人生アルバム」の通知を許可してください。」／ボタン「設定を開く」「閉じる」。</td></tr>
   </table>
   <p>
@@ -78,6 +80,25 @@
     日本国内向けアプリとして JST 固定を選んだ結果であり、v1.0.0 時点では端末タイムゾーン追従にしていない。
   </div>
 
+  <h2>毎日のお知らせの内容（NotificationService.scheduleDaily・1.1.0〜）</h2>
+  <table>
+    <tr><th>項目</th><th>値</th></tr>
+    <tr><td>タイトル</td><td>「今日のこと、一行だけ」</td></tr>
+    <tr><td>本文</td><td>「残しておくと、一年後の今日に読み返せます。」</td></tr>
+    <tr><td>トリガー</td><td>毎日 hour / minute に繰り返し（<code>UNCalendarNotificationTrigger</code>・<code>Asia/Tokyo</code> 固定）</td></tr>
+    <tr><td>識別子</td><td><code>"daily_log"</code>。登録前に同じ識別子の予約を消してから add する</td></tr>
+    <tr><td>押したとき</td><td><code>userInfo["destination"] = "today"</code> → <code>NotificationRouter</code> → 今日タブへ切り替え、各タブを根元へ戻し、開いているシートを閉じて一行入力にカーソル</td></tr>
+    <tr><td>保存先</td><td><code>@AppStorage</code>: <code>dailyReminderEnabled</code> / <code>dailyReminderHour</code>（既定 21）/ <code>dailyReminderMinute</code>（既定 0）/ <code>dailyReminderPromptDismissed</code></td></tr>
+  </table>
+  <p>週次の通知も 1.1.0 から <code>userInfo["destination"] = "reflect"</code> を持ち、押すとふりかえりタブへ開く。アプリを開いている間に届いた通知もバナーと音で見せる（<code>willPresent</code> → <code>[.banner, .sound]</code>）。</p>
+
+  <h2>前面に来たときの予約し直し（1.1.0〜）</h2>
+  <p>
+    アプリが前面に来るたび（<code>scenePhase == .active</code>）に <code>NotificationService.refreshSchedules()</code> を呼ぶ。
+    週次・毎日のどちらかがオンで、通知が許可されている（authorized / provisional / ephemeral）ときだけ、オンのものを<strong>行き先つきの形で予約し直す</strong>。
+    1.0.x で予約した週次通知は行き先を持たないため、更新後の最初の起動でいまの形にそろう。設定アプリで許可を外していたら何もしない。
+  </p>
+
   <h2>通知許可の扱い</h2>
   <table>
     <tr><th>場面</th><th>実装の挙動</th></tr>
@@ -87,7 +108,9 @@
     <tr><td>すでに設定アプリで拒否済み</td><td>システムはダイアログを出さず即座に false を返すため、同じアラートに落ちる。「設定を開く」で <code>UIApplication.openSettingsURLString</code> を <code>UIApplication.shared.open</code>（URL 生成は <code>guard let</code>・force unwrap しない）。</td></tr>
     <tr><td>許可リクエスト自体が throw</td><td><code>Logger</code>（subsystem: com.happyboy1002.LifeReview / category: Notification）にエラーを残し false を返す＝拒否と同じ扱い。</td></tr>
     <tr><td>画面表示のたび（<code>.task</code>）</td><td><code>enabled == true</code> のときだけ <code>notificationSettings().authorizationStatus</code> を確認。<code>.authorized</code> / <code>.provisional</code> のどちらでもなければ <code>enabled = false</code> ＋ <code>cancelWeekly()</code>。アプリ外で通知を切られたまま「ON」が残るのを防ぐ。</td></tr>
-    <tr><td>この画面以外からの許可要求</td><td>ふりかえりタブのリマインダー提案カード（F12）の「設定する」でも <code>requestAuthorization</code> を呼ぶ。アプリ起動時に許可を求める経路は存在しない。</td></tr>
+    <tr><td>この画面以外からの許可要求</td><td>ふりかえりタブのリマインダー提案カード（F12）の「設定する」と、<strong>今日タブの毎日のお知らせの誘い（1.1.0〜）の「お知らせする」</strong>でも <code>requestAuthorization</code> を呼ぶ。アプリ起動時に許可を求める経路は存在しない。</td></tr>
+    <tr><td>毎日のお知らせ: 許可の応答の後</td><td>許可ダイアログに答えるまでの間にトグルを OFF に戻していたら、許可が得られても予約を取り消す（<code>wantsOn</code>・<code>1e140c0</code>）。</td></tr>
+    <tr><td>毎日のお知らせ: 画面表示のたび</td><td>オンなのに通知が許可されていなければ、トグルを OFF に戻し予約を解除する（週次と同じ突き合わせ）。</td></tr>
   </table>
 
   <h2>状態</h2>
@@ -99,6 +122,8 @@
     <tr><td>トグル ON 操作・拒否済み</td><td>ダイアログは出ず、トグルは OFF のままアラート（設定アプリへ誘導）。</td></tr>
     <tr><td>トグル OFF</td><td><code>cancelWeekly()</code> で識別子 <code>weekly_reflection</code> の<strong>予約分のみ</strong>を削除（配信済み通知は消さない）。</td></tr>
     <tr><td>曜日・時刻を変更</td><td><code>enabled == true</code> のときだけ即座に再スケジュール（<code>reschedule()</code>）。OFF のときは値の保存だけ行う。</td></tr>
+    <tr><td>毎日のお知らせ ON・許可済み（1.1.0〜）</td><td>「時刻」ピッカーを表示。毎日その時刻に「今日のこと、一行だけ」。</td></tr>
+    <tr><td>全データ削除の後</td><td>週次・毎日とも予約を解除し、設定キーも初期化する（設定画面 LR-SETTINGS-01）。</td></tr>
     <tr><td>アプリ外で通知を拒否された後に再訪</td><td><code>.task</code> の突き合わせでトグルが自動的に OFF に戻り、予約も解除される。</td></tr>
   </table>
 
@@ -168,9 +193,10 @@ JapaneseWeekday.fullSymbol(1)  // "日曜日" … この画面の曜日ピッカ
     <tr><td>1.0</td><td>2026-06-15</td><td>初版作成。Phase S3 実装済み（UNUserNotificationCenter 週次リマインダー設定画面）</td></tr>
     <tr><td>1.1</td><td>2026-06-16</td><td>Phase S4 実装済み: ナビゲーションバーをダーク天体背景＋明朝インラインタイトルに統一。</td></tr>
     <tr><td>1.2</td><td>2026-07-26</td><td>実装（ReminderSettingsView / NotificationService）と突き合わせて全面修正。通知識別子を <code>lifereview.weekly.reminder</code> → 実際の <code>weekly_reflection</code> に訂正し、週次1本のみで月次・年次は未実装であることを明記。存在しない記述（曜日の segmented ピッカー・通知プレビューカード・画面内 callout warn での拒否案内・<code>Calendar.nextDate</code> による次回日時計算・Flutter 移行メモ）を削除し、実装どおりの List 構成（Toggle ＋ 条件表示の「タイミング」Section ＋ footer「次回：日曜日 21:00」）とアラートによる拒否時案内に差し替え。許可リクエストの経路（トグル ON 時のみ・options は <code>[.alert, .badge, .sound]</code>）、<code>.task</code> でのシステム許可状態との突き合わせ（<code>.authorized</code>/<code>.provisional</code> 以外は自動 OFF ＋解除）、拒否時の挙動を追加。タイムゾーンが Asia/Tokyo 固定で、端末 TZ で読んだ時刻数値をそのまま JST として登録する点を callout に明記。AppStorage キー名を実装（<code>reminderEnabled</code> 等）に合わせ、全データ削除時のリセット・<code>JapaneseWeekday</code>・提案カード（F12）経由は 21:00 固定という事実を追記。ふりかえりタブへのリンク切れ（reflect-home.html）を修正</td></tr>
+    <tr><td>1.3</td><td>2026-10-24</td><td><strong>アプリ 1.1.0 (11) に合わせて改訂。</strong>毎日のお知らせ（識別子 <code>daily_log</code>・既定 21:00・「今日のこと、一行だけ」）の Section・通知内容・許可の扱い・状態を追加。週次・毎日とも押したときの行き先（ふりかえりタブ／今日タブの一行入力）を userInfo に持つこと、前面に来たときに予約し直すこと（refreshSchedules）、アプリを開いている間もバナーを出すことを追記。「週次1本だけ」の注意書きを差し替え（コミット <code>c23afd1</code> <code>1e140c0</code>）</td></tr>
   </table>
 
-  <footer class="site-footer">最終更新: 2026-07-26</footer>
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
 </div>
 </body>
 </html>
