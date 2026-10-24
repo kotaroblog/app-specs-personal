@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>StudyStopwatch - 集中用 BGM</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">StudyStopwatch</a> / 集中用 BGM</div>
+  <header class="site-header"><h1>集中用 BGM</h1><p>計測中だけ流す音（ピアノとパッド・暖炉・森と小川）</p>
+  <div class="section-meta"><span class="tag todo">1.4.2 (22)（TestFlight 配信済み・未公開）</span><span class="tag">SS-FEAT-BGM-01</span></div></header>
+
+  <h2>概要</h2>
+  <p>計測中に流す集中用の BGM（SS-029）。曲は3つ（ピアノとパッド／暖炉／森と小川）。音量と ON/OFF は計測画面と設定画面のどちらでも変えられる。
+  <strong>既定はオフ</strong>。オンにした人の計測中だけ鳴る。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="timer.html">計測画面</a>（BGM の行: ON/OFF・曲・音量）</li>
+    <li><a href="../screens/settings.html">設定</a>（「計測中にBGMを流す」・曲・音量）。計測中に変えると1秒以内に反映</li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant T as TimerViewModel
+  participant C as FocusBGMController
+  participant P as FocusBGMPolicy
+  participant A as FocusBGMPlayer
+  T->>C: 計測中／一時停止／休憩／終了
+  C->>P: decide(入力)
+  P-->>C: playing / stopped
+  alt playing
+    C->>A: オーディオセッションを有効にして再生（ループ）
+  else stopped
+    C->>A: フェードアウトして停止・セッションを手放す
+  end
+  </div>
+
+  <h2>ビジネスルール（いつ鳴らすか）</h2>
+  <table>
+    <tr><th>場面</th><th>挙動</th></tr>
+    <tr><td>計測中（一時停止していない）で ON</td><td>鳴らす</td></tr>
+    <tr><td>画面ロック・アプリを裏へ</td><td><strong>鳴っているものは続ける</strong>（<code>UIBackgroundModes: audio</code>）</td></tr>
+    <tr><td>一時停止・終了・取り消し</td><td>止める</td></tr>
+    <tr><td>ポモドーロの休憩中</td><td>止める（セッションも手放す）。集中に戻ったら再開</td></tr>
+    <tr><td>休憩明けの時点でアプリが裏にある</td><td>裏では新しく鳴らし始めない。<strong>アプリを開いたとき</strong>に集中なら再開</td></tr>
+    <tr><td>電話などの割り込み</td><td>止める。割り込みが終わりシステムが再開を許したときだけ、裏でも再開してよい</td></tr>
+    <tr><td>イヤホンを抜いた</td><td>止める（本人が操作するまで再開しない）</td></tr>
+    <tr><td>広告の表示中</td><td>止める</td></tr>
+  </table>
+  <p>判定は純粋な関数 <code>FocusBGMPolicy.decide</code> 1か所。画面に出す説明文（<code>FocusBGMSettings.behaviorNote</code>）もこの動きに合わせている。</p>
+
+  <h2>外部連携</h2>
+  <p>AVFoundation（<code>AVAudioSession</code> の playback・割り込み通知・経路変更通知）。音源はアプリに同梱（m4a・3曲。自前の合成スクリプトで作成）。</p>
+
+  <h2>エラー処理</h2>
+  <table>
+    <tr><th>ケース</th><th>挙動</th></tr>
+    <tr><td>音源が見つからない・読めない・オーディオエンジンやセッションを開始できない</td><td>Logger に記録し、BGM なしで計測を続ける（計測は止めない）</td></tr>
+  </table>
+
+  <h2>実装メモ</h2>
+  <ul class="checklist">
+    <li class="done">設定は UserDefaults（<code>focusBGM_isEnabled</code> 既定 false／<code>focusBGM_track</code> 既定 piano／<code>focusBGM_volume</code> 既定 0.6・0〜1）</li>
+    <li class="done">以前は休憩中も音量0で鳴らし続けていた。画面ロック中の無音再生は審査ガイドライン 2.5.4 のおそれがあるため、止めてセッションを手放す形に直した（レビュー #5 #9）</li>
+    <li class="done">再生中に落ちる不具合を修正（レビュー #4〜#8）。テストあり（<code>FocusBGMPolicy</code>・設定の読み込み）</li>
+    <li class="done">層: <code>FocusBGMPlayer</code>（Service・再生）／<code>FocusBGMController</code>（ViewModel・計測の状態から判定）／<code>FocusBGMControl</code>（View）</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-24</td><td>初版作成（1.4.2 (22)・TestFlight 配信済み・未公開の内容）</td></tr>
+  </table>
+
+  <footer class="site-footer">最終更新: 2026-10-24</footer>
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+  });
+</script>
+</body></html>
