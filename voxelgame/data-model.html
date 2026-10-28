@@ -65,7 +65,7 @@ erDiagram
   </div>
 
   <h2>WorldRecord（SwiftData @Model）</h2>
-  <p>ワールドのメタ情報・進行状態をまとめて保持するモデル。プレイヤーの位置・向き・時刻・天候・船の位置は保存対象外で、毎回スポーン地点から再開する。</p>
+  <p>ワールドのメタ情報・進行状態をまとめて保持するモデル。時刻・天候・船の位置は保存対象外。プレイヤーの位置と向きは、2026-10-27 から「前回地面に立っていた場所」だけ保存し、入り直したらそこから始める（CF93。立てなくなっていたらスポーン地点へ）。</p>
   <table>
     <tr><th>プロパティ</th><th>型</th><th>既定値</th><th>説明</th></tr>
     <tr><td>id</td><td>UUID</td><td>UUID()</td><td>ワールド固有ID。ChunkRecord/ChestRecord の worldID と紐付く</td></tr>
@@ -76,7 +76,7 @@ erDiagram
     <tr><td>spawnX / spawnY / spawnZ</td><td>Float</td><td>8 / 62 / 8</td><td>スポーン座標。ベッド使用で更新される。<code>setKind</code> で島は (0.5, -, 0.5)、群島は本島の南の草原（<code>ArchipelagoTerrain.spawn</code>）に置き直す</td></tr>
     <tr><td>inventoryData</td><td>Data</td><td>空</td><td>所持品。形式は後述の「所持品・チェストの直列化」</td></tr>
     <tr><td>unlockedToolsData</td><td>Data</td><td>空</td><td>解放済みツール。Tool の rawValue（hand / woodPickaxe / stonePickaxe / ironPickaxe / shears）をカンマ区切りにした UTF-8。空なら hand・woodPickaxe として読み、読み込み時に hand を必ず足す</td></tr>
-    <tr><td><strong>saveVersion</strong></td><td>Int</td><td>0</td><td>保存データの版（2026-10-06）。0 は番号を入れる前（build 36 まで）。新しいワールドはいまの版（<code>SaveDataVersion.current</code>＝1）。開く前に <code>SaveDataMigration</code> が古い版を順に直す（版0→1 は番号を付けるだけ）。公開後に保存の中身の意味を変えたら版を上げ、直し方を1つ足す</td></tr>
+    <tr><td><strong>saveVersion</strong></td><td>Int</td><td>0</td><td>保存データの版（2026-10-06）。0 は番号を入れる前（build 36 まで）。新しいワールドはいまの版（<code>SaveDataVersion.current</code>＝<strong>3</strong>。版2＝高さ128のチャンク〔2026-10-27・CF75〕、版3＝ブロックの番号を2バイトに〔2026-10-28・CF-055〕）。🔴 アプリより新しい版のワールドは開かない（<code>NewerSaveNotice</code>。古いアプリが読めずに上書きして壊すのを防ぐ）。開く前に <code>SaveDataMigration</code> が古い版を順に直す（版0→1 は番号を付けるだけ）。公開後に保存の中身の意味を変えたら版を上げ、直し方を1つ足す</td></tr>
     <tr><td><strong>builtLiftsData</strong></td><td>Data</td><td>空</td><td>自分で作ったリフト（リフトの滑車を置いて立てた物）。Lift（縦穴・ふもとと上の高さ・乗り場・降り立つ所・向き）の JSON の配列（2026-10-05、CF58）</td></tr>
     <tr><td><strong>authorsCrateData</strong></td><td>Data</td><td>空</td><td>作者の荷箱（ステージだけ）。前のステージを完成してから作ったワールドに、届ける素材・道具・どこから届いたかを JSON で入れる。届けたら空にする（2026-10-05、CF57）</td></tr>
     <tr><td><strong>toolConditionsData</strong></td><td>Data</td><td>空</td><td>道具ごとの状態（使った回数 wear・強化の段階 level）。Tool の rawValue をキーにした JSON。空なら全部新品（2026-10-04、CF55）</td></tr>
@@ -102,9 +102,22 @@ erDiagram
     <tr><td><strong>thumbnailPhoto</strong></td><td>Data?（externalStorage）</td><td>nil</td><td>ホームに出す写真。ワールドを出るときに操作ボタンなどを隠して撮った景色（幅640の JPEG）。ホームは完成の写真 → これ → 着手前の写真の順で出す（2026-10-03、CF33）</td></tr>
     <tr><td><strong>blueprintDisplayRaw</strong></td><td>String?</td><td>nil</td><td>ステージのお手本の出し方（BlueprintDisplay の rawValue: all／layer。nil は表示しない）。2026-10-03、CF34</td></tr>
     <tr><td><strong>archipelagoRevision</strong></td><td>Int</td><td>0</td><td>群島の「最初から置いてある物」をどの改訂まで入れたか。現行は 1（build 24：凍った滝・崖のリフト）。新しい群島は作るときに最新にする（2026-10-02 追加）</td></tr>
+    <tr><td><strong>terrainLift</strong></td><td>Int</td><td>0</td><td>地形を持ち上げた段数。新しく作る群島は 60（海面 69・地下が深い・ワールドの決まりを使う）。以前に作った群島・ほかのワールドは 0（以前の地形で開く）。2026-10-28、CF90</td></tr>
+    <tr><td><strong>survivalData</strong></td><td>Data</td><td>空</td><td>体力・満腹・息・煮込みの残り時間など（<code>SurvivalState</code> の JSON）。ワールドの決まりを使うワールドだけ（CF84）</td></tr>
+    <tr><td><strong>tamedMobsData</strong></td><td>Data</td><td>空</td><td>飼っている動物（<code>TamedMob</code> の JSON の配列。上限24。CF84）</td></tr>
+    <tr><td><strong>cartsData</strong></td><td>Data</td><td>空</td><td>置いたトロッコ（<code>RailCart</code> の JSON の配列。チェストつきの積み荷を含む。CF76）</td></tr>
+    <tr><td><strong>stakesData</strong></td><td>Data</td><td>空</td><td>杭と作品カード（<code>StakeBook</code> の JSON。CF78 段4）</td></tr>
+    <tr><td><strong>workPhotosData</strong></td><td>Data?（externalStorage）</td><td>nil</td><td>作品カードの写真（カードの ID → JPEG。<code>WorkPhotoStore</code>。CF78 段4）</td></tr>
+    <tr><td><strong>outfitData</strong></td><td>Data</td><td>空</td><td>身じたく（帽子と上着の色。<code>Outfit</code> の JSON。CF78 段5）</td></tr>
+    <tr><td><strong>machineRecipesData</strong></td><td>Data</td><td>空</td><td>自動の石切り機ごとに選んだ作る物（<code>MachineRecipeChoice</code> の JSON の配列。2026-10-26）</td></tr>
+    <tr><td><strong>pumpedSourcesData</strong></td><td>Data</td><td>空</td><td>揚水機が出した水源の位置（[[x, y, z]] の JSON。止まったら引くのはこの水だけ。CF85 段3）</td></tr>
+    <tr><td><strong>smeltingJobsData</strong></td><td>Data</td><td>空</td><td>かまどで焼いているジョブ（近くのかまどに並べた数だけ同時に・最大4台。CF70）</td></tr>
+    <tr><td><strong>waypointsData / guidedWaypointIDString</strong></td><td>Data / String</td><td>空 / ""</td><td>名前つきの目印（<code>Waypoint</code> の JSON の配列・8つまで）と、案内中の目印の id（空なら案内しない）。CF97</td></tr>
+    <tr><td><strong>hasLastPlayerSpot / lastPlayerX・Y・Z / lastPlayerYaw・Pitch</strong></td><td>Bool / Float</td><td>false / 0</td><td>前回やめた場所（足元・向き）。地面に立っていたときだけ書く（船・リフト・泳ぎ・飛行中は前の場所のまま）。CF93</td></tr>
+    <tr><td><strong>hasSeenStageIntro / beforePhotoDeclined / stageTerrainRevision</strong></td><td>Bool / Bool / Int</td><td>false / false / 0</td><td>ステージの紹介ムービーを流したか・着手前の写真を「撮らない」と答えたか（CF73）・舞台をどの版で作ったか（古い版は一覧を開いたときに最初の状態へ戻す）</td></tr>
   </table>
   <div class="callout warn">
-    <strong>09-17 以降に足した列はすべて既定値つきの追加</strong>（craftingJobData・toolCraftingJobData・stageID・stageCompletedAt・写真3枚・worldKindRaw・isRidingBoat・archipelagoRevision・lakeRefreezePending・thumbnailPhoto・blueprintDisplayRaw）。SwiftData の軽量マイグレーションは「既存レコードに新しい列の値を埋められること」が条件で、既定値の無い非 Optional が1つでもあると次に列を足した時点で移行が失敗し、ストアごと開けなくなる（＝全ワールド消失）。そのためスキーマは <code>VoxelSchemaV1</code> のまま、移行ステージを持たない。
+    <strong>09-17 以降に足した列はすべて既定値つきの追加</strong>（10-26〜28 の terrainLift・survivalData・tamedMobsData・cartsData・stakesData・workPhotosData・outfitData ほかを含む。craftingJobData・toolCraftingJobData・stageID・stageCompletedAt・写真3枚・worldKindRaw・isRidingBoat・archipelagoRevision・lakeRefreezePending・thumbnailPhoto・blueprintDisplayRaw）。SwiftData の軽量マイグレーションは「既存レコードに新しい列の値を埋められること」が条件で、既定値の無い非 Optional が1つでもあると次に列を足した時点で移行が失敗し、ストアごと開けなくなる（＝全ワールド消失）。そのためスキーマは <code>VoxelSchemaV1</code> のまま、移行ステージを持たない。
   </div>
   <div class="callout warn">
     <strong>廃止された列</strong>: <code>hp</code>（体力）・<code>hunger</code>（満腹度）・<code>hasCraftedTorch</code>・<code>hasCraftedGoldenApple</code>。いずれも 2026-09-16 の建築特化への転換で、対応する仕組みごと削除した。
@@ -143,6 +156,19 @@ erDiagram
   </ul>
   <p>チャンクはブロック編集のたびに <code>dirtyChunks</code> へ記録され、(a) チャンクアンロード時、(b) アプリのバックグラウンド移行・「保存して出る」、(c) 定期保存、の経路で <code>WorldStore.saveChunk</code>（専用シリアルキュー上の ModelContext。既存レコードがあれば上書き）へ書き込まれる。バックグラウンド移行時は <code>whenAllPendingWritesComplete</code> で投入済みの書き込みが終わるまで実行猶予を取る。</p>
 
+  <h3>高さ128と2バイトの番号（2026-10-27〜28）</h3>
+  <table>
+    <tr><th>形</th><th>いつ使うか</th><th>内容</th></tr>
+    <tr><td>高さ64（旧）</td><td>2026-10-26 までの保存</td><td>上の表のとおり 16×64×16＝16384 バイト。読むときは高さ128の下半分に入れる</td></tr>
+    <tr><td>高さ128・1バイト</td><td>番号 255 以下のブロックだけのチャンク（ほとんど）</td><td>先頭に高さ128の印を付け、16×128×16 マスを1マス1バイトで（2026-10-27、CF75・保存データの版2）。容量と前の版との読み合いは1バイトの形のまま</td></tr>
+    <tr><td>高さ128・2バイト</td><td>番号 256 以上のブロック（煮込み・ワニの皮・皮の敷物）を含むチャンクだけ</td><td>先頭に印 <code>[0xFE, 0x56, 0x48, 0x03]</code>、1マス2バイト（UInt16 リトルエンディアン）（2026-10-28、CF-055・保存データの版3）</td></tr>
+  </table>
+  <ul>
+    <li>向きの追記（VXOR）は形によらず同じ</li>
+    <li>番号を鍵にした JSON（作者の荷箱・トロッコの中身・作品カードの素材・機械の作る物）は <code>Block.RawValue</code>（UInt16）で読み書きする。今の保存はそのまま読める</li>
+    <li>🔴 版2のアプリは版3のワールドを、版1のアプリは版2のワールドを開かない（読めずに上書きして壊すため）</li>
+  </ul>
+
   <h2>ChestRecord（SwiftData @Model）</h2>
   <table>
     <tr><th>プロパティ</th><th>既定値</th><th>説明</th></tr>
@@ -172,8 +198,30 @@ erDiagram
     <li>初期在庫は 松明2・チェスト1・小麦3（新規ワールドのみ）</li>
   </ul>
 
-  <h2>Block（UInt8 enum）</h2>
+  <h2>Block（UInt16 enum。2026-10-28 に UInt8 から広げた）</h2>
   <p>rawValue が UInt8 として <code>blocksData</code>・<code>inventoryData</code>・<code>slotsData</code>・<code>placedByBlockData</code> に直接書き込まれる。現行の最大 rawValue は <strong>156</strong>（磨いた安山岩）。<strong>欠番 16〜18・31・33 は建築特化への転換で廃止した食べ物</strong>（鶏肉・豚肉・牛肉・パン・金のリンゴ）で、値をずらさないため再利用しない。旧セーブに残っていても読み込み時に空気として読む（所持品では読み飛ばす）。テクスチャアトラスの列は <code>Block.atlasColumn</code> で rawValue から切り離してあり、形違い・色違いは素材の列を借りるので列を消費しない。</p>
+
+  <div class="callout warn">🔴 <strong>2026-10-28 の状態</strong>: rawValue は <strong>UInt16</strong>（CF-055）。番号 252〜255 は保存の印と予備で使わない。新しいブロックは <strong>256</strong> から付ける。現行の最大は 258。下の段落の「UInt8」「最大156」は 10-11 以前の記述で、表 202〜258 は下記。</div>
+  <h3>2026-10-12 以降に足したブロック（202〜251・256〜258）</h3>
+  <table>
+    <tr><th>番号</th><th>名前</th><th>説明</th></tr>
+    <tr><td>202・203</td><td>waterGate・waterGateRaised</td><td>水門（閉じている）と、開いて引き上げた板（水路の1つ上のマス・単独では置けない）</td></tr>
+    <tr><td>204〜206</td><td>waterWheel・shaft・autoStonecutter</td><td>水車・軸・自動の石切り機（<a href="features/machines.html">機械とトロッコ</a>）</td></tr>
+    <tr><td>207〜210</td><td>copperOre・copperIngot・copperBlock・copperSlope</td><td>銅の鉱石（ワールドの地下だけ）・銅の延べ棒（持ち物だけ）・銅のブロック・銅の屋根（CF88）</td></tr>
+    <tr><td>211〜216</td><td>jungleLog・jungleLeaves・junglePlanks・jungleStairs・jungleSlab・jungleFence</td><td>密林の木の原木（堅い）・厚い葉・板・階段・ハーフ・柵</td></tr>
+    <tr><td>217〜220</td><td>undergrowth・jungleVine・fiber・rope</td><td>下草（中を歩くと遅い）・つる（登れる）・繊維・ロープ（持ち物だけ）</td></tr>
+    <tr><td>221〜225</td><td>sawmill・mill・waterPump・flour・bread</td><td>製材機・製粉機・揚水機・小麦粉・パン（満腹+5）</td></tr>
+    <tr><td>226</td><td>lostBag</td><td>倒れた所に残る持ち物の袋（CF84）</td></tr>
+    <tr><td>227〜232</td><td>berryBush・berryBushBare・berries・bananaBunch・bananaStem・bananas</td><td>ベリーの茂み（実のない茂み）・ベリー・バナナの房（茎）・バナナ。夜明けにまた実る</td></tr>
+    <tr><td>233〜237</td><td>egg・rawMeat・cookedMeat・rawFish・cookedFish</td><td>卵・生の肉・焼いた肉・生の魚・焼いた魚</td></tr>
+    <tr><td>238〜240</td><td>fishTrap・fishTrapFull・snare</td><td>魚の罠（魚の入った罠）・くくり罠</td></tr>
+    <tr><td>241〜244</td><td>rail・poweredRail・minecart・chestMinecart</td><td>レール・加速レール・トロッコ・チェストつきトロッコ（トロッコは持ち物だけ。置くと <code>RailCart</code>）</td></tr>
+    <tr><td>245・246</td><td>stake・tripod</td><td>杭・三脚（<a href="features/stakes.html">杭とひな形</a>）</td></tr>
+    <tr><td>247〜249</td><td>campfire・wateringCan・wateringCanFull</td><td>焚き火（保存値 0x04 は消えた焚き火）・ジョウロ・水入りのジョウロ</td></tr>
+    <tr><td>250・251</td><td>dryGrass・ladder</td><td>乾いた草（渓谷・水が4マス以内で草に）・はしご</td></tr>
+    <tr><td>256〜258</td><td>stew・crocodileLeather・leatherRug</td><td>煮込み（満腹+8・10分減らない）・ワニの皮・皮の敷物（2バイトの番号のブロック）</td></tr>
+  </table>
+  <p>帽子と上着はブロックにしない（<code>outfitData</code>）。食べ物・素材の満腹などの値は <a href="features/world-rules.html">ワールドの決まり</a>。</p>
 
   <h3>性質の定義</h3>
   <table>
@@ -353,6 +401,9 @@ erDiagram
   </table>
   <p>0xFF は Block の最大 rawValue（97）と衝突しないため、先頭バイトだけで安全に新旧を判別できる。デコードは常に両形式に対応し、エンコードは常に新形式で書く。個数0の品は書き出さず、知らない rawValue（欠番）は読み飛ばす。エンコード・デコードは <code>GameDomain.swift</code> と <code>WorldStore</code> の2か所に同じ実装がある（揃えて変えること）。</p>
 
+  <h3>2バイトの番号の形（0xFD・2026-10-28〜）</h3>
+  <p>番号 256 以上のブロックを含むときだけ、先頭 0xFD の4バイト組 [rawLo, rawHi, countLo, countHi]（どちらも UInt16 リトルエンディアン）で書く。それ以外は従来の 0xFF の3バイト組のまま。チェストの中身の直列化は持ち物の関数に一本化した（以前の <code>WorldStore</code> の写しは削除）。</p>
+
   <h3>加工ジョブ（craftingJobData / toolCraftingJobData）の形式</h3>
   <p><code>JSONEncoder</code> 既定の JSON。ジョブが無ければ空 Data。読み込み時、期限を過ぎたジョブはその場で完成させる。</p>
   <table>
@@ -407,7 +458,8 @@ erDiagram
     <tr><td>5.5</td><td>2026-10-09</td><td>ブロック 159〜165（岬の灯台の名物。CF65）を追加。アトラスは 80 列</td></tr>
     <tr><td>5.6</td><td>2026-10-09</td><td>ブロック 166〜169（入り江の船小屋の名物。CF65）を追加。アトラスは 84 列</td></tr>
     <tr><td>5.7</td><td>2026-10-11</td><td>ブロック 170〜175（花の丘）・176〜179（雪山）・180〜195（砂漠の泉）・196〜201（湖の城）の名物（CF65）を追加。アトラスは 102 列</td></tr>
-</table>
+    <tr><td>6.0</td><td>2026-10-28</td><td>2026-10-12 以降の実装を反映。WorldRecord に terrainLift・survivalData・tamedMobsData・cartsData・stakesData・workPhotosData・outfitData・machineRecipesData・pumpedSourcesData・smeltingJobsData・目印（CF97）・前回の場所（CF93）・ステージの紹介と着手前の写真の列を追加。保存データの版を3に（版2＝高さ128・版3＝2バイトの番号）。チャンクの高さ128の形と2バイトの形、持ち物の 0xFD の形、Block を UInt16 に広げたこと、ブロック 202〜251・256〜258 を追加</td></tr>
+  </table>
 
   <script>
     mermaid.initialize({
@@ -416,7 +468,7 @@ erDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-10-09</footer>
+  <footer class="site-footer">最終更新: 2026-10-28</footer>
 </div>
 </body>
 </html>
