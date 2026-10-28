@@ -17,25 +17,25 @@
   </header>
 
   <h2>概要</h2>
-  <p>素材を集め、自分の作品を建てるためのボクセルゲーム。2026-09-16 に<strong>サバイバル型から建築特化へ全面転換</strong>し、戦闘・体力・空腹・死亡を廃止した。「自分の作品・アートを作る」という作り手の動機と、サバイバル実装（戦闘・生存）の方向がズレていたためである。設計の核心は「<strong>達成感の源泉は危険を越えることではなく、不可逆な投資（量と時間）が目に見えること</strong>」（Fable 5.1、2026-09-16）で、目標ガイドの終着点も作品カードの表示も「これまでに置いた量」に置き換えている。2026-09-27 以降は「決まった地図」を増やす方針（本人）で、ステージ「岬の灯台」・島の世界・群島の世界（本島と雪山の島を船で渡る）を足している。</p>
+  <p>素材を集め、自分の作品を建てるためのボクセルゲーム。2026-09-16 に<strong>サバイバル型から建築特化へ全面転換</strong>し、戦闘・体力・空腹・死亡を廃止した。「自分の作品・アートを作る」という作り手の動機と、サバイバル実装（戦闘・生存）の方向がズレていたためである。設計の核心は「<strong>達成感の源泉は危険を越えることではなく、不可逆な投資（量と時間）が目に見えること</strong>」（Fable 5.1、2026-09-16）で、目標ガイドの終着点も作品カードの表示も「これまでに置いた量」に置き換えている。2026-09-27 以降は「決まった地図」を増やす方針（本人）で、ステージ「岬の灯台」・島の世界・群島の世界（本島と雪山の島を船で渡る）を足している。2026-10-26 からは、ステージと別に<strong>自由に遊ぶワールドの3マップ（群島・密林・渓谷）</strong>を高さ128・体力と満腹あり（死なない作り）・水車の機械とトロッコつきの正式な形で作っている（本人決定。ステージは建築特化の決まりのまま）。</p>
   <ul class="kv-list">
     <li><span class="k">カテゴリ</span><span class="v">ゲーム / シミュレーション（建築）</span></li>
     <li><span class="k">対応OS</span><span class="v">iOS 18.0+</span></li>
     <li><span class="k">言語</span><span class="v">日本語</span></li>
     <li><span class="k">マネタイズ</span><span class="v">未定</span></li>
-    <li><span class="k">ステータス</span><span class="v">開発中（TestFlight 1.0.0 (24) を 2026-10-02 に配信。M1 判定は 2026-09-28 に取りやめ）</span></li>
+    <li><span class="k">ステータス</span><span class="v">開発中（TestFlight build 54 を 2026-10-28 に配信。その後ワニ＝密林の段6を main に入れた）</span></li>
     <li><span class="k">リリース予定</span><span class="v">未定</span></li>
     <li><span class="k">技術スタック</span><span class="v">Swift 6 / SwiftUI / SceneKit / SwiftData</span></li>
   </ul>
   <div class="callout warn">
-    本ポータルの内容は<strong>2026-10-02 時点の実装</strong>（TestFlight build 24 と、その後の修正＝群島では海面より上を掘らない・ジャンプの絵・所持品の同期・湖の氷の張り直し・チェストの置き換え・船を回す）を反映したもの。将来の拡張予定は原則として書かない（群島の次の段の設計は、リポジトリの <code>docs/群島と雪山の島_設計案_2026-09-30.md</code> が正）。
+    本ポータルの内容は<strong>2026-10-28 時点の実装</strong>（TestFlight build 54 と、その後 main に入れたワニ）を反映したもの。将来の拡張予定は原則として書かない（設計はリポジトリの <code>docs/</code> の設計案＝密林・群島の作り直し・渓谷・運ぶ遊び・水車工房・ステージの2作目が正）。
   </div>
 
   <h2>全体仕様書</h2>
   <div class="card-grid">
     <a class="card" href="data-model.html">
       <div class="title">データモデル</div>
-      <div class="desc">SwiftData モデル・Block 一覧・設置の集計・スキーマ版管理</div>
+      <div class="desc">SwiftData モデル・Block 一覧（UInt16・258まで）・高さ128と2バイトの保存形式・保存データの版3</div>
     </a>
   </div>
 
@@ -117,7 +117,7 @@
     </a>
     <a class="card" href="features/terrain.html">
       <div class="title">地形生成</div>
-      <div class="desc">ワールドの種類（群島・島・無限）・本島と雪山の島・洞窟・木・最初から置いてある物と入れ直し</div>
+      <div class="desc">ワールドの種類（群島・島・密林・渓谷・無限）・高さ128・作り直した群島と採掘の島・密林の地下・渓谷の棚と滝</div>
       <div class="meta"><span class="tag">VG-FEAT-TERRAIN</span></div>
     </a>
     <a class="card" href="features/sound.html">
@@ -132,9 +132,12 @@
     </a>
     <a class="card" href="features/mob-ai.html">
       <div class="title">動物（景観モブ）</div>
-      <div class="desc">鶏・牛・豚・羊の徘徊と、羊の毛刈り。殴れない・壊せない景観要素</div>
+      <div class="desc">鶏・牛・豚・羊の徘徊と毛刈り。ワールドでは狩り・罠・飼育・ワニ</div>
       <div class="meta"><span class="tag">VG-FEAT-MOBAI</span></div>
     </a>
+    <a class="card" href="features/world-rules.html"><div class="title">ワールドの決まり</div><div class="desc">持ち物36枠・体力と満腹・道具の段・畑の水・食べ物・罠と飼育・ワニ・焚き火とジョウロと身じたく</div><div class="meta"><span class="tag">VG-FEAT-WORLD-RULES</span></div></a>
+    <a class="card" href="features/machines.html"><div class="title">機械とトロッコ</div><div class="desc">水門・水車・軸・自動の石切り機・製材機・製粉機・揚水機・レールとトロッコ</div><div class="meta"><span class="tag">VG-FEAT-MACHINES</span></div></a>
+    <a class="card" href="features/stakes.html"><div class="title">杭とひな形・作品カードの画廊</div><div class="desc">杭を打ってひな形を選び、建てて三脚で撮る・眺めのいい杭場8か所</div><div class="meta"><span class="tag">VG-FEAT-STAKES</span></div></a>
   </div>
 
   <h2>廃止済み仕様（参考）</h2>
@@ -142,7 +145,7 @@
   <div class="card-grid">
     <a class="card" href="features/survival.html">
       <div class="title">サバイバルシステム（廃止済み）</div>
-      <div class="desc">体力・空腹・ダメージ・死亡・食料。2026-09-16 に削除</div>
+      <div class="desc">体力・空腹・ダメージ・死亡・食料。2026-09-16 に削除（ワールドでは 10-27 に別の形で戻した）</div>
       <div class="meta"><span class="tag warn">廃止済み</span></div>
     </a>
   </div>
@@ -160,9 +163,10 @@
     <tr><td>2.1</td><td>2026-09-26</td><td>機能仕様書に効果音システム（VG-FEAT-SOUND）を追加。合成音から録音素材への差し替え、素材別の音色、再生ピッチの揺らぎ、音量の正規化基準、中断からの復帰を記載</td></tr>
     <tr><td>3.0</td><td>2026-10-02</td><td>2026-09-17 以降の実装（TestFlight build 13〜24 とその後の修正）をまとめて反映。新設: 乗り物（船とリフト v1.0）・地図（v1.0）・編集モード（v1.0）・植物と染料（v1.0）・ステージと記念写真（v1.0）。改訂: データモデル v4.0・ゲームプレイ v4.0・ワールド選択 v3.0・地形生成 v3.0・クラフト v4.0・クリエイティブ v2.1・採掘（壊す操作と演出）v2.0・動物 v4.0・建築支援 v2.0・目標ガイド v1.1・グラフィック v4.0・作品カード v1.1・効果音 v1.0.2（1日20分に合わせた夜の時間）。概要・ステータス・注記を更新し、パンくずの表記を Personal App Specs に直した</td></tr>
       <tr><td>3.1</td><td>2026-10-02</td><td>本人の決定と修正を反映: 雪山の湖の氷を夜明けに張り直す（地形生成 v3.1・データモデル v4.1）、中身の入ったチェストは置き換えられない（CF-028）・船は胴がかかる向きに回さない（CF-027）（編集モード v1.1・乗り物 v1.1）</td></tr>
-</table>
+    <tr><td>4.0</td><td>2026-10-28</td><td>2026-10-12 以降の実装（build 47〜54 と main のワニ）をまとめて反映。新設: ワールドの決まり（v1.0）・機械とトロッコ（v1.0）・杭とひな形・作品カードの画廊（v1.0）。改訂: データモデル v6.0・地形生成 v4.0・ワールド選択 v5.0・ゲームプレイ v5.0・地図 v1.2・動物 v5.0・クラフト v5.0・ステージ v1.18・建築支援 v2.1・採掘 v2.5・サバイバル（廃止済み）v3.1。概要・ステータス・注記を更新</td></tr>
+  </table>
 
-  <footer class="site-footer">最終更新: 2026-10-12</footer>
+  <footer class="site-footer">最終更新: 2026-10-28</footer>
 </div>
 </body>
 </html>

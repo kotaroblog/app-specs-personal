@@ -223,6 +223,15 @@ sequenceDiagram
     <li><a href="graphics.html">グラフィック設定</a></li>
   </ul>
 
+  <h2>2026-10-26〜28 の追加</h2>
+  <ul>
+    <li><strong>壊すボタン</strong>（CF69）: 押したまま指を滑らせると視点が動く。反応する範囲 80pt→96pt。押した瞬間に振動</li>
+    <li><strong>道具の段</strong>（CF6）: ワールドの決まりを使うワールドでは、木のツルハシで鉄・銅、石のツルハシで金・ダイヤが掘れない。ステージは速さだけ</li>
+    <li><strong>持ち物がいっぱい</strong>: 36枠のワールドでは掘った物は6マス以内のチェスト・樽へ。近くに無ければ壊さずに、掘り始めに知らせる</li>
+    <li>密林の原木は堅い（素手3.0秒・木のツルハシ0.8秒・石以上0.6秒）。下草・つる・葉もツルハシか素手で切る（鉈・斧は作らない）</li>
+    <li>ワールドでは壊すボタンで手前の動物を叩く（<a href="world-rules.html">ワールドの決まり</a>）</li>
+  </ul>
+
   <h2>変更履歴</h2>
   <table class="history-table">
     <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
@@ -234,6 +243,7 @@ sequenceDiagram
     <tr><td>2.2</td><td>2026-10-04</td><td>ツルハシの傷み・補修・強化（CF55）を追加</td></tr>
     <tr><td>2.3</td><td>2026-10-05</td><td>自分で作ったリフトの乗り場は壊せる（CF58）を追記</td></tr>
     <tr><td>2.4</td><td>2026-10-08</td><td>葉を壊したとき・散ったときに10回に1回くらい苗木が落ちる（CF63。詳細は植物と染料の仕様）</td></tr>
+      <tr><td>2.5</td><td>2026-10-28</td><td>壊すボタン（CF69）・道具の段（CF6）・持ち物がいっぱいのとき・密林の原木の堅さ・動物を叩くを追加</td></tr>
   </table>
 
   <script>
@@ -243,7 +253,7 @@ sequenceDiagram
     });
   </script>
 
-  <footer class="site-footer">最終更新: 2026-10-08</footer>
+  <footer class="site-footer">最終更新: 2026-10-28</footer>
 </div>
 </body>
 </html>
