@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - 杭とひな形・作品カードの画廊</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / 杭とひな形・作品カードの画廊</div>
+
+  <header class="site-header">
+    <h1>杭とひな形・作品カードの画廊</h1>
+    <p>ワールドのお題: 杭を打ってひな形を選び、建てて三脚で撮ると作品カードになる。眺めのいい杭場8か所（新しい群島）</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-STAKES</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>群島の作り直しの段4（CF78・2026-10-28）。ステージには「お題」があるが、ワールドには無い。代わりに<strong>自分で杭を打って作品の場所を決め、建てて撮る</strong>のを繰り返す。地図の白い枠が写真で埋まっていくのが群島の進み方で、採点はしない。</p>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（メニュー「作品カードの画廊」・杭と三脚を［使う］）</a></li>
+    <li><a href="map.html">地図（眺めのいい杭場の白い枠と写真）</a></li>
+    <li><a href="work-card.html">作品カード（これまでに置いた量・ステージの写真）</a></li>
+  </ul>
+
+  <h2>杭</h2>
+  <ul>
+    <li>作業台で作る（丸太3＋石1）。打つとひな形を選ぶ</li>
+    <li>ほかの杭と12マス以上離す。<strong>途中の作品は同時に3つまで</strong>（解錠ではなく散らかさない決まり）</li>
+    <li>作品の荷箱: 杭の横のチェスト。入れた素材も「持っている数」に数える（不足数の計算に入る）</li>
+  </ul>
+
+  <h2>ひな形</h2>
+  <table>
+    <tr><th>種類</th><th>中身</th><th>完成</th></tr>
+    <tr><td>① お手本</td><td>ステージのお手本6種＋小屋。杭の向こうに半透明で出る</td><td>そろうと三脚が立つ</td></tr>
+    <tr><td>② 空の枠</td><td>9×9・15×15・25×25（土台の範囲と撮影位置だけ）</td><td>杭から「完成にする」</td></tr>
+    <tr><td>③ 白紙</td><td>何も出さない</td><td>杭から「完成にする」</td></tr>
+  </table>
+  <p>自分の作品（ステージで建てた形）をひな形にするのは後回し（本人 10-27 Q20）。</p>
+
+  <h2>作品カードと画廊</h2>
+  <ul>
+    <li>三脚を［使う］と写真を撮り、作品カードにする: 写真・場所の名前・かかった日数・運んだ距離の合計・素材の内訳</li>
+    <li>カードの一覧はメニュー「作品カードの画廊」。地図にもカードの写真を出す</li>
+    <li>写真は記録の行に入れず別ファイル（<code>workPhotosData</code>・externalStorage）、カードの中身は <code>stakesData</code>（<code>StakeBook</code> の JSON）</li>
+  </ul>
+
+  <h2>眺めのいい杭場（新しい群島だけ）</h2>
+  <ul>
+    <li>最初から8か所に 3×3 の石畳＋ランタン: 城山の頂・川の橋のたもと・滝の前・凍った湖の岸・坑口の上・地下の北と南の広間・岬</li>
+    <li>地図に白い枠で出て、撮ると写真に変わる</li>
+    <li>最初の小屋の杭がスポーン地点の北東 (30, 30) に刺さっている（最初の30分の作品＝小屋）</li>
+  </ul>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant G as GameSceneView
+  participant B as StakeBook
+  U->>G: 杭を置く
+  G->>B: 12マス・途中3つまでを確かめる
+  G-->>U: ひな形を選ぶ（お手本／空の枠／白紙）
+  U->>G: 建てる（荷箱の中身も数える）
+  alt お手本がそろった
+    G->>G: 撮影位置に三脚を立てる
+  else 枠・白紙
+    U->>G: 杭から「完成にする」
+  end
+  U->>G: 三脚を［使う］
+  G->>B: 作品カード（写真・場所・日数・距離・内訳）を足す
+  </div>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>採点しない。完成の条件はお手本がそろうか、自分で宣言するか</li>
+    <li>杭と作品カードはワールドで使える（眺めのいい杭場と最初の小屋の杭は新しい群島だけ）</li>
+  </ul>
+
+  <h2>エラー処理</h2>
+  <ul>
+    <li>取り消しで杭を消したときは記録も消す（記録だけ残らない）。同じ作品のカードを重ねて作らない（段4のレビュー）</li>
+  </ul>
+
+  <h2>実装メモ</h2>
+  <ul>
+    <li><code>Stake.swift</code>（杭・ひな形・<code>StakeBook</code>）・<code>WorkGallery.swift</code>（画廊）。ブロック 245 杭・246 三脚</li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-28</td><td>初版作成。群島の作り直しの段4（杭とひな形・作品カードと画廊・作品の荷箱・眺めのいい杭場8か所・最初の小屋の杭）を記載</td></tr>
+  </table>
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+  });
+</script>
+</body>
+</html>

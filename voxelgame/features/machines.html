@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CraftFrontier - 機械とトロッコ</title>
+<link rel="stylesheet" href="../../assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="../../">Personal App Specs</a> / <a href="../">CraftFrontier</a> / 機械とトロッコ</div>
+
+  <header class="site-header">
+    <h1>機械とトロッコ</h1>
+    <p>水門・水車・軸と、水車の動力で動く自動の石切り機・製材機・製粉機・揚水機。レール・加速レール・トロッコ・チェストつきトロッコ</p>
+    <div style="margin-top:8px;">
+      <span class="tag">機能ID: VG-FEAT-MACHINES</span>
+    </div>
+  </header>
+
+  <h2>概要</h2>
+  <p>「水を引いて工房と畑を組む」遊び（CF83 水車工房の試作・2026-10-26）を、ワールドの3マップ共通の道具にしたもの（CF85 段3）。動力は水車だけで、自動は1段まで（機械は上のチェストから取り、横のチェストへ出す）。物を遠くへ送るのはチェストつきトロッコ（マイクラ式・荷札なし。CF76）。</p>
+  <ul class="kv-list">
+    <li><span class="k">使える所</span><span class="v">ワールド（群島・島・密林・渓谷ほか）でクラフトできる。<strong>ステージでは作れない</strong>。トロッコはワールドの決まりを使うワールドで保存する</span></li>
+    <li><span class="k">材料の鍵</span><span class="v">銅の延べ棒（銅の鉱石をかまどで。銅の鉱石はワールドの地下だけ・CF88）</span></li>
+  </ul>
+
+  <h2>関連画面</h2>
+  <ul>
+    <li><a href="../screens/gameplay.html">ゲームプレイ画面（叩くと止まった理由を出す・トロッコに乗る）</a></li>
+    <li><a href="crafting.html">クラフト（レシピ）</a> / <a href="world-rules.html">ワールドの決まり（畑の水）</a></li>
+  </ul>
+
+  <h2>水まわりと動力</h2>
+  <table>
+    <tr><th>物</th><th>レシピ</th><th>決まり</th></tr>
+    <tr><td>水門</td><td>板4＋銅2</td><td>叩くと開く／閉じる。閉じていると水を通さない。開けると水が流れ込み、閉じると下流の水が引く。開くと板が1つ上のマスへ上がる（<code>waterGateRaised</code>）</td></tr>
+    <tr><td>水車</td><td>板8＋銅1</td><td>横（東西南北）か真下に<strong>川の水か流れている水</strong>があると回る。池・沼・溝に溜まった水では回らない。🔴 build 49 までは川の水も止まった水扱いで回らなかった（build 50 で直した）</td></tr>
+    <tr><td>軸</td><td>密林の原木1→2</td><td>水車から、つながった軸（上下左右前後）を伝って動力を渡す（最大8本）。向きは見た目だけで、つながっていれば向きに関係なく伝わる</td></tr>
+  </table>
+  <p>川の水は今の水の決まりのまま（本人 10-27「マイクラと同じ仕様で」）: 地形の川は水源。掘った溝へは水源から7マスまで流れ、段差では落ちる。水源2つに挟まれたマスは新しい水源になる。</p>
+
+  <h2>機械（動力で動く）</h2>
+  <table>
+    <tr><th>機械</th><th>レシピ</th><th>していること</th></tr>
+    <tr><td>自動の石切り機</td><td>石切台＋軸＋銅3</td><td>上のチェストの材料を石切台のレシピで加工し（1回2秒）、横のチェストへ。叩くと作る物を選べる（既定は「作れる物から自動」・<code>machineRecipesData</code>）</td></tr>
+    <tr><td>製材機</td><td>作業台＋軸＋銅3</td><td>上のチェストの原木1→板6</td></tr>
+    <tr><td>製粉機</td><td>石8＋軸＋銅2</td><td>上のチェストの小麦3→小麦粉1（小麦粉はかまどでパン）</td></tr>
+    <tr><td>揚水機</td><td>バケツ＋軸＋銅4</td><td>横か下に水があると真上へ水源を出す。重ねるとさらに上へ。止まると<strong>自分が出した水源だけ</strong>を引く（<code>pumpedSourcesData</code>）。渓谷の「水を上へ持ち上げる」の道具</td></tr>
+  </table>
+  <h3>止まった理由</h3>
+  <p>水車・軸を叩くと回っているか・止まった理由、機械を叩くと「動力が来ていません」「上にチェストがありません」「横にチェストがありません」「材料がありません」を出す。</p>
+
+  <h2>処理フロー</h2>
+  <div class="mermaid">
+sequenceDiagram
+  participant W as 水車
+  participant S as 軸（最大8本）
+  participant M as 機械
+  participant U as 上のチェスト
+  participant O as 横のチェスト
+  W->>W: 横か下に川・流れる水があるか
+  W->>S: 回っていれば動力を渡す
+  S->>M: つながっていれば動力あり
+  loop 動力がある間
+    M->>U: 材料を取る
+    M->>M: 加工（石切り機は1回2秒）
+    M->>O: できた物を入れる（あふれた分は機械が覚える）
+  end
+  </div>
+
+  <h2>レールとトロッコ（CF76）</h2>
+  <table>
+    <tr><th>物</th><th>レシピ</th><th>決まり</th></tr>
+    <tr><td>レール</td><td>鉄6＋板1→16</td><td>隣に合わせて、まっすぐ・曲がり・坂になる。通り抜けられる</td></tr>
+    <tr><td>加速レール</td><td>金6＋板1→6</td><td>置くだけで常に動き、上を通るトロッコを速くする（坂を上がる手段。巻き上げ機は作らない）</td></tr>
+    <tr><td>トロッコ</td><td>鉄5</td><td>レールに置く。乗って前へ倒すと押せる。持ち物としてはブロックにならない（<code>RailCart</code>）</td></tr>
+    <tr><td>チェストつきトロッコ</td><td>トロッコ＋チェスト</td><td>送り出すと端まで走り、端の横のチェストと積み下ろしする（荷札は作らない）</td></tr>
+  </table>
+  <ul>
+    <li>乗ったまま出た・倒れたときも、トロッコは保存の写しから戻す（build 53 前のレビューで直した）</li>
+    <li>🔴 曲がりと坂の見た目はシミュレーターで撮れていない（実機で確認する）</li>
+  </ul>
+
+  <h2>ビジネスルール</h2>
+  <ul>
+    <li>動力は水車だけ。止まった水では回らない（「流れを引いてこないと回らない」を体で覚える）</li>
+    <li>機械はクラフトでワールドだけ（ステージのクラフト一覧には出さない）</li>
+    <li>自動は1段まで（運ぶ遊びの設計案）</li>
+  </ul>
+
+  <h2>エラー処理</h2>
+  <ul>
+    <li>開く途中のチェストへは機械が入れない（取り合いで増減しないため）</li>
+    <li>出す先が満杯なら、できた物は機械が覚えて次に空いたとき足す</li>
+  </ul>
+
+  <h2>実装メモ</h2>
+  <ul>
+    <li><code>Watermill.swift</code>（水門・水車・軸・機械）・<code>Rail.swift</code>（レール・<code>RailCart</code>）</li>
+    <li>保存: 機械の作る物 <code>machineRecipesData</code>・揚水機の水源 <code>pumpedSourcesData</code>・トロッコ <code>cartsData</code>（<a href="../data-model.html">データモデル</a>）</li>
+    <li>試作の「試作: 水車工房」（96×96 の草地と川・最初の持ち物つき）は開発者向けだけに残る</li>
+  </ul>
+
+  <h2>関連</h2>
+  <ul>
+    <li><a href="terrain.html">地形生成（密林の川・地下の川・渓谷の水路と滝）</a></li>
+  </ul>
+
+  <h2>変更履歴</h2>
+  <table class="history-table">
+    <tr><th>バージョン</th><th>日付</th><th>変更内容</th></tr>
+    <tr><td>1.0</td><td>2026-10-28</td><td>初版作成。水車工房の試作（CF83）の水門・水車・軸・自動の石切り機、密林の段3の製材機・製粉機・揚水機（CF85）、銅の材料（CF88）、レールとトロッコ（CF76）を記載</td></tr>
+  </table>
+</div>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+  });
+</script>
+</body>
+</html>
